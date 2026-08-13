@@ -1,0 +1,61 @@
+@layer components {
+  .p-datatable-tbody > tr > td {
+    max-width: 8rem;
+  }
+  .custom-table.custom-border {
+    @apply rounded-2xl border-2 border-line overflow-auto;
+  }
+  .custom-table .p-datatable-header-cell {
+    @apply !text-gray-700 !bg-background;
+  }
+  th {
+    @apply p-3.5;
+  }
+  .custom-table .p-paginator {
+    @apply !bg-background;
+  }
+
+  .tree-table {
+    @apply rounded-2xl border-2 border-line overflow-auto;
+  }
+  .tree-table .p-datatable-header-cell {
+    @apply !text-gray-700;
+  }
+  .tree-table td {
+    @apply bg-background;
+  }
+
+  .tree-table .p-datatable-row-expansion td {
+    @apply !bg-white !px-2 border-b-0;
+    background: white !important;
+  }
+
+  .tree-table {
+    @apply !text-gray-700 !bg-white;
+  }
+
+  .p-paginator-content > button {
+    @apply !bg-white  !rounded-xl !border-line;
+    border: 1px solid !important;
+  }
+  .p-paginator-content > button.p-disabled {
+    @apply !bg-white  !opacity-100 !rounded-xl border-2 !border-line;
+  }
+
+  .p-paginator-page.p-paginator-page-selected {
+    @apply !text-white !bg-primary !rounded-xl;
+  }
+
+  .custom-paginator,
+  .custom-paginator .p-paginator {
+    @apply !bg-white !rounded-lg;
+  }
+
+  .custom-paginator .p-datatable-paginator-bottom {
+    @apply !bg-white !border-0;
+  }
+
+  .custom-paginator .p-datatable-tbody {
+    display: none;
+  }
+}

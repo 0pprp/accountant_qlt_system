@@ -1,0 +1,53 @@
+{
+  "form": {
+    "name": {
+      "label": "أسم القائمة",
+      "placeholder": "تاريخ ميلاد المستخدم كما مسجل في الهوية",
+      "validation": {
+        "required": "أسم القائمة مطلوب"
+      }
+    },
+    "branchId": {
+      "label": " الفرع",
+      "placeholder": "أختر أسم المتابع",
+      "validation": {
+        "required": "أسم الفرع مطلوب"
+      }
+    },
+    "mandobId": {
+      "label": "المندوب",
+      "placeholder": "أختر أسم المندوب",
+      "validation": {
+        "required": "أسم المندوب مطلوبة"
+      }
+    },
+    "motabaId": {
+      "label": "المتابع",
+      "placeholder": "أختر أسم المتابع",
+      "validation": {
+        "required": "أسم المتابع مطلوبة"
+      }
+    }
+  },
+  "table": {
+    "branchName": "الفرع",
+    "name": "القائمة",
+    "mandobName": "المندوب",
+    "motabaName": "المتابع",
+    "customersCount": "عدد الزبائن",
+    "createdAt": "تاريخ الأضافة"
+  },
+
+  "orders": "القوائم",
+  "createOrder": "أضافة قائمة",
+  "updateTitleSuccess": "تسديد ناجح",
+  "updateDescriptionSuccess": "تم أضافة التسديد  بنجاح",
+  "updateTitleError": "فشل التسديد",
+  "updateDescriptionError": "حدثت مشكلة اثناء أضافة تسديد",
+  "createTitleSuccess": "أضافة ناجحة",
+  "createDescriptionSuccess": "تم أضافة مندوب بنجاح",
+  "createTitleError": "فشلت الأضافة",
+  "createDescriptionError": "حدثت مشكلة اثناء أضافة مندوب",
+  "updatePending": "جاري التعدیل",
+  "createPending": "جاري الأضافة"
+}

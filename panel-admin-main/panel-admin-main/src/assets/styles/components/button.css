@@ -1,0 +1,140 @@
+@layer components {
+  button {
+    @apply cursor-pointer;
+  }
+  .btn {
+    @apply rounded-xl text-sm transition-colors duration-200 cursor-pointer px-4 py-2 border-0 flex justify-center items-center gap-2;
+  }
+
+  .btn:hover {
+    @apply opacity-90;
+  }
+
+  .btn:active {
+    @apply opacity-80;
+  }
+
+  .btn:disabled {
+    @apply bg-background text-gray-300 cursor-not-allowed;
+  }
+
+  .btn-primary,
+  .btn-secondary,
+  .btn-tertiary,
+  .btn-success,
+  .btn-error,
+  .btn-warning,
+  .btn-info,
+  .btn-accent,
+  .btn-purple,
+  .btn-black {
+    @apply text-white;
+  }
+
+  .btn-white,
+  .btn-line,
+  .btn-background,
+  .btn-surface-1,
+  .btn-surface-2,
+  .btn-surface-3 {
+    @apply text-black;
+  }
+
+  .btn-primary {
+    @apply bg-primary;
+  }
+  .btn-text-primary {
+    @apply text-primary shadow-2xl;
+  }
+  .btn-secondary {
+    @apply bg-secondary;
+  }
+
+  .btn-tertiary {
+    @apply bg-tertiary;
+  }
+
+  .btn-success {
+    @apply bg-success;
+  }
+
+  .btn-error {
+    @apply bg-error;
+  }
+
+  .btn-warning {
+    @apply bg-warning;
+  }
+
+  .btn-info {
+    @apply bg-info;
+  }
+
+  .btn-accent {
+    @apply bg-accent;
+  }
+
+  .btn-purple {
+    @apply bg-purple;
+  }
+
+  .btn-white {
+    @apply bg-white;
+  }
+
+  .btn-black {
+    @apply bg-black;
+  }
+
+  .btn-line {
+    @apply bg-line;
+  }
+
+  .btn-background {
+    @apply bg-background;
+  }
+
+  .btn-surface-1 {
+    @apply bg-surface-1;
+  }
+
+  .btn-surface-2 {
+    @apply bg-surface-2;
+  }
+
+  .btn-surface-3 {
+    @apply bg-surface-3;
+  }
+
+  .btn-sm {
+    @apply px-8 py-4;
+  }
+
+  .btn-md {
+    @apply px-12 py-6;
+  }
+
+  .btn-lg {
+    @apply px-16 py-8;
+  }
+
+  .btn-xl {
+    @apply px-20 py-10;
+  }
+
+  .btn-2xl {
+    @apply px-24 py-12;
+  }
+
+  .btn-3xl {
+    @apply px-28 py-14;
+  }
+
+  .btn-block {
+    @apply w-full;
+  }
+
+  .btn-icon {
+    @apply flex items-center justify-center;
+  }
+}

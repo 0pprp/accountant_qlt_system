@@ -1,0 +1,57 @@
+{
+  "form": {
+    "factorNumber": {
+      "label": " الفاتوره",
+      "placeholder": "أختر الفاتوره"
+    },
+    "safeType": {
+      "label": "القاصه",
+      "placeholder": "أختر القاصه المستقطعة منها الأموال",
+      "validation": {
+        "required": "أسم القاصه مطلوبة"
+      }
+    },
+    "name": {
+      "label": " عنوان الصرف",
+      "placeholder": "أدخل عنوان الصرف لأضافتها",
+      "validation": {
+        "required": "عنوان الصرف مطلوب"
+      }
+    },
+    "quantity": {
+      "label": "الكمية",
+      "placeholder": "أدخل كمية المادة",
+      "validation": {
+        "required": "أسم الكمية مطلوبة"
+      }
+    },
+    "amount": {
+      "label": "السعر",
+      "placeholder": "أدخل سعر للمادة",
+      "validation": {
+        "required": "أسم السعر مطلوبة"
+      }
+    }
+  },
+  "safeType": {
+    "main": "القاصة الرئيسية",
+    "branch": "قاصة الفرع"
+  },
+  "expensesCount": "عدد الصرفيات",
+  "viewExpenses": "عرض المشتریات ",
+  "expenses": "صرفيات",
+  "createExpenses": "أضافة صرفيات",
+  "updateExpenses": "تعدیل صرفيات",
+  "viewDetails": "عرض التفاصيل",
+  "allAmount": "المبلغ الكلي",
+  "updateTitleSuccess": "تسديد ناجح",
+  "updateDescriptionSuccess": "تم أضافة التسديد  بنجاح",
+  "updateTitleError": "فشل التسديد",
+  "updateDescriptionError": "حدثت مشكلة اثناء أضافة تسديد",
+  "createTitleSuccess": "أضافة ناجحة",
+  "createDescriptionSuccess": "تم أضافة مندوب بنجاح",
+  "createTitleError": "فشلت الأضافة",
+  "createDescriptionError": "حدثت مشكلة اثناء أضافة مندوب",
+  "updatePending": "جاري التعدیل",
+  "createPending": "جاري الأضافة"
+}

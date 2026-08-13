@@ -1,0 +1,79 @@
+{
+  "paginatorLabel": "العملاء",
+  "tableColumns": {
+    "fullName": "الأسم الثلاثي",
+    "businessName": "اسم المتجر",
+    "orderListName": "القائمة",
+    "start": "عدد المبيعات",
+    "end": "اخر تسديد",
+    "businessAddress": "عنوان العميل",
+    "details": "تفاصيل"
+  },
+  "createCustomer": "إضافة العميل",
+  "tabs": {
+    "form": "بيانات العميل",
+    "document": "وثائق العميل",
+    "orders": "المبیعات العميل"
+  },
+  "orders": {
+    "shoppingCart": "المبیع",
+    "branchSafe": "قاصه الفرع",
+    "items": "عنصر",
+    "item": "العنصر",
+    "quantity": "الكمية",
+    "price": "السعر",
+    "salePrice": "البيع",
+    "totalAmount": "المبلغ الكلي",
+    "showDetails": "عرض التفاصيل",
+    "customerPayments": "تسديدات العميل",
+    "showMore": "عرض المزيد",
+    "noOrders": "لا توجد المبیعات",
+    "back": "تراجع",
+    "paymentStatus": "حالة الدفع",
+    "paid": "مسدد",
+    "unpaid": "غير مسدد",
+    "summary": {
+      "salePrice": "سعر البيع",
+      "receivedAmount": "الواصل",
+      "accumulated": "المتراكمات",
+      "dailyInstallment": "القسط اليومي",
+      "remaining": "المتبقي",
+      "buyAmount": "سعر الشراء"
+    }
+  },
+  "form": {
+    "personalInfoTitle": "المعلومات الشخصية",
+    "businessInfoTitle": "المعلومات التجارية",
+    "required": "هذه الخانة مطلوبه.",
+    "fullName": {
+      "label": "الأسم الثلاثي"
+    },
+    "motherName": {
+      "label": "أسم الأم"
+    },
+    "nationalCode": {
+      "label": "رقم الهوية",
+      "match": "رقم الهوية غير صحيح."
+    },
+    "birthDate": {
+      "label": "تاريخ الميلاد"
+    },
+    "businessName": {
+      "label": "أسم المتجر"
+    },
+    "whatsAppPhoneNumber": {
+      "label": "رقم الهاتف (وتساب)",
+      "match": "يجب أن يكون رقم الهاتف 11 رقمًا."
+    },
+    "phoneNumber": {
+      "label": "رقم الهاتف",
+      "match": "يجب أن يكون رقم الهاتف 11 رقمًا."
+    },
+    "address": {
+      "label": "عنوان المتجر"
+    },
+    "nearestKnownLocation": {
+      "label": "أقرب نقطة دالة"
+    }
+  }
+}

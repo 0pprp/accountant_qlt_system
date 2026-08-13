@@ -1,0 +1,90 @@
+/* RUBIK */
+@font-face {
+  font-family: 'Rubik';
+  font-weight: 300;
+  font-style: normal;
+  src: url('@/assets/fonts/Rubik/Rubik-Light.ttf');
+  font-display: swap;
+  unicode-range: U+0030-0039;
+}
+
+@font-face {
+  font-family: 'Rubik';
+  font-weight: 400;
+  font-style: normal;
+  src: url('@/assets/fonts/Rubik/Rubik-Regular.ttf');
+  font-display: swap;
+  unicode-range: U+0030-0039;
+}
+
+@font-face {
+  font-family: 'Rubik';
+  font-weight: 500;
+  font-style: normal;
+  src: url('@/assets/fonts/Rubik/Rubik-Medium.ttf');
+  font-display: swap;
+  unicode-range: U+0030-0039;
+}
+
+@font-face {
+  font-family: 'Rubik';
+  font-weight: 700;
+  font-style: normal;
+  src: url('@/assets/fonts/Rubik/Rubik-Bold.ttf');
+  font-display: swap;
+  unicode-range: U+0030-0039;
+}
+
+@font-face {
+  font-family: 'Rubik';
+  font-weight: 900;
+  font-style: normal;
+  src: url('@/assets/fonts/Rubik/Rubik-Black.ttf');
+  font-display: swap;
+  unicode-range: U+0030-0039;
+}
+
+/* ElMessiri */
+@font-face {
+  font-family: 'ElMessiri';
+  font-weight: 400;
+  font-style: normal;
+  src: url('@/assets/fonts/ElMessiri/ElMessiri-Regular.ttf');
+  font-display: swap;
+  unicode-range: U+0000-002F, U+003A-FFFF;
+}
+
+@font-face {
+  font-family: 'ElMessiri';
+  font-weight: 500;
+  font-style: normal;
+  src: url('@/assets/fonts/ElMessiri/ElMessiri-Medium.ttf');
+  font-display: swap;
+  unicode-range: U+0000-002F, U+003A-FFFF;
+}
+
+@font-face {
+  font-family: 'ElMessiri';
+  font-weight: 600;
+  font-style: normal;
+  src: url('@/assets/fonts/ElMessiri/ElMessiri-SemiBold.ttf');
+  font-display: swap;
+  unicode-range: U+0000-002F, U+003A-FFFF;
+}
+
+@font-face {
+  font-family: 'ElMessiri';
+  font-weight: 700;
+  font-style: normal;
+  src: url('@/assets/fonts/ElMessiri/ElMessiri-Bold.ttf');
+  font-display: swap;
+  unicode-range: U+0000-002F, U+003A-FFFF;
+}
+
+html body {
+  font-family: 'ElMessiri', 'Rubik', sans-serif;
+}
+
+body {
+  font-size: 16px;
+}

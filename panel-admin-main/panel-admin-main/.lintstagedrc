@@ -1,0 +1,6 @@
+{
+  "*.{vue,ts}": [
+    "eslint --fix --cache",
+    "prettier --write --ignore-unknown"
+  ]
+}

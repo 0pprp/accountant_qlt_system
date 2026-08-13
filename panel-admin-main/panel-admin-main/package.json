@@ -1,0 +1,71 @@
+{
+  "name": "qalaatal-dhaman-panel",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite --host --open",
+    "build": "yarn build:tsc && vite build",
+    "build:tsc": "vue-tsc",
+    "preview": "vite preview",
+    "build-only": "vite build",
+    "type-check": "vue-tsc --build",
+    "lint": "eslint . --fix",
+    "format": "prettier --write src/",
+    "prepare": "husky",
+    "optimize:icons": "svgo -f src/assets/icons"
+  },
+  "dependencies": {
+    "@primeuix/themes": "^1.1.1",
+    "@tailwindcss/vite": "^4.1.8",
+    "@tanstack/vue-query": "^5.67.2",
+    "@vueuse/core": "^13.1.0",
+    "axios": "^1.8.2",
+    "chart.js": "^4.5.1",
+    "pinia": "^3.0.1",
+    "pinia-plugin-persistedstate": "^4.2.0",
+    "primeicons": "^7.0.0",
+    "primevue": "^4.3.7",
+    "qs": "^6.14.0",
+    "svgo": "3.3.2",
+    "tailwindcss-primeui": "^0.6.1",
+    "vee-validate": "^4.15.0",
+    "vue": "^3.5.13",
+    "vue-i18n": "^11.1.2",
+    "vue-persian-datetime-picker": "^2.10.4",
+    "vue-router": "4",
+    "vue3-persian-datetime-picker": "^1.2.2",
+    "yup": "^1.6.1"
+  },
+  "devDependencies": {
+    "@commitlint/config-conventional": "^19.7.1",
+    "@tailwindcss/postcss": "^4.1.8",
+    "@tsconfig/node22": "^22.0.0",
+    "@types/node": "^22.13.4",
+    "@vitejs/plugin-vue": "^5.2.1",
+    "@vue/eslint-config-prettier": "^10.2.0",
+    "@vue/eslint-config-typescript": "^14.4.0",
+    "@vue/tsconfig": "^0.7.0",
+    "commitlint": "19.8.0",
+    "eslint": "^9.20.1",
+    "eslint-plugin-import": "^2.31.0",
+    "eslint-plugin-vue": "^9.32.0",
+    "husky": "^9.1.7",
+    "lint-staged": "^15.4.3",
+    "npm-run-all2": "^7.0.2",
+    "prettier": "^3.5.1",
+    "typescript": "~5.7.3",
+    "vite": "^6.1.0",
+    "vite-plugin-vue-devtools": "^7.7.2",
+    "vite-svg-loader": "^5.1.0",
+    "vue-tsc": "^2.2.2"
+  },
+  "lint-staged": {
+    "*.js": [
+      "eslint --fix"
+    ],
+    "*.vue": [
+      "eslint --fix"
+    ]
+  }
+}

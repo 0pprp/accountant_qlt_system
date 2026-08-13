@@ -1,0 +1,97 @@
+{
+  "brandName": "قلعة الضمان",
+  "noData": "لا توجد بيانات",
+  "words": {
+    "login": "تسجيل الدخول",
+    "logout": "تسجيل الخروج",
+    "cancel": "ألغاء",
+    "edit": "تعديل",
+    "view": "النشاط",
+    "eyeView": "رؤية",
+    "add": "أضافة",
+    "delete": "حذف",
+    "collect": "يجمع",
+    "unknown": "مجهول",
+    "save": "حفظ",
+    "next": "التالي",
+    "dinar": "د.ع",
+    "details": "تفاصيل",
+    "export": " تصدير "
+  },
+  "sidebar": {
+    "home": "الرئيسية",
+    "branch": "الفروع",
+    "payment": "التسديدات",
+    "customer": "العملاء",
+    "sale": "المبيعات",
+    "purchases": "الحسابات",
+    "safe": "القاصه",
+    "safeMain": "القاصة الرئيسية",
+    "warehouse": "المخزن",
+    "user": "المستخدمين",
+    "activityLog": "سجل المستخدمين",
+    "order": "القوائم",
+    "notifications": "الأشعارات"
+  },
+  "header": {
+    "input": {
+      "placeholder": "البحث بأسم العميل"
+    }
+  },
+  "createPending": "جاري الأضافة...",
+  "updatePending": "جاري التعديل...",
+  "successUpdate": "تعديل ناجح",
+  "errorUpdate": "فشل التعديل",
+  "successUpdateDescription": "تم أضافة التعدیل  بنجاح",
+  "serveErrorMassage": "خطأ في الخادم",
+  "serveErrorDescription": "حدث خطأ، يرجى المحاولة مرة أخرى",
+  "dashboard": {
+    "user": {
+      "title": "المستخدم"
+    },
+    "monthlyChart": {
+      "title": "التخطيط البياني الشهري",
+      "sales": "المبيعات",
+      "purchases": "المشتريات",
+      "payments": "التسديدات",
+      "currency": "دينار عراقي"
+    },
+    "stats": {
+      "customers": {
+        "title": "العملاء",
+        "description": "العملاء المسجلين لدى الشركة"
+      },
+      "representatives": {
+        "title": "المندوبين",
+        "description": "المندوبين المسجلين لدى الشركة"
+      },
+      "users": {
+        "title": "المستخدمين",
+        "description": "المستخدمين المسجلين لدى الشركة"
+      },
+      "suppliers": {
+        "title": "الموردين",
+        "description": "الموردين المسجلين لدى الشركة"
+      }
+    },
+    "financialTable": {
+      "date": "التاريخ",
+      "cashSafes": "الخزائن النقدية",
+      "withdrawals": "السحوبات",
+      "transfer": "النقل",
+      "additions": "الأضافات",
+      "periods": {
+        "today": "اليوم",
+        "yesterday": "البارحة",
+        "lastWeek": "الأسبوع السابق",
+        "lastMonth": "الشهر السابق",
+        "lastYear": "السنة السابقة"
+      }
+    },
+    "warehouse": {
+      "title": "المخازن و العناصر",
+      "items": "عنصر",
+      "warehouse": "مخزن"
+    }
+  }
+}

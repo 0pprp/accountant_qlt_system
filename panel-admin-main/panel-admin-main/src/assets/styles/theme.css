@@ -1,0 +1,65 @@
+@theme {
+  --font-sans:
+    'ElMessiri', 'Rubik', ui-sans-serif, system-ui, -apple-system,
+    BlinkMacSystemFont, sans-serif;
+  --font-serif: Georgia, Cambria, 'Times New Roman', Times, ui-serif, serif;
+  --font-mono:
+    'SFMono-Regular', Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New',
+    ui-monospace, monospace;
+
+  --color-primary: #006a64;
+  --color-secondary: #1d6b50;
+  --color-tertiary: #006879;
+  --color-success: #34c759;
+  --color-error: #ff3a3a;
+  --color-warning: #ffcc00;
+  --color-info: #007aff;
+  --color-accent: #e3427a;
+  --color-purple: #7f21b3;
+  --color-pink: #e3427a;
+  --color-white: #ffffff;
+  --color-black: #000000;
+  --color-line: #f0effe;
+  --color-background: #f8f8f8;
+  --color-surface-1: #f8f8f8;
+  --color-surface-2: #cce1e0;
+  --color-surface-3: #f4fbf9;
+
+  --color-gray-300: #cdcdcd;
+  --color-gray-500: #d9d9d9;
+  --color-gray-700: #6f797a;
+  --color-gray-900: #00201e;
+
+  --text-md: 1.6rem;
+  /* --text-3xs: 0.8rem;
+  --text-2xs: 1rem;
+  --text-xs: 1.2rem;
+  --text-sm: 1.4rem;
+  --text-lg: 1.8rem;
+  --text-3xl: 2rem;
+  --text-4xl: 3rem;
+  --text-5xl: 4rem; */
+
+  --font-weight-thin: 100;
+  --font-weight-light: 300;
+  --font-weight-regular: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+  --font-weight-black: 900;
+
+  --breakpoint-sm: 100%;
+  --breakpoint-md: 768px;
+  --breakpoint-lg: 1024px;
+  --breakpoint-xl: 1280px;
+
+  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.05);
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.1);
+  --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.1);
+  --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.1);
+
+  --container-sm: 100%;
+  --container-md: 100%;
+  --container-lg: 1024px;
+  --container-xl: 1280px;
+}

@@ -1,0 +1,17 @@
+version: '3.9'
+
+networks:
+  default:
+    name: qalaat_net
+    external: true
+
+services:
+  qalaat_view:
+    container_name: qalaat_view
+    image:  qalaat/view
+    restart: always
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - 8080:4173

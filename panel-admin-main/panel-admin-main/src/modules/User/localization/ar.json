@@ -1,0 +1,197 @@
+{
+  "userForm": {
+    "userName": {
+      "label": "أسم المستخدم",
+      "placeholder": "أختر أسم المستخدم للموظف ",
+      "validation": {
+        "required": "أسم المستخدم مطلوب"
+      }
+    },
+    "password": {
+      "label": "الرمز السري",
+      "placeholder": "أختر الرمز السري للموظف ",
+      "validation": {
+        "required": "أسم السري مطلوب",
+        "minLength": "كلمة المرور يجب أن تحتوي على 8 أحرف على الأقل"
+      }
+    },
+    "branchIds": {
+      "label": " الفرع",
+      "placeholder": "أختر أسم المتابع",
+      "validation": {
+        "required": "أسم الفرع مطلوب"
+      }
+    },
+    "roleId": {
+      "label": "المنصب الوضيفي",
+      "placeholder": "أختر المنصب الوضيفي للموظف ",
+      "validation": {
+        "required": " المنصب الوضيفي مطلوبة"
+      }
+    },
+    "fullName": {
+      "label": "الأسم الثلاثي",
+      "placeholder": "أختر الأسم الثلاثي",
+      "validation": {
+        "required": " الأسم الثلاثي مطلوبة"
+      }
+    },
+    "address": {
+      "label": "عنوان",
+      "placeholder": "أختر عنوان",
+      "validation": {
+        "required": " عنوان مطلوبة"
+      }
+    },
+    "motherName": {
+      "label": "الأسم الأم",
+      "placeholder": "أختر الأسم الأم",
+      "validation": {
+        "required": " الأسم الأم مطلوبة"
+      }
+    },
+    "nationalCode": {
+      "label": "رقم الهوية ",
+      "placeholder": "رقم الهوية الوطنيه للعميل",
+      "validation": {
+        "required": " رقم الهوية  مطلوبة",
+        "valid": "غير صالح"
+      }
+    },
+    "phoneNumber": {
+      "label": "رقم التليفون ",
+      "placeholder": "رقم التليفون الوطنيه للعميل",
+      "validation": {
+        "required": " رقم التليفون  مطلوبة",
+        "valid": "غير صالح"
+      }
+    },
+    "birthDate": {
+      "label": "تاريخ الميلاد",
+      "placeholder": "تاريخ ميلاد العميل كما مسجل في الهوية الوطنيه",
+      "validation": {
+        "required": "تاريخ الميلاد  مطلوبة"
+      }
+    }
+  },
+  "salaryDetailsForm": {
+    "type": {
+      "label": " فئة الراتب",
+      "placeholder": "أختر فئة الراتب للمستخدم ",
+      "validation": {
+        "required": " فئة الراتب مطلوب"
+      }
+    },
+    "amount": {
+      "label": " الراتب الأسمي ",
+      "placeholder": "أدرج الراتب الأسمي للمستخدم",
+      "validation": {
+        "required": "الراتب الأسمي  مطلوبة",
+        "valid": "غير صالح"
+      }
+    },
+    "installmentSharePercent": {
+      "label": "نسبة الواردات",
+      "placeholder": "أدخل نسبة الوردات",
+      "validation": {
+        "required": "نسبة الواردات  مطلوبة",
+        "valid": "غير صالح"
+      }
+    },
+    "saleSharePercent": {
+      "label": "نسبة المبيعات",
+      "placeholder": "أدخل نسبة المبيعات",
+      "validation": {
+        "required": "نسبة المبيعات  مطلوبة",
+        "valid": "غير صالح"
+      }
+    }
+  },
+  "employeeDocumentsForm": {
+    "nationalIdentity": {
+      "title": "الهوية الوطنية",
+      "description": "صور الهوية الوطنية الخاصة بالمستخدم"
+    },
+    "housingCard": {
+      "title": "بطاقة السكن",
+      "description": "صور بطاقة السكن الحاليه للمستخدم"
+    },
+    "rationCard": {
+      "title": "البطاقة التموينيه",
+      "description": "صورة البطاقة التموينيه الخاصة بالمستخدم"
+    },
+    "personalPhoto": {
+      "title": "الصوره الشخصيه",
+      "description": "صورة المستخدم الحية"
+    }
+  },
+  "table": {
+    "name": "الأسم",
+    "branchNames": "المحافظة",
+    "createdAt": "تاريخ الأضافة"
+  },
+  "columnSelector": {
+    "title": "اختر الأعمدة",
+    "placeholder": "اختر الأعمدة للعرض",
+    "selectAll": "تحديد الكل",
+    "deselectAll": "إلغاء تحديد الكل"
+  },
+  "filters": {
+    "role": {
+      "label": "دور المستخدم",
+      "placeholder": "اختر دور المستخدم",
+      "all": "جميع الأدوار"
+    }
+  },
+
+  "dailyReport": {
+    "date": "تاريخ",
+    "undeliveredCashAmount": "مبلغ النقد غير المُسلَّم",
+    "totalInstallmentAmount": "مبلغ الأقساط المستلمة",
+    "totalDeliveredCashAmount": "مبلغ النقد المُسلَّم إلى القاصه",
+    "cumulativeUndeliveredCashAmount": "المتبقي في نهاية اليوم"
+  },
+
+  "users": "المستخدمين",
+  "createUser": "أضافة ",
+  "updateTitleSuccess": "تسديد ناجح",
+  "updateDescriptionSuccess": "تم أضافة التسديد  بنجاح",
+  "updateTitleError": "فشل التسديد",
+  "updateDescriptionError": "حدثت مشكلة اثناء أضافة تسديد",
+  "createTitleSuccess": "أضافة ناجحة",
+  "createDescriptionSuccess": "تم أضافة مندوب بنجاح",
+  "createTitleError": "فشلت الأضافة",
+  "createDescriptionError": "حدثت مشكلة اثناء أضافة مندوب",
+  "updatePending": "جاري التعدیل",
+  "createPending": "جاري الأضافة",
+  "permission": {
+    "description": "عرض جميع صلاحيات الحسابات "
+  },
+
+  "userCreateSteps": {
+    "accountDetails": {
+      "stepTitle": "تفاصيل الحساب",
+      "title": "الأسم و الرمز السري"
+    },
+    "employeeData": {
+      "stepTitle": " بيانات الموظف",
+      "jobInfoTitle": "المعلومات الوظيفة",
+      "personnelInfoTitle": "المعلومات الشخصية"
+    },
+    "employeeDocuments": {
+      "stepTitle": " وثائق الموظف",
+      "personalDocumentsTitle": "الوثائق الشخصية"
+    },
+    "salaryDetails": {
+      "stepTitle": " تفاصيل الراتب"
+    },
+    "powers": {
+      "stepTitle": "الصلاحيات"
+    }
+  },
+
+  "salaryType": {
+    "commissionBased": "راتب بالنسية",
+    "fixed": "راتب كامل"
+  }
+}

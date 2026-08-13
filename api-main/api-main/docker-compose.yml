@@ -1,0 +1,31 @@
+version: "3.9"
+
+services:
+  qalaat-api:
+    container_name: qalaat-api
+    image: qalaat-api
+    restart: always
+    build:
+      context: .
+      dockerfile: Dockerfile
+    environment:
+      - ASPNETCORE_ENVIRONMENT=${ASP_ENV}
+      - ASPNETCORE_URLS=http://+:80
+      - ConnectionStrings__Postgres=${PGS_CS}
+      - SeqUrl=${SEQ_HOST}
+      - BearerTokenSettings__SecretKey=${JWT_SECRET_KEY}
+      - AdminData__Username=${ADMIN_USERNAME}
+      - AdminData__Password=${ADMIN_PASSWORD}
+    ports:
+      - 6075:80
+
+    volumes:
+      - qalaat_api_data:/app/wwwroot
+
+networks:
+  default:
+    name: qalaat_net
+    external: true
+
+volumes:
+  qalaat_api_data:  

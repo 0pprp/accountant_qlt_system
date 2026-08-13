@@ -1,0 +1,44 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <TargetFramework>net9.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+    </PropertyGroup>
+
+    <ItemGroup>
+        <ProjectReference Include="..\Domain\Domain.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <PackageReference Include="ByteSize" Version="2.1.2" />
+        <PackageReference Include="ClosedXML" Version="0.105.0" />
+        <PackageReference Include="FluentValidation" Version="12.1.1" />
+        <PackageReference Include="FluentValidation.DependencyInjectionExtensions" Version="12.1.1" />
+        <PackageReference Include="MediatR" Version="12.5.0" />
+        <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="9.0.4" />
+        <PackageReference Include="Microsoft.EntityFrameworkCore" Version="9.0.4" />
+        <PackageReference Include="Microsoft.IdentityModel.Tokens" Version="8.18.0" />
+        <PackageReference Include="QuestPDF" Version="2026.5.0" />
+        <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="8.18.0" />
+    </ItemGroup>
+
+    <ItemGroup>
+        <FrameworkReference Include="Microsoft.AspNetCore.App" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <Folder Include="Customers\Commands\Admin\" />
+      <Folder Include="Expenses\Commands\Admin\" />
+      <Folder Include="Permissions\Commands\" />
+      <Folder Include="Provinces\Commands\" />
+      <Folder Include="Provinces\Common\" />
+      <Folder Include="Provinces\Queries\Admin\" />
+      <Folder Include="Users\Commands\App\" />
+      <Folder Include="Users\Commands\Common\" />
+      <Folder Include="Warehouses\Commands\" />
+      <Folder Include="Warehouses\Common\" />
+      <Folder Include="Warehouses\Queries\Admin\" />
+    </ItemGroup>
+
+</Project>

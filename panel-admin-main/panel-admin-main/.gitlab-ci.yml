@@ -1,0 +1,51 @@
+stages:
+  - staging
+
+Build on staging server:
+  stage: staging
+  tags:
+    - affiliate
+  rules:
+    - if: $CI_COMMIT_BRANCH == "develop"
+  script:
+    - docker network create qalaat_net || true
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+    - docker pull $CI_REGISTRY/shared/docker_repository/node:20-alpine
+    - echo "VITE_API_BASE_URL=$API_BASE_STAGE"  >> .env
+    - echo "VITE_FILE_BASE_URL=$API_FILE_BASE_STAGE" >> .env
+    - echo "VITE_APP_API_VERSION=1" >> .env
+    - docker compose build
+    - docker compose down
+    - docker compose up -d
+Build Production image in test server:
+  stage: staging
+  tags:
+    - affiliate
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main"
+  script:
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+    - docker pull git.faramaham.com:5050/shared/docker_repository/node:20-alpine
+    - echo "VITE_API_BASE_URL=$API_BASE_PRODUCT"  >> .env
+    - echo "VITE_FILE_BASE_URL=$API_FILE_BASE_PRODUCT" >> .env
+    - echo "VITE_APP_API_VERSION=1" >> .env
+    - docker login -u "$dehghanian_user" -p "$dehghanian_pass" git.faramaham.com:5050
+    - docker build -t git.faramaham.com:5050/asp/qalaatal-dhaman/panel-admin:prod .
+    - docker push git.faramaham.com:5050/asp/qalaatal-dhaman/panel-admin:prod
+
+Build on Production server:
+  stage: staging
+  tags:
+    - qalaat-prod
+  rules:
+    - if: $CI_COMMIT_BRANCH == "main2"
+  script:
+    - docker network create qalaat_net || true
+    - docker login -u $CI_REGISTRY_USER -p $CI_REGISTRY_PASSWORD $CI_REGISTRY
+    - docker pull $CI_REGISTRY/shared/docker_repository/node:20-alpine
+    - echo "VITE_API_BASE_URL=$API_BASE_PRODUCT"  >> .env
+    - echo "VITE_FILE_BASE_URL=$API_FILE_BASE_PRODUCT" >> .env
+    - echo "VITE_APP_API_VERSION=1" >> .env
+    - docker compose build
+    - docker compose down
+    - docker compose up -d

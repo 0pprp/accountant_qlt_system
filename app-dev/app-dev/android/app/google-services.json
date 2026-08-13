@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "46597263959",
+    "project_id": "qalaatal-dhaman-team",
+    "storage_bucket": "qalaatal-dhaman-team.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:46597263959:android:9342ce3156616e40474912",
+        "android_client_info": {
+          "package_name": "com.qalaatal_dhaman.team"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCpnntWdKsDl-TAtwPIjgujH3nQiy6lV1c"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

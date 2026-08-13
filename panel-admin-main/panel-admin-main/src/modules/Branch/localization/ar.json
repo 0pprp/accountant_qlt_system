@@ -1,0 +1,35 @@
+{
+  "form": {
+    "name": {
+      "label": "أسم الفرع",
+      "placeholder": "أدخل أسم الفرع",
+      "validation": {
+        "required": "أسم الفرع مطلوب"
+      }
+    },
+    "provinceId": {
+      "label": "المحافظة",
+      "placeholder": "أدخل أسم المحافظة",
+      "validation": {
+        "required": "أسم المحافظة مطلوبة"
+      }
+    }
+  },
+  "table": {
+    "provinceName": "المحافظة",
+    "createdAt": "تاريخ الأضافة",
+    "name": "أسم الفرع"
+  },
+  "branches": "الفروع",
+  "createBranch": "أضافة فرع",
+  "updateTitleSuccess": "تسديد ناجح",
+  "updateDescriptionSuccess": "تم أضافة التسديد  بنجاح",
+  "updateTitleError": "فشل التسديد",
+  "updateDescriptionError": "حدثت مشكلة اثناء أضافة تسديد",
+  "createTitleSuccess": "أضافة ناجحة",
+  "createDescriptionSuccess": "تم أضافة مندوب بنجاح",
+  "createTitleError": "فشلت الأضافة",
+  "createDescriptionError": "حدثت مشكلة اثناء أضافة مندوب",
+  "updatePending": "جاري التعدیل",
+  "createPending": "جاري الأضافة"
+}

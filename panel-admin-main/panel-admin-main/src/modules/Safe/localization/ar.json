@@ -1,0 +1,135 @@
+{
+  "paginatorLabel": "العمليات",
+  "safeCards": {
+    "remainingCashAmount": {
+      "title": "النقد",
+      "description": "الموجود الفعلي في القاصة الرئيسية"
+    },
+    "netBalance": {
+      "title": "القاصه الرئیسیه",
+      "description": "المطلوب تحويله للقاصات"
+    },
+    "totalAmount": {
+      "title": "القاصه الکلیه",
+      "description": "المطلوب أستلامه من القاصات"
+    },
+    "netCreditAmount": {
+      "title": "طلب سالب",
+      "description": "المطلوب تحويله للقاصة الرئيسية"
+    },
+    "netDebitAmount": {
+      "title": "طلب موجب",
+      "description": "المطلوب استلامه للقاصة الرئيسية"
+    },
+    "totalBranchesRemainingCashAmount": {
+      "title": "نقد الفروع",
+      "description": "مجموع أرصدة الفروع"
+    },
+    "totalUndeliveredCashAmount": {
+      "title": "الواردات",
+      "description": "الواردات غير المسلمة"
+    }
+  },
+  "transactionType": {
+    "sellerPayment": "تسدید",
+    "purchase": "مشتریات",
+    "expense": "الصرفیات",
+    "safeTransfer": "تحويل قاصة",
+    "foreignProductOrder": "مبیع الخارجی"
+  },
+  "tableColumns": {
+    "fullName": "الأسم الثلاثي",
+    "orderListName": "القائمة",
+    "undeliveredCashAmount": "الواردات",
+    "deliveredCashAmount": "التسديدات",
+    "remaining": "المتبقي",
+    "lastCashDeliveryDescription": "اخر تسديد",
+    "description": "ملاحظات",
+    "businessAddress": "عنوان العميل",
+    "details": "تفاصيل",
+    "report": "تقرير يومي"
+  },
+
+  "tableTransactionColumns": {
+    "source": "من",
+    "destination": "الى",
+    "type": "النوع",
+    "amount": "المبلغ",
+    "createdAt": "التاريخ",
+    "status": "الحالة",
+    "statusDescription": "ملاحظات",
+    "actions": "الأجراء"
+  },
+
+  "status": {
+    "pending": "قيد الانتظار",
+    "approved": "مقبول",
+    "rejected": "مرفوض"
+  },
+
+  "changeStatusForm": {
+    "statusDescription": {
+      "placeholder": "ادخل ملاحظات",
+      "label": "ملاحظات"
+    },
+    "status": {
+      "placeholder": "ادخل الحالة",
+      "label": "الحالة"
+    }
+  },
+  "sellerCashDeliveriesForm": {
+    "date": {
+      "label": "تاريخ",
+      "placeholder": "أدخل تاريخ",
+      "required": " تاريخ مطلوبة"
+    },
+    "amount": {
+      "label": "المبلغ",
+      "placeholder": "أدخل المبلغ المراد تسديده",
+      "validation": {
+        "valid": "يرجى إدخال مبلغ صحيح",
+        "required": "المبلغ مطلوب"
+      }
+    },
+    "description": {
+      "label": "ملاحظات",
+      "placeholder": "ملاحظات"
+    }
+  },
+
+  "transferForm": {
+    "sourceSafeId": {
+      "label": "من",
+      "placeholder": "أختر القاصة المستقطعة منها الأموال",
+      "required": "مطلوبة"
+    },
+    "destinationSafeId": {
+      "label": "إلى",
+      "placeholder": "أختر القاصة المحول لها الأموال",
+      "required": "مطلوبة"
+    },
+    "amount": {
+      "label": "المبلغ",
+      "placeholder": "أدخل المبلغ المراد تسديده",
+      "validation": {
+        "valid": "يرجى إدخال مبلغ صحيح",
+        "required": "المبلغ مطلوب"
+      }
+    },
+    "description": {
+      "label": "ملاحظات",
+      "placeholder": "ملاحظات"
+    }
+  },
+  "foreignSafe": "مصدر خارجي",
+  "changeStatusTitle": "تعدیل الحالة",
+  "createSafe": "إضافة عملية",
+  "createSellerCashDeliveries": "إضافة تسديد",
+  "someSellerCashDeliveriesBtn": "تسديد الكل",
+  "someSellerCashDeliveriesDescription": "هل أنت متأكد من تسديد القوائم",
+  "allAmount": "المبلغ الكلي",
+  "requests": "الطلبات",
+  "sellers": "الرئيسة",
+  "updateTitleSuccess": "تم التحديث بنجاح",
+  "updateDescriptionSuccess": "تم تأكيد استلام المبلغ النقدي بنجاح."
+}

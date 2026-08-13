@@ -1,0 +1,13 @@
+{
+  "searchPlaceholder": "البحث باسم العميل",
+  "markAllAsRead": "ضع علامة كمقروء",
+  "paginatorLabel": "الأشعارات",
+  "markAllSuccessTitle": "تم بنجاح",
+  "markAllSuccess": "تم وضع علامة على جميع الإشعارات كمقروءة",
+  "tableColumns": {
+    "title": "عنوان",
+    "actorUserFullName": "اسم المستخدم",
+    "createdAt": "تاريخ الإنشاء",
+    "description": "وصف"
+  }
+}

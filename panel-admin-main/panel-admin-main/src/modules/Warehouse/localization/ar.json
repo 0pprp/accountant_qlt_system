@@ -1,0 +1,119 @@
+{
+  "productCategoryForm": {
+    "name": {
+      "label": "أسم الفئة",
+      "placeholder": "أدخل أسم الفئة",
+      "validation": {
+        "required": "أسم الفئة مطلوب"
+      }
+    }
+  },
+  "productForm": {
+    "name": {
+      "label": "العنصر",
+      "placeholder": "أدخل أسم العنصر لأضافته",
+      "validation": {
+        "required": "أسم العنصر مطلوب"
+      }
+    },
+    "remainingCount": {
+      "label": "كمية",
+      "placeholder": "أدخل كمية",
+      "validation": {
+        "required": " كمية مطلوب"
+      }
+    },
+    "buyAmount": {
+      "label": "سعر الشراء",
+      "placeholder": "أدخل موقع المخزن لأضافته",
+      "validation": {
+        "required": "سعر الشراء مطلوب"
+      }
+    },
+    "sellAmount": {
+      "label": "سعر البيع",
+      "placeholder": "أدخل سعر البيع",
+      "validation": {
+        "required": "سعر البيع مطلوب"
+      }
+    },
+    "dailyInstallmentAmount": {
+      "label": " القسط",
+      "placeholder": "أدخل القسط",
+      "validation": {
+        "required": " القسط مطلوب"
+      }
+    },
+    "description": {
+      "label": "ملاحظات",
+      "placeholder": "أضف ملاحظة تخص المخزن"
+    },
+    "categoryId": {
+      "label": " الفئة",
+      "placeholder": "أختر او ادخل اسم الفئة لأضافتها",
+      "validation": {
+        "required": "أسم الفئة مطلوب"
+      }
+    },
+    "warehouseId": {
+      "label": " الخزينة",
+      "placeholder": "أختر الخزينه المستقطعة منها الأموال",
+      "validation": {
+        "required": "أسم الخزينة مطلوب"
+      }
+    }
+  },
+  "table": {
+    "name": "العنصر",
+    "productsCount": "الخزينة",
+    "remainingCount": "عدد العناصر",
+    "dailyInstallmentAmount": "القسط",
+    "buyAmount": "سعر الشراء",
+    "sellAmount": "سعر البيع",
+    "creatorName": "المستخدم",
+    "description": "ملاحظات",
+    "createdAt": "تاريخ الأضافة",
+    "categoryName": "الفئة",
+    "warehouseName": "الخزينة"
+  },
+  "category": "الفئة",
+  "selectCategory": "اختر الفئة",
+  "allCategories": "جميع الفئات",
+  "products": "المنتجات",
+  "totalRemainingCount": "إجمالي عدد العناصر",
+  "warehouses": "العناصر",
+  "warehouse": "عنصر",
+  "updateProductCategory": "التعدیل العنصر",
+  "createProductCategory": "إضافة فئة جديدة",
+  "createProduct": "الأضافة العنصر",
+  "deleteProduct": {
+    "title": "الحذف العنصر",
+    "description": "هل أنت متأكد من حذف العنصر:"
+  },
+  "productCategory": {
+    "updateTitleSuccess": "تعديل ناجح",
+    "updateDescriptionSuccess": "تم تعديل الفئة بنجاح",
+    "updateTitleError": "فشل التعديل",
+    "updateDescriptionError": "حدثت مشكلة اثناء تعديل الفئة"
+  },
+  "product": {
+    "createTitleSuccess": "أضافة ناجحة",
+    "createDescriptionSuccess": "تم أضافة العنصر بنجاح",
+    "createTitleError": "فشلت الأضافة",
+    "createDescriptionError": "حدثت مشكلة اثناء أضافة العنصر",
+
+    "updateTitleSuccess": "تعديل ناجحة",
+    "updateDescriptionSuccess": "تم تعديل العنصر بنجاح",
+    "updateTitleError": "فشلت التعديل",
+    "updateDescriptionError": "حدثت مشكلة اثناء تعديل العنصر",
+
+    "deleteTitleSuccess": "حذف ناجحة",
+    "deleteDescriptionSuccess": "تم حذف العنصر بنجاح",
+    "deleteTitleError": "فشلت الحذف",
+    "deleteDescriptionError": "حدثت مشكلة اثناء حذف العنصر"
+  },
+  "updatePending": "جاري التعدیل...",
+  "createPending": "جاري الأضافة...",
+  "deletePending": "جاري الحذف...",
+  "totalPurchaseAmounts": "اجمالي مبالغ الشراء"
+}

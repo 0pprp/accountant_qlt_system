@@ -1,0 +1,86 @@
+{
+  "form": {
+    "amount": {
+      "label": "التسديد",
+      "placeholder": "6,000 د.ع",
+      "validation": {
+        "required": "التسديد مطلوب"
+      }
+    },
+    "description": {
+      "label": "ملاحظات",
+      "placeholder": "ملاحظات"
+    },
+    "customer": {
+      "label": "اسم العميل",
+      "placeholder": "اختر العميل",
+      "validation": {
+        "required": "اسم العميل مطلوب"
+      }
+    },
+    "order": {
+      "label": "المبيع",
+      "placeholder": "اختر المبيع",
+      "validation": {
+        "required": "المبيع مطلوب"
+      }
+    },
+    "date": {
+      "label": "التاريخ",
+      "placeholder": "اختر التاريخ",
+      "validation": {
+        "required": "التاريخ مطلوب"
+      }
+    }
+  },
+
+  "table": {
+    "customerFullName": "الأسم الثلاثي",
+    "productName": "المبيع",
+    "date": "التاريخ",
+    "sellerFullName": "المندوب",
+    "status": "الحاله",
+    "amount": "المبلغ",
+    "setAsOverdue": "تعيين متأخر",
+    "description": "ملاحظات",
+    "orderListName": "اسم القائمة",
+    "installmentPaymentsCount": "عدد التسديدات",
+    "totalPaidAmount": "المبلغ الكلي",
+    "customersCount": "عدد العملاء"
+  },
+  "status": {
+    "pending": "غیر مسدد",
+    "collected": "مسدد",
+    "overdue": "متأخر"
+  },
+  "actions": {
+    "enterPayment": "أدخل التسديد",
+    "setAsOverdue": "تعيين متأخر",
+    "collect": "تحصيل",
+    "newInstallment": "إضافة التسديد"
+  },
+
+  "setAsOverdue": {
+    "description": "هل أنت متأكد من تعيين هذه الدفعة كمتأخرة؟"
+  },
+  "payments": "التسديدات",
+  "payment": "تسديد",
+  "updateTitleSuccess": "تسديد ناجح",
+  "updateDescriptionSuccess": "تم أضافة التسديد  بنجاح",
+  "updateTitleError": "فشل التسديد",
+  "updateDescriptionError": "حدثت مشكلة اثناء أضافة تسديد",
+  "createTitleSuccess": "أضافة ناجحة",
+  "createDescriptionSuccess": "تم أضافة التسديد بنجاح",
+  "createTitleError": "فشلت الأضافة",
+  "createDescriptionError": "حدثت مشكلة اثناء أضافة مندوب",
+  "updatePending": "جاري التعدیل",
+  "createPending": "جاري الأضافة",
+  "deletePending": "جاري الحذف...",
+  "deleteConfirmation": "هل أنت متأكد من حذف هذا التسديد؟",
+  "successDelete": "حذف ناجح",
+  "successDeleteDescription": "تم حذف التسديد بنجاح",
+  "errorDelete": "فشل الحذف",
+  "errorDeleteDescription": "حدثت مشكلة اثناء حذف التسديد",
+  "orderNotInProgressTitle": "لا يمكن إجراء التسديد",
+  "orderNotInProgressDescription": "التسديد متاح فقط للمبيعات قيد التنفيذ والموافق عليها"
+}

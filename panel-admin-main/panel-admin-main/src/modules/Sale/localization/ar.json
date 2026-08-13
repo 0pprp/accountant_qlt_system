@@ -1,0 +1,244 @@
+{
+  "saleForm": {
+    "productType": {
+      "label": "النوع",
+      "placeholder": "أختر نوع المبيع",
+      "validation": {
+        "required": "النوع مطلوب"
+      }
+    },
+    "productCategoryId": {
+      "label": " الفئة",
+      "placeholder": "أختر فئة المبيع ",
+      "validation": {
+        "required": "أسم الفئة مطلوب"
+      }
+    },
+    "productId": {
+      "label": "المنتج",
+      "placeholder": "أدخل أسم المنتج مع التفاصيل",
+      "validation": {
+        "required": "أسم المندوب مطلوبة"
+      }
+    },
+    "buyAmount": {
+      "label": "سعر الشراء",
+      "placeholder": "أدخل سعر الشراء",
+      "validation": {
+        "required": "سعر الشراء مطلوب",
+        "valid": "غير صالح"
+      }
+    },
+    "sellAmount": {
+      "label": "سعر القسط",
+      "placeholder": "أدخل سعر القسط",
+      "validation": {
+        "required": "سعر القسط مطلوب",
+        "valid": "غير صالح"
+      }
+    },
+    "prepaymentAmount": {
+      "label": "المقدمة",
+      "placeholder": "أدخل مبلغ المقدمة",
+      "validation": {
+        "required": "المقدمة مطلوبة",
+        "valid": "غير صالح"
+      }
+    },
+    "dailyInstallmentAmount": {
+      "label": "القسط اليومي",
+      "placeholder": "أدخل مبلغ القسط اليومي",
+      "validation": {
+        "required": "القسط اليومي مطلوب",
+        "valid": "غير صالح"
+      }
+    },
+    "customerForm": {
+      "personalInfoTitle": "المعلومات الشخصية",
+      "businessInfoTitle": "المعلومات التجارية",
+      "required": "هذه الخانة مطلوبه.",
+      "customerId": {
+        "label": "معرف العميل",
+        "placeholder": "أدخل معرف العميل"
+      },
+      "fullName": {
+        "label": "الأسم الثلاثي",
+        "placeholder": "أدخل الاسم الثلاثي"
+      },
+      "motherName": {
+        "label": "أسم الأم",
+        "placeholder": "أدخل اسم الأم"
+      },
+      "nationalCode": {
+        "label": "رقم الهوية",
+        "placeholder": "أدخل رقم الهوية",
+        "match": "رقم الهوية غير صحيح."
+      },
+      "birthDate": {
+        "label": "تاريخ الميلاد",
+        "placeholder": "اختر تاريخ الميلاد"
+      },
+      "businessName": {
+        "label": "أسم المتجر",
+        "placeholder": "أدخل اسم المتجر"
+      },
+      "whatsAppPhoneNumber": {
+        "label": "رقم الهاتف (وتساب)",
+        "placeholder": "أدخل رقم الواتساب",
+        "match": "يجب أن يكون رقم الهاتف 11 رقمًا."
+      },
+      "phoneNumber": {
+        "label": "رقم الهاتف",
+        "placeholder": "أدخل رقم الهاتف",
+        "match": "يجب أن يكون رقم الهاتف 11 رقمًا."
+      },
+      "address": {
+        "label": "عنوان المتجر",
+        "placeholder": "أدخل عنوان المتجر"
+      },
+      "nearestKnownLocation": {
+        "label": "أقرب نقطة دالة",
+        "placeholder": "أدخل أقرب نقطة دالة"
+      }
+    },
+    "documents": {
+      "purchaseReceipt": {
+        "title": "وصل الشراء",
+        "description": "صورة وصل شراء العنصر المباع"
+      },
+      "trustReceipt": {
+        "title": "وصل أمانة",
+        "description": "صور بطاقة السكن الحاليه للعميل"
+      },
+      "saleContract": {
+        "title": "عقد البيع",
+        "description": "صورة البطاقة التموينيه الخاصة بالعميل"
+      }
+    }
+  },
+  "sellerInfoForm": {
+    "sellerId": {
+      "label": "البائع",
+      "placeholder": "أسم المحل التجاري الخاص بالعميل",
+      "validation": {
+        "required": "البائع مطلوب"
+      }
+    },
+    "orderListId": {
+      "label": " قائمة البيع",
+      "placeholder": "أسم المحل التجاري الخاص بالعميل",
+      "validation": {
+        "required": "أسم قائمة البيع مطلوب"
+      }
+    },
+    "creationAddress": {
+      "label": "عنوان البيع",
+      "placeholder": "أدخل او حدد عنوان بيع المنتج",
+      "validation": {
+        "required": " عنوان البيع مطلوبة"
+      }
+    },
+    "saleDate": {
+      "label": " تاريخ البيع",
+      "placeholder": "تاريخ البيع للعميل"
+    },
+    "saleTime": {
+      "label": "وقت البيع",
+      "placeholder": "وقت البيع للعميل"
+    },
+    "documents": {
+      "purchaseReceipt": {
+        "title": "وصل الشراء",
+        "description": "صورة وصل شراء العنصر المباع"
+      },
+      "trustReceipt": {
+        "title": "وصل أمانة",
+        "description": "صور بطاقة السكن الحاليه للعميل"
+      },
+      "saleContract": {
+        "title": "عقد البيع",
+        "description": "صورة البطاقة التموينيه الخاصة بالعميل"
+      }
+    }
+  },
+  "table": {
+    "documentNumber": "رقم السند",
+    "fullName": "الأسم الثلاثي",
+    "saleType": "نوع المبيع",
+    "product": "المبيع",
+    "installmentPrice": "سعر القسط",
+    "mandob": "المندوب",
+    "date": "التاريخ",
+    "productsSummary": "ملخص المنتجات",
+    "orderListName": "اسم قائمة الطلب",
+    "customerPhoneNumber": "رقم هاتف العميل",
+    "lastInstallmentDate": "تاريخ آخر قسط",
+    "installmentsCount": "عدد الأقساط",
+    "totalInstallmentsAmount": "إجمالي مبلغ الأقساط",
+    "remainingAmount": "المبلغ المتبقي",
+    "buyAmount": "سعر الشراء",
+    "totalSellAmount": "إجمالي مبلغ المبيعات",
+    "totalBuyAmount": "إجمالي مبلغ الشراء",
+    "prepaymentAmount": "المقدمة",
+    "dailyInstallmentAmount": "القسط اليومي",
+    "status": "الحالة",
+    "executionStatus": "حالة التنفيذ",
+    "approvalStatus": "حالة الموافقة",
+    "customerNationalCode": "الرقم الوطني للعميل",
+    "createdAt": "تاريخ الإنشاء"
+  },
+  "columnSelector": {
+    "title": "اختر الأعمدة",
+    "placeholder": "اختر الأعمدة للعرض",
+    "selectAll": "تحديد الكل",
+    "deselectAll": "إلغاء تحديد الكل"
+  },
+  "executionStatus": {
+    "notStarted": "لم يبدأ بعد",
+    "inProgress": "جاري",
+    "completed": "مكتمل"
+  },
+  "approvalStatus": {
+    "pending": "قيد المراجعة",
+    "approved": "تمت الموافقة",
+    "rejected": "مرفوض"
+  },
+  "approvalTabs": {
+    "pending": "قيد المراجعة",
+    "approved": "موافقة",
+    "rejected": "مرفوض"
+  },
+  "approvalActions": {
+    "title": "تغيير حالة الموافقة",
+    "approve": "موافقة",
+    "reject": "رفض",
+    "confirm": "تأكيد",
+    "statusLabel": "الحالة",
+    "successTitle": "تم التحديث بنجاح",
+    "successDescription": "تم تحديث حالة موافقة الطلب"
+  },
+  "productType": {
+    "warehouse": "مبيع من المخزن",
+    "foreign": "مبيع الخارجي"
+  },
+  "saleCreateSteps": {
+    "customerData": {
+      "stepTitle": "معلومات العملاء"
+    },
+    "customerDocuments": {
+      "stepTitle": "وثائق العملاء"
+    },
+    "installmentDetails": {
+      "stepTitle": "تفاصيل القسط",
+      "soldOutTitle": "المباع",
+      "salesDocumentsTitle": "وثائق البيع"
+    },
+    "sellerInfo": {
+      "stepTitle": "معلومات البائع"
+    }
+  },
+  "sale": " مبيع",
+  "sales": " المبيعات",
+  "createSale": "أضافة مبيع",
+  "updateDescriptionError": "حدثت مشكلة اثناء أضافة تسديد"
+}

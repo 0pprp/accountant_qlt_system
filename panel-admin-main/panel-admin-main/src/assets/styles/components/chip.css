@@ -1,0 +1,5 @@
+@layer component {
+  .chip {
+    @apply flex items-center flex-row-reverse gap-2 text-gray-700 text-sm;
+  }
+}

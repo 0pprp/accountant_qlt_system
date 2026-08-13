@@ -1,0 +1,19 @@
+@import url('primeicons/primeicons.css');
+@import 'tailwindcss';
+@import 'tailwindcss-primeui';
+@import './typography.css';
+@import './theme.css';
+@import './components/index.css';
+
+@layer base {
+  html {
+    /* font-size: 16px; */
+    /* @apply text-[62.5%] max-[320px]:text-[55%]; */
+  }
+
+  .set-center {
+    transform: translate(-50%, -50%);
+    top: 50%;
+    left: 50%;
+  }
+}

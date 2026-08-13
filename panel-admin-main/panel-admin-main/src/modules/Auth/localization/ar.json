@@ -1,0 +1,20 @@
+{
+  "form": {
+    "username": {
+      "label": "اسم المستخدم",
+      "placeholder": "أدخل اسم المستخدم",
+      "validation": {
+        "required": "اسم المستخدم مطلوب"
+      }
+    },
+    "password": {
+      "label": "كلمة المرور",
+      "placeholder": "أدخل كلمة المرور",
+      "validation": {
+        "required": "كلمة المرور مطلوبة"
+      }
+    }
+  },
+  "exitWord": "تسجيل خروج",
+  "exitDescription": "هل أنت متأكد من تسجيل الخروج"
+}

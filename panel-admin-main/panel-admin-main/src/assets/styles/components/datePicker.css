@@ -1,0 +1,23 @@
+@layer components {
+  .HeaderDatePicker > input {
+    display: none;
+  }
+
+  .HeaderDatePicker > .p-datepicker-dropdown {
+    @apply !border !border-line rounded-lg !bg-background !p-2;
+  }
+  .p-datepicker-panel {
+    @apply !bg-background !rounded-2xl border border-line;
+  }
+  .p-datepicker-header {
+    @apply !bg-background;
+  }
+
+  .p-datepicker-day {
+    @apply bg-white !rounded-lg;
+  }
+
+  .p-button-icon {
+    @apply !text-black;
+  }
+}

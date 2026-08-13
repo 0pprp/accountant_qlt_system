@@ -1,0 +1,9 @@
+﻿global using Api.Extensions;
+global using MediatR;
+global using Application.Common.Models;
+global using Application.Common.Models.Sorting;
+global using Application.Common.SeedData;
+global using Asp.Versioning;
+global using Api.Authorization;
+global using Application.Common.Interfaces;
+global using Microsoft.AspNetCore.Mvc;
