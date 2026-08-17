@@ -2,6 +2,7 @@
 using Application.Users.Common;
 using Domain.Entities.ActivityLogAggregate.Enums;
 using Domain.Entities.RoleAggregate;
+using Domain.Entities.UserAggregate;
 using Domain.Entities.UserAggregate.Enums;
 using Microsoft.EntityFrameworkCore;
 
@@ -75,6 +76,13 @@ public class UpdateUserPermissionsHandler : IRequestHandler<UpdateUserPermission
 
         _dbContext.UserPermissions.AddRange(permissionsToAdd);
         _dbContext.UserPermissions.RemoveRange(permissionsToRemove);
+
+        user.InvalidateSessions();
+
+        var userLogins = await _dbContext.UserLogins
+            .Where(x => x.UserId == request.UserId)
+            .ToListAsync(cancellationToken);
+        _dbContext.UserLogins.RemoveRange(userLogins);
 
         if (user.CreationStep == UserCreationStep.Permissions)
             user.CreationStep = UserCreationStep.Completed;

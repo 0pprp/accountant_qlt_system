@@ -29,13 +29,6 @@
           ref="salaryDetailsFormRef"
         />
 
-        <PowersForm
-          v-if="canCreatePermission"
-          v-show="activeStep === UserSteps.power"
-          :roleId="userForm.roleId"
-          ref="powersFormRef"
-        />
-
         <div class="py-4 w-full flex flex-row gap-4 justify-center">
           <Button
             :disabled="isSubmitDisabled"
@@ -54,7 +47,7 @@
 </template>
 
 <script lang="ts" setup>
-import { computed, onMounted, ref, watch } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import Button from 'primevue/button'
 import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
@@ -69,18 +62,14 @@ import {
   useSalaryDetailsMutation,
   useUpdateUserDocumentsStepMutation,
   useUpdateUserMutation,
-  useUserPermissionMutation,
 } from '../../requests/mutations'
 import AccountDetailsForm from '../UserForms/AccountDetailsForm/AccountDetailsForm.vue'
 import EmployeeDataForm from '../UserForms/EmployeeDataForm/EmployeeDataForm.vue'
 import { FormMode } from '../UserTabs/UserTabs.types'
 import EmployeeDocumentsForm from '../UserForms/EmployeeDocumentsForm/EmployeeDocumentsForm.vue'
 import SalaryDetailsForm from '../UserForms/SalaryDetailsForm/SalaryDetailsForm.vue'
-import PowersForm from '../UserForms/PowersForm/PowersForm.vue'
 import CustomStepper from '@/modules/Core/components/shared/CustomStepper/CustomStepper.vue'
 import type { StepItem } from '@/modules/Core/components/shared/CustomStepper/CustomStepper.types'
-import { useToastStore } from '@/modules/Core/store'
-import { DialogState } from '@/modules/Core/types/model/dialog'
 import { usePermission } from '@/modules/Core/composable/usePermission'
 
 const { t } = useI18n()
@@ -89,7 +78,6 @@ const router = useRouter()
 const activeStep = ref<UserSteps>(UserSteps.accountDetails)
 
 const { can } = usePermission()
-const canCreatePermission = can('Permission', 'Create')
 const canCreateUser = can('User', 'Create')
 const canCreateAttachment = can('Attachment', 'Create')
 
@@ -105,8 +93,6 @@ const employeeDocumentsFormRef = ref<{ hasError: boolean }>()
 const salaryDetailsFormRef = ref<InstanceType<typeof SalaryDetailsForm> | null>(
   null
 )
-
-const powersFormRef = ref<InstanceType<typeof PowersForm> | null>()
 
 const allSteps = ref<StepItem[]>([
   {
@@ -136,15 +122,7 @@ const allSteps = ref<StepItem[]>([
     icon: 'tagPrice',
     value: UserSteps.salaryDetails,
     enTitle: 'salaryDetails',
-    isLastStep: false,
-  },
-  {
-    title: t('user.userCreateSteps.powers.stepTitle'),
-    icon: 'dashboard',
-    value: UserSteps.power,
-    enTitle: 'powers',
     isLastStep: true,
-    permission: 'Permission',
   },
 ])
 
@@ -155,9 +133,6 @@ const steps = computed(() => {
 
       if (step.permission === 'Attachment') {
         return canCreateAttachment
-      }
-      if (step.permission === 'Permission') {
-        return canCreatePermission
       }
 
       return true
@@ -172,7 +147,7 @@ onMounted(() => {
   const storedStep = localStorage.getItem('activeStep')
   if (storedStep) {
     const stepValue = Number(storedStep)
-    if (stepValue >= UserSteps.accountDetails && stepValue <= UserSteps.power) {
+    if (stepValue >= UserSteps.accountDetails && stepValue <= UserSteps.salaryDetails) {
       activeStep.value = stepValue
     } else {
       activeStep.value = UserSteps.accountDetails
@@ -241,22 +216,6 @@ const salaryForm = ref<SalaryDetailsFormTypes>({
 const { mutateAsync: updateUserDocumentsStep, isPending: isUpdatePending } =
   useUpdateUserDocumentsStepMutation()
 
-const { isPending: isUserPermission, mutateAsync: userPermission } =
-  useUserPermissionMutation()
-
-const toastStore = useToastStore()
-
-watch([isUserPermission], () => {
-  if (isUserPermission.value) {
-    toastStore.setMassage({
-      title: 'user.createPending',
-      description: undefined,
-      dialogState: DialogState.Loading,
-      isOpen: true,
-    })
-  }
-})
-
 const canSubmitCurrentStep = computed(() => {
   if (
     activeStep.value === UserSteps.accountDetails ||
@@ -268,10 +227,6 @@ const canSubmitCurrentStep = computed(() => {
 
   if (activeStep.value === UserSteps.employeeDocuments) {
     return canCreateAttachment
-  }
-
-  if (activeStep.value === UserSteps.power) {
-    return canCreatePermission
   }
 
   return false
@@ -286,7 +241,6 @@ const isSubmitLoading = computed(() => {
     isCreatingUser.value ||
     isUpdatingUser.value ||
     isCreatingSalaryDetails.value ||
-    isUserPermission.value ||
     isUpdatePending.value
   )
 })
@@ -325,13 +279,9 @@ async function onSubmit() {
       salaryDetailsFormRef.value!.formValues.installmentSharePercent
 
     await salaryDetails({ id: userId.value!, payload: salaryForm.value })
-  } else if (activeStep.value === UserSteps.power) {
-    const permissionIds = powersFormRef.value?.permissionIds || []
-    await userPermission({
-      id: userId.value!,
-      payload: { permissionIds },
-    })
-    router.push({ name: 'UserListRoute' })
+    localStorage.removeItem('activeStep')
+    await router.push({ name: 'UserListRoute' })
+    return
   }
   nextStep()
 }

@@ -49,7 +49,6 @@
         />
 
         <PowersForm
-          v-if="canReadPermission"
           v-show="activeTab === UserSteps.power"
           :roleId="userInfo.roles[0].id"
           ref="powersFormRef"
@@ -106,18 +105,67 @@ import CustomTab from '@/modules/Core/components/shared/CustomTab/CustomTab.vue'
 import type { TabItem } from '@/modules/Core/components/shared/CustomTab/CustomTab.types'
 import { usePermission } from '@/modules/Core/composable/usePermission'
 
-defineProps<Props>()
+const props = defineProps<Props>()
 const { t } = useI18n()
+const route = useRoute()
 const router = useRouter()
 
-const activeTab = ref<UserSteps>(UserSteps.accountDetails)
+const TAB_QUERY_PERMISSIONS = 'permissions'
+
+const tabQueryByStep: Record<UserSteps, string> = {
+  [UserSteps.accountDetails]: 'accountDetails',
+  [UserSteps.employeeData]: 'employeeData',
+  [UserSteps.employeeDocuments]: 'employeeDocuments',
+  [UserSteps.salaryDetails]: 'salaryDetails',
+  [UserSteps.power]: TAB_QUERY_PERMISSIONS,
+}
+
+function getStepFromTabQuery(tab: unknown): UserSteps | null {
+  const tabValue = Array.isArray(tab) ? tab[0] : tab
+  if (tabValue === TAB_QUERY_PERMISSIONS) {
+    return UserSteps.power
+  }
+  if (tabValue === 'accountDetails') {
+    return UserSteps.accountDetails
+  }
+  if (tabValue === 'employeeData') {
+    return UserSteps.employeeData
+  }
+  if (tabValue === 'employeeDocuments') {
+    return UserSteps.employeeDocuments
+  }
+  if (tabValue === 'salaryDetails') {
+    return UserSteps.salaryDetails
+  }
+
+  return null
+}
+
+function getInitialTab(): UserSteps {
+  return getStepFromTabQuery(route.query.tab) ?? UserSteps.accountDetails
+}
+
+const activeTab = ref<UserSteps>(getInitialTab())
 
 const { can } = usePermission()
-const canUpdatePermission = can('Permission', 'Update')
 const canUpdateAttachment = can('Attachment', 'Update')
 const canUpdateUser = can('User', 'Update')
-const canReadPermission = can('Permission', 'Read')
 const canReadAttachment = can('Attachment', 'Read')
+
+const userId = computed(() => Number(route.params.userId))
+
+const userFormMode = computed(() => {
+  return route.name === 'UserCreateRoute'
+    ? FormMode.IsCreate
+    : route.name === 'UserUpdateRoute'
+      ? FormMode.IsUpdate
+      : FormMode.IsView
+})
+
+const isTargetAdmin = computed(
+  () =>
+    props.userInfo.roles?.some((role) => role.name === 'Admin') === true
+)
 
 const getFormModeForAttachment = computed(() => {
   if (userFormMode.value === FormMode.IsView) return FormMode.IsView
@@ -125,8 +173,10 @@ const getFormModeForAttachment = computed(() => {
 })
 
 const getFormModeForPermission = computed(() => {
-  if (userFormMode.value === FormMode.IsView) return FormMode.IsView
-  return canUpdatePermission ? FormMode.IsUpdate : FormMode.IsView
+  if (userFormMode.value === FormMode.IsView || isTargetAdmin.value) {
+    return FormMode.IsView
+  }
+  return canUpdateUser ? FormMode.IsUpdate : FormMode.IsView
 })
 
 const accountDetailsFormRef = ref<InstanceType<
@@ -180,7 +230,6 @@ const allSteps = ref<TabItem[]>([
     value: UserSteps.power,
     enTitle: 'powers',
     isLastTab: true,
-    permission: 'Permission',
   },
 ])
 
@@ -191,11 +240,52 @@ const steps = computed(() => {
     if (step.permission === 'Attachment') {
       return canReadAttachment
     }
-    if (step.permission === 'Permission') {
-      return canReadPermission
-    }
 
     return true
+  })
+})
+
+watch(
+  () => route.query.tab,
+  (tabQuery) => {
+    const stepFromQuery = getStepFromTabQuery(tabQuery)
+    if (stepFromQuery !== null && activeTab.value !== stepFromQuery) {
+      activeTab.value = stepFromQuery
+      return
+    }
+
+    if (tabQuery === undefined && activeTab.value !== UserSteps.accountDetails) {
+      activeTab.value = UserSteps.accountDetails
+    }
+  }
+)
+
+watch(activeTab, (tab) => {
+  const nextTabQuery = tabQueryByStep[tab]
+  const currentTabQuery = Array.isArray(route.query.tab)
+    ? route.query.tab[0]
+    : route.query.tab
+
+  if (tab === UserSteps.accountDetails) {
+    if (currentTabQuery === undefined) {
+      return
+    }
+
+    const restQuery = { ...route.query }
+    delete restQuery.tab
+    router.replace({ query: restQuery })
+    return
+  }
+
+  if (currentTabQuery === nextTabQuery) {
+    return
+  }
+
+  router.replace({
+    query: {
+      ...route.query,
+      tab: nextTabQuery,
+    },
   })
 })
 
@@ -222,7 +312,7 @@ const canSubmitCurrentStep = computed(() => {
     }
 
     if (activeTab.value === UserSteps.power) {
-      return canUpdatePermission
+      return canUpdateUser && isTargetAdmin.value === false
     }
   }
 
@@ -297,10 +387,10 @@ const { isPending: isUserPermission, mutateAsync: userPermission } =
 
 const toastStore = useToastStore()
 
-watch([isUserPermission], () => {
+watch(isUserPermission, () => {
   if (isUserPermission.value) {
     toastStore.setMassage({
-      title: 'user.createPending',
+      title: 'user.updatePending',
       description: undefined,
       dialogState: DialogState.Loading,
       isOpen: true,
@@ -355,36 +445,15 @@ async function onSubmit() {
 
     await salaryDetails({ id: userId.value!, payload: salaryForm.value })
   } else if (activeTab.value === UserSteps.power) {
-    if (!canUpdatePermission) {
-      toastStore.setMassage({
-        title: t('errors.noPermission'),
-        description: t('errors.noPermissionForPermission'),
-        dialogState: DialogState.Error,
-        isOpen: true,
-      })
-      return
-    }
     const permissionIds = powersFormRef.value?.permissionIds || []
 
     await userPermission({
       id: userId.value!,
       payload: { permissionIds },
     })
-
     await router.push({ name: 'UserListRoute' })
+    return
   }
   nextStep()
 }
-
-const route = useRoute()
-
-const userId = computed(() => Number(route.params.userId))
-
-const userFormMode = computed(() => {
-  return route.name === 'UserCreateRoute'
-    ? FormMode.IsCreate
-    : route.name === 'UserUpdateRoute'
-      ? FormMode.IsUpdate
-      : FormMode.IsView
-})
 </script>

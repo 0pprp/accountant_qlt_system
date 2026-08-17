@@ -70,4 +70,9 @@ public class User : AuditableEntity
         UserRoles = userRoles;
         UserBranches = userBranches;
     }
+
+    public void InvalidateSessions()
+    {
+        SecurityStamp = Guid.NewGuid();
+    }
 }
