@@ -31,9 +31,13 @@ public class UpdateUserHandler : IRequestHandler<UpdateUserCommand, Result>
         if (isUsernameExist)
             return UserErrors.UsernameIsAlreadyExist;
 
-        var isRoleExist = await _dbContext.Roles.AnyAsync(x => x.Id == request.RoleId, cancellationToken);
-        if (isRoleExist == false)
+        var role = await _dbContext.Roles.FirstOrDefaultAsync(x => x.Id == request.RoleId, cancellationToken);
+        if (role is null)
             return UserErrors.RoleNotFound;
+
+        // Super Admin is seeded once; these screens must not promote a user to Admin.
+        if (role.Name == global::Application.Common.SeedData.Roles.Admin.Name)
+            return UserErrors.CannotAssignAdminRole;
 
         var userBranches = request.BranchIds.Select(x => new UserBranch(x)).ToHashSet();
         user.Update(request.FullName, request.MotherName, request.NationalCode, request.BirthDate, request.Username, request.Address,

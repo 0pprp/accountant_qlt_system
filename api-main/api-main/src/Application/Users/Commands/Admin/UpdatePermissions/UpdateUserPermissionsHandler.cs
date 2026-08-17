@@ -33,19 +33,48 @@ public class UpdateUserPermissionsHandler : IRequestHandler<UpdateUserPermission
 
         var user = userRoles.First().User!;
 
-        var userPermissions = await _dbContext.UserPermissions
+        // Super Admin permissions come from the Admin role and must not be changed from this screen.
+        if (userRoles.Any(x => x.Role!.Name == global::Application.Common.SeedData.Roles.Admin.Name))
+            return UserErrors.CannotUpdateAdminPermissions;
+
+        var requestedPermissionIds = request.PermissionIds.Distinct().ToList();
+
+        var existingPermissionsCount = await _dbContext.Permissions
+            .CountAsync(x => requestedPermissionIds.Contains(x.Id), cancellationToken);
+        if (existingPermissionsCount != requestedPermissionIds.Count)
+            return UserErrors.SomePermissionsNotFound;
+
+        var currentUserPermissions = await _dbContext.UserPermissions
             .Where(x => x.UserId == request.UserId)
             .ToListAsync(cancellationToken);
 
-        var permissions = userRoles.SelectMany(x => x.Role!.RolePermissions).Select(x => x.PermissionId).ToList();
-        var customPermissions = userPermissions.Select(x => x.PermissionId).ToList();
+        var rolePermissionIds = userRoles
+            .SelectMany(x => x.Role!.RolePermissions)
+            .Select(x => x.PermissionId)
+            .ToHashSet();
 
-        var allPermissions = permissions.Union(customPermissions).ToList();
+        var currentUserPermissionIds = currentUserPermissions
+            .Select(x => x.PermissionId)
+            .ToHashSet();
 
-        var permissionsToAdd = request.PermissionIds.Except(allPermissions).ToList();
+        // Incoming IDs are the displayed set. RolePermissions stay on the role and are never copied or deleted here.
+        var requestedExtraPermissionIds = requestedPermissionIds
+            .Where(id => rolePermissionIds.Contains(id) == false)
+            .ToHashSet();
 
-        var newUserPermissions = permissionsToAdd.Select(x => new UserPermission(request.UserId, x)).ToList();
-        _dbContext.UserPermissions.AddRange(newUserPermissions);
+        // Add extras that are requested and not already stored as UserPermissions.
+        var permissionsToAdd = requestedExtraPermissionIds
+            .Where(id => currentUserPermissionIds.Contains(id) == false)
+            .Select(id => new UserPermission(request.UserId, id))
+            .ToList();
+
+        // Remove extras that were turned off (no longer present in the incoming IDs).
+        var permissionsToRemove = currentUserPermissions
+            .Where(x => requestedPermissionIds.Contains(x.PermissionId) == false)
+            .ToList();
+
+        _dbContext.UserPermissions.AddRange(permissionsToAdd);
+        _dbContext.UserPermissions.RemoveRange(permissionsToRemove);
 
         if (user.CreationStep == UserCreationStep.Permissions)
             user.CreationStep = UserCreationStep.Completed;

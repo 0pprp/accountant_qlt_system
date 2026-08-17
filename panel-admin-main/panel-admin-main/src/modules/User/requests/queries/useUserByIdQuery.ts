@@ -1,4 +1,4 @@
-import type { Ref } from 'vue'
+import { computed, type Ref } from 'vue'
 import { type UseQueryOptions, useQuery } from '@tanstack/vue-query'
 import { axiosInstance } from '@/modules/Core/plugins/axios'
 import type { UserByIdServerSuccessResponse } from '@/modules/User/types/api'
@@ -25,5 +25,6 @@ export function useUserByIdDataQuery(
 
     queryFn: () => fetchUser(id.value),
     ...options,
+    enabled: computed(() => id.value > 0),
   })
 }

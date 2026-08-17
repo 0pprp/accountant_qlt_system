@@ -4,7 +4,7 @@ import {
   useQueryClient,
 } from '@tanstack/vue-query'
 import type { AxiosResponse } from 'axios'
-import { QUERY_KEY_USER_LIST } from '../queries'
+import { QUERY_KEY_USER_BY_ID, QUERY_KEY_USER_LIST } from '../queries'
 import { axiosInstance } from '@/modules/Core/plugins/axios'
 import type { UserPermissionPayload } from '@/modules/User/types/api'
 
@@ -34,16 +34,19 @@ export function useUserPermissionMutation(
       await queryClient.invalidateQueries({
         queryKey: [QUERY_KEY_USER_LIST],
       })
+      await queryClient.invalidateQueries({
+        queryKey: [QUERY_KEY_USER_BY_ID],
+      })
     },
 
     meta: {
       success: {
-        title: 'user.createTitleSuccess',
-        description: 'user.createDescriptionSuccess',
+        title: 'user.updatePermissionsTitleSuccess',
+        description: 'user.updatePermissionsDescriptionSuccess',
       },
       error: {
-        title: 'user.createTitleError',
-        description: 'user.createDescriptionError',
+        title: 'user.updatePermissionsTitleError',
+        description: 'user.updatePermissionsDescriptionError',
       },
     },
     ...options,

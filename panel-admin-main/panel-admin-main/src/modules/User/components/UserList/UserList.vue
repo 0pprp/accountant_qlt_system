@@ -117,6 +117,19 @@
         </Button>
       </template>
 
+      <template #body-managePermissions="{ data: rowData }" v-if="canUpdateUser">
+        <Button
+          class="text-gray-300"
+          :disabled="getUserId(rowData) === null"
+          @click="handleManagePermissions(rowData)"
+        >
+          <SvgIcon
+            name="dashboard"
+            class="text-gray-300 hover:text-primary transition-colors"
+          />
+        </Button>
+      </template>
+
       <template #body-view="{ data: rowData }" v-if="canReadUser">
         <Button class="text-gray-300" v-slot="slotProps">
           <RouterLink
@@ -135,6 +148,59 @@
         </Button>
       </template>
     </CustomDataTable>
+
+    <CustomDialog
+      v-model="isPermissionsDialogOpen"
+      title="user.managePermissions"
+      @update:is-open="togglePermissionsDialog"
+    >
+      <template #content>
+        <div
+          v-if="isPermissionsUserLoading"
+          class="flex justify-center items-center py-10"
+        >
+          <i class="pi pi-spin pi-spinner text-primary text-2xl"></i>
+        </div>
+
+        <template v-else-if="permissionsRoleId > 0">
+          <div
+            v-if="permissionsUser?.fullName || permissionsUserName"
+            class="text-gray-700 font-medium px-6"
+          >
+            {{ permissionsUser?.fullName || permissionsUserName }}
+          </div>
+
+          <PowersForm
+            :roleId="permissionsRoleId"
+            :selectedPermissions="permissionsUser?.allPermissions"
+            :userFormMode="FormMode.IsUpdate"
+            ref="powersFormRef"
+          />
+
+          <div class="pt-4 w-full flex flex-row gap-4 justify-center">
+            <Button
+              type="button"
+              :disabled="isSavingPermissions"
+              :loading="isSavingPermissions"
+              class="py-4 w-1/4 btn-primary"
+              @click="onSavePermissions"
+            >
+              {{ $t('user.savePermissions') }}
+              <i v-if="isSavingPermissions" class="pi pi-spin pi-spinner"></i>
+            </Button>
+
+            <Button
+              type="button"
+              class="btn-text-primary py-4 w-1/4"
+              :disabled="isSavingPermissions"
+              @click="togglePermissionsDialog"
+            >
+              {{ $t('words.cancel') }}
+            </Button>
+          </div>
+        </template>
+      </template>
+    </CustomDialog>
   </div>
 </template>
 
@@ -146,9 +212,13 @@ import { useRoute, useRouter } from 'vue-router'
 import {
   useUserDataQuery,
   useAvailableColumnsQuery,
+  useUserByIdDataQuery,
 } from '../../requests/queries'
+import { useUserPermissionMutation } from '../../requests/mutations'
 import type { User } from '../../types/model'
 import type { AvailableColumn } from '../../types/api'
+import { FormMode } from '../UserTabs/UserTabs.types'
+import PowersForm from '../UserForms/PowersForm/PowersForm.vue'
 import SvgIcon from '@/modules/Core/components/SvgIcon/SvgIcon.vue'
 import { formattedDate } from '@/modules/Core/utils/time'
 import useAuthStore from '@/modules/Auth/store'
@@ -161,6 +231,9 @@ import ColumnSelectorDropdown from '@/modules/Core/components/shared/ColumnSelec
 import SelectField from '@/modules/Core/components/base/Fields/SelectField/SelectField.vue'
 import { useRoleDataQuery } from '@/modules/Role/requests/queries'
 import { usePermission } from '@/modules/Core/composable/usePermission'
+import CustomDialog from '@/modules/Core/components/shared/CustomDialog/CustomDialog.vue'
+import { useToastStore } from '@/modules/Core/store'
+import { DialogState } from '@/modules/Core/types/model/dialog'
 
 const { t } = useI18n()
 const route = useRoute()
@@ -281,6 +354,11 @@ const columns = computed<Column<AllowedTypes>[]>(() => {
     baseColumns.push({
       field: 'edit',
       header: t('words.edit'),
+      sortable: false,
+    })
+    baseColumns.push({
+      field: 'managePermissions',
+      header: t('user.managePermissions'),
       sortable: false,
     })
   }
@@ -498,6 +576,69 @@ function handleSortChange(event: {
     ]
   } else {
     sortCriteria.value = null
+  }
+}
+
+const isPermissionsDialogOpen = ref(false)
+const permissionsDialogUserId = ref(0)
+const permissionsUserName = ref('')
+const powersFormRef = ref<InstanceType<typeof PowersForm> | null>(null)
+const toastStore = useToastStore()
+
+const { data: permissionsUser, isLoading: isPermissionsUserLoading } =
+  useUserByIdDataQuery(permissionsDialogUserId)
+
+const permissionsRoleId = computed(
+  () => permissionsUser.value?.roles?.[0]?.id ?? 0
+)
+
+const { isPending: isSavingPermissions, mutateAsync: saveUserPermissions } =
+  useUserPermissionMutation()
+
+watch(isSavingPermissions, () => {
+  if (isSavingPermissions.value) {
+    toastStore.setMassage({
+      title: 'user.updatePending',
+      description: undefined,
+      dialogState: DialogState.Loading,
+      isOpen: true,
+    })
+  }
+})
+
+function togglePermissionsDialog() {
+  isPermissionsDialogOpen.value = !isPermissionsDialogOpen.value
+  if (isPermissionsDialogOpen.value === false) {
+    permissionsDialogUserId.value = 0
+    permissionsUserName.value = ''
+  }
+}
+
+function handleManagePermissions(rowData: User) {
+  const userId = getUserId(rowData)
+  if (userId === null) {
+    return
+  }
+
+  permissionsDialogUserId.value = userId
+  const fullName = getFieldValue(rowData, 'FullName')
+  permissionsUserName.value =
+    fullName === '-' || fullName === null || fullName === undefined
+      ? ''
+      : String(fullName)
+  isPermissionsDialogOpen.value = true
+}
+
+async function onSavePermissions() {
+  const permissionIds = powersFormRef.value?.permissionIds || []
+
+  await saveUserPermissions({
+    id: permissionsDialogUserId.value,
+    payload: { permissionIds },
+  })
+
+  if (isPermissionsDialogOpen.value) {
+    togglePermissionsDialog()
   }
 }
 </script>

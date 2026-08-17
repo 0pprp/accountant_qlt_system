@@ -153,6 +153,12 @@
   },
 
   "users": "المستخدمين",
+  "managePermissions": "إدارة الصلاحيات",
+  "savePermissions": "حفظ الصلاحيات",
+  "updatePermissionsTitleSuccess": "تم تحديث الصلاحيات بنجاح",
+  "updatePermissionsDescriptionSuccess": "سيتم تطبيقها بالكامل عند تسجيل دخول المستخدم من جديد.",
+  "updatePermissionsTitleError": "فشل تحديث الصلاحيات",
+  "updatePermissionsDescriptionError": "حدثت مشكلة اثناء تحديث الصلاحيات",
   "createUser": "أضافة ",
   "updateTitleSuccess": "تسديد ناجح",
   "updateDescriptionSuccess": "تم أضافة التسديد  بنجاح",

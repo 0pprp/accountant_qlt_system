@@ -26,9 +26,13 @@ public class CreateUserHandler : IRequestHandler<CreateUserCommand, Result<Creat
         if (isUsernameExist)
             return UserErrors.UsernameIsAlreadyExist;
 
-        var isRoleExist = await _dbContext.Roles.AnyAsync(x => x.Id == request.RoleId, cancellationToken);
-        if (isRoleExist == false)
+        var role = await _dbContext.Roles.FirstOrDefaultAsync(x => x.Id == request.RoleId, cancellationToken);
+        if (role is null)
             return UserErrors.RoleNotFound;
+
+        // Super Admin is seeded once; these screens must not create another Admin user.
+        if (role.Name == global::Application.Common.SeedData.Roles.Admin.Name)
+            return UserErrors.CannotAssignAdminRole;
 
         var hashedPassword = PasswordHash.HashPassword(request.Password);
         var user = new User(request.FullName, request.MotherName, request.NationalCode, request.BirthDate, request.Username, hashedPassword,
