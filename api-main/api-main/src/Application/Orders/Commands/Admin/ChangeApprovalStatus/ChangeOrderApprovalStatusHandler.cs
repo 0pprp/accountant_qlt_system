@@ -1,5 +1,7 @@
 ﻿using Application.Common.Interfaces;
 using Application.Orders.Common;
+using Application.Safes.Common;
+using Application.Users.Common;
 using Domain.Entities.ActivityLogAggregate.Enums;
 using Domain.Entities.InstallmentPaymentAggregate;
 using Domain.Entities.OrderAggregate;
@@ -47,13 +49,18 @@ public class ChangeOrderApprovalStatusHandler : IRequestHandler<ChangeOrderAppro
             if (decreaseProductsInventoryResult.IsFailed)
                 return decreaseProductsInventoryResult.Error!;
 
-            await RegisterForeignProductsPurchaseAsync(order, cancellationToken);
+            var registerPurchaseResult = await RegisterForeignProductsPurchaseAsync(order, cancellationToken);
+            if (registerPurchaseResult.IsFailed)
+                return registerPurchaseResult;
 
             if (order.PrepaymentAmount > 0)
             {
                 var firstInstallmentPayment = new InstallmentPayment(order.PrepaymentAmount, order.SaleDate!.Value);
 
-                var seller = await _dbContext.Users.FirstAsync(x => x.Id == order.SellerId, cancellationToken);
+                var seller = await _dbContext.Users.FirstOrDefaultAsync(x => x.Id == order.SellerId, cancellationToken);
+                if (seller is null)
+                    return UserErrors.UserNotFound;
+
                 seller.UndeliveredCashAmount += firstInstallmentPayment.Amount;
 
                 order.InstallmentPayments.Add(firstInstallmentPayment);
@@ -76,18 +83,23 @@ public class ChangeOrderApprovalStatusHandler : IRequestHandler<ChangeOrderAppro
         return Result.Success();
     }
 
-    private async Task RegisterForeignProductsPurchaseAsync(Order order, CancellationToken cancellationToken)
+    private async Task<Result> RegisterForeignProductsPurchaseAsync(Order order, CancellationToken cancellationToken)
     {
         var foreignProducts = order.OrderItems
             .Where(x => x.ProductType == ProductType.Foreign)
             .ToList();
         if (foreignProducts.Count == 0)
-            return;
+            return Result.Success();
 
         var foreignProductsBuyAmount = foreignProducts.Sum(x => x.BuyAmount);
-        var lastFactorNumber = await _dbContext.Purchases.MaxAsync(x => x.FactorNumber, cancellationToken);
+        var lastFactorNumber = await _dbContext.Purchases
+            .Select(x => (int?)x.FactorNumber)
+            .MaxAsync(cancellationToken) ?? 0;
 
-        var branchSafe = await _dbContext.Safes.FirstAsync(x => x.BranchId == order.BranchId, cancellationToken);
+        var branchSafe = await _dbContext.Safes.FirstOrDefaultAsync(x => x.BranchId == order.BranchId, cancellationToken);
+        if (branchSafe is null)
+            return SafeErrors.SafeNotFound;
+
         branchSafe.RemainingCashAmount -= foreignProductsBuyAmount;
 
         var transaction = new Transaction(
@@ -113,13 +125,18 @@ public class ChangeOrderApprovalStatusHandler : IRequestHandler<ChangeOrderAppro
         _dbContext.Purchases.Add(purchase);
 
         _notificationService.AddTransactionCreatedNotification(transaction, order.BranchId);
+
+        return Result.Success();
     }
 
     private Result DecreaseProductsInventory(List<OrderItem> orderItems)
     {
         foreach (var orderItem in orderItems.Where(x => x.ProductId is not null))
         {
-            if (orderItem.Quantity > orderItem.Product!.RemainingCount)
+            if (orderItem.Product is null)
+                return OrderErrors.SomeSelectedProductsNotFound;
+
+            if (orderItem.Quantity > orderItem.Product.RemainingCount)
                 return OrderErrors.ThereIsNotEnoughQuantityOfThisProduct;
 
             orderItem.Product.RemainingCount -= orderItem.Quantity;

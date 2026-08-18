@@ -170,7 +170,9 @@ public class UpdateOrderHandler : IRequestHandler<UpdateOrderCommand, Result>
 
         if (existingPurchase is null)
         {
-            var lastFactorNumber = await _dbContext.Purchases.MaxAsync(x => x.FactorNumber, cancellationToken);
+            var lastFactorNumber = await _dbContext.Purchases
+                .Select(x => (int?)x.FactorNumber)
+                .MaxAsync(cancellationToken) ?? 0;
 
             var transaction = new Transaction(
                 newTotalAmount,

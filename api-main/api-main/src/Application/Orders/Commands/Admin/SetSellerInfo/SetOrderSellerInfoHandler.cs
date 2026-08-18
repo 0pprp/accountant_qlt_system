@@ -103,7 +103,9 @@ public class SetOrderSellerInfoHandler : IRequestHandler<SetOrderSellerInfoComma
             return;
 
         var foreignProductsBuyAmount = foreignProducts.Sum(x => x.BuyAmount);
-        var lastFactorNumber = await _dbContext.Purchases.MaxAsync(x => x.FactorNumber, cancellationToken);
+        var lastFactorNumber = await _dbContext.Purchases
+            .Select(x => (int?)x.FactorNumber)
+            .MaxAsync(cancellationToken) ?? 0;
 
         var branchSafe = await _dbContext.Safes.FirstAsync(x => x.BranchId == order.BranchId, cancellationToken);
         branchSafe.RemainingCashAmount -= foreignProductsBuyAmount;
