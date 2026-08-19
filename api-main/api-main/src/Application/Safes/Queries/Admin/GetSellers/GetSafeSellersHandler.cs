@@ -1,6 +1,7 @@
 ﻿using Application.Common.Extensions;
 using Application.Common.Interfaces;
 using Application.Common.Models;
+using Application.Safes.Common;
 using Domain.Entities.SafeAggregate.Enums;
 using Microsoft.EntityFrameworkCore;
 
@@ -18,14 +19,26 @@ public class GetSafeSellersHandler : IRequestHandler<GetSafeSellersQuery, Result
     public async Task<Result<PaginatedList<GetSafeSellersResponse>>> Handle(GetSafeSellersQuery request,
         CancellationToken cancellationToken)
     {
+        var cashHolderIds = SafeCashHolderQuery.UserIdsForSafe(
+            _dbContext.OrderLists,
+            _dbContext.Orders,
+            _dbContext.Safes,
+            request.SafeId);
+
         var sellers = await _dbContext.Users.AsNoTracking()
-            .Where(x => x.OrderListAsMandob!.Branch!.Safe!.Id == request.SafeId)
+            .Where(x => cashHolderIds.Contains(x.Id))
             .When(request.Filter.SearchTerm is not null, x => x.FullName.Contains(request.Filter.SearchTerm!))
             .Select(x => new GetSafeSellersResponse
             {
                 Id = x.Id,
                 FullName = x.FullName,
-                OrderListName = x.OrderListAsMandob != null ? x.OrderListAsMandob.Name : null,
+                RoleName = x.UserRoles.Select(ur => ur.Role!.DisplayName).FirstOrDefault(),
+                OrderListName = _dbContext.OrderLists
+                    .Where(ol => _dbContext.Safes.Any(s => s.Id == request.SafeId && s.BranchId == ol.BranchId)
+                                 && (ol.MandobId == x.Id || ol.MotabaId == x.Id))
+                    .OrderBy(ol => ol.MandobId == x.Id ? 0 : 1)
+                    .Select(ol => ol.Name)
+                    .FirstOrDefault(),
                 DeliveredCashAmount = x.SellerCashDeliveryTransactions
                     .Where(s => s.Transaction!.Status == TransactionStatus.Approved)
                     .Sum(s => s.Transaction!.Amount),

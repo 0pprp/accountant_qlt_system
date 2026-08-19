@@ -35,6 +35,7 @@ export interface Safe {
 export interface SafeSellers {
   id: number
   fullName: string
+  roleName: string | null
   orderListName: string | null
   deliveredCashAmount: number
   undeliveredCashAmount: number

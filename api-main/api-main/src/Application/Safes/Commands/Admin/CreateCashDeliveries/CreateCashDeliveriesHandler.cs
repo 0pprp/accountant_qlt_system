@@ -26,7 +26,6 @@ public class CreateCashDeliveriesHandler : IRequestHandler<CreateCashDeliveriesC
     public async Task<Result> Handle(CreateCashDeliveriesCommand request, CancellationToken cancellationToken)
     {
         var sellers = await _dbContext.Users
-            .Include(x => x.OrderListAsMandob)
             .Where(x => request.SellerIds.Contains(x.Id))
             .ToListAsync(cancellationToken);
 
@@ -37,8 +36,19 @@ public class CreateCashDeliveriesHandler : IRequestHandler<CreateCashDeliveriesC
         if (safe is null)
             return SafeErrors.SafeNotFound;
 
-        if (sellers.All(x => x.OrderListAsMandob!.BranchId == safe.BranchId) == false)
+        if (safe.BranchId is null)
             return SafeErrors.OneOrMoreSellersDoNotBelongToThisBranch;
+
+        foreach (var seller in sellers)
+        {
+            var belongsToBranch = await SafeCashHolderQuery.BelongsToBranchAsync(
+                _dbContext,
+                seller.Id,
+                safe.BranchId.Value,
+                cancellationToken);
+            if (belongsToBranch == false)
+                return SafeErrors.OneOrMoreSellersDoNotBelongToThisBranch;
+        }
 
         foreach (var seller in sellers)
         {

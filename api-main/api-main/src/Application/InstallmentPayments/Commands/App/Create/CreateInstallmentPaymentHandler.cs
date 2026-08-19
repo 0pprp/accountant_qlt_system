@@ -36,14 +36,17 @@ public class CreateInstallmentPaymentHandler : IRequestHandler<CreateInstallment
         if (totalPaidAmount + request.Amount > order.SellAmount)
             return OrderErrors.PaidAmountCanNotBeGreaterThanSellAmount;
 
+        var cashHolderResult = await OrderCashHolder.GetAsync(_dbContext, order.SellerId, cancellationToken);
+        if (cashHolderResult.IsFailed)
+            return cashHolderResult.Error!;
+
         var installmentPayment = new InstallmentPayment(request.Amount, _dateTimeProvider.Today);
         order.InstallmentPayments.Add(installmentPayment);
 
         if (order.InstallmentPayments.Sum(x => x.Amount) == order.SellAmount)
             order.ExecutionStatus = OrderExecutionStatus.Completed;
 
-        var user = await _dbContext.Users.FirstAsync(x => x.Id == request.UserId, cancellationToken);
-        user.UndeliveredCashAmount += request.Amount;
+        cashHolderResult.Data!.UndeliveredCashAmount += request.Amount;
 
         await _dbContext.SaveChangesAsync(cancellationToken);
 

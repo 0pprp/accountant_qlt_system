@@ -1,5 +1,6 @@
 ﻿using Application.Common.Interfaces;
 using Application.InstallmentPayments.Common;
+using Application.Orders.Common;
 using Domain.Entities.ActivityLogAggregate.Enums;
 using Domain.Entities.InstallmentPaymentAggregate;
 using Domain.Entities.OrderAggregate.Enums;
@@ -30,7 +31,6 @@ public class UpdateInstallmentPaymentHandler : IRequestHandler<UpdateInstallment
             .ThenInclude(x => x!.InstallmentPayments)
             .Include(x => x.Order)
             .ThenInclude(x => x!.OrderList)
-            .ThenInclude(x => x!.Mandob)
             .FirstOrDefaultAsync(
                 x => x.Id == request.Id && _currentUserService.BranchIds!.Contains(x.Order!.OrderList!.BranchId), cancellationToken);
         if (installmentPayment is null)
@@ -38,6 +38,10 @@ public class UpdateInstallmentPaymentHandler : IRequestHandler<UpdateInstallment
 
         if (IsActionRestricted(installmentPayment))
             return InstallmentPaymentErrors.CanNotPerformThisAction;
+
+        var cashHolderResult = await OrderCashHolder.GetAsync(_dbContext, installmentPayment.Order!.SellerId, cancellationToken);
+        if (cashHolderResult.IsFailed)
+            return cashHolderResult.Error!;
 
         var previousInstallmentAmount = installmentPayment.Amount;
         
@@ -49,8 +53,8 @@ public class UpdateInstallmentPaymentHandler : IRequestHandler<UpdateInstallment
         if (totalPaidAmount >= order.SellAmount)
             order.ExecutionStatus = OrderExecutionStatus.Completed;
 
-        installmentPayment.Order!.OrderList!.Mandob!.UndeliveredCashAmount -= previousInstallmentAmount;
-        installmentPayment.Order.OrderList.Mandob.UndeliveredCashAmount += request.Amount;
+        cashHolderResult.Data!.UndeliveredCashAmount -= previousInstallmentAmount;
+        cashHolderResult.Data.UndeliveredCashAmount += request.Amount;
 
         await _activityLogService.AddAsync(
             order!.OrderList!.BranchId,

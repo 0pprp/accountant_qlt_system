@@ -65,6 +65,15 @@ public class TestApplicationDbContext : DbContext, IApplicationDbContext
             entity.HasMany(x => x.InstallmentPayments)
                 .WithOne(x => x.Order)
                 .HasForeignKey(x => x.OrderId);
+            entity.HasOne(x => x.Seller)
+                .WithMany(x => x.SoldOrders)
+                .HasForeignKey(x => x.SellerId);
+            entity.HasOne(x => x.Branch)
+                .WithMany(x => x.Orders)
+                .HasForeignKey(x => x.BranchId);
+            entity.HasOne(x => x.OrderList)
+                .WithMany(x => x.Orders)
+                .HasForeignKey(x => x.OrderListId);
         });
 
         modelBuilder.Entity<Customer>(entity =>
@@ -74,7 +83,7 @@ public class TestApplicationDbContext : DbContext, IApplicationDbContext
 
         modelBuilder.Entity<User>(entity =>
         {
-            entity.ComplexProperty(x => x.SalaryDetail);
+            entity.Ignore(x => x.SalaryDetail);
             entity.Ignore(x => x.OrderListAsMandob);
             entity.Ignore(x => x.OrderListsAsMotaba);
         });
@@ -112,6 +121,24 @@ public class TestApplicationDbContext : DbContext, IApplicationDbContext
             entity.HasOne(x => x.Motaba)
                 .WithMany()
                 .HasForeignKey(x => x.MotabaId);
+            entity.HasOne(x => x.Branch)
+                .WithMany(x => x.OrderLists)
+                .HasForeignKey(x => x.BranchId);
+        });
+
+        modelBuilder.Entity<UserRole>()
+            .HasOne(x => x.Role)
+            .WithMany(x => x.UserRoles)
+            .HasForeignKey(x => x.RoleId);
+
+        modelBuilder.Entity<SellerCashDeliveryTransaction>(entity =>
+        {
+            entity.HasOne(x => x.Seller)
+                .WithMany(x => x.SellerCashDeliveryTransactions)
+                .HasForeignKey(x => x.SellerId);
+            entity.HasOne(x => x.Transaction)
+                .WithOne(x => x.SellerCashDeliveryTransaction)
+                .HasForeignKey<SellerCashDeliveryTransaction>(x => x.TransactionId);
         });
 
         modelBuilder.Entity<SafeTransferTransaction>(entity =>

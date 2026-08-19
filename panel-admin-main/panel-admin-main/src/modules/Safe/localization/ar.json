@@ -39,6 +39,7 @@
   },
   "tableColumns": {
     "fullName": "الأسم الثلاثي",
+    "roleName": "النوع",
     "orderListName": "القائمة",
     "undeliveredCashAmount": "الواردات",
     "deliveredCashAmount": "التسديدات",

@@ -1,5 +1,6 @@
 ﻿using Application.Common.Interfaces;
 using Application.InstallmentPayments.Common;
+using Application.Orders.Common;
 using Domain.Entities.ActivityLogAggregate.Enums;
 using Domain.Entities.OrderAggregate.Enums;
 using Microsoft.EntityFrameworkCore;
@@ -22,7 +23,6 @@ public class DeleteInstallmentPaymentHandler : IRequestHandler<DeleteInstallment
         var installmentPayment = await _dbContext.InstallmentPayments
             .Include(x => x.Order)
             .ThenInclude(x => x!.OrderList)
-            .ThenInclude(x => x!.Mandob)
             .Include(x => x.Order)
             .ThenInclude(x => x!.InstallmentPayments)
             .FirstOrDefaultAsync(x => x.Id == request.Id, cancellationToken);
@@ -31,7 +31,11 @@ public class DeleteInstallmentPaymentHandler : IRequestHandler<DeleteInstallment
         
         var order = installmentPayment.Order;
 
-        order!.OrderList!.Mandob!.UndeliveredCashAmount -= installmentPayment.Amount;
+        var cashHolderResult = await OrderCashHolder.GetAsync(_dbContext, order!.SellerId, cancellationToken);
+        if (cashHolderResult.IsFailed)
+            return cashHolderResult.Error!;
+
+        cashHolderResult.Data!.UndeliveredCashAmount -= installmentPayment.Amount;
         
         var totalPaidAmount = order.InstallmentPayments.Sum(x => x.Amount) - installmentPayment.Amount;
         if (totalPaidAmount < order.SellAmount)

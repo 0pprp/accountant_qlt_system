@@ -47,8 +47,13 @@ public class GetSafeByBranchHandler : IRequestHandler<GetSafeByBranchQuery, Resu
 
         if (request.BranchId.HasValue)
         {
+            var cashHolderIds = SafeCashHolderQuery.UserIdsForBranch(
+                _dbContext.OrderLists,
+                _dbContext.Orders,
+                request.BranchId.Value);
+
             safe.TotalUndeliveredCashAmount = await _dbContext.Users.AsNoTracking()
-                .Where(x => x.OrderListAsMandob!.BranchId == request.BranchId)
+                .Where(x => cashHolderIds.Contains(x.Id))
                 .SumAsync(x => x.UndeliveredCashAmount, cancellationToken);
         }
         else

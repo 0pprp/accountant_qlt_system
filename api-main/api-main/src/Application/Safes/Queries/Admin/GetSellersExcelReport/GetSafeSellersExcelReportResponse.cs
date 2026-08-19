@@ -11,6 +11,7 @@ public record GetSafeSellersExcelReportItem
 {
     public int Id { get; set; }
     public required string FullName { get; set; }
+    public string? RoleName { get; set; }
     public double DeliveredCashAmount { get; set; }
     public double UndeliveredCashAmount { get; set; }
     public string? LastCashDeliveryDate { get; set; }

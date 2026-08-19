@@ -28,6 +28,7 @@ public class User : AuditableEntity
         UserLogins = new HashSet<UserLogin>();
         UserRoles = new HashSet<UserRole>();
         Attachments = new HashSet<Attachment>();
+        OrderListsAsMotaba = new HashSet<OrderList>();
         SoldOrders = new HashSet<Order>();
         UserPermissions = new HashSet<UserPermission>();
         UserBranches = new HashSet<UserBranch>();

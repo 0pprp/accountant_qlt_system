@@ -20,8 +20,6 @@ public class SyncInstallmentPaymentsHandler : IRequestHandler<SyncInstallmentPay
 
     public async Task<Result> Handle(SyncInstallmentPaymentsCommand request, CancellationToken cancellationToken)
     {
-        var user = await _dbContext.Users.FirstAsync(x => x.Id == request.UserId, cancellationToken);
-
         var groupedInstallments = request.InstallmentPayments
             .GroupBy(x => x.OrderId);
 
@@ -37,6 +35,10 @@ public class SyncInstallmentPaymentsHandler : IRequestHandler<SyncInstallmentPay
             if (order is null)
                 return OrderErrors.OrderNotFound;
 
+            var cashHolderResult = await OrderCashHolder.GetAsync(_dbContext, order.SellerId, cancellationToken);
+            if (cashHolderResult.IsFailed)
+                return cashHolderResult.Error!;
+
             var installmentPayments = groupedOrder
                 .Select(x => new InstallmentPayment(x.Amount, x.Date))
                 .ToList();
@@ -48,7 +50,7 @@ public class SyncInstallmentPaymentsHandler : IRequestHandler<SyncInstallmentPay
             if (totalPaidAmount >= order.SellAmount)
                 order.ExecutionStatus = OrderExecutionStatus.Completed;
 
-            user.UndeliveredCashAmount += installmentPayments.Sum(x => x.Amount);
+            cashHolderResult.Data!.UndeliveredCashAmount += installmentPayments.Sum(x => x.Amount);
 
             await _activityLogService.AddAsync(
                 order.BranchId,

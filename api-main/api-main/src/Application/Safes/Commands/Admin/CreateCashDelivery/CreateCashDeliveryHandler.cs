@@ -23,9 +23,7 @@ public class CreateCashDeliveryHandler : IRequestHandler<CreateCashDeliveryComma
 
     public async Task<Result> Handle(CreateCashDeliveryCommand request, CancellationToken cancellationToken)
     {
-        var seller = await _dbContext.Users
-            .Include(x => x.OrderListAsMandob)
-            .FirstOrDefaultAsync(x => x.Id == request.SellerId, cancellationToken);
+        var seller = await _dbContext.Users.FirstOrDefaultAsync(x => x.Id == request.SellerId, cancellationToken);
         if (seller is null)
             return SafeErrors.SellerNotFound;
 
@@ -36,7 +34,15 @@ public class CreateCashDeliveryHandler : IRequestHandler<CreateCashDeliveryComma
         if (safe is null)
             return SafeErrors.SafeNotFound;
 
-        if (seller.OrderListAsMandob!.BranchId != safe.BranchId)
+        if (safe.BranchId is null)
+            return SafeErrors.SellerDoesNotBelongToThisBranch;
+
+        var belongsToBranch = await SafeCashHolderQuery.BelongsToBranchAsync(
+            _dbContext,
+            seller.Id,
+            safe.BranchId.Value,
+            cancellationToken);
+        if (belongsToBranch == false)
             return SafeErrors.SellerDoesNotBelongToThisBranch;
 
         var transaction = new Transaction(request.Amount, TransactionType.SellerPayment, TransactionStatus.Pending, TransactionDirection.In,

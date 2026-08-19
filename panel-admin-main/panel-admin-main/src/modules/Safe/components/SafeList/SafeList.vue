@@ -25,6 +25,10 @@
         {{ data.fullName || '-' }}
       </template>
 
+      <template #body-roleName="{ data }">
+        {{ data.roleName || '-' }}
+      </template>
+
       <template #body-orderListName="{ data }">
         {{ data.orderListName || '-' }}
       </template>
@@ -253,6 +257,11 @@ const columns = computed(() => {
     {
       field: 'fullName',
       header: t('safe.tableColumns.fullName'),
+      sortable: false,
+    },
+    {
+      field: 'roleName',
+      header: t('safe.tableColumns.roleName'),
       sortable: false,
     },
     {
