@@ -25,9 +25,10 @@ $env:DISPLAY = 'dummy:0'
 $env:SSH_ASKPASS = $askpass
 $env:SSH_ASKPASS_REQUIRE = 'force'
 
+# LF-only bash to avoid CRLF breaking `set -o pipefail`
 $bash = @"
 #!/bin/bash
-set -euo pipefail
+set -eu
 cd /opt/qalaat/source
 git fetch origin $Branch
 git checkout $Branch
@@ -50,7 +51,7 @@ cd /home
 sed -i "s|image: qalaat-view:.*|image: qalaat-view:`$TAG|" docker-compose.yml
 docker compose up -d --force-recreate qalaat_view
 docker ps --filter name=qalaat --format 'table {{.Names}}\t{{.Image}}\t{{.Status}}\t{{.Ports}}'
-"@
+"@ -replace "`r`n", "`n"
 
 try {
     $b64 = [Convert]::ToBase64String([Text.Encoding]::UTF8.GetBytes($bash))
