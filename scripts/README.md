@@ -9,6 +9,7 @@
 | `publish-panel.ps1` | يبني لوحة الإدارة إلى `publish-out/panel` |
 | `publish-all.ps1` | تنظيف ثم نشر API + Panel |
 | `push-github.ps1` | يرفع الفرع الحالي إلى GitHub (`origin`) |
+| `deploy-server.ps1` | سحب `development` على السيرفر الحي وإعادة بناء API + Panel |
 
 ## أمثلة
 
