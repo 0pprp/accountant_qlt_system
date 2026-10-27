@@ -49,6 +49,7 @@ export interface SingleCustomer {
   birthDate: string
   phoneNumber: string
   whatsAppPhoneNumber: string
+  rating: string | null
   branch: Warehouse
   business: Business
   attachments: Array<Attachment>

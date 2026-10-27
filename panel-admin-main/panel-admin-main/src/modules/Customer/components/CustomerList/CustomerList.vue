@@ -129,6 +129,12 @@ const columns = computed(() => {
       style: 'min-width: 200px',
     },
     {
+      field: 'rating',
+      header: t('customer.tableColumns.rating'),
+      sortable: false,
+      style: 'min-width: 110px',
+    },
+    {
       field: 'businessName',
       header: t('customer.tableColumns.businessName'),
       sortable: true,
@@ -151,12 +157,6 @@ const columns = computed(() => {
       header: t('customer.tableColumns.end'),
       sortable: true,
       style: 'min-width: 140px',
-    },
-    {
-      field: 'rating',
-      header: t('customer.tableColumns.rating'),
-      sortable: false,
-      style: 'min-width: 120px',
     },
     {
       field: 'businessAddress',

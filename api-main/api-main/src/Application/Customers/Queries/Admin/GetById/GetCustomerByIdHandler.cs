@@ -17,22 +17,22 @@ public class GetCustomerByIdHandler : IRequestHandler<GetCustomerByIdQuery, Resu
     
     public async Task<Result<GetCustomerByIdResponse>> Handle(GetCustomerByIdQuery request, CancellationToken cancellationToken)
     {
-        var customer = await _dbContext.Customers.AsNoTracking()
-            .Select(x => new GetCustomerByIdResponse
+        var asOf = DateOnly.FromDateTime(DateTime.UtcNow.AddHours(3));
+
+        var row = await _dbContext.Customers.AsNoTracking()
+            .Where(x => x.Id == request.Id)
+            .Select(x => new
             {
-                Id = x.Id,
-                FullName = x.FullName,
-                MotherName = x.MotherName,
-                NationalCode = x.NationalCode,
-                BirthDate = x.BirthDate,
-                PhoneNumber = x.PhoneNumber,
-                WhatsAppPhoneNumber = x.WhatsAppPhoneNumber,
-                Business = x.Business,
-                Branch = new GetBranchDto
-                {
-                    Id = x.BranchId,
-                    Name = x.Branch!.Name
-                },
+                x.Id,
+                x.FullName,
+                x.MotherName,
+                x.NationalCode,
+                x.BirthDate,
+                x.PhoneNumber,
+                x.WhatsAppPhoneNumber,
+                x.Business,
+                BranchId = x.BranchId,
+                BranchName = x.Branch!.Name,
                 Attachments = x.Attachments.Select(a => new GetAttachmentDto
                 {
                     Id = a.Id,
@@ -40,12 +40,50 @@ public class GetCustomerByIdHandler : IRequestHandler<GetCustomerByIdQuery, Resu
                     RelativePath = a.RelativePath,
                     FileSizeInByte = a.FileSizeInByte,
                     Type = a.Type
-                }).ToList()
+                }).ToList(),
+                SellAmount = x.Orders.Sum(o => o.SellAmount),
+                PaidAmount = x.Orders.SelectMany(o => o.InstallmentPayments).Sum(ip => ip.Amount),
+                SaleDate = x.Orders.Where(o => o.SaleDate != null).Select(o => o.SaleDate).Min(),
+                EarliestOrderCreated = x.Orders.Where(o => o.CreatedAt != null)
+                    .Select(o => (DateTimeOffset?)o.CreatedAt).Min(),
+                LastInstallmentPaymentDate = x.Orders.SelectMany(o => o.InstallmentPayments).Any()
+                    ? x.Orders.SelectMany(o => o.InstallmentPayments).Max(ip => ip.Date)
+                    : (DateOnly?)null,
             })
-            .FirstOrDefaultAsync(x => x.Id == request.Id, cancellationToken);
-        if (customer is null)
+            .FirstOrDefaultAsync(cancellationToken);
+
+        if (row is null)
             return CustomerErrors.CustomerNotFound;
 
-        return customer;
+        var saleDate = row.SaleDate
+                       ?? (row.EarliestOrderCreated is { } created
+                           ? DateOnly.FromDateTime(created.DateTime)
+                           : (DateOnly?)null);
+        var remaining = row.SellAmount - row.PaidAmount;
+
+        return new GetCustomerByIdResponse
+        {
+            Id = row.Id,
+            FullName = row.FullName,
+            MotherName = row.MotherName,
+            NationalCode = row.NationalCode,
+            BirthDate = row.BirthDate,
+            PhoneNumber = row.PhoneNumber,
+            WhatsAppPhoneNumber = row.WhatsAppPhoneNumber,
+            Rating = CustomerRatingCalculator.EvaluateLabel(
+                row.SellAmount,
+                row.PaidAmount,
+                remaining,
+                saleDate,
+                row.LastInstallmentPaymentDate,
+                asOf),
+            Business = row.Business,
+            Branch = new GetBranchDto
+            {
+                Id = row.BranchId,
+                Name = row.BranchName
+            },
+            Attachments = row.Attachments
+        };
     }
 }

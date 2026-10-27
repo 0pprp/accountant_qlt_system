@@ -13,6 +13,7 @@ public record GetCustomerByIdResponse
     public DateOnly BirthDate { get; set; }
     public required string PhoneNumber { get; set; }
     public required string WhatsAppPhoneNumber { get; set; }
+    public string? Rating { get; set; }
     public required Business Business { get; set; }
     public required GetBranchDto Branch { get; set; }
     public required List<GetAttachmentDto> Attachments { get; set; }

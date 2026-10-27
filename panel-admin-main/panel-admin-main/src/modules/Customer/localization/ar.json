@@ -49,6 +49,9 @@
     "fullName": {
       "label": "الأسم الثلاثي"
     },
+    "rating": {
+      "label": "التقييم"
+    },
     "motherName": {
       "label": "أسم الأم"
     },

@@ -42,6 +42,7 @@
             :isEditMode="!!customerId"
             :loading="isCreatePending || isUpdatePending"
             :initialValues="initialValues"
+            :rating="customerByIdData?.rating ?? null"
             @submit="handleSubmit"
           />
         </TabPanel>

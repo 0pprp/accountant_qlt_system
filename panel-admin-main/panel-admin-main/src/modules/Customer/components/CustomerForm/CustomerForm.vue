@@ -25,6 +25,17 @@
           </Message>
         </div>
 
+        <div v-if="isEditMode" class="w-full">
+          <label class="text-gray-300 text-[14px] font-medium">
+            {{ $t('customer.form.rating.label') }}
+          </label>
+          <div
+            class="mt-2 min-h-[48px] flex items-center rounded-lg border border-gray-200 bg-gray-50 px-4 text-[14px] font-semibold text-gray-800"
+          >
+            {{ rating || '—' }}
+          </div>
+        </div>
+
         <div class="w-full">
           <label class="text-gray-300 text-[14px] font-medium">
             {{ $t('customer.form.motherName.label') }}
@@ -236,6 +247,8 @@ const props = defineProps<Props>()
 const emit = defineEmits<Emits>()
 
 const { t } = useI18n()
+const isEditMode = computed(() => props.isEditMode)
+const rating = computed(() => props.rating ?? null)
 const validationSchema = object().shape({
   fullName: string().required(t('customer.form.required')),
   motherName: string().required(t('customer.form.required')),
