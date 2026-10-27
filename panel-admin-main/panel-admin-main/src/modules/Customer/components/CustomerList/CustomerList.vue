@@ -31,6 +31,10 @@
         {{ formattedDate(data.lastInstallmentPaymentDate || '') || '-' }}
       </template>
 
+      <template #body-rating="{ data }">
+        {{ data.rating || '-' }}
+      </template>
+
       <template #body-details="{ data: rowData }" v-if="canUpdateCustomer">
         <SvgIcon
           name="note"
@@ -147,6 +151,12 @@ const columns = computed(() => {
       header: t('customer.tableColumns.end'),
       sortable: true,
       style: 'min-width: 140px',
+    },
+    {
+      field: 'rating',
+      header: t('customer.tableColumns.rating'),
+      sortable: false,
+      style: 'min-width: 120px',
     },
     {
       field: 'businessAddress',

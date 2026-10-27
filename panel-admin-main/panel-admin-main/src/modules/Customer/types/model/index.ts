@@ -15,6 +15,8 @@ export interface Customer {
   orderListName: string | null
   ordersCount: number
   lastInstallmentPaymentDate: string | null
+  /** Arabic label only: ممتاز / جيد / ضعيف / متلكئ / سيء */
+  rating: string | null
 }
 
 export interface CustomerForm {

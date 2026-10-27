@@ -9,5 +9,7 @@ public record GetPaginatedCustomersResponse
     public string? OrderListName { get; set; }
     public int OrdersCount { get; set; }
     public DateOnly? LastInstallmentPaymentDate { get; set; }
+    /// <summary>Arabic rating name only (ممتاز/جيد/ضعيف/متلكئ/سيء).</summary>
+    public string? Rating { get; set; }
     public DateTimeOffset CreatedAt { get; set; }
 }

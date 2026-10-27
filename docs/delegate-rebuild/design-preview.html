@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>معاينة دخول — مندوب التحصيل</title>
+  <style>
+    :root {
+      --primary: #006A64;
+      --surface1: #F8F8F8;
+      --surface2: #FFFFFF;
+      --text1: #00201E;
+      --text2: #6F797A;
+      --text4: #CDCDCD;
+      --error: #FF3A3A;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Segoe UI", Tahoma, Arial, sans-serif;
+      background: var(--surface1);
+      color: var(--text1);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    .hero {
+      background: linear-gradient(180deg, var(--primary) 0%, #004F4A 100%);
+      color: #fff;
+      padding: 48px 24px 72px;
+      text-align: center;
+      border-radius: 0 0 28px 28px;
+    }
+    .hero h1 { margin: 8px 0 0; font-size: 22px; }
+    .hero p { margin: 4px 0 0; color: var(--text4); font-size: 13px; }
+    .welcome {
+      margin: -36px 24px 0;
+      color: #fff;
+      position: relative;
+      z-index: 1;
+    }
+    .welcome strong { display: block; font-size: 20px; }
+    .welcome span { font-size: 12px; color: var(--text4); }
+    .card {
+      margin: 24px;
+      background: transparent;
+    }
+    label { display: block; color: var(--text2); font-size: 14px; margin-bottom: 6px; }
+    input, select {
+      width: 100%;
+      padding: 16px;
+      border: none;
+      border-radius: 12px;
+      background: var(--surface2);
+      margin-bottom: 16px;
+      font-size: 14px;
+    }
+    .hint { color: var(--text2); font-size: 12px; margin-top: 8px; }
+    .error { color: var(--error); font-size: 13px; display: none; }
+    .footer {
+      margin-top: auto;
+      padding: 24px 40px 32px;
+    }
+    button {
+      width: 100%;
+      height: 50px;
+      border: none;
+      border-radius: 16px;
+      background: var(--primary);
+      color: #fff;
+      font-size: 16px;
+      font-weight: 600;
+      box-shadow: 0 4px 12px rgba(211,211,211,.35);
+      cursor: pointer;
+    }
+    button:disabled { background: #D9D9D9; color: var(--text2); }
+    .ok { display: none; margin: 16px 24px; padding: 16px; background: #CCE1E0; border-radius: 12px; }
+  </style>
+</head>
+<body>
+  <div class="hero">
+    <div style="font-size:40px">◆</div>
+    <h1>قلعة الضمان</h1>
+    <p>مندوب التحصيل</p>
+  </div>
+  <div class="welcome">
+    <strong>مرحبا بك</strong>
+    <span>يرجى تسجيل الدخول</span>
+  </div>
+  <div class="card">
+    <label for="user">أسم المستخدم</label>
+    <input id="user" value="مندوب" placeholder="يرجى أدخال اسم المستخدم" />
+    <label for="pass">الرمز السري</label>
+    <input id="pass" type="password" value="123456" placeholder="يرجى أدخال الرمز السري للمستخدم" />
+    <div class="error" id="err">اسم المستخدم أو كلمة المرور غير صحيحة</div>
+    <div class="hint">معاينة: مندوب / 123456 — بدون اختيار محافظة (نظام مركزي)</div>
+  </div>
+  <div class="ok" id="ok">تم الدخول — جاهز لمعاينة التصميم داخل التطبيق</div>
+  <div class="footer">
+    <button id="login" type="button">تسجيل دخول</button>
+  </div>
+  <script>
+    document.getElementById('login').addEventListener('click', () => {
+      const u = document.getElementById('user').value.trim();
+      const p = document.getElementById('pass').value.trim();
+      const ok = (u === 'مندوب' || u.toLowerCase() === 'delegate' || u === 'demo') && p === '123456';
+      document.getElementById('err').style.display = ok ? 'none' : 'block';
+      document.getElementById('ok').style.display = ok ? 'block' : 'none';
+    });
+  </script>
+</body>
+</html>

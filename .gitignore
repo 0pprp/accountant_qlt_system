@@ -1,0 +1,28 @@
+# Local / IDE
+.cursor/
+.vs/
+.idea/
+*.user
+*.suo
+
+# Publish & build outputs (cleaned by scripts/clean.ps1)
+publish-out/
+**/bin/
+**/obj/
+**/dist/
+**/node_modules/
+**/.dart_tool/
+**/build/
+**/coverage/
+
+# Logs / temp
+*.log
+*.tmp
+.DS_Store
+Thumbs.db
+
+# Secrets
+.env
+.env.*
+**/appsettings.*.local.json
+**/secrets.json

@@ -16,4 +16,5 @@ public record GetCustomersExcelReportItem
     public string? OrderListName { get; set; }
     public int OrdersCount { get; set; }
     public string? LastInstallmentPaymentDate { get; set; }
+    public string? Rating { get; set; }
 }
