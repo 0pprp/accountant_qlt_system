@@ -195,6 +195,9 @@ public class Order : AuditableEntity
             ApprovalStatus = OrderApprovalStatus.Pending;
 
         WorkflowStatus = target;
+        // Leaving "sold" / completed for workflow testing or reopen.
+        if (target != SalesWorkflowStatus.Sold && Step == OrderStep.Completed)
+            Step = OrderStep.SellerInfo;
         if (target == SalesWorkflowStatus.Ready && Step == OrderStep.Attachments)
             Step = OrderStep.SellerInfo;
     }

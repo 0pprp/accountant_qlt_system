@@ -49,10 +49,26 @@ public class GetOrderByIdHandler : IRequestHandler<GetOrderByIdQuery, Result<Get
                 Step = x.Step,
                 ExecutionStatus = x.ExecutionStatus,
                 ApprovalStatus = x.ApprovalStatus,
+                WorkflowStatus = x.WorkflowStatus,
+                WorkflowChangeReason = x.WorkflowChangeReason,
                 Seller = new SellerDto
                 {
                     Id = x.SellerId!.Value,
                     Name = x.Seller!.FullName
+                },
+                Customer = new AppOrderCustomerDto
+                {
+                    Id = x.CustomerId,
+                    FullName = x.Customer!.FullName,
+                    PhoneNumber = x.Customer.PhoneNumber,
+                    BusinessName = x.Customer.Business.Name,
+                    BusinessAddress = x.Customer.Business.Address,
+                    NearestKnownLocation = x.Customer.Business.NearestKnownLocation
+                },
+                Branch = new AppOrderBranchDto
+                {
+                    Id = x.BranchId,
+                    Name = x.Branch!.Name
                 },
                 OrderList = x.OrderListId != null
                     ? new OrderListDto

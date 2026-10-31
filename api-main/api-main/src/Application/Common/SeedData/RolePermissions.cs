@@ -97,9 +97,15 @@ public static class RolePermissions
         };
         mandob.Permissions.Add(Permissions.InstallmentPayment.Create);
         mandob.Permissions.Add(Permissions.InstallmentPayment.Read);
+        mandob.Permissions.Add(Permissions.Order.Create);
         mandob.Permissions.Add(Permissions.Order.Read);
-        mandob.Permissions.Add(Permissions.User.Read);
+        mandob.Permissions.Add(Permissions.Order.Update);
+        mandob.Permissions.Add(Permissions.Product.Read);
+        mandob.Permissions.Add(Permissions.Customer.Create);
         mandob.Permissions.Add(Permissions.Customer.Read);
+        mandob.Permissions.Add(Permissions.Attachment.Create);
+        mandob.Permissions.Add(Permissions.Attachment.Update);
+        mandob.Permissions.Add(Permissions.User.Read);
         mandob.Permissions.Add(Permissions.Warehouse.Read);
         mandob.Permissions.Add(Permissions.OrderList.Read);
         mandob.Permissions.Add(Permissions.Purchase.Read);

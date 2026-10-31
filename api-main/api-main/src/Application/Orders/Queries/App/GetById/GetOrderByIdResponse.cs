@@ -23,9 +23,29 @@ public record GetOrderByIdResponse
     public OrderStep Step { get; set; }
     public OrderExecutionStatus ExecutionStatus { get; set; }
     public OrderApprovalStatus ApprovalStatus { get; set; }
+    public SalesWorkflowStatus WorkflowStatus { get; set; }
+    public string? WorkflowChangeReason { get; set; }
     public required SellerDto Seller { get; set; }
+    public required AppOrderCustomerDto Customer { get; set; }
+    public required AppOrderBranchDto Branch { get; set; }
     public OrderListDto? OrderList { get; set; }
     public required List<GetAttachmentDto> Attachments { get; set; }
     public required List<OrderItemDto> OrderItems { get; set; }
     public DateTimeOffset CreatedAt { get; set; }
+}
+
+public record AppOrderCustomerDto
+{
+    public int Id { get; set; }
+    public required string FullName { get; set; }
+    public required string PhoneNumber { get; set; }
+    public string? BusinessName { get; set; }
+    public string? BusinessAddress { get; set; }
+    public string? NearestKnownLocation { get; set; }
+}
+
+public record AppOrderBranchDto
+{
+    public int Id { get; set; }
+    public required string Name { get; set; }
 }

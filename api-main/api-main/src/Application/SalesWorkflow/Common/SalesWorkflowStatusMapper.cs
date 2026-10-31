@@ -24,19 +24,20 @@ public static class SalesWorkflowStatusMapper
 
     public static string ToApiStatus(Order order)
     {
+        // WorkflowStatus is the sales-employee bin source of truth.
+        // Do not force "sold" from Step.Completed alone — legacy completed
+        // orders still have WorkflowStatus.Sold after CompleteSalesWorkflow().
         if (order.ApprovalStatus == OrderApprovalStatus.Rejected || order.WorkflowStatus == SalesWorkflowStatus.Rejected)
             return Rejected;
 
-        if (order.WorkflowStatus == SalesWorkflowStatus.Sold || order.Step == OrderStep.Completed)
-            return Sold;
-
         return order.WorkflowStatus switch
         {
+            SalesWorkflowStatus.Sold => Sold,
             SalesWorkflowStatus.Ready => Ready,
             SalesWorkflowStatus.Disclosure => Disclosure,
             SalesWorkflowStatus.OnHold => OnHold,
             SalesWorkflowStatus.Pending => Pending,
-            _ => order.Step == OrderStep.SellerInfo ? Ready : Pending
+            _ => Pending
         };
     }
 
@@ -45,16 +46,14 @@ public static class SalesWorkflowStatusMapper
         if (approvalStatus == OrderApprovalStatus.Rejected || status == SalesWorkflowStatus.Rejected)
             return Rejected;
 
-        if (status == SalesWorkflowStatus.Sold || step == OrderStep.Completed)
-            return Sold;
-
         return status switch
         {
+            SalesWorkflowStatus.Sold => Sold,
             SalesWorkflowStatus.Ready => Ready,
             SalesWorkflowStatus.Disclosure => Disclosure,
             SalesWorkflowStatus.OnHold => OnHold,
             SalesWorkflowStatus.Pending => Pending,
-            _ => step == OrderStep.SellerInfo ? Ready : Pending
+            _ => Pending
         };
     }
 
