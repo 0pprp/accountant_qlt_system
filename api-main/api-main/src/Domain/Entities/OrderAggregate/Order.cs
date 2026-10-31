@@ -22,6 +22,7 @@ public class Order : AuditableEntity
         double dailyInstallmentAmount,
         OrderStep step,
         OrderApprovalStatus approvalStatus,
+        SalesWorkflowStatus workflowStatus,
         int customerId,
         int branchId,
         List<OrderItem> orderItems)
@@ -33,6 +34,7 @@ public class Order : AuditableEntity
         Step = step;
         ExecutionStatus = OrderExecutionStatus.NotStarted;
         ApprovalStatus = approvalStatus;
+        WorkflowStatus = workflowStatus;
         CustomerId = customerId;
         BranchId = branchId;
         Attachments = new HashSet<Attachment>();
@@ -56,6 +58,7 @@ public class Order : AuditableEntity
             dailyInstallmentAmount,
             OrderStep.SellerInfo,
             OrderApprovalStatus.Approved,
+            SalesWorkflowStatus.Ready,
             customerId,
             branchId,
             orderItems);
@@ -78,6 +81,7 @@ public class Order : AuditableEntity
             dailyInstallmentAmount,
             OrderStep.Attachments,
             OrderApprovalStatus.Pending,
+            SalesWorkflowStatus.Pending,
             customerId,
             branchId,
             orderItems)
@@ -97,6 +101,8 @@ public class Order : AuditableEntity
     public OrderStep Step { get; set; }
     public OrderExecutionStatus ExecutionStatus { get; set; }
     public OrderApprovalStatus ApprovalStatus { get; set; }
+    public SalesWorkflowStatus WorkflowStatus { get; set; }
+    public string? WorkflowChangeReason { get; set; }
     public int? SellerId { get; set; }
     public int CustomerId { get; set; }
     public int BranchId { get; set; }
@@ -113,6 +119,8 @@ public class Order : AuditableEntity
     public void CompleteAttachmentsStep()
     {
         Step = OrderStep.SellerInfo;
+        if (WorkflowStatus == SalesWorkflowStatus.Pending)
+            WorkflowStatus = SalesWorkflowStatus.Ready;
     }
 
     public void SetSeller(
@@ -131,9 +139,64 @@ public class Order : AuditableEntity
         SaleDate = saleDate;
         SaleTime = saleTime;
         Step = OrderStep.Completed;
+        WorkflowStatus = SalesWorkflowStatus.Sold;
 
         if (firstInstallmentPayment is not null)
             InstallmentPayments.Add(firstInstallmentPayment);
+    }
+
+    public void ProgressSalesWorkflow()
+    {
+        WorkflowStatus = WorkflowStatus switch
+        {
+            SalesWorkflowStatus.Pending => SalesWorkflowStatus.Ready,
+            SalesWorkflowStatus.Ready => SalesWorkflowStatus.Disclosure,
+            SalesWorkflowStatus.Disclosure => SalesWorkflowStatus.OnHold,
+            SalesWorkflowStatus.OnHold => SalesWorkflowStatus.Ready,
+            _ => WorkflowStatus
+        };
+
+        if (WorkflowStatus == SalesWorkflowStatus.Ready && Step == OrderStep.Attachments)
+            Step = OrderStep.SellerInfo;
+    }
+
+    public void CompleteSalesWorkflow()
+    {
+        WorkflowStatus = SalesWorkflowStatus.Sold;
+        Step = OrderStep.Completed;
+    }
+
+    public void TransferSalesWorkflow(SalesWorkflowStatus target, string? reason)
+    {
+        if (target is SalesWorkflowStatus.Rejected or SalesWorkflowStatus.OnHold)
+        {
+            if (string.IsNullOrWhiteSpace(reason))
+                throw new ArgumentException("Reason is required for this status.", nameof(reason));
+            WorkflowChangeReason = reason.Trim();
+        }
+        else if (!string.IsNullOrWhiteSpace(reason))
+        {
+            WorkflowChangeReason = reason.Trim();
+        }
+
+        if (target == SalesWorkflowStatus.Rejected)
+        {
+            Reject();
+            return;
+        }
+
+        if (target == SalesWorkflowStatus.Sold)
+        {
+            CompleteSalesWorkflow();
+            return;
+        }
+
+        if (ApprovalStatus == OrderApprovalStatus.Rejected)
+            ApprovalStatus = OrderApprovalStatus.Pending;
+
+        WorkflowStatus = target;
+        if (target == SalesWorkflowStatus.Ready && Step == OrderStep.Attachments)
+            Step = OrderStep.SellerInfo;
     }
 
     public void Update(
@@ -169,5 +232,6 @@ public class Order : AuditableEntity
     public void Reject()
     {
         ApprovalStatus = OrderApprovalStatus.Rejected;
+        WorkflowStatus = SalesWorkflowStatus.Rejected;
     }
 }

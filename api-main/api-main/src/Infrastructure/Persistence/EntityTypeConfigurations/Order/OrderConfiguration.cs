@@ -20,6 +20,8 @@ public class OrderConfiguration : IEntityTypeConfiguration<Domain.Entities.Order
         builder.Property(x => x.Step).IsRequired();
         builder.Property(x => x.ExecutionStatus).IsRequired();
         builder.Property(x => x.ApprovalStatus).IsRequired();
+        builder.Property(x => x.WorkflowStatus).IsRequired().HasDefaultValue(Domain.Entities.OrderAggregate.Enums.SalesWorkflowStatus.Pending);
+        builder.Property(x => x.WorkflowChangeReason).HasMaxLength(500).IsRequired(false);
 
         builder.HasOne(x => x.Seller)
             .WithMany(x => x.SoldOrders)

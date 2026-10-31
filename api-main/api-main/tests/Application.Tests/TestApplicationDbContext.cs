@@ -13,6 +13,8 @@ using Domain.Entities.ProvinceAggregate;
 using Domain.Entities.PurchaseAggregate;
 using Domain.Entities.RoleAggregate;
 using Domain.Entities.SafeAggregate;
+using Domain.Entities.SalesLocationAggregate;
+using Domain.Entities.SalesShiftAggregate;
 using Domain.Entities.UserAggregate;
 using Domain.Entities.WarehouseAggregate;
 using Microsoft.EntityFrameworkCore;
@@ -53,6 +55,8 @@ public class TestApplicationDbContext : DbContext, IApplicationDbContext
     public DbSet<SellerCashDeliveryTransaction> SellerCashDeliveryTransactions { get; set; }
     public DbSet<Notification> Notifications { get; set; }
     public DbSet<ActivityLog> ActivityLogs { get; set; }
+    public DbSet<SalesShift> SalesShifts { get; set; }
+    public DbSet<SalesLocationPoint> SalesLocationPoints { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
