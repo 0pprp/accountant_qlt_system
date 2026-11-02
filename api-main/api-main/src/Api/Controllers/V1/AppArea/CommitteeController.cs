@@ -1,3 +1,4 @@
+using Application.Committee.Commands.App.AuthenticatePendingSale;
 using Application.Committee.Commands.App.PostComplaint;
 using Application.Committee.Commands.App.PostDayRating;
 using Application.Committee.Commands.App.PostDirectorNote;
@@ -96,6 +97,16 @@ public class CommitteeController : ApiController
     {
         var result = await _mediator.Send(
             new GetCommitteePendingSalesQuery(_current.UserId!.Value),
+            CancellationToken);
+        return result.ToHttpResponse();
+    }
+
+    [HasPermission(Permissions.Order.Read)]
+    [HttpPost("pending-sales/{orderId:int}/authenticate")]
+    public async Task<ActionResult> AuthenticatePendingSale([FromRoute] int orderId)
+    {
+        var result = await _mediator.Send(
+            new AuthenticateCommitteePendingSaleCommand(_current.UserId!.Value, orderId),
             CancellationToken);
         return result.ToHttpResponse();
     }
