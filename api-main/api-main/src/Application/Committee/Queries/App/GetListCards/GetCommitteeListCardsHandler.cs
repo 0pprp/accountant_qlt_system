@@ -1,5 +1,4 @@
 using Application.Common.Interfaces;
-using Application.Committee.Common;
 using Domain.Entities.OrderAggregate.Enums;
 using Microsoft.EntityFrameworkCore;
 
@@ -48,7 +47,7 @@ public class GetCommitteeListCardsHandler
             .ToListAsync(cancellationToken);
 
         if (lists.Count == 0)
-            return CommitteeErrors.NoLists;
+            return new List<CommitteeListCardDto>();
 
         var cards = lists.Select(x =>
         {

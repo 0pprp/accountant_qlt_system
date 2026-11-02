@@ -1,5 +1,4 @@
 using Application.Common.Interfaces;
-using Application.Committee.Common;
 using Domain.Entities.OrderAggregate.Enums;
 using Microsoft.EntityFrameworkCore;
 
@@ -26,9 +25,7 @@ public class GetCommitteeListsHandler : IRequestHandler<GetCommitteeListsQuery, 
             })
             .ToListAsync(cancellationToken);
 
-        if (lists.Count == 0)
-            return CommitteeErrors.NoLists;
-
+        // قائمة فارغة ليست خطأ — المسؤول قد يُربط لاحقاً بأكثر من قائمة.
         return lists;
     }
 }
