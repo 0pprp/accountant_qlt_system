@@ -1,7 +1,7 @@
 name: committee_officer_application
 description: تطبيق مسؤول اللجنة — قلعة الضمان.
 publish_to: 'none'
-version: 1.0.1+2
+version: 1.0.2+3
 
 environment:
   sdk: ^3.13.1
@@ -28,6 +28,8 @@ dependencies:
   image_picker: ^1.2.0
   url_launcher: ^6.3.2
   package_info_plus: ^9.0.1
+  qalaat_in_app_update:
+    path: ../packages/qalaat_in_app_update
 
 dev_dependencies:
   flutter_test:

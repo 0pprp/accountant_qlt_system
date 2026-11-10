@@ -1,7 +1,7 @@
 name: sales_employee_app
 description: Qalaat Al-Dhaman sales employee field app.
 publish_to: 'none'
-version: 1.0.1+2
+version: 1.0.2+3
 
 environment:
   sdk: ^3.13.1
@@ -33,6 +33,8 @@ dependencies:
   carousel_slider: ^5.1.1
   signalr_netcore: ^1.4.4
   package_info_plus: ^10.2.2
+  qalaat_in_app_update:
+    path: ../packages/qalaat_in_app_update
 
 dev_dependencies:
   flutter_test:

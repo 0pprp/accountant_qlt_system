@@ -1,13 +1,12 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:package_info_plus/package_info_plus.dart';
+import 'package:qalaat_in_app_update/qalaat_in_app_update.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 import '../network/dio_client.dart';
 import '../theme/app_colors.dart';
-
-enum _Kind { none, optional, mandatory }
 
 class AppUpdateGate {
   static const appKey = 'delegate';
@@ -19,7 +18,9 @@ class AppUpdateGate {
     if (_running) return true;
     _running = true;
     try {
-      final installed = await _installedCode();
+      final pkg = await PackageInfo.fromPlatform();
+      final installed = int.tryParse(pkg.buildNumber) ?? 1;
+      final installedName = pkg.version.isEmpty ? '1.0.0' : pkg.version;
       await _clearIfSatisfied(installed);
 
       Map<String, dynamic>? raw;
@@ -35,119 +36,61 @@ class AppUpdateGate {
 
       if (!context.mounted) return true;
 
+      UpdateInfo? info;
       if (raw != null) {
-        final info = _parse(raw, installed);
+        info = UpdateInfo.fromApiJson(
+          raw,
+          currentVersionCode: installed,
+          currentVersionName: installedName,
+          appTitle: 'مندوب التحصيل',
+        );
         await _syncCache(info, installed);
-        if (info.kind == _Kind.mandatory) {
-          await _show(context, info, mandatory: true);
-          return false;
-        }
-        if (info.kind == _Kind.optional) {
-          await _show(context, info, mandatory: false);
-          return true;
-        }
       } else {
-        final cached = await _fromCache(installed);
-        if (cached != null) {
-          await _show(context, cached, mandatory: true);
-          return false;
-        }
+        info = await _fromCache(installed, installedName);
       }
-      return true;
+
+      if (info == null || info.kind == MobileUpdateKind.none) return true;
+      if (!context.mounted) return true;
+
+      await ForceUpdateScreen.present(
+        context,
+        info: info,
+        primaryColor: AppColors.primary,
+        foregroundColor: AppColors.foreground,
+        backgroundColor: AppColors.background,
+        surfaceColor: AppColors.surface,
+        logo: SvgPicture.asset(
+          'assets/svg/logo_green.svg',
+          height: 64,
+          fit: BoxFit.contain,
+        ),
+        supportLine: (info.releaseNotes?.isNotEmpty ?? false)
+            ? info.releaseNotes
+            : 'تحسينات استقرار وأداء لتجربة تحصيل أوضح وأسرع.',
+      );
+
+      return info.kind != MobileUpdateKind.mandatory;
     } finally {
       _running = false;
     }
   }
 
-  static Future<int> _installedCode() async {
-    try {
-      final info = await PackageInfo.fromPlatform();
-      return int.tryParse(info.buildNumber) ?? 1;
-    } catch (_) {
-      return 1;
-    }
-  }
-
-  static _Info _parse(Map<String, dynamic> json, int current) {
-    final latest = _asInt(json['latestVersionCode']);
-    final min = _asInt(json['minimumSupportedVersionCode']);
-    final force = json['forceUpdate'] == true;
-    final kind = current >= latest
-        ? _Kind.none
-        : (current < min || force ? _Kind.mandatory : _Kind.optional);
-    return _Info(
-      kind: kind,
-      name: '${json['latestVersionName'] ?? ''}',
-      code: latest,
-      apkUrl: _opt(json['apkUrl']),
-      notes: _opt(json['releaseNotes']),
-    );
-  }
-
-  static Future<void> _show(BuildContext context, _Info info, {required bool mandatory}) {
-    return showDialog<void>(
-      context: context,
-      barrierDismissible: !mandatory,
-      builder: (ctx) => PopScope(
-        canPop: !mandatory,
-        child: Directionality(
-          textDirection: TextDirection.rtl,
-          child: AlertDialog(
-            title: Text(
-              mandatory ? 'يجب تحديث التطبيق للاستمرار' : 'يتوفر تحديث جديد',
-              style: const TextStyle(fontWeight: FontWeight.bold),
-            ),
-            content: SingleChildScrollView(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text('الإصدار ${info.name}'),
-                  if ((info.notes ?? '').isNotEmpty) ...[
-                    const SizedBox(height: 8),
-                    Text(info.notes!),
-                  ],
-                  if (mandatory) ...[
-                    const SizedBox(height: 12),
-                    const Text('حدّث التطبيق ثم افتحه من جديد للمتابعة.'),
-                  ],
-                ],
-              ),
-            ),
-            actions: [
-              if (!mandatory)
-                TextButton(
-                  onPressed: () => Navigator.of(ctx).pop(),
-                  child: const Text('لاحقاً'),
-                ),
-              FilledButton(
-                style: FilledButton.styleFrom(backgroundColor: AppColors.primary),
-                onPressed: () async {
-                  if (!mandatory) Navigator.of(ctx).pop();
-                  final url = info.apkUrl;
-                  if (url != null && url.startsWith('http')) {
-                    await launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
-                  }
-                },
-                child: const Text('تحديث الآن'),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  static Future<void> _syncCache(_Info info, int installed) async {
+  static Future<void> _syncCache(UpdateInfo info, int installed) async {
     final prefs = await SharedPreferences.getInstance();
-    if (info.kind == _Kind.mandatory && (info.apkUrl ?? '').startsWith('http')) {
+    if (info.mandatory && info.canDownload) {
       await prefs.setString(
         _cacheKey,
-        [info.code, info.name, info.apkUrl!, info.notes ?? ''].join('\u001f'),
+        [
+          info.latestVersionCode,
+          info.latestVersionName,
+          info.apkUrl!,
+          info.releaseNotes ?? '',
+          info.sha256 ?? '',
+        ].join('\u001f'),
       );
       return;
     }
-    if (info.kind != _Kind.mandatory) await prefs.remove(_cacheKey);
+    if (!info.mandatory) await prefs.remove(_cacheKey);
   }
 
   static Future<void> _clearIfSatisfied(int installed) async {
@@ -158,7 +101,7 @@ class AppUpdateGate {
     if (installed >= required) await prefs.remove(_cacheKey);
   }
 
-  static Future<_Info?> _fromCache(int installed) async {
+  static Future<UpdateInfo?> _fromCache(int installed, String installedName) async {
     final prefs = await SharedPreferences.getInstance();
     final raw = prefs.getString(_cacheKey);
     if (raw == null) return null;
@@ -166,40 +109,19 @@ class AppUpdateGate {
     if (parts.length < 3) return null;
     final required = int.tryParse(parts[0]) ?? 0;
     final apk = parts[2];
-    if (required <= 0 || installed >= required || !apk.startsWith('http')) return null;
-    return _Info(
-      kind: _Kind.mandatory,
-      name: parts[1],
-      code: required,
+    if (required <= 0 || installed >= required || !apk.startsWith('http')) {
+      return null;
+    }
+    return UpdateInfo(
+      kind: MobileUpdateKind.mandatory,
+      latestVersionName: parts[1],
+      latestVersionCode: required,
+      currentVersionCode: installed,
+      currentVersionName: installedName,
       apkUrl: apk,
-      notes: parts.length > 3 ? parts[3] : null,
+      releaseNotes: parts.length > 3 && parts[3].isNotEmpty ? parts[3] : null,
+      sha256: parts.length > 4 && parts[4].isNotEmpty ? parts[4] : null,
+      appTitle: 'مندوب التحصيل',
     );
   }
-
-  static int _asInt(dynamic v) {
-    if (v is int) return v;
-    if (v is num) return v.toInt();
-    return int.tryParse('$v') ?? 0;
-  }
-
-  static String? _opt(dynamic v) {
-    if (v == null) return null;
-    final s = '$v'.trim();
-    return s.isEmpty ? null : s;
-  }
-}
-
-class _Info {
-  const _Info({
-    required this.kind,
-    required this.name,
-    required this.code,
-    this.apkUrl,
-    this.notes,
-  });
-  final _Kind kind;
-  final String name;
-  final int code;
-  final String? apkUrl;
-  final String? notes;
 }

@@ -1,0 +1,23 @@
+name: qalaat_in_app_update
+description: In-app APK update gate UI and download/install for Qalaat apps.
+publish_to: 'none'
+version: 1.0.0
+
+environment:
+  sdk: ^3.13.1
+
+dependencies:
+  flutter:
+    sdk: flutter
+  dio: ^5.11.1
+  path: ^1.9.1
+  path_provider: ^2.1.6
+  crypto: ^3.0.6
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+
+flutter:
+  uses-material-design: true

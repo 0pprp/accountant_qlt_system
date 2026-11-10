@@ -1,22 +1,7 @@
+import 'package:qalaat_in_app_update/qalaat_in_app_update.dart';
 import 'package:sales_employee_app/core/network/dio_client.dart';
 import 'package:sales_employee_app/features/updates/data/app_version.dart';
-import 'package:sales_employee_app/features/updates/data/update_models.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:url_launcher/url_launcher.dart';
-
-class AppUpdateInfo {
-  const AppUpdateInfo({
-    required this.forceUpdate,
-    this.message,
-    this.storeUrl,
-    this.kind = MobileUpdateKind.optional,
-  });
-
-  final bool forceUpdate;
-  final String? message;
-  final String? storeUrl;
-  final MobileUpdateKind kind;
-}
 
 class AppVersionDataSource {
   AppVersionDataSource(this._dio);
@@ -24,9 +9,10 @@ class AppVersionDataSource {
 
   static const _cacheKey = 'sales_employee_mandatory_update_v1';
 
-  Future<AppUpdateInfo?> check() async {
+  Future<UpdateInfo?> check() async {
     await AppVersion.ensureLoaded();
     final installed = AppVersion.resolvedCode;
+    final installedName = AppVersion.resolvedName;
     await _clearCacheIfSatisfied(installed);
 
     try {
@@ -35,32 +21,21 @@ class AppVersionDataSource {
         queryParameters: {'currentVersionCode': installed},
       );
       if (res.data is! Map) return null;
-      final info = MobileUpdateInfo.fromJson(
+      final info = UpdateInfo.fromApiJson(
         Map<String, dynamic>.from(res.data as Map),
         currentVersionCode: installed,
+        currentVersionName: installedName,
+        appTitle: 'موظف المبيعات',
       );
       await _syncCache(info, installed);
       if (info.kind == MobileUpdateKind.none) return null;
-      return AppUpdateInfo(
-        forceUpdate: info.mandatory,
-        message: (info.releaseNotes?.isNotEmpty ?? false)
-            ? info.releaseNotes
-            : 'يتوفر الإصدار ${info.latestVersionName}',
-        storeUrl: info.apkUrl,
-        kind: info.kind,
-      );
+      return info;
     } catch (_) {
-      return _fromCache(installed);
+      return _fromCache(installed, installedName);
     }
   }
 
-  Future<bool> openDownload(String url) async {
-    final uri = Uri.tryParse(url);
-    if (uri == null) return false;
-    return launchUrl(uri, mode: LaunchMode.externalApplication);
-  }
-
-  Future<void> _syncCache(MobileUpdateInfo info, int installed) async {
+  Future<void> _syncCache(UpdateInfo info, int installed) async {
     final prefs = await SharedPreferences.getInstance();
     if (info.mandatory && info.canDownload) {
       await prefs.setString(
@@ -70,6 +45,7 @@ class AppVersionDataSource {
           info.latestVersionName,
           info.apkUrl ?? '',
           info.releaseNotes ?? '',
+          info.sha256 ?? '',
         ].join('\u001f'),
       );
       return;
@@ -86,7 +62,7 @@ class AppVersionDataSource {
     if (installed >= required) await prefs.remove(_cacheKey);
   }
 
-  Future<AppUpdateInfo?> _fromCache(int installed) async {
+  Future<UpdateInfo?> _fromCache(int installed, String installedName) async {
     final prefs = await SharedPreferences.getInstance();
     final raw = prefs.getString(_cacheKey);
     if (raw == null) return null;
@@ -97,13 +73,16 @@ class AppVersionDataSource {
     if (required <= 0 || installed >= required || !apk.startsWith('http')) {
       return null;
     }
-    return AppUpdateInfo(
-      forceUpdate: true,
-      message: parts.length > 3 && parts[3].isNotEmpty
-          ? parts[3]
-          : 'يجب تحديث التطبيق للاستمرار (${parts[1]})',
-      storeUrl: apk,
+    return UpdateInfo(
       kind: MobileUpdateKind.mandatory,
+      latestVersionName: parts[1],
+      latestVersionCode: required,
+      currentVersionCode: installed,
+      currentVersionName: installedName,
+      apkUrl: apk,
+      releaseNotes: parts.length > 3 && parts[3].isNotEmpty ? parts[3] : null,
+      sha256: parts.length > 4 && parts[4].isNotEmpty ? parts[4] : null,
+      appTitle: 'موظف المبيعات',
     );
   }
 }

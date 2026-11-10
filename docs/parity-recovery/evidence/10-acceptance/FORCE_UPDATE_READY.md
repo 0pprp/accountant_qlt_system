@@ -1,41 +1,37 @@
-# تحديث إجباري — جاهز للنشر على الإنتاج
+# تحديث إجباري — داخل التطبيق (1.0.2+3)
 
-## تم بالفعل
+## تجربة التطبيق
 
-1. كود `development` مرفوع:
-   - https://github.com/0pprp/accountant_qlt_system/commit/a9942f753fe1c15bb611685f5da56bc8c9a05123
-   - https://github.com/0pprp/accountant_qlt_system/commit/5f7e48e (bump 1.0.1+2)
-2. Release APKs عامة:
-   - https://github.com/0pprp/accountant_qlt_system/releases/tag/mobile-1.0.1-2
+التنزيل والتثبيت داخل التطبيق فقط عبر `qalaat_in_app_update`:
+فحص → شاشة كاملة → تنزيل مع تقدّم → مثبت النظام.
+لا يوجد زر تنزيل عبر المتصفح في المسار الأساسي.
+
+## كود
+
+- فرع `development` يتضمن الحزمة `packages/qalaat_in_app_update`
+- التطبيقات: `delegate` / `sales-employee` / `committee` → **1.0.2+3**
+
+## APK Release
+
+https://github.com/0pprp/accountant_qlt_system/releases/tag/mobile-1.0.2-3
 
 | AppKey | Version | Code | SHA256 | APK |
 |---|---|---|---|---|
-| delegate | 1.0.1 | 2 | `9A3F6BAEFD45473B0484313B53CF11CC195CCF580B34FA7A769975A2C8152568` | [delegate](https://github.com/0pprp/accountant_qlt_system/releases/download/mobile-1.0.1-2/delegate-1.0.1%2B2.apk) |
-| sales-employee | 1.0.1 | 2 | `9B1EF8CDE293830A24E2D0269B9335CBC3CCB2AA0EFC17FCBA306B09CC59F35C` | [sales-employee](https://github.com/0pprp/accountant_qlt_system/releases/download/mobile-1.0.1-2/sales-employee-1.0.1%2B2.apk) |
-| committee | 1.0.1 | 2 | `13D29BDCFBB2A0259D6AAD2BB781413054A6C631BF0F23184492092FF53DFAFD` | [committee](https://github.com/0pprp/accountant_qlt_system/releases/download/mobile-1.0.1-2/committee-1.0.1%2B2.apk) |
+| delegate | 1.0.2 | 3 | `969DE7E0D9B81639E4BD4D6ADE982599C73B4D2EC5BA1FAF8EB2249C7C9ED13D` | [delegate](https://github.com/0pprp/accountant_qlt_system/releases/download/mobile-1.0.2-3/delegate-1.0.2%2B3.apk) |
+| sales-employee | 1.0.2 | 3 | `8E1D492F222729339D156C315AF4C6570FE89719F8137C7F25BC12A61761C81F` | [sales-employee](https://github.com/0pprp/accountant_qlt_system/releases/download/mobile-1.0.2-3/sales-employee-1.0.2%2B3.apk) |
+| committee | 1.0.2 | 3 | `96E4F8A5038636A49D94E96DEA17D19A652293FF1E577AEBD7DC5C74F1E817D6` | [committee](https://github.com/0pprp/accountant_qlt_system/releases/download/mobile-1.0.2-3/committee-1.0.2%2B3.apk) |
 
-## متوقف عند نشر سياسة الإنتاج
+## تفعيل الإنتاج (يحتاج Admin إنتاجي)
 
-محاولة `POST /api/v1/admin/Auth/login` على `api.qalataldhaman.com` ببيانات `AdminData__*` المحلية → **400 اسم/كلمة مرور غير صحيحة**.  
-لا يمكن تفعيل `ForceUpdate=true` على الإنتاج بدون حساب Admin إنتاجي يملك `MobileAppRelease.Publish`.
+`PUT /api/v1/admin/MobileAppReleases/{appKey}` مع:
 
-## أمر التفعيل (بعد توفير توكن إنتاج)
+- `latestVersionCode = 3`
+- `minimumSupportedVersionCode = 3`
+- `forceUpdate = true`
+- `apkUrl` من الجدول أعلاه
+- `sha256` من الجدول أعلاه
 
-```powershell
-$token = "<ACCESS_TOKEN>"
-$headers = @{ Authorization = "Bearer $token" }
-# لكل تطبيق: PUT /api/v1/admin/MobileAppReleases/{appKey}
-$body = @{
-  latestVersionName = "1.0.1"
-  latestVersionCode = 2
-  minimumSupportedVersionCode = 2
-  forceUpdate = $true
-  apkUrl = "https://github.com/0pprp/accountant_qlt_system/releases/download/mobile-1.0.1-2/delegate-1.0.1%2B2.apk"
-  sha256 = "9A3F6BAEFD45473B0484313B53CF11CC195CCF580B34FA7A769975A2C8152568"
-  releaseNotes = "تحديث إجباري 1.0.1+2"
-} | ConvertTo-Json
-Invoke-RestMethod -Method Put -Uri "https://api.qalataldhaman.com/api/v1/admin/MobileAppReleases/delegate" -Headers $headers -ContentType "application/json; charset=utf-8" -Body ([Text.Encoding]::UTF8.GetBytes($body))
-```
+تحقق: `GET /api/v1/app/mobile-updates/{appKey}?currentVersionCode=1`
+→ `forceUpdate=true`, `latestVersionCode=3`, `apkUrl` غير فارغ.
 
-تحقق: `GET https://api.qalataldhaman.com/api/v1/app/mobile-updates/delegate?currentVersionCode=1`  
-المتوقع: `forceUpdate=true`, `latestVersionCode=2`, `apkUrl` غير فارغ.
+> ملاحظة: أول انتقال من نسخة قديمة ما زالت تستخدم المتصفح قد يفتح المثبت عبر المسار القديم مرة واحدة؛ بعد تثبيت 1.0.2+3 تصبح التجربة داخل التطبيق فقط.

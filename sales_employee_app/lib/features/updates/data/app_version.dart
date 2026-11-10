@@ -1,14 +1,15 @@
 import 'package:package_info_plus/package_info_plus.dart';
 
 class AppVersion {
-  static const String name = '1.0.0';
-  static const int code = 1;
+  static const String name = '1.0.2';
+  static const int code = 3;
   static const String appKey = 'sales-employee';
 
   static int? _resolvedCode;
   static String? _resolvedName;
 
   static String get display => '${_resolvedName ?? name} (${_resolvedCode ?? code})';
+  static String get resolvedName => _resolvedName ?? name;
 
   static Future<void> ensureLoaded() async {
     if (_resolvedCode != null) return;
