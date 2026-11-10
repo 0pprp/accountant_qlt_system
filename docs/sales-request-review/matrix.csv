@@ -1,0 +1,41 @@
+section,item,status,notes
+tabs,unassigned-list,Implemented,FE+API; live Schema-blocked until table
+tabs,match-cards,Implemented,unit Tested rules; FE states Arabic
+tabs,prior-accounts,Implemented,MatchRead + optional ReadFinancial
+tabs,duplicate-requests,Implemented,separate from prior accounts
+tabs,customer-overview,Implemented,ReadAuditProfile|MatchRead|Customer.Read
+tabs,customer-accounts,Implemented,per-Order rows; financial via ReadFinancial
+tabs,customer-sales,Implemented,ReadFinancial for amounts
+tabs,customer-documents,Implemented,lazy; ReadAuditDocuments|Attachment.Read
+tabs,customer-shop,Not implemented,partial address exists in API DTO but UI hidden
+tabs,customer-notes,Not implemented,no notes entity — not only schema
+tabs,customer-legal,Not implemented,no IsLegal field
+actions,assign,Implemented,no match-block; concurrency stamp; employee eligibility
+actions,reject,Implemented,no auto-reject on match; concurrency
+actions,request-exception,Implemented,status gates + concurrency
+actions,update-request,Not implemented,no endpoint — CTA omitted
+permissions,outside-All,Implemented,Admin seed only; not in Permissions.All
+permissions,ReadAuditProfile,Implemented,handler+route anyOf
+permissions,ReadAuditDocuments,Implemented,documents section gate
+nav,Sales-SaleRequests-Unassigned,Implemented,parent anyOf; child leaf permission
+sources,Manual,Implemented enum,intake Not implemented (no create endpoint this phase)
+sources,EmployeeSubmitted,Implemented enum,intake Not implemented
+sources,Follower,Implemented enum,intake Not implemented
+sources,Delegate,Implemented enum,intake Not implemented
+sources,ExcelImport,Implemented enum,intake Not implemented
+sources,ExternalCrm,Implemented enum,intake Not implemented — CRM auto-assign out of scope
+tests,matching-rules,Tested,unit
+tests,unassigned-parity,Tested,unit Domain vs query shape
+tests,concurrency-stamp,Tested,unit stamp increments
+tests,batch-limit,Tested,unit declared 50
+tests,return-context,Tested,vitest allowlist
+tests,live-endpoints,Schema-blocked,needs table apply
+tests,responsive-mock-design,Implemented,mock on API error only
+endpoint,GET unassigned,Implemented,ReadUnassigned
+endpoint,POST match-summary,Implemented,MatchRead; batch limit error
+endpoint,GET match-hits,Implemented,MatchRead; server identity
+endpoint,GET duplicate-requests,Implemented,MatchRead
+endpoint,POST assign,Implemented,Assign
+endpoint,POST reject,Implemented,Reject
+endpoint,POST request-exception,Implemented,RequestException
+endpoint,GET audit-profile,Implemented,handler permission contracts

@@ -1,0 +1,122 @@
+﻿{
+    "at":  "2026-11-09T19:17:47.8803219Z",
+    "api":  "http://127.0.0.1:15645",
+    "database":  "qalaat_22_23_iso",
+    "steps":  {
+                  "auth.admin":  {
+                                     "ok":  true,
+                                     "tokenChars":  5652
+                                 },
+                  "auth.probe.follower_iso":  {
+                                                  "ok":  true,
+                                                  "tokenChars":  1241
+                                              },
+                  "auth.probe.mandob_iso":  {
+                                                "ok":  true,
+                                                "tokenChars":  1296
+                                            },
+                  "auth.probe.branch_mgr_iso":  {
+                                                    "ok":  false,
+                                                    "message":  "The remote server returned an error: (400) Bad Request.",
+                                                    "status":  400
+                                                },
+                  "auth.probe.delegate_iso":  {
+                                                  "ok":  false,
+                                                  "message":  "The remote server returned an error: (400) Bad Request.",
+                                                  "status":  400
+                                              },
+                  "auth.probe.sales_iso":  {
+                                               "ok":  false,
+                                               "message":  "The remote server returned an error: (400) Bad Request.",
+                                               "status":  400
+                                           },
+                  "auth.probe.motaba_iso":  {
+                                                "ok":  false,
+                                                "message":  "The remote server returned an error: (400) Bad Request.",
+                                                "status":  400
+                                            },
+                  "auth.probe.noperm_iso":  {
+                                                "ok":  false,
+                                                "message":  "The remote server returned an error: (400) Bad Request.",
+                                                "status":  400
+                                            },
+                  "mod.waivers.list":  {
+                                           "awaiting":  0,
+                                           "items":  0,
+                                           "total":  0
+                                       },
+                  "mod.legalDecisions.list":  {
+                                                  "ok":  false,
+                                                  "message":  null,
+                                                  "status":  404
+                                              },
+                  "mod.priceBoard":  {
+                                         "ok":  true,
+                                         "keys":  "items,totalCount,page,pageSize"
+                                     },
+                  "mod.announcements":  {
+                                            "total":  0,
+                                            "ok":  true
+                                        },
+                  "mod.tutorialVideos":  {
+                                             "total":  0,
+                                             "ok":  true
+                                         },
+                  "mod.appNotes":  {
+                                       "total":  0,
+                                       "ok":  true
+                                   },
+                  "mod.committeeTasks":  {
+                                             "total":  null,
+                                             "ok":  true
+                                         },
+                  "mod.wrongSales":  {
+                                         "total":  1,
+                                         "items":  1
+                                     },
+                  "mod.branchVisits.active":  {
+                                                  "empty":  true,
+                                                  "status":  204
+                                              },
+                  "mod.branchCustomers":  {
+                                              "error":  true,
+                                              "message":  "The remote server returned an error: (404) Not Found.\r\n",
+                                              "status":  404
+                                          },
+                  "mod.branchPayments":  {
+                                             "ok":  false,
+                                             "message":  null,
+                                             "status":  400
+                                         },
+                  "mod.newSales":  {
+                                       "error":  true,
+                                       "message":  "The remote server returned an error: (404) Not Found.\r\n",
+                                       "status":  404
+                                   },
+                  "authz.noToken.waivers":  {
+                                                "denied":  true,
+                                                "status":  401
+                                            },
+                  "waiver.pickOrder":  {
+                                           "orderId":  null,
+                                           "sell":  null,
+                                           "customerId":  null,
+                                           "total":  null,
+                                           "via":  "customers"
+                                       },
+                  "app.notes.write":  {
+                                          "ok":  false,
+                                          "message":  null,
+                                          "status":  404
+                                      },
+                  "app.wrongSale.firstCollectionEval":  {
+                                                            "ok":  false,
+                                                            "message":  null,
+                                                            "status":  400
+                                                        },
+                  "salesRequests.unassigned":  {
+                                                   "total":  6,
+                                                   "ok":  true
+                                               }
+              }
+}

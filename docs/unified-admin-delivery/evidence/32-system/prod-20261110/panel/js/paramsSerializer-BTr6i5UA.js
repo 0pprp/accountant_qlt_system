@@ -1,0 +1,2 @@
+function a(o){const t=new URLSearchParams;return Object.entries(o).forEach(([n,r])=>{n==="sortCriteria"&&Array.isArray(r)?r.forEach((i,f)=>{i&&typeof i=="object"&&Object.entries(i).forEach(([c,s])=>{s!=null&&t.append(`${n}[${f}].${c}`,String(s))})}):n==="filter"&&r&&typeof r=="object"&&!Array.isArray(r)?Object.entries(r).forEach(([i,f])=>{f!=null&&t.append(`filter.${i}`,String(f))}):Array.isArray(r)?r.forEach(i=>{i!=null&&t.append(n,String(i))}):r!=null&&t.append(n,String(r))}),t.toString()}export{a as s};
+//# sourceMappingURL=paramsSerializer-BTr6i5UA.js.map

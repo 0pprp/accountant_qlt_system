@@ -1,0 +1,916 @@
+{
+  "Stages": [
+    [
+      "Stage",
+      "Scope",
+      "Current status",
+      "Next evidence"
+    ],
+    [
+      "01",
+      "هيكل الإدارة وربط الموجود",
+      "Implemented shell; Live-verified screenshots Blocked",
+      "ACCEPTANCE_01.md + modules/Management"
+    ],
+    [
+      "02",
+      "المهام وتبادل الإسناد",
+      "Planned; not implemented by this pack",
+      "Assigned tasks"
+    ],
+    [
+      "03",
+      "الرسائل والشكاوى",
+      "Planned; not implemented by this pack",
+      "Complaints and messages"
+    ],
+    [
+      "04",
+      "زيارات الفرع وتقييم المغادرة",
+      "Planned; not implemented by this pack",
+      "Branch visits"
+    ],
+    [
+      "05",
+      "القرارات القانونية والتنازلات والمبيعات الخاطئة",
+      "Planned; not implemented by this pack",
+      "Legal waiver and wrong-sale decisions"
+    ],
+    [
+      "06",
+      "التقييمات والزبائن المتدنية",
+      "Planned; not implemented by this pack",
+      "Ratings and declining customers"
+    ],
+    [
+      "07",
+      "ربط التطبيقات وقبول الإصدار",
+      "Planned; not implemented by this pack",
+      "Apps and release verification"
+    ]
+  ],
+  "Endpoints": [
+    [
+      "Status",
+      "Method and path",
+      "Authorization and scope",
+      "Source or planned owner"
+    ],
+    [
+      "Existing source",
+      "GET /api/v1/admin/SalesRequests/filter-options",
+      "Inspect handler access and branch scope",
+      "api-main/api-main/src/Api/Controllers/V1/AdminArea/SalesRequestsController.cs"
+    ],
+    [
+      "Existing source",
+      "GET /api/v1/admin/SalesRequests",
+      "Inspect handler access and branch scope",
+      "api-main/api-main/src/Api/Controllers/V1/AdminArea/SalesRequestsController.cs"
+    ],
+    [
+      "Existing source",
+      "GET /api/v1/admin/SalesRequests/counts",
+      "Inspect handler access and branch scope",
+      "api-main/api-main/src/Api/Controllers/V1/AdminArea/SalesRequestsController.cs"
+    ],
+    [
+      "Existing source",
+      "GET /api/v1/admin/SalesRequests/assignable-employees",
+      "Permissions.SalesRequest.Assign",
+      "api-main/api-main/src/Api/Controllers/V1/AdminArea/SalesRequestsController.cs"
+    ],
+    [
+      "Existing source",
+      "GET /api/v1/admin/SalesRequests/unassigned",
+      "Permissions.SalesRequest.ReadUnassigned",
+      "api-main/api-main/src/Api/Controllers/V1/AdminArea/SalesRequestsController.cs"
+    ],
+    [
+      "Existing source",
+      "POST /api/v1/admin/SalesRequests/match-summary",
+      "Permissions.SalesRequest.MatchRead",
+      "api-main/api-main/src/Api/Controllers/V1/AdminArea/SalesRequestsController.cs"
+    ],
+    [
+      "Existing source",
+      "GET /api/v1/admin/SalesRequests/{id:int}",
+      "Inspect handler access and branch scope",
+      "api-main/api-main/src/Api/Controllers/V1/AdminArea/SalesRequestsController.cs"
+    ],
+    [
+      "Existing source",
+      "GET /api/v1/admin/SalesRequests/{id:int}/timeline",
+      "Inspect handler access and branch scope",
+      "api-main/api-main/src/Api/Controllers/V1/AdminArea/SalesRequestsController.cs"
+    ],
+    [
+      "Existing source",
+      "GET /api/v1/admin/SalesRequests/{id:int}/match-hits",
+      "Permissions.SalesRequest.MatchRead",
+      "api-main/api-main/src/Api/Controllers/V1/AdminArea/SalesRequestsController.cs"
+    ],
+    [
+      "Existing source",
+      "GET /api/v1/admin/SalesRequests/{id:int}/duplicate-requests",
+      "Permissions.SalesRequest.MatchRead",
+      "api-main/api-main/src/Api/Controllers/V1/AdminArea/SalesRequestsController.cs"
+    ],
+    [
+      "Existing source",
+      "POST /api/v1/admin/SalesRequests/{id:int}/assign",
+      "Permissions.SalesRequest.Assign",
+      "api-main/api-main/src/Api/Controllers/V1/AdminArea/SalesRequestsController.cs"
+    ],
+    [
+      "Existing source",
+      "POST /api/v1/admin/SalesRequests/{id:int}/reject",
+      "Permissions.SalesRequest.Reject",
+      "api-main/api-main/src/Api/Controllers/V1/AdminArea/SalesRequestsController.cs"
+    ],
+    [
+      "Existing source",
+      "POST /api/v1/admin/SalesRequests/{id:int}/request-exception",
+      "Permissions.SalesRequest.RequestException",
+      "api-main/api-main/src/Api/Controllers/V1/AdminArea/SalesRequestsController.cs"
+    ],
+    [
+      "Existing source",
+      "POST /api/v1/admin/SalesRequests/{id:int}/approve-exception",
+      "Permissions.SalesRequest.ExceptionDecide",
+      "api-main/api-main/src/Api/Controllers/V1/AdminArea/SalesRequestsController.cs"
+    ],
+    [
+      "Existing source",
+      "POST /api/v1/admin/SalesRequests/{id:int}/reject-exception",
+      "Permissions.SalesRequest.ExceptionDecide",
+      "api-main/api-main/src/Api/Controllers/V1/AdminArea/SalesRequestsController.cs"
+    ],
+    [
+      "Existing source",
+      "POST /api/v1/admin/SalesRequests/{id:int}/soft-delete",
+      "Permissions.SalesRequest.SoftDelete",
+      "api-main/api-main/src/Api/Controllers/V1/AdminArea/SalesRequestsController.cs"
+    ],
+    [
+      "Existing source",
+      "POST /api/v1/admin/SalesRequests/{id:int}/restore",
+      "Permissions.SalesRequest.Restore",
+      "api-main/api-main/src/Api/Controllers/V1/AdminArea/SalesRequestsController.cs"
+    ],
+    [
+      "Existing source",
+      "GET /api/v1/admin/SalesFollowup/employees",
+      "Permissions.SalesFollowup.Read",
+      "api-main/api-main/src/Api/Controllers/V1/AdminArea/SalesFollowupController.cs"
+    ],
+    [
+      "Existing source",
+      "GET /api/v1/admin/SalesFollowup/employees/{employeeId:int}",
+      "Permissions.SalesFollowup.Read",
+      "api-main/api-main/src/Api/Controllers/V1/AdminArea/SalesFollowupController.cs"
+    ],
+    [
+      "Existing source",
+      "GET /api/v1/admin/SalesFollowup/employees/{employeeId:int}/app-block",
+      "Permissions.SalesFollowup.Read",
+      "api-main/api-main/src/Api/Controllers/V1/AdminArea/SalesFollowupController.cs"
+    ],
+    [
+      "Existing source",
+      "PUT /api/v1/admin/SalesFollowup/employees/{employeeId:int}/app-block",
+      "Permissions.SalesFollowup.ManageAppBlock",
+      "api-main/api-main/src/Api/Controllers/V1/AdminArea/SalesFollowupController.cs"
+    ],
+    [
+      "Existing source",
+      "POST /api/v1/admin/SalesFollowup/employees/{employeeId:int}/manager-rating",
+      "Permissions.SalesFollowup.UpsertManagerRating",
+      "api-main/api-main/src/Api/Controllers/V1/AdminArea/SalesFollowupController.cs"
+    ],
+    [
+      "Existing source",
+      "POST /api/v1/admin/Users",
+      "Permissions.User.Create",
+      "api-main/api-main/src/Api/Controllers/V1/AdminArea/UsersController.cs"
+    ],
+    [
+      "Existing source",
+      "PUT /api/v1/admin/Users/{id:int}/personal-documents/complete",
+      "Permissions.User.Update",
+      "api-main/api-main/src/Api/Controllers/V1/AdminArea/UsersController.cs"
+    ],
+    [
+      "Existing source",
+      "PUT /api/v1/admin/Users/{id:int}/salary-detail",
+      "Permissions.User.Update",
+      "api-main/api-main/src/Api/Controllers/V1/AdminArea/UsersController.cs"
+    ],
+    [
+      "Existing source",
+      "PUT /api/v1/admin/Users/{id:int}/permissions",
+      "Permissions.User.ManagePermissions",
+      "api-main/api-main/src/Api/Controllers/V1/AdminArea/UsersController.cs"
+    ],
+    [
+      "Existing source",
+      "GET /api/v1/admin/Users/{id:int}/permission-overrides",
+      "Permissions.User.ManagePermissions",
+      "api-main/api-main/src/Api/Controllers/V1/AdminArea/UsersController.cs"
+    ],
+    [
+      "Existing source",
+      "PATCH /api/v1/admin/Users/{id:int}/permission-overrides",
+      "Permissions.User.ManagePermissions",
+      "api-main/api-main/src/Api/Controllers/V1/AdminArea/UsersController.cs"
+    ],
+    [
+      "Existing source",
+      "GET /api/v1/admin/Users/{id:int}",
+      "Permissions.User.Read",
+      "api-main/api-main/src/Api/Controllers/V1/AdminArea/UsersController.cs"
+    ],
+    [
+      "Existing source",
+      "GET /api/v1/admin/Users",
+      "Permissions.User.Read",
+      "api-main/api-main/src/Api/Controllers/V1/AdminArea/UsersController.cs"
+    ],
+    [
+      "Existing source",
+      "GET /api/v1/admin/Users/available-columns",
+      "Permissions.User.Read",
+      "api-main/api-main/src/Api/Controllers/V1/AdminArea/UsersController.cs"
+    ],
+    [
+      "Existing source",
+      "PUT /api/v1/admin/Users/{id:int}",
+      "Permissions.User.Update",
+      "api-main/api-main/src/Api/Controllers/V1/AdminArea/UsersController.cs"
+    ],
+    [
+      "Existing source",
+      "GET /api/v1/admin/Users/{id:int}/daily-installment-report",
+      "Permissions.User.Read",
+      "api-main/api-main/src/Api/Controllers/V1/AdminArea/UsersController.cs"
+    ],
+    [
+      "Existing source",
+      "GET /api/v1/admin/Users/profile",
+      "Permissions.User.Read",
+      "api-main/api-main/src/Api/Controllers/V1/AdminArea/UsersController.cs"
+    ],
+    [
+      "Existing source",
+      "POST /api/v1/admin/Customers",
+      "Permissions.Customer.Create",
+      "api-main/api-main/src/Api/Controllers/V1/AdminArea/CustomersController.cs"
+    ],
+    [
+      "Existing source",
+      "GET /api/v1/admin/Customers",
+      "Permissions.Customer.Read",
+      "api-main/api-main/src/Api/Controllers/V1/AdminArea/CustomersController.cs"
+    ],
+    [
+      "Existing source",
+      "GET /api/v1/admin/Customers/{id:int}",
+      "Permissions.Customer.Read",
+      "api-main/api-main/src/Api/Controllers/V1/AdminArea/CustomersController.cs"
+    ],
+    [
+      "Existing source",
+      "PUT /api/v1/admin/Customers/{id:int}",
+      "Permissions.Customer.Update",
+      "api-main/api-main/src/Api/Controllers/V1/AdminArea/CustomersController.cs"
+    ],
+    [
+      "Existing source",
+      "GET /api/v1/admin/Customers/excel-report",
+      "Permissions.Customer.Read",
+      "api-main/api-main/src/Api/Controllers/V1/AdminArea/CustomersController.cs"
+    ],
+    [
+      "Existing source",
+      "GET /api/v1/admin/Customers/{id:int}/orders",
+      "Permissions.Order.Read",
+      "api-main/api-main/src/Api/Controllers/V1/AdminArea/CustomersController.cs"
+    ],
+    [
+      "Existing source",
+      "GET /api/v1/admin/Customers/{id:int}/audit-profile",
+      "Inspect handler access and branch scope",
+      "api-main/api-main/src/Api/Controllers/V1/AdminArea/CustomersController.cs"
+    ],
+    [
+      "Existing source",
+      "POST /api/v1/admin/Orders",
+      "Permissions.Order.Create",
+      "api-main/api-main/src/Api/Controllers/V1/AdminArea/OrdersController.cs"
+    ],
+    [
+      "Existing source",
+      "PUT /api/v1/admin/Orders/{id:int}",
+      "Permissions.Order.Update",
+      "api-main/api-main/src/Api/Controllers/V1/AdminArea/OrdersController.cs"
+    ],
+    [
+      "Existing source",
+      "PUT /api/v1/admin/Orders/{id:int}/seller-info",
+      "Permissions.Order.Update",
+      "api-main/api-main/src/Api/Controllers/V1/AdminArea/OrdersController.cs"
+    ],
+    [
+      "Existing source",
+      "GET /api/v1/admin/Orders",
+      "Permissions.Order.Read",
+      "api-main/api-main/src/Api/Controllers/V1/AdminArea/OrdersController.cs"
+    ],
+    [
+      "Existing source",
+      "GET /api/v1/admin/Orders/available-columns",
+      "Permissions.Order.Read",
+      "api-main/api-main/src/Api/Controllers/V1/AdminArea/OrdersController.cs"
+    ],
+    [
+      "Existing source",
+      "GET /api/v1/admin/Orders/excel-report",
+      "Permissions.Order.Read",
+      "api-main/api-main/src/Api/Controllers/V1/AdminArea/OrdersController.cs"
+    ],
+    [
+      "Existing source",
+      "GET /api/v1/admin/Orders/{id:int}",
+      "Permissions.Order.Read",
+      "api-main/api-main/src/Api/Controllers/V1/AdminArea/OrdersController.cs"
+    ],
+    [
+      "Existing source",
+      "GET /api/v1/admin/Orders/{id:int}/installment-payments",
+      "Permissions.InstallmentPayment.Read",
+      "api-main/api-main/src/Api/Controllers/V1/AdminArea/OrdersController.cs"
+    ],
+    [
+      "Existing source",
+      "GET /api/v1/admin/Orders/{id:int}/summary",
+      "Permissions.Order.Read",
+      "api-main/api-main/src/Api/Controllers/V1/AdminArea/OrdersController.cs"
+    ],
+    [
+      "Existing source",
+      "PATCH /api/v1/admin/Orders/{id:int}/approval-status",
+      "Permissions.Order.Update",
+      "api-main/api-main/src/Api/Controllers/V1/AdminArea/OrdersController.cs"
+    ],
+    [
+      "Existing source",
+      "POST /api/v1/admin/InstallmentPayments",
+      "Permissions.InstallmentPayment.Create",
+      "api-main/api-main/src/Api/Controllers/V1/AdminArea/InstallmentPaymentsController.cs"
+    ],
+    [
+      "Existing source",
+      "PUT /api/v1/admin/InstallmentPayments/{id:int}",
+      "Permissions.InstallmentPayment.Update",
+      "api-main/api-main/src/Api/Controllers/V1/AdminArea/InstallmentPaymentsController.cs"
+    ],
+    [
+      "Existing source",
+      "GET /api/v1/admin/InstallmentPayments/excel-report",
+      "Permissions.InstallmentPayment.Read",
+      "api-main/api-main/src/Api/Controllers/V1/AdminArea/InstallmentPaymentsController.cs"
+    ],
+    [
+      "Existing source",
+      "DELETE /api/v1/admin/InstallmentPayments/{id:int}",
+      "Permissions.InstallmentPayment.Delete",
+      "api-main/api-main/src/Api/Controllers/V1/AdminArea/InstallmentPaymentsController.cs"
+    ],
+    [
+      "Existing source",
+      "GET /api/v1/admin/Reports/yearly-financial",
+      "Permissions.Report.Read",
+      "api-main/api-main/src/Api/Controllers/V1/AdminArea/ReportsController.cs"
+    ],
+    [
+      "Existing source",
+      "GET /api/v1/admin/Reports/users",
+      "Permissions.Report.Read",
+      "api-main/api-main/src/Api/Controllers/V1/AdminArea/ReportsController.cs"
+    ],
+    [
+      "Existing source",
+      "GET /api/v1/admin/Reports/safe",
+      "Permissions.Report.Read",
+      "api-main/api-main/src/Api/Controllers/V1/AdminArea/ReportsController.cs"
+    ],
+    [
+      "Existing source",
+      "GET /api/v1/admin/Reports/products",
+      "Permissions.Report.Read",
+      "api-main/api-main/src/Api/Controllers/V1/AdminArea/ReportsController.cs"
+    ],
+    [
+      "Existing source",
+      "GET /api/v1/admin/ActivityLogs",
+      "Permissions.ActivityLog.Read",
+      "api-main/api-main/src/Api/Controllers/V1/AdminArea/ActivityLogsController.cs"
+    ],
+    [
+      "Existing source",
+      "GET /api/v1/admin/ActivityLogs/{id:int}",
+      "Permissions.ActivityLog.Read",
+      "api-main/api-main/src/Api/Controllers/V1/AdminArea/ActivityLogsController.cs"
+    ],
+    [
+      "Proposed NOT implemented",
+      "GET /api/v1/admin/ManagementTasks",
+      "Separate action permission; authorized branches; validate resource scope",
+      "Application/ManagementTasks; Api/AdminArea/ManagementTasksController"
+    ],
+    [
+      "Proposed NOT implemented",
+      "POST /api/v1/admin/ManagementTasks",
+      "Separate action permission; authorized branches; validate resource scope",
+      "Application/ManagementTasks; Api/AdminArea/ManagementTasksController"
+    ],
+    [
+      "Proposed NOT implemented",
+      "GET /api/v1/admin/ManagementTasks/{id}",
+      "Separate action permission; authorized branches; validate resource scope",
+      "Application/ManagementTasks; Api/AdminArea/ManagementTasksController"
+    ],
+    [
+      "Proposed NOT implemented",
+      "POST /api/v1/admin/ManagementTasks/{id}/accept",
+      "Separate action permission; authorized branches; validate resource scope",
+      "Application/ManagementTasks; Api/AdminArea/ManagementTasksController"
+    ],
+    [
+      "Proposed NOT implemented",
+      "POST /api/v1/admin/ManagementTasks/{id}/reject",
+      "Separate action permission; authorized branches; validate resource scope",
+      "Application/ManagementTasks; Api/AdminArea/ManagementTasksController"
+    ],
+    [
+      "Proposed NOT implemented",
+      "POST /api/v1/admin/ManagementTasks/{id}/transfer",
+      "Separate action permission; authorized branches; validate resource scope",
+      "Application/ManagementTasks; Api/AdminArea/ManagementTasksController"
+    ],
+    [
+      "Proposed NOT implemented",
+      "POST /api/v1/admin/ManagementTasks/{id}/complete",
+      "Separate action permission; authorized branches; validate resource scope",
+      "Application/ManagementTasks; Api/AdminArea/ManagementTasksController"
+    ],
+    [
+      "Proposed NOT implemented",
+      "POST /api/v1/admin/ManagementTasks/{id}/confirm",
+      "Separate action permission; authorized branches; validate resource scope",
+      "Application/ManagementTasks; Api/AdminArea/ManagementTasksController"
+    ],
+    [
+      "Proposed NOT implemented",
+      "GET /api/v1/admin/ManagementTasks/{id}/attachments/{fileId}",
+      "Separate action permission; authorized branches; validate resource scope",
+      "Application/ManagementTasks; Api/AdminArea/ManagementTasksController"
+    ],
+    [
+      "Proposed NOT implemented",
+      "GET /api/v1/admin/Complaints",
+      "Separate action permission; authorized branches; validate resource scope",
+      "Application/Complaints; Api/AdminArea/ComplaintsController"
+    ],
+    [
+      "Proposed NOT implemented",
+      "GET /api/v1/admin/Complaints/{id}",
+      "Separate action permission; authorized branches; validate resource scope",
+      "Application/Complaints; Api/AdminArea/ComplaintsController"
+    ],
+    [
+      "Proposed NOT implemented",
+      "PUT /api/v1/admin/Complaints/{id}/read",
+      "Separate action permission; authorized branches; validate resource scope",
+      "Application/Complaints; Api/AdminArea/ComplaintsController"
+    ],
+    [
+      "Proposed NOT implemented",
+      "PUT /api/v1/admin/Complaints/read-all",
+      "Separate action permission; authorized branches; validate resource scope",
+      "Application/Complaints; Api/AdminArea/ComplaintsController"
+    ],
+    [
+      "Proposed NOT implemented",
+      "GET /api/v1/admin/BranchVisits",
+      "Separate action permission; authorized branches; validate resource scope",
+      "Application/BranchVisits; Api/AdminArea/BranchVisitsController"
+    ],
+    [
+      "Proposed NOT implemented",
+      "GET /api/v1/admin/BranchVisits/active",
+      "Separate action permission; authorized branches; validate resource scope",
+      "Application/BranchVisits; Api/AdminArea/BranchVisitsController"
+    ],
+    [
+      "Proposed NOT implemented",
+      "POST /api/v1/admin/BranchVisits/open",
+      "Separate action permission; authorized branches; validate resource scope",
+      "Application/BranchVisits; Api/AdminArea/BranchVisitsController"
+    ],
+    [
+      "Proposed NOT implemented",
+      "PUT /api/v1/admin/BranchVisits/{id}/ratings",
+      "Separate action permission; authorized branches; validate resource scope",
+      "Application/BranchVisits; Api/AdminArea/BranchVisitsController"
+    ],
+    [
+      "Proposed NOT implemented",
+      "POST /api/v1/admin/BranchVisits/{id}/depart",
+      "Separate action permission; authorized branches; validate resource scope",
+      "Application/BranchVisits; Api/AdminArea/BranchVisitsController"
+    ],
+    [
+      "Proposed NOT implemented",
+      "GET /api/v1/admin/WaiverRequests",
+      "Separate action permission; authorized branches; validate resource scope",
+      "Application/WaiverRequests; Api/AdminArea/WaiverRequestsController"
+    ],
+    [
+      "Proposed NOT implemented",
+      "POST /api/v1/admin/WaiverRequests",
+      "Separate action permission; authorized branches; validate resource scope",
+      "Application/WaiverRequests; Api/AdminArea/WaiverRequestsController"
+    ],
+    [
+      "Proposed NOT implemented",
+      "PUT /api/v1/admin/WaiverRequests/{id}/decision",
+      "Separate action permission; authorized branches; validate resource scope",
+      "Application/WaiverRequests; Api/AdminArea/WaiverRequestsController"
+    ],
+    [
+      "Proposed NOT implemented",
+      "GET /api/v1/admin/LegalCases",
+      "Separate action permission; authorized branches; validate resource scope",
+      "Application/LegalCases; Api/AdminArea/LegalCasesController"
+    ],
+    [
+      "Proposed NOT implemented",
+      "POST /api/v1/admin/LegalCases",
+      "Separate action permission; authorized branches; validate resource scope",
+      "Application/LegalCases; Api/AdminArea/LegalCasesController"
+    ],
+    [
+      "Proposed NOT implemented",
+      "POST /api/v1/admin/LegalCases/{id}/decisions",
+      "Separate action permission; authorized branches; validate resource scope",
+      "Application/LegalCases; Api/AdminArea/LegalCasesController"
+    ],
+    [
+      "Proposed NOT implemented",
+      "GET /api/v1/admin/WrongSaleReviews",
+      "Separate action permission; authorized branches; validate resource scope",
+      "Application/WrongSaleReviews; Api/AdminArea/WrongSaleReviewsController"
+    ],
+    [
+      "Proposed NOT implemented",
+      "POST /api/v1/admin/WrongSaleReviews/{id}/review",
+      "Separate action permission; authorized branches; validate resource scope",
+      "Application/WrongSaleReviews; Api/AdminArea/WrongSaleReviewsController"
+    ],
+    [
+      "Proposed NOT implemented",
+      "GET /api/v1/admin/ManagementReports/catalog",
+      "Separate action permission; authorized branches; validate resource scope",
+      "Application/ManagementReports; Api/AdminArea/ManagementReportsController"
+    ],
+    [
+      "Proposed NOT implemented",
+      "GET /api/v1/admin/ManagementReports/trend",
+      "Separate action permission; authorized branches; validate resource scope",
+      "Application/ManagementReports; Api/AdminArea/ManagementReportsController"
+    ],
+    [
+      "Proposed NOT implemented",
+      "GET /api/v1/admin/ManagementReports/branch-month",
+      "Separate action permission; authorized branches; validate resource scope",
+      "Application/ManagementReports; Api/AdminArea/ManagementReportsController"
+    ],
+    [
+      "Proposed NOT implemented",
+      "GET /api/v1/admin/ManagementReports/declining-customers",
+      "Separate action permission; authorized branches; validate resource scope",
+      "Application/ManagementReports; Api/AdminArea/ManagementReportsController"
+    ],
+    [
+      "Proposed NOT implemented",
+      "GET /api/v1/admin/ManagementReports/decline-alerts/{id}",
+      "Separate action permission; authorized branches; validate resource scope",
+      "Application/ManagementReports; Api/AdminArea/ManagementReportsController"
+    ],
+    [
+      "Proposed NOT implemented",
+      "PUT /api/v1/admin/ManagementReports/decline-alerts/{id}/read",
+      "Separate action permission; authorized branches; validate resource scope",
+      "Application/ManagementReports; Api/AdminArea/ManagementReportsController"
+    ],
+    [
+      "Proposed NOT implemented",
+      "POST /api/v1/app/Complaints",
+      "Authenticated submitter or assignee from session",
+      "AppArea controllers"
+    ],
+    [
+      "Proposed NOT implemented",
+      "GET /api/v1/app/ManagementTasks/inbox",
+      "Authenticated submitter or assignee from session",
+      "AppArea controllers"
+    ]
+  ],
+  "FileMap": [
+    [
+      "State",
+      "Path relative to repository",
+      "Responsibility",
+      "Action"
+    ],
+    [
+      "Existing",
+      "panel-admin-main/panel-admin-main/src/modules/Core/navigation/navigation.registry.ts",
+      "Menu registration and access requirements",
+      "Reuse; do not duplicate"
+    ],
+    [
+      "Existing",
+      "panel-admin-main/panel-admin-main/src/modules/Core/components/layout/TheSideBar/TheSideBar.vue",
+      "Sidebar parent and children rendering",
+      "Reuse; do not duplicate"
+    ],
+    [
+      "Existing",
+      "panel-admin-main/panel-admin-main/src/modules/Core/access/resolveRouteAccess.ts",
+      "Route access before mounting business views",
+      "Reuse; do not duplicate"
+    ],
+    [
+      "Existing",
+      "panel-admin-main/panel-admin-main/src/modules/User/components/UserForms/PowersForm/PowersForm.vue",
+      "Allow Deny Inherit draft and concurrency",
+      "Reuse; do not duplicate"
+    ],
+    [
+      "Existing",
+      "panel-admin-main/panel-admin-main/src/modules/SalesRequests/components/RequestFilters.vue",
+      "Account branch filter and search icon",
+      "Reuse; do not duplicate"
+    ],
+    [
+      "Existing",
+      "panel-admin-main/panel-admin-main/src/assets/styles/components/choice.css",
+      "Shared Select and MultiSelect design",
+      "Reuse; do not duplicate"
+    ],
+    [
+      "Existing",
+      "api-main/api-main/src/Application/Users/Common/UserAssignmentGuard.cs",
+      "Protected role and branch assignments",
+      "Reuse; do not duplicate"
+    ],
+    [
+      "Existing",
+      "api-main/api-main/src/Application/SalesRequests/Common/SalesRequestAdminQuery.cs",
+      "Sales request query authorization",
+      "Reuse; do not duplicate"
+    ],
+    [
+      "Existing",
+      "panel-admin-main/panel-admin-main/src/modules/SalesFollowup/views/SalesFollowupBoard.vue",
+      "Existing sales employee evaluation board",
+      "Reuse; do not duplicate"
+    ],
+    [
+      "Proposed",
+      "api-main/api-main/src/Domain/Entities/ManagementTasks",
+      "State transitions and invariants",
+      "Create only in owning stage; actual class names in stage documentation"
+    ],
+    [
+      "Proposed",
+      "api-main/api-main/src/Application/ManagementTasks",
+      "Queries commands validators access",
+      "Create only in owning stage; actual class names in stage documentation"
+    ],
+    [
+      "Proposed",
+      "api-main/api-main/src/Infrastructure/Persistence/EntityTypeConfigurations/ManagementTasks",
+      "Mappings indexes concurrency",
+      "Create only in owning stage; actual class names in stage documentation"
+    ],
+    [
+      "Proposed",
+      "api-main/api-main/src/Api/Controllers/V1/AdminArea/ManagementTasks",
+      "HTTP contracts only",
+      "Create only in owning stage; actual class names in stage documentation"
+    ],
+    [
+      "Proposed",
+      "api-main/api-main/src/Domain/Entities/Complaints",
+      "State transitions and invariants",
+      "Create only in owning stage; actual class names in stage documentation"
+    ],
+    [
+      "Proposed",
+      "api-main/api-main/src/Application/Complaints",
+      "Queries commands validators access",
+      "Create only in owning stage; actual class names in stage documentation"
+    ],
+    [
+      "Proposed",
+      "api-main/api-main/src/Infrastructure/Persistence/EntityTypeConfigurations/Complaints",
+      "Mappings indexes concurrency",
+      "Create only in owning stage; actual class names in stage documentation"
+    ],
+    [
+      "Proposed",
+      "api-main/api-main/src/Api/Controllers/V1/AdminArea/Complaints",
+      "HTTP contracts only",
+      "Create only in owning stage; actual class names in stage documentation"
+    ],
+    [
+      "Proposed",
+      "api-main/api-main/src/Domain/Entities/BranchVisits",
+      "State transitions and invariants",
+      "Create only in owning stage; actual class names in stage documentation"
+    ],
+    [
+      "Proposed",
+      "api-main/api-main/src/Application/BranchVisits",
+      "Queries commands validators access",
+      "Create only in owning stage; actual class names in stage documentation"
+    ],
+    [
+      "Proposed",
+      "api-main/api-main/src/Infrastructure/Persistence/EntityTypeConfigurations/BranchVisits",
+      "Mappings indexes concurrency",
+      "Create only in owning stage; actual class names in stage documentation"
+    ],
+    [
+      "Proposed",
+      "api-main/api-main/src/Api/Controllers/V1/AdminArea/BranchVisits",
+      "HTTP contracts only",
+      "Create only in owning stage; actual class names in stage documentation"
+    ],
+    [
+      "Proposed",
+      "api-main/api-main/src/Domain/Entities/WaiverRequests",
+      "State transitions and invariants",
+      "Create only in owning stage; actual class names in stage documentation"
+    ],
+    [
+      "Proposed",
+      "api-main/api-main/src/Application/WaiverRequests",
+      "Queries commands validators access",
+      "Create only in owning stage; actual class names in stage documentation"
+    ],
+    [
+      "Proposed",
+      "api-main/api-main/src/Infrastructure/Persistence/EntityTypeConfigurations/WaiverRequests",
+      "Mappings indexes concurrency",
+      "Create only in owning stage; actual class names in stage documentation"
+    ],
+    [
+      "Proposed",
+      "api-main/api-main/src/Api/Controllers/V1/AdminArea/WaiverRequests",
+      "HTTP contracts only",
+      "Create only in owning stage; actual class names in stage documentation"
+    ],
+    [
+      "Proposed",
+      "api-main/api-main/src/Domain/Entities/LegalCases",
+      "State transitions and invariants",
+      "Create only in owning stage; actual class names in stage documentation"
+    ],
+    [
+      "Proposed",
+      "api-main/api-main/src/Application/LegalCases",
+      "Queries commands validators access",
+      "Create only in owning stage; actual class names in stage documentation"
+    ],
+    [
+      "Proposed",
+      "api-main/api-main/src/Infrastructure/Persistence/EntityTypeConfigurations/LegalCases",
+      "Mappings indexes concurrency",
+      "Create only in owning stage; actual class names in stage documentation"
+    ],
+    [
+      "Proposed",
+      "api-main/api-main/src/Api/Controllers/V1/AdminArea/LegalCases",
+      "HTTP contracts only",
+      "Create only in owning stage; actual class names in stage documentation"
+    ],
+    [
+      "Proposed",
+      "api-main/api-main/src/Domain/Entities/WrongSaleReviews",
+      "State transitions and invariants",
+      "Create only in owning stage; actual class names in stage documentation"
+    ],
+    [
+      "Proposed",
+      "api-main/api-main/src/Application/WrongSaleReviews",
+      "Queries commands validators access",
+      "Create only in owning stage; actual class names in stage documentation"
+    ],
+    [
+      "Proposed",
+      "api-main/api-main/src/Infrastructure/Persistence/EntityTypeConfigurations/WrongSaleReviews",
+      "Mappings indexes concurrency",
+      "Create only in owning stage; actual class names in stage documentation"
+    ],
+    [
+      "Proposed",
+      "api-main/api-main/src/Api/Controllers/V1/AdminArea/WrongSaleReviews",
+      "HTTP contracts only",
+      "Create only in owning stage; actual class names in stage documentation"
+    ],
+    [
+      "Proposed",
+      "api-main/api-main/src/Domain/Entities/ManagementReports",
+      "State transitions and invariants",
+      "Create only in owning stage; actual class names in stage documentation"
+    ],
+    [
+      "Proposed",
+      "api-main/api-main/src/Application/ManagementReports",
+      "Queries commands validators access",
+      "Create only in owning stage; actual class names in stage documentation"
+    ],
+    [
+      "Proposed",
+      "api-main/api-main/src/Infrastructure/Persistence/EntityTypeConfigurations/ManagementReports",
+      "Mappings indexes concurrency",
+      "Create only in owning stage; actual class names in stage documentation"
+    ],
+    [
+      "Proposed",
+      "api-main/api-main/src/Api/Controllers/V1/AdminArea/ManagementReports",
+      "HTTP contracts only",
+      "Create only in owning stage; actual class names in stage documentation"
+    ]
+  ],
+  "Acceptance": [
+    [
+      "Check",
+      "Required result",
+      "Evidence",
+      "Status"
+    ],
+    [
+      "API scopes",
+      "401/403 and A/B isolation",
+      "Relational and live clone tests",
+      "Required"
+    ],
+    [
+      "State conflicts",
+      "409 and no double effect",
+      "Concurrent commands",
+      "Required"
+    ],
+    [
+      "Finance",
+      "Ledger and totals consistent",
+      "Stage 05 reference matrix + clone",
+      "Not implemented"
+    ],
+    [
+      "Migration",
+      "No pending model changes",
+      "Formal migration + clone + backup",
+      "Per stage"
+    ],
+    [
+      "Mobile",
+      "Physical target cycle",
+      "Device recording and API evidence",
+      "Not verified"
+    ],
+    [
+      "UI",
+      "360/768/1440 and locked tabs",
+      "Browser screenshots",
+      "Per stage"
+    ],
+    [
+      "Search icon",
+      "Preserve field background",
+      "RequestFilters.vue diff",
+      "Implemented locally; not yet deployed in this pack"
+    ],
+    [
+      "Time window",
+      "4h is planning constraint, not completion evidence",
+      "Prioritize source-backed path",
+      "No completeness promise"
+    ]
+  ]
+}

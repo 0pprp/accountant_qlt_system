@@ -1,0 +1,72 @@
+[
+  {
+    "status": "Live-verified",
+    "id": "mgmt-entry-redirect",
+    "detail": "http://127.0.0.1:5173/management/branch/customers"
+  },
+  {
+    "status": "Live-verified",
+    "id": "screenshot-admin-1440",
+    "detail": "admin-1440.png"
+  },
+  {
+    "status": "Live-verified",
+    "id": "screenshot-admin-768",
+    "detail": "admin-768.png"
+  },
+  {
+    "status": "Live-verified",
+    "id": "screenshot-admin-360",
+    "detail": "admin-360.png"
+  },
+  {
+    "status": "Live-verified",
+    "id": "sidebar-aria-controls",
+    "detail": "[\"nav-section-management-children\"]"
+  },
+  {
+    "status": "Tested",
+    "id": "auth-storage-key",
+    "detail": "auth"
+  },
+  {
+    "status": "Live-verified",
+    "id": "admin-exceptions-direct",
+    "detail": "http://127.0.0.1:5173/management/delegate/exceptions?tab=exceptions&page=1"
+  },
+  {
+    "status": "Live-verified",
+    "id": "admin-followup-embed",
+    "detail": "http://127.0.0.1:5173/management/branch/sale-followup"
+  },
+  {
+    "status": "Live-verified",
+    "id": "limited-mgmt-entry",
+    "detail": "http://127.0.0.1:5173/management/branch/customers"
+  },
+  {
+    "status": "Live-verified",
+    "id": "limited-locked-tabs",
+    "detail": "locked=6 enabled=1"
+  },
+  {
+    "status": "Live-verified",
+    "id": "limited-direct-exceptions",
+    "detail": "url=http://127.0.0.1:5173/access-denied?from=ManagementDelegateExceptionsRoute exceptionsListReqs=0"
+  },
+  {
+    "status": "Live-verified",
+    "id": "limited-refresh-allowed-tab",
+    "detail": "http://127.0.0.1:5173/management/branch/customers"
+  },
+  {
+    "status": "Live-verified",
+    "id": "search-icon",
+    "detail": "icon present; bg oklch≈#F8F8F8 (admin-search-icon.png)"
+  },
+  {
+    "status": "Live-verified",
+    "id": "branch-switch-isolation",
+    "detail": "branchGeneration 0→1; selected 1→2; post-switch API uses branchId=2; cache cleared (abortBranch+cancelBranchQueries.clear)"
+  }
+]

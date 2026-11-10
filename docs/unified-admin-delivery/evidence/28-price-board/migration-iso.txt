@@ -1,0 +1,4 @@
+Migration: 20261109174512_PriceBoardAndAnnouncements
+Target: Host=localhost Database=qalaat_22_23_iso
+Result: Done — PriceBoardEntries + Announcements
+Note: Schema only. Not API-live.

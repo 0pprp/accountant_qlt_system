@@ -1,0 +1,36 @@
+﻿
+{"ok":true,"step":"login_admin","snippet":"{\"accessToken\":\"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiIxYWJjMDNkMy1mMWY2LTQwMjgtOGVkNi1mMmE4NjNmYmQ4NGYiLCJpYXQiOiIxNzkzODI3ODk5IiwiaHR0cDovL3NjaGVtYXMueG1sc29hcC5vcmcvd3M","status":200}
+{"ok":true,"step":"create_emp_a_04f","snippet":"{\"id\":3}","status":200}
+{"ok":true,"step":"create_emp_b_04f","snippet":"{\"id\":4}","status":200}
+{"idsOut":["3,emp_a_04f","4,emp_b_04f"],"step":"user_ids_raw"}
+{"empAId":"3","step":"user_ids","empBId":"4"}
+{"seedOut":["qalaat_04f_sales_verify","INSERT 0 1","3","INSERT 0 1"],"step":"seed_sales_request"}
+{"ok":false,"step":"assign_to_A","body":"{\"errors\":[{\"message\":\"الموظف غير صالح للإسناد\",\"code\":\"SalesRequest_Invalid_Employee\"}],\"status\":400,\"type\":\"https://tools.ietf.org/html/rfc7231#section-6.5.1\"}","status":400}
+{"ok":true,"step":"login_emp_a_04f","snippet":"{\"accessToken\":\"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiJhZTYxNWE5OC0xMDIwLTQ2ZTAtYTQyYy1jNzFhZDA1YmNhYTEiLCJpYXQiOiIxNzkzODI3OTAwIiwiaHR0cDovL3NjaGVtYXMueG1sc29hcC5vcmcvd3M","status":200}
+{"ok":true,"step":"login_emp_b_04f","snippet":"{\"accessToken\":\"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiJjNzA4OTQ0My05OGI3LTQxZjctOGMxMS0wNDdiMDhjNzM5ODYiLCJpYXQiOiIxNzkzODI3OTAwIiwiaHR0cDovL3NjaGVtYXMueG1sc29hcC5vcmcvd3M","status":200}
+{"ok":true,"step":"A_incoming","body":"[]","status":200}
+{"ok":true,"step":"B_incoming_should_empty","body":"[]","status":200}
+{"ok":false,"step":"view","body":"{\"errors\":[{\"message\":\"الطلب غير مملوك للموظف الحالي\",\"code\":\"SalesRequest_Not_Owner\"}],\"status\":400,\"type\":\"https://tools.ietf.org/html/rfc7231#section-6.5.1\"}","status":400}
+{"ok":false,"step":"prepare","body":"{\"errors\":[{\"message\":\"الطلب غير مملوك للموظف الحالي\",\"code\":\"SalesRequest_Not_Owner\"}],\"status\":400,\"type\":\"https://tools.ietf.org/html/rfc7231#section-6.5.1\"}","status":400}
+{"ok":true,"step":"admin_counts_after_prepare","body":"{\"tabs\":[{\"tab\":\"unassigned\",\"label\":\"غير المسند\",\"count\":2},{\"tab\":\"incoming\",\"label\":\"طلبات البيع\",\"count\":1},{\"tab\":\"prepared\",\"label\":\"جاهز للبيع\",\"count\":0},{\"tab\":\"inspected\",\"label\":\"تم الكشف\",\"count\":0},{\"tab\":\"pending\",\"label\":\"معلقة\",\"count\":0},{\"tab\":\"rejected\",\"label\":\"مرفوض\",\"count\":0},{\"tab\":\"sold\",\"label\":\"تم البيع\",\"count\":0},{\"tab\":\"all\",\"label\":\"الكل\",\"count\":3}],\"allowedTabs\":[\"unassigned\",\"incoming\",\"prepared\",\"inspected\",\"pending\",\"rejected\",\"sold\"],\"extraViews\":[{\"tab\":\"sent\",\"label\":\"الطلبات المرسلة\",\"count\":0,\"overlapping\":true,\"includedInAll\":false,\"caveat\":\"no_ingestion_path_wired\"},{\"tab\":\"exceptions\",\"label\":\"الاستثناءات\",\"count\":0,\"overlapping\":true,\"includedInAll\":false,\"caveat\":null},{\"tab\":\"deleted\",\"label\":\"المحذوفة\",\"count\":0,\"overlapping\":true,\"includedIn"}
+{"ok":true,"step":"admin_detail_after_prepare","body":"{\"id\":3,\"customerName\":\"04F Live Customer\",\"customerPhone\":\"07701112233\",\"sourceType\":0,\"sourceTypeLabel\":\"إدخال يدوي\",\"originalExternalId\":null,\"branchId\":1,\"branchName\":\"??? ??????\",\"provinceId\":null,\"provinceName\":null,\"status\":0,\"statusLabel\":\"غير مسند\",\"tabKey\":\"unassigned\",\"targetEmployeeId\":null,\"targetEmployeeName\":null,\"linkedOrderId\":null,\"existingCustomerId\":4,\"createdAt\":\"2026-11-04T21:31:40.383833+00:00\",\"statusChangedAtUtc\":null,\"lastStatusNote\":null,\"rejectReason\":null,\"createdByName\":null,\"concurrencyStamp\":0,\"isDeleted\":false,\"deletedAtUtc\":null,\"deleteReason\":null,\"exceptionState\":null,\"exceptionDecidedAtUtc\":null,\"exceptionConsumedAtUtc\":null,\"isSentSource\":false}"}
+{"ok":true,"step":"admin_timeline_after_prepare","body":"[]"}
+{"ok":false,"step":"inspect","body":"{\"errors\":[{\"message\":\"الطلب غير مملوك للموظف الحالي\",\"code\":\"SalesRequest_Not_Owner\"}],\"status\":400,\"type\":\"https://tools.ietf.org/html/rfc7231#section-6.5.1\"}","status":400}
+{"ok":false,"step":"ensure_draft_1","body":"{\"errors\":[{\"message\":\"الطلب غير مملوك للموظف الحالي\",\"code\":\"SalesRequest_Not_Owner\"}],\"status\":400,\"type\":\"https://tools.ietf.org/html/rfc7231#section-6.5.1\"}","status":400}
+{"ok":false,"step":"ensure_draft_2","body":"{\"errors\":[{\"message\":\"الطلب غير مملوك للموظف الحالي\",\"code\":\"SalesRequest_Not_Owner\"}],\"status\":400,\"type\":\"https://tools.ietf.org/html/rfc7231#section-6.5.1\"}","status":400}
+{"linkedCheck":["3||0","0"],"step":"linked_order_idempotency"}
+{"ok":false,"step":"reassign_to_B","body":"{\"errors\":[{\"message\":\"الموظف غير صالح للإسناد\",\"code\":\"SalesRequest_Invalid_Employee\"}],\"status\":400,\"type\":\"https://tools.ietf.org/html/rfc7231#section-6.5.1\"}","status":400}
+{"ok":false,"step":"A_after_reassign_blocked","body":"{\"errors\":[{\"message\":\"الطلب غير مملوك للموظف الحالي\",\"code\":\"SalesRequest_Not_Owner\"}],\"status\":400,\"type\":\"https://tools.ietf.org/html/rfc7231#section-6.5.1\"}","status":400}
+{"body":"[]","step":"A_incoming_after_reassign"}
+{"step":"B_tabs_after_reassign","prepared":"[]","inspected":"[]","incoming":"[]"}
+{"exId":"4","step":"exception_request_id"}
+{"ok":true,"step":"request_exception","body":[],"status":200}
+{"ok":false,"step":"approve_exception","body":"{\"errors\":[{\"message\":\"لا يجوز لطالب الاستثناء الموافقة عليه بنفسه\",\"code\":\"SalesRequest_Exception_Self_Approval\"}],\"status\":400,\"type\":\"https://tools.ietf.org/html/rfc7231#section-6.5.1\"}","status":400}
+{"ok":true,"step":"exception_detail","body":"{\"id\":4,\"customerName\":\"04F Ex Customer\",\"customerPhone\":\"07701112233\",\"sourceType\":0,\"sourceTypeLabel\":\"إدخال يدوي\",\"originalExternalId\":null,\"branchId\":1,\"branchName\":\"??? ??????\",\"provinceId\":null,\"provinceName\":null,\"status\":0,\"statusLabel\":\"غير مسند\",\"tabKey\":\"unassigned\",\"targetEmployeeId\":null,\"targetEmployeeName\":null,\"linkedOrderId\":null,\"existingCustomerId\":4,\"createdAt\":\"2026-11-04T21:31:41.047663+00:00\",\"statusChangedAtUtc\":null,\"lastStatusNote\":null,\"rejectReason\":\"need exception\",\"createdByName\":null,\"concurrencyStamp\":1,\"isDeleted\":false,\"deletedAtUtc\":null,\"deleteReason\":null,\""}
+{"ok":true,"step":"soft_delete","body":[],"status":200}
+{"ok":true,"step":"restore","body":[],"status":200}
+{"ok":true,"step":"deleted_tab","body":"{\"items\":[],\"pageIndex\":1,\"pageSize\":20,\"totalCount\":0}"}
+{"ok":true,"step":"sent_tab","body":"{\"items\":[],\"pageIndex\":1,\"pageSize\":20,\"totalCount\":0}"}
+{"ok":false,"step":"legal_tab","body":"{\"errors\":[{\"message\":\"هذا العرض غير منفَّذ بعد\",\"code\":\"SalesRequest_Tab_Not_Implemented\"}],\"status\":400,\"type\":\"https://tools.ietf.org/html/rfc7231#section-6.5.1\"}","status":400}
+{"step":"parse_linked_order","linkedOrderId":"","firstLine":"3||0"}
+{"step":"DONE","empAId":"3","delId":"5","reqId":"3","exId":"4","empBId":"4"}

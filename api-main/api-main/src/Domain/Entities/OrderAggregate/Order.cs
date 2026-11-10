@@ -1,4 +1,4 @@
-﻿using Domain.Common;
+using Domain.Common;
 using Domain.Entities.AttachmentAggregate;
 using Domain.Entities.BranchAggregate;
 using Domain.Entities.CustomerAggregate;
@@ -103,6 +103,10 @@ public class Order : AuditableEntity
     public OrderApprovalStatus ApprovalStatus { get; set; }
     public SalesWorkflowStatus WorkflowStatus { get; set; }
     public string? WorkflowChangeReason { get; set; }
+    /// <summary>وقت إكمال البيع (Workflow=Sold) — أساس ترتيب NewSales للفرع.</summary>
+    public DateTimeOffset? SalesCompletedAtUtc { get; private set; }
+    /// <summary>قراءة مشتركة لصندوق مبيعات الفرع (ليست لكل مستخدم) — لا تغيّر حالة البيع.</summary>
+    public DateTimeOffset? BranchManagerReadAtUtc { get; private set; }
     public int? SellerId { get; set; }
     public int CustomerId { get; set; }
     public int BranchId { get; set; }
@@ -140,6 +144,7 @@ public class Order : AuditableEntity
         SaleTime = saleTime;
         Step = OrderStep.Completed;
         WorkflowStatus = SalesWorkflowStatus.Sold;
+        SalesCompletedAtUtc ??= DateTimeOffset.UtcNow;
 
         if (firstInstallmentPayment is not null)
             InstallmentPayments.Add(firstInstallmentPayment);
@@ -160,15 +165,27 @@ public class Order : AuditableEntity
             Step = OrderStep.SellerInfo;
     }
 
-    public void CompleteSalesWorkflow()
+    public void CompleteSalesWorkflow(DateTimeOffset? completedAtUtc = null)
     {
         WorkflowStatus = SalesWorkflowStatus.Sold;
         Step = OrderStep.Completed;
+        SalesCompletedAtUtc ??= completedAtUtc ?? DateTimeOffset.UtcNow;
+    }
+
+    /// <summary>تعليمليم مقروء لصندوق الفرع — idempotent؛ لا يمس Approval/Workflow.</summary>
+    public bool MarkBranchManagerRead(DateTimeOffset atUtc)
+    {
+        if (WorkflowStatus != SalesWorkflowStatus.Sold)
+            return false;
+        if (BranchManagerReadAtUtc is not null)
+            return false;
+        BranchManagerReadAtUtc = atUtc;
+        return true;
     }
 
     public void TransferSalesWorkflow(SalesWorkflowStatus target, string? reason)
     {
-        if (target is SalesWorkflowStatus.Rejected or SalesWorkflowStatus.OnHold)
+        if (target is SalesWorkflowStatus.Rejected or SalesWorkflowStatus.OnHold or SalesWorkflowStatus.Ready)
         {
             if (string.IsNullOrWhiteSpace(reason))
                 throw new ArgumentException("Reason is required for this status.", nameof(reason));

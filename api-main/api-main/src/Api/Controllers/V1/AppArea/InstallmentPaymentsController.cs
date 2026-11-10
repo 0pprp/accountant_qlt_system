@@ -71,7 +71,7 @@ public class InstallmentPaymentsController : ApiController
 
     [HasPermission(Permissions.InstallmentPayment.Create)]
     [HttpPost("sync")]
-    public async Task<ActionResult> Sync([FromBody] SyncInstallmentPaymentsDto dto)
+    public async Task<ActionResult<SyncInstallmentPaymentsResultDto>> Sync([FromBody] SyncInstallmentPaymentsDto dto)
     {
         var command = new SyncInstallmentPaymentsCommand
         {

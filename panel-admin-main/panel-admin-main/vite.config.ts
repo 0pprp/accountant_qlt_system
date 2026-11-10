@@ -10,6 +10,14 @@ export default defineConfig({
   server: {
     host: '0.0.0.0',
     port: 8080,
+    // 04G: proxy Hub محليًا (same-origin) — لا يوسّع CORS؛ للـAPI المعزول فقط
+    proxy: {
+      '/hubs': {
+        target: process.env.VITE_API_PROXY_TARGET || 'http://127.0.0.1:4200',
+        changeOrigin: true,
+        ws: true,
+      },
+    },
   },
   preview: {
     allowedHosts : ['panel.qalataldhaman.com'],

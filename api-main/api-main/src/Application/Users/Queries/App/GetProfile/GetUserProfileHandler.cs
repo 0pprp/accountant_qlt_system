@@ -45,7 +45,8 @@ public class GetUserProfileHandler : IRequestHandler<GetUserProfileQuery, Result
                     ? new OrderListDto
                     {
                         Id = x.OrderListAsMandob!.Id,
-                        Name = x.OrderListAsMandob.Name
+                        Name = x.OrderListAsMandob.Name,
+                        FollowerCollectionEnabled = x.OrderListAsMandob.FollowerCollectionEnabled
                     }
                     : null
             })

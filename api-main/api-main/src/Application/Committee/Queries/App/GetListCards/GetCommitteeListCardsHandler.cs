@@ -33,7 +33,7 @@ public class GetCommitteeListCardsHandler
                 x.Name,
                 MandobName = x.Mandob!.FullName,
                 ActiveCustomers = x.Orders.Count(o => o.ExecutionStatus == OrderExecutionStatus.InProgress),
-                CollectionEnabled = x.Orders.Any(o => o.ExecutionStatus == OrderExecutionStatus.InProgress),
+                CollectionEnabled = x.FollowerCollectionEnabled,
                 CurrentPaid = x.Orders
                     .Where(o => o.ExecutionStatus == OrderExecutionStatus.InProgress)
                     .SelectMany(o => o.InstallmentPayments)

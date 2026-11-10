@@ -1,0 +1,24 @@
+- generic [ref=f1e5]:
+  - generic:
+    - generic:
+      - generic:
+        - generic:
+          - generic:
+            - generic:
+              - button "رجوع" [active] [ref=f1e204]
+              - heading "إتمام البيع — 5) المراجعة" [level=2] [ref=f1e205]
+            - progressbar "100" [ref=f1e206]
+            - generic:
+              - group:
+                - generic [ref=f1e207]: مراجعة قبل الإقرار
+                - generic [ref=f1e209]: "المحل: محل 13 — بقالة"
+                - generic [ref=f1e210]: "المساحة: 4 × 3 | GPS: 33.3152, 44.3661"
+                - generic [ref=f1e211]: "الزبون: 04F Live Customer | 07704445566 | بغداد"
+                - generic [ref=f1e212]: "القائمة/المندوب: قائمة موظف A"
+                - generic [ref=f1e213]: "المنتجات: 1"
+                - generic [ref=f1e214]: "الإجمالي: 1350000 | القسط: 13000 | المقدمة: 67500"
+                - generic [ref=f1e215]: "مستندات الزبون: 0 | صورة محل: نعم"
+                - generic [ref=f1e217]: «تم البيع» يغلق الطلب في صندوق تم البيع. «تم الكشف» يحفظ التقدّم دون إغلاق.
+            - button "تم الكشف (حفظ بلا إغلاق)" [ref=f1e218]
+            - button "السابق" [ref=f1e219]
+            - button "تم البيع" [ref=f1e220]

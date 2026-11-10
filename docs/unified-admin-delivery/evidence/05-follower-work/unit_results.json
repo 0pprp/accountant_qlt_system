@@ -1,0 +1,24 @@
+{
+  "batch": "05-follower-work-shell",
+  "date": "2026-11-08",
+  "api": {
+    "filter": "FullyQualifiedName~FollowerWork",
+    "passed": 16,
+    "failed": 0
+  },
+  "ui": {
+    "suites": [
+      "navigation.registry.test.ts",
+      "sections.access.test.ts",
+      "FollowerWork/domain/__tests__/sections.test.ts",
+      "FollowerWork/composables/__tests__/useFollowerReturnContext.test.ts"
+    ],
+    "passed": 21,
+    "failed": 0
+  },
+  "sectionsStatus": {
+    "shell": "ready",
+    "eightChildren": "not_implemented"
+  },
+  "liveScreenshots": "pending_isolated_db"
+}

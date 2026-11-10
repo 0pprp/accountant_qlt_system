@@ -1,0 +1,8 @@
+dotnet test --filter "FullyQualifiedName~CommitteeTasks|FullyQualifiedName~AppNotes"
+Passed: 16, Failed: 0 (includes 24+25)
+API build: succeeded
+Panel vue-tsc --noEmit: exit 0
+Migration: 20261109170117_CommitteeTasksAndAppNotes
+API-live: Missing — Docker Desktop engine unavailable; psql not on PATH; no iso DB reachable this session
+Browser-live: Missing — panel/API not running
+Device-verified: Missing — TasksPage wired in code only

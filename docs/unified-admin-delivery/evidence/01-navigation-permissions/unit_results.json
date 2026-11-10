@@ -1,0 +1,27 @@
+[
+  {
+    "id": "vitest-navigation-registry",
+    "status": "Live-verified",
+    "detail": "7 passed — parents, Read-only delegate, single-child unlock, not_implemented filter"
+  },
+  {
+    "id": "vitest-sections-access",
+    "status": "Live-verified",
+    "detail": "5 passed — Task.Read tab, Upsert without Read denied, oversight alias"
+  },
+  {
+    "id": "dotnet-RoleDefaultMatrixTests",
+    "status": "Live-verified",
+    "detail": "6 passed — Director/Monitor/SalesManager templates, no ManagePermissions, idempotent lists"
+  },
+  {
+    "id": "source-matrix",
+    "status": "Source-reviewed",
+    "detail": "01-navigation-field-matrix.md + RoleDefaultMatrix from FE_Company VerticalNav/router"
+  },
+  {
+    "id": "ui-responsive-shots",
+    "status": "Blocked",
+    "detail": "يتطلب جلسة لوحة معزولة حية؛ لم تُلتقط في هذه الدفعة. الاختبارات المنطقية مكتملة."
+  }
+]

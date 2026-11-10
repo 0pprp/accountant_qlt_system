@@ -15,5 +15,6 @@ public enum TargetEntityType : byte
     Safe = 10,
     Transaction = 11,
     Attachment = 12,
-    Notification = 13
+    Notification = 13,
+    ManagementTask = 14
 }

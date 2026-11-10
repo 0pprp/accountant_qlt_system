@@ -1,0 +1,7 @@
+- generic [ref=e251] [cursor=pointer]:
+  - dialog:
+    - button "1" [active] [ref=e252]
+    - button "2" [ref=e253]
+    - button "3" [ref=e254]
+    - button "4" [ref=e255]
+    - button "5" [ref=e256]

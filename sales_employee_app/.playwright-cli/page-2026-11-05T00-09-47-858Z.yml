@@ -1,0 +1,12 @@
+- main [ref=e3]:
+  - img "background" [ref=e4]
+  - generic [ref=e8]:
+    - generic [ref=e9]:
+      - generic [ref=e10]: "*اسم المستخدم"
+      - textbox "أدخل اسم المستخدم" [ref=e11]
+    - generic [ref=e13]:
+      - generic "كلمة المرور" [ref=e14]: "*كلمة المرور"
+      - generic [ref=e15]:
+        - textbox "أدخل كلمة المرور" [ref=e16]
+        - generic: Enter a password
+    - button "تسجيل الدخول" [ref=e19] [cursor=pointer]

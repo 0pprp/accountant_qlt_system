@@ -1,4 +1,4 @@
-﻿using Application.Branches.Common;
+using Application.Branches.Common;
 using Application.Common;
 using Application.Common.Interfaces;
 using Application.Common.Models.SignIn;
@@ -91,6 +91,7 @@ public class AuthService : IAuthService
                 Roles = x.User.UserRoles.Select(ur => ur.Role!.Name).ToList(),
                 UserPermissions = x.User.UserPermissions.Select(up => up.Permission).ToList()!,
                 RolePermissions = x.User.UserRoles.SelectMany(ur => ur.Role!.RolePermissions.Select(rp => rp.Permission)).ToList()!,
+                DeniedPermissions = x.User.UserPermissionDenials.Select(d => d.Permission).ToList()!,
                 Branches = x.User.UserBranches.Select(ub => ub.Branch).ToList()!
             })
             .FirstOrDefaultAsync(x => x.RefreshToken == hashedRefreshToken, cancellationToken);

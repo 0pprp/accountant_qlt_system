@@ -1,0 +1,41 @@
+﻿{
+    "at":  "2026-11-09T19:19:57.0613159Z",
+    "steps":  {
+                  "waiver.reject":  {
+                                        "error":  true,
+                                        "msg":  null,
+                                        "status":  400
+                                    },
+                  "waiver.apply":  {
+                                       "error":  true,
+                                       "msg":  null,
+                                       "status":  400
+                                   },
+                  "announcement.create":  {
+                                              "status":  400,
+                                              "msg":  null
+                                          },
+                  "priceboard.list":  {
+                                          "items":  0,
+                                          "totalCount":  0
+                                      },
+                  "videos.list":  {
+                                      "items":  0,
+                                      "totalCount":  0
+                                  },
+                  "committee.list":  {
+                                         "keys":  "Count,Length,LongLength,Rank,SyncRoot,IsReadOnly,IsFixedSize,IsSynchronized",
+                                         "items":  1,
+                                         "totalCount":  null
+                                     },
+                  "appNotes.admin.list":  {
+                                              "items":  2,
+                                              "totalCount":  2
+                                          },
+                  "legal.list":  {
+                                     "keys":  "items,totalCount,page,pageSize,branchScope",
+                                     "items":  1,
+                                     "totalCount":  1
+                                 }
+              }
+}

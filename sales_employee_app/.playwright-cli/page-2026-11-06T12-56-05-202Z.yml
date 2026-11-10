@@ -1,0 +1,26 @@
+- generic [ref=e4]:
+  - generic:
+    - generic:
+      - generic:
+        - generic:
+          - generic:
+            - generic:
+              - button "رجوع" [active] [ref=e50]
+              - heading "04H Flutter Complete Customer" [level=2] [ref=e51]
+            - generic:
+              - group:
+                - generic [ref=e52]: "رقم الطلب #13"
+                - generic [ref=e53]: الحالة تم الكشف
+                - generic [ref=e54]: التبويب تم الكشف
+                - generic [ref=e55]: الهاتف 07704445566
+                - generic [ref=e56]: العنوان غير مسجل
+                - generic [ref=e57]: المنتج المطلوب غير مسجل
+                - generic [ref=e58]: مصدر الطلب تقديم موظف
+                - generic [ref=e59]: الفرع ??? ??????
+                - generic [ref=e60]: آخر تغيير 2026-11-06 15:50:29.036430
+                - generic [ref=e61]: "ملاحظة 04H Flutter UI prepare #13"
+                - generic [ref=e62]: "البيع المرتبط #8"
+            - button "بدء / استكمال البيع" [ref=e63]
+            - button "تعليق" [ref=e64]
+            - button "رفض" [ref=e65]
+            - button "فتح البيع المرتبط" [ref=e66]

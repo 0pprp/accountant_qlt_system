@@ -1,0 +1,26 @@
+﻿Permission,DisplayName,Kind,Seeded in OutsideAll,Granted to Admin role,Used by,Backend enforcement,Frontend action key,Frontend usage,Status,Notes
+SalesRequest.ReadUnassigned,قراءة غير المسند,Tab read,Yes,Yes,tab=unassigned + GET unassigned,Handler ApplyTab + [HasPermission] on /unassigned,ReadUnassigned,Tab + nav anyOf,Implemented,04A/04B
+SalesRequest.TabIncoming,تبويب طلبات البيع,Tab read,Yes,Yes,tab=incoming,Handler ApplyTab,TabIncoming,Tab + nav anyOf,Implemented,04B
+SalesRequest.TabPrepared,تبويب جاهز للبيع,Tab read,Yes,Yes,tab=prepared,Handler ApplyTab,TabPrepared,Tab + nav anyOf,Implemented,04B
+SalesRequest.TabInspected,تبويب تم الكشف,Tab read,Yes,Yes,tab=inspected,Handler ApplyTab,TabInspected,Tab + nav anyOf,Implemented,04B
+SalesRequest.TabPending,تبويب المعلقة,Tab read,Yes,Yes,tab=pending,Handler ApplyTab,TabPending,Tab + nav anyOf,Implemented,04B
+SalesRequest.TabRejected,تبويب المرفوض,Tab read,Yes,Yes,tab=rejected,Handler ApplyTab,TabRejected,Tab + nav anyOf,Implemented,04B
+SalesRequest.TabSold,تبويب تم البيع,Tab read,Yes,Yes,tab=sold,Handler ApplyTab,TabSold,Tab + nav anyOf,Implemented,04B
+SalesRequest.TabSent,تبويب الطلبات المرسلة,Tab read (extra view),Yes,Yes,tab=sent + counts.extraViews,Handler ApplyTab (ExtraViewQuery),TabSent,Extra views menu + nav anyOf,Implemented (new 04E),Not part of tab=all; filters by SentSourceTypes; no ingestion path wired
+SalesRequest.TabExceptions,تبويب الاستثناءات,Tab read (extra view),Yes,Yes,tab=exceptions + counts.extraViews,Handler ApplyTab (ExtraViewQuery),TabExceptions,Extra views menu + nav anyOf,Implemented (new 04E),Read only; does NOT allow approve/reject
+SalesRequest.TabDeleted,تبويب المحذوفة,Tab read (extra view),Yes,Yes,tab=deleted + counts.extraViews + GET by id/timeline of deleted rows,Handler ApplyTab (ExtraViewQuery),TabDeleted,Extra views menu + nav anyOf,Implemented (new 04E),Read only; does NOT allow restore
+SalesRequest.TimelineRead,قراءة سجل حركة الطلب,Read,Yes,Yes,GET {id}/timeline,Handler (plus row visibility via CanReadRow),TimelineRead,Timeline panel,Implemented,Row visibility also requires a tab permission that covers the row
+SalesRequest.MatchRead,قراءة نتائج المطابقة,Read,Yes,Yes,match-summary / match-hits / duplicate-requests,[HasPermission],MatchRead,Audit area (unassigned tab),Implemented,
+SalesRequest.Assign,إسناد الطلب,Action,Yes,Yes,POST {id}/assign,[HasPermission] + exception gate + eligibility,Assign,Request actions,Implemented,04E: blocked by Pending/Rejected hold; consumes Approved hold
+SalesRequest.Reject,رفض الطلب,Action,Yes,Yes,POST {id}/reject,[HasPermission],Reject,Request actions,Implemented,
+SalesRequest.RequestException,طلب استثناء,Action,Yes,Yes,POST {id}/request-exception,[HasPermission] + status gates,RequestException,Request actions,Implemented,04E: allowed again after hold is consumed or Rejected; NEVER implies ExceptionDecide
+SalesRequest.ExceptionDecide,قرار الاستثناء (موافقة/رفض),Action,Yes,Yes,POST {id}/approve-exception + POST {id}/reject-exception,[HasPermission] + handler re-check + requester != decider on approve,ExceptionDecide,Action key declared; no UI button yet,API Implemented / UI Not-implemented (new 04E),Separate from RequestException
+SalesRequest.SoftDelete,حذف ناعم للطلب,Action,Yes,Yes,POST {id}/soft-delete,[HasPermission] + handler re-check,SoftDelete,Action key declared; no UI button yet,API Implemented / UI Not-implemented (new 04E),Reason mandatory; blocked for Completed and linked-order requests
+SalesRequest.Restore,استعادة طلب محذوف,Action,Yes,Yes,POST {id}/restore,[HasPermission] + handler re-check,Restore,Action key declared; no UI button yet,API Implemented / UI Not-implemented (new 04E),Never re-grants status; see StateTransitions.md
+SalesRequest.ReadFinancial,قراءة التفاصيل المالية للمطابقة,Read,Yes,Yes,match-hits money fields,Handler,ReadFinancial,Matching results,Implemented,
+SalesRequest.ReadAuditProfile,بروفايل تدقيق الزبون,Read,Yes,Yes,Customers/{id}/audit-profile,Handler,ReadAuditProfile,Profile link,Implemented,
+SalesRequest.ReadAuditDocuments,مستندات بروفايل التدقيق,Read,Yes,Yes,audit-profile documents,Handler,ReadAuditDocuments,Profile documents,Implemented,
+SalesRequest.AppRead,قراءة طلبات الموظف,App read,Yes,Yes (Admin) + Mandob role,GET app/SalesRequests,[HasPermission],n/a,Flutter app,Implemented,Employee area
+SalesRequest.AppView / AppPrepare / AppPend / AppReject / AppInspect / AppLinkDraft,Employee actions,App action,Yes,Yes (Admin) + Mandob role,app/SalesRequests/{id}/...,[HasPermission] + ownership,n/a,Flutter app,Implemented,04A
+SalesRequest.UpdateRequest,تعديل بيانات الطلب,Constant only,No,No,none,none,n/a,none,Not-implemented,No endpoint; not seeded
+(tab=legal),القانونية,No permission,No,No,none,none,n/a,Locked in menu,Not-implemented,No TabLegal permission created: no legal transition rules exist in the domain

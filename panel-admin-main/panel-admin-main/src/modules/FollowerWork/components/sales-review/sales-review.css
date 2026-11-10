@@ -1,0 +1,113 @@
+.fsr-section {
+  margin-top: 1.25rem;
+}
+.fsr-section__title {
+  margin: 0 0 0.65rem;
+  font-size: 1.1rem;
+  color: #006a64;
+}
+.fsr-hint {
+  font-size: 14px;
+  font-weight: 500;
+  color: #3d524f;
+  margin-inline-start: 0.5rem;
+}
+.fsr-grid,
+.fsr-bucket-grid,
+.fsr-name-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 14rem), 1fr));
+  gap: 0.75rem;
+}
+.fsr-card,
+.fsr-bucket,
+.fsr-name {
+  min-height: 44px;
+  padding: 0.85rem;
+  border: 1px solid #d5e3e1;
+  border-radius: 10px;
+  background: #fff;
+  text-align: start;
+  font-family: inherit;
+  color: #00201e;
+}
+.fsr-bucket,
+.fsr-name {
+  cursor: pointer;
+}
+.fsr-bucket--active,
+.fsr-name--active {
+  border-color: #006a64;
+  box-shadow: 0 0 0 1px #006a64;
+}
+.fsr-card__title,
+.fsr-name__title {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 700;
+}
+.fsr-card__meta,
+.fsr-name__sub {
+  margin: 0.35rem 0 0;
+  font-size: 14px;
+  color: #3d524f;
+  display: block;
+}
+.fsr-badge {
+  display: inline-block;
+  margin-inline-start: 0.35rem;
+  padding: 0.15rem 0.45rem;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 700;
+}
+.fsr-badge--ok {
+  background: #e6f4f2;
+  color: #006a64;
+}
+.fsr-badge--warn {
+  background: #fff6e5;
+  color: #8a5a00;
+}
+.fsr-badge--danger {
+  background: #fde8e8;
+  color: #8a1f1f;
+}
+.fsr-profile {
+  margin-top: 1rem;
+  padding: 1rem;
+  border: 1px solid #d5e3e1;
+  border-radius: 12px;
+  background: #f8f8f8;
+}
+.fsr-profile__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+.fsr-profile__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(10rem, 1fr));
+  gap: 0.75rem;
+  margin: 0.85rem 0;
+}
+.fsr-profile__grid span {
+  display: block;
+  font-size: 14px;
+  color: #3d524f;
+}
+.fsr-profile__grid b {
+  font-size: 16px;
+}
+.fsr-profile__wide {
+  grid-column: 1 / -1;
+}
+@media (max-width: 480px) {
+  .fsr-grid,
+  .fsr-bucket-grid,
+  .fsr-name-grid {
+    grid-template-columns: 1fr;
+  }
+}

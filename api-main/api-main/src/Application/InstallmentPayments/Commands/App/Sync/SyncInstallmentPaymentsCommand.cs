@@ -1,6 +1,8 @@
-﻿namespace Application.InstallmentPayments.Commands.App.Sync;
+﻿using Application.InstallmentPayments.Common;
 
-public record SyncInstallmentPaymentsCommand : IRequest<Result>
+namespace Application.InstallmentPayments.Commands.App.Sync;
+
+public record SyncInstallmentPaymentsCommand : IRequest<Result<SyncInstallmentPaymentsResultDto>>
 {
     public required List<InstallmentPaymentDto> InstallmentPayments { get; set; }
     public int UserId { get; set; }
@@ -13,4 +15,8 @@ public record InstallmentPaymentDto
     public int OrderId { get; set; }
     public double Amount { get; set; }
     public DateOnly Date { get; set; }
+    public Guid? ClientPaymentId { get; set; }
 }
+
+public record SyncInstallmentPaymentsResultDto(
+    IReadOnlyList<InstallmentPaymentWriteResultDto> Items);

@@ -12,6 +12,12 @@ public class InstallmentPaymentConfiguration : IEntityTypeConfiguration<Domain.E
         builder.Property(x => x.Amount).IsRequired();
         builder.Property(x => x.Date).IsRequired();
         builder.Property(x => x.Description).HasMaxLength(400).IsRequired(false);
+        builder.Property(x => x.ClientPaymentId);
+
+        builder.HasIndex(x => x.ClientPaymentId)
+            .IsUnique()
+            .HasFilter("\"ClientPaymentId\" IS NOT NULL")
+            .HasDatabaseName("UX_InstallmentPayments_ClientPaymentId");
 
         builder.HasOne(x => x.Order)
             .WithMany(x => x.InstallmentPayments)

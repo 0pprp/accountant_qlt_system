@@ -1,0 +1,5 @@
+- generic [ref=f1e68]:
+  - dialog:
+    - textbox "اكتب..." [active] [ref=f1e70]
+    - button "إلغاء" [ref=f1e71]
+    - button "تأكيد" [ref=f1e72]

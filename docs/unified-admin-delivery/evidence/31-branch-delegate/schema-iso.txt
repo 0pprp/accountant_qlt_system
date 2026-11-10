@@ -1,0 +1,9 @@
+﻿2026-11-09
+Database: qalaat_22_23_iso (localhost:5432)
+dotnet ef database update → Done
+Migration: 20261109182501_Branch31ComplaintsVisitsAndOrderRead
+
+Created/altered:
+- ComplaintMessages (+ indexes)
+- BranchVisits + BranchVisitRatings
+- Orders.SalesCompletedAtUtc, Orders.BranchManagerReadAtUtc + composite index

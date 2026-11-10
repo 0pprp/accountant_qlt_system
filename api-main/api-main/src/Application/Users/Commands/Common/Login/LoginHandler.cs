@@ -1,4 +1,4 @@
-﻿using Application.Common.Interfaces;
+using Application.Common.Interfaces;
 using Application.Common.Models;
 using Application.Common.Models.SignIn;
 using Application.Common.Utilities;
@@ -43,6 +43,14 @@ public class LoginHandler : IRequestHandler<LoginCommand, Result<LoginResponse>>
         if (user.HasRoles == false)
             return UserErrors.UsernameOrPasswordIsNotCorrect;
 
+        if (request.EnforceSalesAppBlock)
+        {
+            var blocked = await _dbContext.SalesEmployeeAppBlocks.AsNoTracking()
+                .AnyAsync(x => x.EmployeeUserId == user.Id && x.IsBlocked, cancellationToken);
+            if (blocked)
+                return UserErrors.AppBlocked;
+        }
+
         var userDetails = await _dbContext.Users.AsNoTracking()
             .AsSplitQuery()
             .Select(x => new SignInRequest
@@ -52,6 +60,7 @@ public class LoginHandler : IRequestHandler<LoginCommand, Result<LoginResponse>>
                 Roles = x.UserRoles.Select(ur => ur.Role!.Name).ToList(),
                 UserPermissions = x.UserPermissions.Select(up => up.Permission).ToList()!,
                 RolePermissions = x.UserRoles.SelectMany(ur => ur.Role!.RolePermissions.Select(rp => rp.Permission)).ToList()!,
+                DeniedPermissions = x.UserPermissionDenials.Select(d => d.Permission).ToList()!,
                 Branches = x.UserBranches.Select(ub => ub.Branch).ToList()!
             })
             .FirstAsync(x => x.Id == user.Id, cancellationToken);

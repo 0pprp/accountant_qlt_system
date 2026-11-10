@@ -1,4 +1,17 @@
 export const PASS_THROUGH_COMPONENT_STYLES = {
+  select: {
+    root: 'app-choice', label: 'app-choice-label', dropdown: 'app-choice-trigger',
+    overlay: 'app-choice-panel', header: 'app-choice-header', list: 'app-choice-list',
+    listContainer: 'app-choice-scroll', option: 'app-choice-option', optionLabel: 'app-choice-option-label',
+    emptyMessage: 'app-choice-empty', filterInput: { root: 'app-choice-search' },
+  },
+  multiselect: {
+    root: 'app-choice', label: 'app-choice-label', dropdown: 'app-choice-trigger',
+    overlay: 'app-choice-panel', header: 'app-choice-header', list: 'app-choice-list',
+    listContainer: 'app-choice-scroll', option: 'app-choice-option', optionLabel: 'app-choice-option-label',
+    emptyMessage: 'app-choice-empty', filterInput: { root: 'app-choice-search' },
+  },
+
   button: {
     root: 'btn',
     label: 'text-white',

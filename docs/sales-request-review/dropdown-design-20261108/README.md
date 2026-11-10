@@ -1,0 +1,4 @@
+# Shared dropdown design — 2026-11-08
+Applied globally through PrimeVue Select/MultiSelect pass-through classes and assets/styles/components/choice.css. SalesRequests native select replaced with searchable Select, retaining branchId, account branch scope and null all-branches semantics. Existing list behavior elsewhere retained; search only where configured.
+Live browser verified: search province, branchId selection, keyboard opening/Escape, 360px overlay bounds, shared role dropdown and multi-select column picker. Production build successful. Typecheck retains 8 unrelated errors. No API, permission or database changes.
+Active image: qalaat-view:20261108-dropdown-design. Previous image: qalaat-view:pre-20261108-dropdown. Existing active compose override updated. Release directory /opt/qalaat/releases/20261108-dropdown-design.

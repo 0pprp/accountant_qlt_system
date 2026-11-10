@@ -1,0 +1,41 @@
+{
+  "mode": "deployed",
+  "results": [
+    {
+      "section": "branch/customers",
+      "width": 360,
+      "title": "إدارة الفروع",
+      "url": "/management/branch/customers",
+      "overflow": false,
+      "screenshot": "branch/customers-360.png"
+    },
+    {
+      "section": "branch/payments",
+      "width": 360,
+      "title": "إدارة الفروع",
+      "url": "/management/branch/payments",
+      "overflow": false,
+      "screenshot": "branch/payments-360.png"
+    },
+    {
+      "section": "branch/customers",
+      "width": 768,
+      "title": "إدارة الفروع",
+      "url": "/management/branch/customers",
+      "overflow": false,
+      "screenshot": "branch/customers-768.png"
+    },
+    {
+      "section": "branch/payments",
+      "width": 768,
+      "title": "إدارة الفروع",
+      "url": "/management/branch/payments",
+      "overflow": false,
+      "screenshot": "branch/payments-768.png"
+    }
+  ],
+  "errors": [],
+  "failed": [],
+  "taskRequests": [],
+  "tabClickAndBack": false
+}

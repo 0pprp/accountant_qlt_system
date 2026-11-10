@@ -1,0 +1,156 @@
+- generic [ref=e20]:
+  - navigation "قائمة التنقل" [ref=e22]:
+    - generic [ref=e24]:
+      - generic [ref=e25]:
+        - generic [ref=e26]: قلعة الضمان
+        - button "طي أو توسيع القائمة" [ref=e30] [cursor=pointer]: 
+      - menu [ref=e31]:
+        - menuitem [ref=e32]:
+          - link "الرئيسية" [ref=e35] [cursor=pointer]:
+            - /url: /
+        - menuitem [ref=e41]:
+          - link "الفروع" [ref=e44] [cursor=pointer]:
+            - /url: /branch
+        - menuitem [ref=e52]:
+          - link "التسديدات" [ref=e55] [cursor=pointer]:
+            - /url: /payment
+        - menuitem [ref=e63]:
+          - link "العملاء" [ref=e66] [cursor=pointer]:
+            - /url: /customer
+        - menuitem [ref=e74]:
+          - link "الحسابات" [ref=e77] [cursor=pointer]:
+            - /url: /purchases
+        - menuitem [ref=e84]:
+          - link "المصاريف" [ref=e87] [cursor=pointer]:
+            - /url: /expenses
+        - menuitem [ref=e94]:
+          - link "المبيعات" [ref=e97] [cursor=pointer]:
+            - /url: /sale
+        - menuitem [ref=e103]:
+          - link "طلبات البيع" [ref=e106] [cursor=pointer]:
+            - /url: /sale/requests
+        - menuitem [ref=e112]:
+          - link "المخزن" [ref=e115] [cursor=pointer]:
+            - /url: /warehouse
+        - menuitem [ref=e122]:
+          - link "القاصة الرئيسية" [ref=e125] [cursor=pointer]:
+            - /url: /safe/main
+        - menuitem [ref=e132]:
+          - link "القاصه" [ref=e135] [cursor=pointer]:
+            - /url: /safe
+        - menuitem [ref=e142]:
+          - link "القوائم" [ref=e145] [cursor=pointer]:
+            - /url: /order
+        - menuitem [ref=e151]:
+          - link "المستخدمين" [ref=e154] [cursor=pointer]:
+            - /url: /user
+        - menuitem [ref=e162]:
+          - link "سجل المستخدمين" [ref=e165] [cursor=pointer]:
+            - /url: /activity-log
+        - menuitem [ref=e172]:
+          - link "الأشعارات" [ref=e175] [cursor=pointer]:
+            - /url: /notifications
+      - generic [ref=e182]:
+        - button "??? ??????" [ref=e183] [cursor=pointer]
+        - button "تسجيل الخروج" [ref=e191] [cursor=pointer]
+  - text: 
+  - main [ref=e197]:
+    - generic [ref=e198]:
+      - generic [ref=e199]:
+        - generic [ref=e202]:
+          - paragraph [ref=e204]: المستخدم
+          - generic [ref=e207]:
+            - img "admin" [ref=e209]
+            - paragraph [ref=e210]: admin
+            - generic [ref=e211]: المدیر
+        - generic [ref=e219]:
+          - paragraph [ref=e221]: التخطيط البياني الشهري
+          - generic [ref=e226]:
+            - generic [ref=e227]:
+              - generic [ref=e228]: المبيعات
+              - generic [ref=e231]:
+                - generic [ref=e232]: "0"
+                - generic [ref=e233]: دينار عراقي
+            - generic [ref=e234]:
+              - generic [ref=e235]: المشتريات
+              - generic [ref=e238]:
+                - generic [ref=e239]: "0"
+                - generic [ref=e240]: دينار عراقي
+            - generic [ref=e241]:
+              - generic [ref=e242]: التسديدات
+              - generic [ref=e245]:
+                - generic [ref=e246]: "0"
+                - generic [ref=e247]: دينار عراقي
+      - generic [ref=e251]:
+        - generic [ref=e253]:
+          - generic [ref=e261]:
+            - strong [ref=e262]: العملاء
+            - generic [ref=e263]: العملاء المسجلين لدى الشركة
+          - generic [ref=e264]:
+            - generic [ref=e265]:
+              - generic [ref=e266]: ↑
+              - text: 100.00%
+            - generic [ref=e267]: "1"
+        - generic [ref=e269]:
+          - generic [ref=e276]:
+            - strong [ref=e277]: المندوبين
+            - generic [ref=e278]: المندوبين المسجلين لدى الشركة
+          - generic [ref=e279]:
+            - generic [ref=e280]:
+              - generic [ref=e281]: ↑
+              - text: 100.00%
+            - generic [ref=e282]: "2"
+        - generic [ref=e284]:
+          - generic [ref=e290]:
+            - strong [ref=e291]: المستخدمين
+            - generic [ref=e292]: المستخدمين المسجلين لدى الشركة
+          - generic [ref=e293]:
+            - generic [ref=e294]:
+              - generic [ref=e295]: ↑
+              - text: 150.00%
+            - generic [ref=e296]: "5"
+      - generic [ref=e297]:
+        - table [ref=e305]:
+          - rowgroup [ref=e306]:
+            - row [ref=e307]:
+              - columnheader "التاريخ" [ref=e308]
+              - columnheader "الخزائن النقدية" [ref=e311]
+              - columnheader "السحوبات" [ref=e314]
+              - columnheader "النقل" [ref=e317]
+              - columnheader "الأضافات" [ref=e320]
+          - rowgroup [ref=e323]:
+            - row [ref=e324]:
+              - cell "اليوم" [ref=e325]
+              - cell "0 د.ع" [ref=e326]
+              - cell "0 د.ع" [ref=e328]
+              - cell "0 د.ع" [ref=e330]
+              - cell "0 د.ع" [ref=e332]
+            - row [ref=e334]:
+              - cell "البارحة" [ref=e335]
+              - cell "0 د.ع" [ref=e336]
+              - cell "0 د.ع" [ref=e338]
+              - cell "0 د.ع" [ref=e340]
+              - cell "0 د.ع" [ref=e342]
+            - row [ref=e344]:
+              - cell "الأسبوع السابق" [ref=e345]
+              - cell "0 د.ع" [ref=e346]
+              - cell "0 د.ع" [ref=e348]
+              - cell "0 د.ع" [ref=e350]
+              - cell "0 د.ع" [ref=e352]
+            - row [ref=e354]:
+              - cell "الشهر السابق" [ref=e355]
+              - cell "0 د.ع" [ref=e356]
+              - cell "0 د.ع" [ref=e358]
+              - cell "0 د.ع" [ref=e360]
+              - cell "0 د.ع" [ref=e362]
+            - row [ref=e364]:
+              - cell "السنة السابقة" [ref=e365]
+              - cell "0 د.ع" [ref=e366]
+              - cell "0 د.ع" [ref=e368]
+              - cell "0 د.ع" [ref=e370]
+              - cell "0 د.ع" [ref=e372]
+        - generic [ref=e378]:
+          - paragraph [ref=e380]: المخازن و العناصر
+          - generic [ref=e386]:
+            - generic [ref=e387]: "??? ??????"
+            - generic [ref=e390]: 0 عنصر

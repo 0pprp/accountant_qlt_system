@@ -1,0 +1,34 @@
+{
+  "phase": "04H",
+  "webShellVerified": true,
+  "salesLifecycleVerified": true,
+  "mobileVerified": false,
+  "gpsProven": false,
+  "gpsNote": "duty used LocationService.webFallback stub",
+  "apiBaseUrl": "http://127.0.0.1:4200/",
+  "isolatedDb": "qalaat_04f_sales_verify",
+  "flutterTarget": "web-server:5180",
+  "lifecycleRequestId": 13,
+  "reassignRequestId": 14,
+  "scenario": [
+    {"step": "nav_sales_requests", "result": "bottom nav + bins → SalesRequestsBinPage; Orders remain drawer سجلات البيع"},
+    {"step": "dio_session_fix", "result": "SessionStore web memory+SharedPreferences; before_send session_read_failed fixed"},
+    {"step": "A_prepare_inspect_complete_UI", "result": "#13 Flutter UI → sold linkedOrder=8"},
+    {"step": "panel_reflection", "result": "sold tab shows #13; Hub متصل"},
+    {"step": "reassign_B_block_A", "result": "#14 emp=4 Employee B; A inbox lacks #14"},
+    {"step": "network_error_retry", "result": "offline bin → dialog + إعادة المحاولة; no fake data"}
+  ],
+  "regressionTests": [
+    "test/sales_nav_test.dart",
+    "test/dio_failure_probe_test.dart",
+    "test/session_store_memory_test.dart",
+    "test/attachment_upload_form_test.dart"
+  ],
+  "artifacts": [
+    "docs/sales-request-review/CardParityMatrix.md",
+    "docs/sales-request-review/CardParityMatrix.csv",
+    "docs/sales-request-review/Acceptance-04H.md",
+    "docs/sales-request-review/Acceptance-04H.csv",
+    "docs/sales-request-review/04h-live-evidence/screenshots/"
+  ]
+}

@@ -128,5 +128,11 @@ public enum ActivityType : byte
     NotificationMarkedAsRead = 40,
 
     [Display(Name = "تحديد جميع الإشعارات كمقروءة")]
-    AllNotificationsMarkedAsRead = 41
+    AllNotificationsMarkedAsRead = 41,
+
+    [Display(Name = "إنشاء مهمة إدارية")]
+    ManagementTaskCreated = 42,
+
+    [Display(Name = "تحديث مهمة إدارية")]
+    ManagementTaskUpdated = 43
 }

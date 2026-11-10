@@ -1,0 +1,13 @@
+- generic [ref=f3e5]:
+  - generic:
+    - generic:
+      - generic:
+        - generic:
+          - generic:
+            - generic:
+              - button "رجوع" [active] [ref=f3e55]
+              - heading "المخزن" [level=2] [ref=f3e56]
+            - generic:
+              - group:
+                - generic [ref=f3e57]: مخزن فرعك / محافظتك يُعرض مخزون فرع موظف المبيعات فقط.
+                - generic [ref=f3e59]: لا توجد أصناف في مخزن فرعك

@@ -1,0 +1,218 @@
+{
+  "mode": "deployed",
+  "results": [
+    {
+      "section": "delegate",
+      "width": 1440,
+      "title": "المدير المفوض",
+      "url": "/management/delegate/assigned-tasks",
+      "overflow": false,
+      "screenshot": "delegate-1440.png"
+    },
+    {
+      "section": "branch",
+      "width": 1440,
+      "title": "إدارة الفروع",
+      "url": "/management/branch/assigned-tasks",
+      "overflow": false,
+      "screenshot": "branch-1440.png"
+    },
+    {
+      "section": "summary",
+      "width": 1440,
+      "title": "لوحة الإدارة",
+      "url": "/management/oversight/summary",
+      "overflow": false,
+      "screenshot": "summary-1440.png"
+    },
+    {
+      "section": "follower-work",
+      "width": 1440,
+      "title": "لوحة الإدارة",
+      "url": "/management/oversight/follower-work",
+      "overflow": false,
+      "screenshot": "follower-work-1440.png"
+    },
+    {
+      "section": "delegate",
+      "width": 768,
+      "title": "المدير المفوض",
+      "url": "/management/delegate/assigned-tasks",
+      "overflow": false,
+      "screenshot": "delegate-768.png"
+    },
+    {
+      "section": "branch",
+      "width": 768,
+      "title": "إدارة الفروع",
+      "url": "/management/branch/assigned-tasks",
+      "overflow": false,
+      "screenshot": "branch-768.png"
+    },
+    {
+      "section": "summary",
+      "width": 768,
+      "title": "لوحة الإدارة",
+      "url": "/management/oversight/summary",
+      "overflow": false,
+      "screenshot": "summary-768.png"
+    },
+    {
+      "section": "follower-work",
+      "width": 768,
+      "title": "لوحة الإدارة",
+      "url": "/management/oversight/follower-work",
+      "overflow": false,
+      "screenshot": "follower-work-768.png"
+    },
+    {
+      "section": "delegate",
+      "width": 360,
+      "title": "المدير المفوض",
+      "url": "/management/delegate/assigned-tasks",
+      "overflow": false,
+      "screenshot": "delegate-360.png"
+    },
+    {
+      "section": "branch",
+      "width": 360,
+      "title": "إدارة الفروع",
+      "url": "/management/branch/assigned-tasks",
+      "overflow": false,
+      "screenshot": "branch-360.png"
+    },
+    {
+      "section": "summary",
+      "width": 360,
+      "title": "لوحة الإدارة",
+      "url": "/management/oversight/summary",
+      "overflow": false,
+      "screenshot": "summary-360.png"
+    },
+    {
+      "section": "follower-work",
+      "width": 360,
+      "title": "لوحة الإدارة",
+      "url": "/management/oversight/follower-work",
+      "overflow": false,
+      "screenshot": "follower-work-360.png"
+    },
+    {
+      "section": "branch/customers",
+      "width": 1440,
+      "url": "/management/branch/customers",
+      "overflow": false,
+      "bodyLength": 319,
+      "screenshot": "branch-customers-1440.png"
+    },
+    {
+      "section": "branch/payments",
+      "width": 1440,
+      "url": "/management/branch/payments",
+      "overflow": false,
+      "bodyLength": 185,
+      "screenshot": "branch-payments-1440.png"
+    },
+    {
+      "section": "ratings",
+      "width": 1440,
+      "url": "/management/oversight/ratings",
+      "overflow": false,
+      "bodyLength": 661,
+      "screenshot": "ratings-1440.png"
+    },
+    {
+      "section": "director/delegate-followup",
+      "width": 1440,
+      "url": "/management/director/delegate-followup",
+      "overflow": false,
+      "bodyLength": 496,
+      "screenshot": "director-delegate-followup-1440.png"
+    },
+    {
+      "section": "follower-work/sales",
+      "width": 1440,
+      "url": "/management/oversight/follower-work/sales",
+      "overflow": false,
+      "bodyLength": 143,
+      "screenshot": "follower-work-sales-1440.png"
+    },
+    {
+      "section": "follower-work/declining",
+      "width": 1440,
+      "url": "/management/oversight/follower-work/declining",
+      "overflow": false,
+      "bodyLength": 75,
+      "screenshot": "follower-work-declining-1440.png"
+    },
+    {
+      "section": "follower-work/notes",
+      "width": 1440,
+      "url": "/management/oversight/follower-work/notes",
+      "overflow": false,
+      "bodyLength": 122,
+      "screenshot": "follower-work-notes-1440.png"
+    },
+    {
+      "section": "follower-work/old-customers",
+      "width": 1440,
+      "url": "/management/oversight/follower-work/old-customers",
+      "overflow": false,
+      "bodyLength": 82,
+      "screenshot": "follower-work-old-customers-1440.png"
+    },
+    {
+      "section": "follower-work/delegate-notes",
+      "width": 1440,
+      "url": "/management/oversight/follower-work/delegate-notes",
+      "overflow": false,
+      "bodyLength": 170,
+      "screenshot": "follower-work-delegate-notes-1440.png"
+    },
+    {
+      "section": "follower-work/collection",
+      "width": 1440,
+      "url": "/management/oversight/follower-work/collection",
+      "overflow": false,
+      "bodyLength": 157,
+      "screenshot": "follower-work-collection-1440.png"
+    },
+    {
+      "section": "follower-work/live-map",
+      "width": 1440,
+      "url": "/management/oversight/follower-work/live-map",
+      "overflow": false,
+      "bodyLength": 243,
+      "screenshot": "follower-work-live-map-1440.png"
+    },
+    {
+      "section": "follower-work/routes",
+      "width": 1440,
+      "url": "/management/oversight/follower-work/routes",
+      "overflow": false,
+      "bodyLength": 257,
+      "screenshot": "follower-work-routes-1440.png"
+    }
+  ],
+  "errors": [],
+  "failed": [],
+  "taskRequests": [
+    "",
+    "?pageIndex=1&pageSize=12&branchId=1&inboxForMe=true",
+    "",
+    "?pageIndex=1&pageSize=12&branchId=1&inboxForMe=true",
+    "",
+    "?pageIndex=1&pageSize=12&branchId=1&inboxForMe=true",
+    "",
+    "?pageIndex=1&pageSize=12&branchId=1&inboxForMe=true",
+    "",
+    "?pageIndex=1&pageSize=12&branchId=1&inboxForMe=true",
+    "",
+    "?pageIndex=1&pageSize=12&branchId=1&inboxForMe=true",
+    "",
+    "?pageIndex=1&pageSize=12&branchId=1&inboxForMe=true",
+    "?pageIndex=1&pageSize=12&branchId=1&inboxForMe=true",
+    ""
+  ],
+  "tabClickAndBack": true
+}

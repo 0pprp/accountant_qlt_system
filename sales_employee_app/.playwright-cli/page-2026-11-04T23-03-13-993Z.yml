@@ -1,0 +1,14 @@
+- generic [active] [ref=e5] [cursor=pointer]:
+  - generic:
+    - generic:
+      - generic:
+        - generic:
+          - generic:
+            - generic:
+              - generic:
+                - group "قلعة الضمان ابدأ الدوام للمتابعة إلى حالات الطلب":
+                  - img "قلعة الضمان" [ref=e18]
+                  - button "بدء الدوام" [ref=e19]
+            - button "طلبات البيع" [ref=e20]
+            - button [ref=e21]
+            - button "تقييمات زبائني" [ref=e22]

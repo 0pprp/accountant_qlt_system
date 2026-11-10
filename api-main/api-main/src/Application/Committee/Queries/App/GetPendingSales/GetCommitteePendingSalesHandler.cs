@@ -15,11 +15,15 @@ public class GetCommitteePendingSalesHandler
         GetCommitteePendingSalesQuery request,
         CancellationToken cancellationToken)
     {
-        // طلبات بانتظار مصادقة مسؤول اللجنة: لم تبدأ التنفيذ بعد ومرتبطة بقوائمه
+        // معلّقات المصادقة: قوائم Motaba فقط، بلا سجل مصادقة، ولم يبدأ التنفيذ
+        var authenticatedOrderIds = _db.FollowerSaleAuthentications.AsNoTracking()
+            .Select(a => a.OrderId);
+
         var rows = await _db.Orders.AsNoTracking()
             .Where(o => o.OrderList != null
-                        && (o.OrderList.MotabaId == request.UserId || o.OrderList.MandobId == request.UserId)
-                        && o.ExecutionStatus == OrderExecutionStatus.NotStarted)
+                        && o.OrderList.MotabaId == request.UserId
+                        && o.ExecutionStatus == OrderExecutionStatus.NotStarted
+                        && authenticatedOrderIds.Contains(o.Id) == false)
             .OrderByDescending(o => o.CreatedAt)
             .Select(o => new CommitteePendingSaleDto
             {

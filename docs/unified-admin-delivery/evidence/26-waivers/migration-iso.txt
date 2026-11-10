@@ -1,0 +1,5 @@
+Command: dotnet ef database update --connection ConnectionStrings__Postgres
+Target: Host=localhost Database=qalaat_22_23_iso (isolated; not production)
+Migration: 20261109171453_WaiversAndCustomerDecisions
+Result: Done — created CustomerWaiverRequests, CustomerDecisions, LegalConversionRequests + indexes
+Note: Schema applied only. Authenticated HTTP cycle not executed (API not running).

@@ -1,0 +1,194 @@
+[
+  {
+    "file": "01-navigation-permissions.md",
+    "feature": "Management + Core/navigation",
+    "route": "/management/{feature} و/sale/{feature} مع إبقاء aliases آمنة للروابط الحالية",
+    "title": "توحيد التنقل وقوالب الصلاحيات"
+  },
+  {
+    "file": "02-summary.md",
+    "feature": "ManagementSummary",
+    "route": "/management/summary",
+    "title": "الملخص الإداري"
+  },
+  {
+    "file": "03-ratings.md",
+    "feature": "ManagementRatings",
+    "route": "/management/ratings",
+    "title": "التقييمات"
+  },
+  {
+    "file": "04-delegate-followup.md",
+    "feature": "DelegateFollowup الموجود",
+    "route": "/management/delegate-followup مع alias للمسار الحالي",
+    "title": "تدقيق واستكمال متابعة المندوبين"
+  },
+  {
+    "file": "05-follower-shell.md",
+    "feature": "FollowerWork",
+    "route": "/management/follower-work/{sales|declining|notes|old-customers|delegate-notes|collection|live-map|routes}",
+    "title": "هيكل عمل المتابعين والبطاقات"
+  },
+  {
+    "file": "06-follower-sales.md",
+    "feature": "FollowerSalesReview",
+    "route": "/management/follower-work/sales",
+    "title": "عمل المتابعين — مصادقة البيع"
+  },
+  {
+    "file": "07-follower-declining.md",
+    "feature": "FollowerDeclining",
+    "route": "/management/follower-work/declining",
+    "title": "عمل المتابعين — المتدنية"
+  },
+  {
+    "file": "08-follower-notes.md",
+    "feature": "FollowerNotes",
+    "route": "/management/follower-work/notes",
+    "title": "عمل المتابعين — الملاحظات"
+  },
+  {
+    "file": "09-follower-old-customers.md",
+    "feature": "FollowerOldCustomers",
+    "route": "/management/follower-work/old-customers",
+    "title": "عمل المتابعين — الزبائن القديمة"
+  },
+  {
+    "file": "10-follower-delegate-notes.md",
+    "feature": "FollowerDelegateNotes",
+    "route": "/management/follower-work/delegate-notes",
+    "title": "عمل المتابعين — ملاحظات المندوبين"
+  },
+  {
+    "file": "11-follower-collection.md",
+    "feature": "FollowerCollection",
+    "route": "/management/follower-work/collection",
+    "title": "عمل المتابعين — الجباية"
+  },
+  {
+    "file": "12-follower-live-map.md",
+    "feature": "FollowerLocation",
+    "route": "/management/follower-work/live-map",
+    "title": "الموقع المباشر للمتابعين"
+  },
+  {
+    "file": "13-follower-routes.md",
+    "feature": "FollowerRoute",
+    "route": "/management/follower-work/routes",
+    "title": "مسارات المتابعين"
+  },
+  {
+    "file": "14-sales-dashboard.md",
+    "feature": "SalesOverview",
+    "route": "/sale/overview",
+    "title": "المبيعات — نظرة عامة"
+  },
+  {
+    "file": "15-sales-employees.md",
+    "feature": "SalesEmployees",
+    "route": "/sale/employees",
+    "title": "المبيعات — موظفو المبيعات"
+  },
+  {
+    "file": "16-sales-followup.md",
+    "feature": "SalesFollowup الموجود",
+    "route": "/sale/followup",
+    "title": "المبيعات — متابعة المبيعات"
+  },
+  {
+    "file": "17-sales-live-map.md",
+    "feature": "SalesLocation",
+    "route": "/sale/live-map",
+    "title": "المبيعات — الموقع المباشر"
+  },
+  {
+    "file": "18-sales-routes.md",
+    "feature": "SalesRoute",
+    "route": "/sale/routes",
+    "title": "المبيعات — المسارات"
+  },
+  {
+    "file": "19-sales-records.md",
+    "feature": "SalesRecords / Sale الموجود",
+    "route": "/sale/records مع الحفاظ على المسار الحالي إن كان مناسبًا",
+    "title": "المبيعات — المبيعات المنجزة"
+  },
+  {
+    "file": "20-sales-summary.md",
+    "feature": "SalesSummary",
+    "route": "/sale/summary",
+    "title": "المبيعات — ملخص المبيعات"
+  },
+  {
+    "file": "21-sales-legal.md",
+    "feature": "SalesLegalFollowup",
+    "route": "/sale/legal-followup",
+    "title": "المبيعات — المتابعة القانونية"
+  },
+  {
+    "file": "22-sales-requests.md",
+    "feature": "SalesRequests الموجود",
+    "route": "/sale/requests مع aliases الحالية",
+    "title": "المبيعات — تثبيت طلبات البيع والتكامل"
+  },
+  {
+    "file": "23-admin-tasks.md",
+    "feature": "ManagementTasks",
+    "route": "/management/tasks",
+    "title": "لوحة الإدارة — المهام"
+  },
+  {
+    "file": "24-committee-tasks.md",
+    "feature": "CommitteeWork",
+    "route": "/management/committee-tasks",
+    "title": "لوحة الإدارة — مهام اللجنة"
+  },
+  {
+    "file": "25-application-notes.md",
+    "feature": "ApplicationNotes",
+    "route": "/management/application-notes",
+    "title": "لوحة الإدارة — ملاحظات التطبيقات"
+  },
+  {
+    "file": "26-waivers.md",
+    "feature": "WaiverRequests",
+    "route": "/management/waivers",
+    "title": "لوحة الإدارة — التنازلات"
+  },
+  {
+    "file": "27-legal-board.md",
+    "feature": "LegalCases",
+    "route": "/management/legal/{cases|waiver-requests|decisions}",
+    "title": "لوحة الإدارة — الأسماء القانونية وطلبات التنازل وسجل القرارات"
+  },
+  {
+    "file": "28-price-board.md",
+    "feature": "PriceBoard",
+    "route": "/management/price-board",
+    "title": "لوحة الإدارة — لوحة الأسعار"
+  },
+  {
+    "file": "29-announcements.md",
+    "feature": "Announcements",
+    "route": "/management/announcements",
+    "title": "لوحة الإدارة — الإعلانات"
+  },
+  {
+    "file": "30-tutorials.md",
+    "feature": "Tutorials",
+    "route": "/management/tutorials",
+    "title": "لوحة الإدارة — الفيديوهات التعليمية"
+  },
+  {
+    "file": "31-branch-operations.md",
+    "feature": "BranchOperations",
+    "route": "/management/branch-operations مع aliases للمسارات الحالية",
+    "title": "أعمال إدارة الفرع والمفوض دون تكرار اللوحات"
+  },
+  {
+    "file": "32-final-acceptance.md",
+    "feature": "Integration acceptance",
+    "route": "كل المسارات الجديدة والحالية",
+    "title": "قبول تكامل اللوحة الموحدة والتطبيقات"
+  }
+]

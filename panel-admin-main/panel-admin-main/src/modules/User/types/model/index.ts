@@ -78,6 +78,7 @@ export interface PermissionsResponse {
 
 export interface UserPermissionForm {
   permissionIds: Array<number>
+  expectedVersion: number
 }
 
 export interface Attachment {

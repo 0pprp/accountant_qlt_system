@@ -1,0 +1,32 @@
+[
+  {
+    "status": "Live-verified",
+    "id": "ui-page-title",
+    "detail": "visible=true url=http://127.0.0.1:5173/management/director/delegate-followup"
+  },
+  {
+    "status": "Live-verified",
+    "id": "shot-1440",
+    "detail": "df-1440.png"
+  },
+  {
+    "status": "Live-verified",
+    "id": "shot-detail",
+    "detail": "df-detail-1440.png unresolved=true"
+  },
+  {
+    "status": "Live-verified",
+    "id": "shot-768",
+    "detail": "df-768.png"
+  },
+  {
+    "status": "Live-verified",
+    "id": "shot-360",
+    "detail": "df-360.png"
+  },
+  {
+    "status": "Live-verified",
+    "id": "salesfollowup-still-open",
+    "detail": "visible=true"
+  }
+]

@@ -1,0 +1,326 @@
+/* ManagementSummary — RTL, ElMessiri, #006A64 / #00201E / #F8F8F8 */
+.ms-page {
+  direction: rtl;
+  font-family: 'ElMessiri', 'El Messiri', sans-serif;
+  color: #00201e;
+  padding: 1rem 1.25rem 2rem;
+  max-width: 100%;
+}
+
+.ms-title {
+  margin: 0 0 0.35rem;
+  font-size: 1.65rem;
+  font-weight: 700;
+  color: #006a64;
+}
+
+.ms-subtitle {
+  margin: 0 0 1rem;
+  font-size: 0.95rem;
+  color: #00201e99;
+}
+
+.ms-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+  align-items: flex-end;
+  margin-bottom: 1rem;
+}
+
+.ms-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  min-width: 7.5rem;
+}
+
+.ms-field label {
+  font-size: 0.8rem;
+  color: #00201ecc;
+}
+
+.ms-field select {
+  appearance: none;
+  border: 1px solid #cddbd7;
+  border-radius: 10px;
+  background: #f8f8f8;
+  color: #00201e;
+  font-family: inherit;
+  font-size: 0.95rem;
+  padding: 0.55rem 0.75rem;
+  min-height: 44px;
+}
+
+.ms-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem 1.25rem;
+  margin-bottom: 0.85rem;
+  font-size: 0.9rem;
+  color: #00201ecc;
+}
+
+.ms-meta strong {
+  color: #006a64;
+  font-weight: 600;
+}
+
+.ms-box-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.ms-box {
+  background: #f8f8f8;
+  border: 1px solid #d7e4df;
+  border-radius: 12px;
+  padding: 0.75rem 1rem;
+  min-width: 11rem;
+}
+
+.ms-box-label {
+  display: block;
+  font-size: 0.8rem;
+  color: #00201e99;
+  margin-bottom: 0.2rem;
+}
+
+.ms-box-value {
+  font-variant-numeric: tabular-nums;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #006a64;
+}
+
+.ms-box-muted {
+  color: #00201e66;
+  font-size: 0.85rem;
+}
+
+.ms-table-scroll {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  border: 1px solid #d7e4df;
+  border-radius: 12px;
+  background: #fff;
+}
+
+.ms-table {
+  border-collapse: separate;
+  border-spacing: 0;
+  min-width: 100%;
+  font-size: 0.9rem;
+}
+
+.ms-table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background: #f8f8f8;
+  color: #00201e;
+  font-weight: 700;
+  padding: 0.65rem 0.75rem;
+  border-bottom: 1px solid #d7e4df;
+  white-space: nowrap;
+  text-align: center;
+}
+
+.ms-table th.ms-th-day,
+.ms-table td.ms-td-day {
+  position: sticky;
+  right: 0;
+  z-index: 3;
+  background: #f8f8f8;
+  text-align: center;
+  font-weight: 700;
+  min-width: 3.25rem;
+  border-left: 1px solid #d7e4df;
+}
+
+.ms-table tbody td {
+  padding: 0.45rem 0.65rem;
+  border-bottom: 1px solid #eef3f1;
+  text-align: end;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.ms-table td.ms-td-day {
+  text-align: center;
+  background: #fafafa;
+}
+
+.ms-cell-btn {
+  all: unset;
+  display: block;
+  width: 100%;
+  cursor: default;
+  text-align: end;
+  font-variant-numeric: tabular-nums;
+  color: inherit;
+  box-sizing: border-box;
+  padding: 0.15rem 0;
+}
+
+.ms-cell-btn.is-clickable {
+  cursor: pointer;
+  color: #006a64;
+}
+
+.ms-cell-btn.is-clickable:hover,
+.ms-cell-btn.is-clickable:focus-visible {
+  text-decoration: underline;
+  outline: none;
+}
+
+.ms-td-sum,
+.ms-th-sum {
+  font-weight: 700;
+  background: #f3faf8 !important;
+  color: #006a64;
+}
+
+.ms-foot-row td {
+  font-weight: 700;
+  background: #f3faf8;
+  border-top: 1px solid #cddbd7;
+}
+
+.ms-state {
+  padding: 2rem 1rem;
+  text-align: center;
+  color: #00201e99;
+}
+
+.ms-error {
+  color: #8b1e1e;
+  background: #fff5f5;
+  border: 1px solid #f0c9c9;
+  border-radius: 10px;
+  padding: 0.85rem 1rem;
+  margin-bottom: 1rem;
+}
+
+.ms-dialog-backdrop {
+  position: fixed;
+  inset: 0;
+  background: #00201e66;
+  z-index: 60;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+}
+
+.ms-dialog {
+  background: #fff;
+  border-radius: 14px;
+  width: min(920px, 100%);
+  max-height: min(88vh, 900px);
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 18px 48px #00201e33;
+  direction: rtl;
+  font-family: 'ElMessiri', 'El Messiri', sans-serif;
+  color: #00201e;
+}
+
+.ms-dialog-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.9rem 1.1rem;
+  border-bottom: 1px solid #d7e4df;
+}
+
+.ms-dialog-head h2 {
+  margin: 0;
+  font-size: 1.15rem;
+  color: #006a64;
+}
+
+.ms-dialog-close {
+  border: none;
+  background: #f8f8f8;
+  color: #00201e;
+  border-radius: 8px;
+  min-width: 44px;
+  min-height: 44px;
+  cursor: pointer;
+  font-size: 1.1rem;
+}
+
+.ms-dialog-body {
+  padding: 1rem 1.1rem;
+  overflow: auto;
+}
+
+.ms-dialog-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem 1.25rem;
+  margin-bottom: 0.85rem;
+  font-size: 0.9rem;
+}
+
+.ms-dialog table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+.ms-dialog th,
+.ms-dialog td {
+  border-bottom: 1px solid #eef3f1;
+  padding: 0.5rem 0.4rem;
+  text-align: start;
+}
+
+.ms-dialog td.amt {
+  text-align: end;
+  font-variant-numeric: tabular-nums;
+}
+
+.ms-pager {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+
+.ms-pager button {
+  border: 1px solid #cddbd7;
+  background: #f8f8f8;
+  border-radius: 8px;
+  min-height: 40px;
+  padding: 0 0.85rem;
+  cursor: pointer;
+  font-family: inherit;
+  color: #00201e;
+}
+
+.ms-pager button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+@media (max-width: 768px) {
+  .ms-page {
+    padding: 0.75rem;
+  }
+
+  .ms-filters {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .ms-field {
+    width: 100%;
+  }
+}

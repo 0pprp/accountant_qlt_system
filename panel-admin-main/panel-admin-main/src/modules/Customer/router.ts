@@ -42,6 +42,22 @@ export const CustomerRoutes: RouteRecordRaw = {
         },
       },
     },
+    {
+      path: ':id/audit-profile',
+      name: 'CustomerAuditProfileRoute',
+      component: () => import('./views/CustomerAuditProfilePage.vue'),
+      meta: {
+        requiresAuth: true,
+        accessRequirement: {
+          type: 'anyOf',
+          permissions: [
+            { module: 'SalesRequest', action: 'ReadAuditProfile' },
+            { module: 'SalesRequest', action: 'MatchRead' },
+            { module: 'Customer', action: 'Read' },
+          ],
+        },
+      },
+    },
   ],
   meta: {
     layout: 'Default',

@@ -1,0 +1,37 @@
+[
+  {
+    "status": "Live-verified",
+    "id": "ui-login",
+    "detail": "admin"
+  },
+  {
+    "status": "Live-verified",
+    "id": "screenshot-1440",
+    "detail": "admin-tasks-1440.png"
+  },
+  {
+    "status": "Live-verified",
+    "id": "tasks-page-visible",
+    "detail": "heading=true url=http://127.0.0.1:5173/management/branch/assigned-tasks"
+  },
+  {
+    "status": "Live-verified",
+    "id": "screenshot-768",
+    "detail": "admin-tasks-768.png"
+  },
+  {
+    "status": "Live-verified",
+    "id": "screenshot-360",
+    "detail": "admin-tasks-360.png"
+  },
+  {
+    "status": "Live-verified",
+    "id": "branch-switch-stale-isolation",
+    "detail": "{\"switchResult\":{\"ok\":true,\"before\":{\"id\":1,\"gen\":0},\"after\":{\"id\":2,\"gen\":1}},\"leaked\":false,\"staleServedAfterSwitch\":true}"
+  },
+  {
+    "status": "Live-verified",
+    "id": "delegate-tab",
+    "detail": "http://127.0.0.1:5173/management/delegate/assigned-tasks"
+  }
+]

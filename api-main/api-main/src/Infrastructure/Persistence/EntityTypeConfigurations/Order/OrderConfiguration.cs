@@ -22,6 +22,9 @@ public class OrderConfiguration : IEntityTypeConfiguration<Domain.Entities.Order
         builder.Property(x => x.ApprovalStatus).IsRequired();
         builder.Property(x => x.WorkflowStatus).IsRequired().HasDefaultValue(Domain.Entities.OrderAggregate.Enums.SalesWorkflowStatus.Pending);
         builder.Property(x => x.WorkflowChangeReason).HasMaxLength(500).IsRequired(false);
+        builder.Property(x => x.SalesCompletedAtUtc).IsRequired(false);
+        builder.Property(x => x.BranchManagerReadAtUtc).IsRequired(false);
+        builder.HasIndex(x => new { x.BranchId, x.WorkflowStatus, x.BranchManagerReadAtUtc, x.SalesCompletedAtUtc });
 
         builder.HasOne(x => x.Seller)
             .WithMany(x => x.SoldOrders)

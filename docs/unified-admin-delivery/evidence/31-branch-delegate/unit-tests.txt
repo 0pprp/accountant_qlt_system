@@ -1,0 +1,6 @@
+﻿Batch31 + WrongSale unit tests
+Command: dotnet test --filter FullyQualifiedName~BranchDelegate|FullyQualifiedName~WrongSale
+Result: Passed! Failed: 0, Passed: 16, Skipped: 0
+At: 2026-11-09T21:59:20.5450229+03:00
+Database for live: qalaat_22_23_iso
+Migrations Branch31*: applied (see schema-iso / iso_query)

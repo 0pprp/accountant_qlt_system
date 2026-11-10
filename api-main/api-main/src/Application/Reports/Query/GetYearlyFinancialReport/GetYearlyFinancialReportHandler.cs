@@ -1,4 +1,4 @@
-﻿using Application.Common.Interfaces;
+using Application.Common.Interfaces;
 using Domain.Entities.OrderAggregate.Enums;
 using Microsoft.EntityFrameworkCore;
 
@@ -8,16 +8,26 @@ public class GetYearlyFinancialReportHandler : IRequestHandler<GetYearlyFinancia
 {
     private readonly IApplicationDbContextFactory _dbContextFactory;
     private readonly IDateTimeProvider _dateTimeProvider;
+    private readonly ICurrentUserService _currentUserService;
 
-    public GetYearlyFinancialReportHandler(IApplicationDbContextFactory dbContextFactory, IDateTimeProvider dateTimeProvider)
+    public GetYearlyFinancialReportHandler(
+        IApplicationDbContextFactory dbContextFactory,
+        IDateTimeProvider dateTimeProvider,
+        ICurrentUserService currentUserService)
     {
         _dbContextFactory = dbContextFactory;
         _dateTimeProvider = dateTimeProvider;
+        _currentUserService = currentUserService;
     }
 
     public async Task<Result<GetYearlyFinancialReportResponse>> Handle(GetYearlyFinancialReportQuery request,
         CancellationToken cancellationToken)
     {
+        var accessDenied = Application.Reports.Common.ReportBranchAccess.DenyIfOutOfScope(
+            _currentUserService, request.BranchId);
+        if (accessDenied is not null)
+            return accessDenied;
+
         var year = request.Year ?? _dateTimeProvider.Today.Year;
 
         var sellAmountsByMonthTask = GetSellAmountsByMonthAsync(request.BranchId, year, cancellationToken);

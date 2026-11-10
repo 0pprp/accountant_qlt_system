@@ -1,0 +1,15 @@
+- generic [active] [ref=e4]:
+  - generic:
+    - generic:
+      - generic:
+        - generic:
+          - generic:
+            - generic:
+              - generic:
+                - group "طلبات البيع":
+                  - generic:
+                    - group:
+                      - generic [ref=e54]: لا توجد طلبات بيع
+            - button [ref=e55]
+            - button "الرئيسية" [ref=e56]
+            - button "تقييمات زبائني" [ref=e57]

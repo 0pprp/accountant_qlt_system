@@ -10,5 +10,6 @@ public interface IActivityLogService
         ActivityType activityType,
         TargetEntityType targetEntityType,
         int? targetEntityId,
-        ActivityLogActor? actorOverride = null);
+        ActivityLogActor? actorOverride = null,
+        string? details = null);
 }

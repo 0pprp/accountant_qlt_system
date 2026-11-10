@@ -1,0 +1,2 @@
+import{b as n}from"./sections-DjACIFcF.js";const s=[n,"/management/oversight/follower-work","/management/director/follower-work"];function l(r){if(typeof r!="string")return null;const t=r.trim();if(!t.startsWith("/")||t.startsWith("//")||t.includes("://")||t.includes("\\"))return null;const e=t.split("?")[0]??t;return s.some(o=>e===o||e.startsWith(`${o}/`))?t:null}function u(r){const t=new URLSearchParams(r).toString();return t?`${n}?${t}`:n}export{u as b,l as s};
+//# sourceMappingURL=useFollowerReturnContext-rpPu10_x.js.map

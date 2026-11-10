@@ -81,7 +81,7 @@ class _OrderDetailsPageViewState extends State<OrderDetailsPageView> {
     text: IraqiDinarInputFormatter().format(widget.dailyInstallmentAmount.toString()),
   );
   //print data
-  final printPageSize = ValueNotifier<ExpansionOption>(ExpansionOption(id: 1, name: 'A4'));
+  final printPageSize = ValueNotifier<ExpansionOption>(ExpansionOption(id: 58, name: 'حراري 58مم'));
   final printDirectionSize = ValueNotifier<ExpansionOption>(ExpansionOption(id: 0, name: 'عامودي'));
   final printPageSizeExpansionTileController = ExpansionTileController();
   final printDirectionExpansionTileController = ExpansionTileController();
@@ -336,15 +336,16 @@ class _OrderDetailsPageViewState extends State<OrderDetailsPageView> {
                 padding: const EdgeInsets.only(bottom: 24),
                 child: DefaultExpansionTile(
                   valueNotifier: printPageSize,
-                  isNumber: true,
                   onExpanded: () {
                     printDirectionExpansionTileController.collapse();
                   },
                   controller: printPageSizeExpansionTileController,
                   children: [
-                    ExpansionOption(id: 0, name: 'A3'),
-                    ExpansionOption(id: 1, name: 'A4'),
+                    ExpansionOption(id: 80, name: 'حراري 80مم'),
+                    ExpansionOption(id: 58, name: 'حراري 58مم'),
                     ExpansionOption(id: 2, name: 'A5'),
+                    ExpansionOption(id: 1, name: 'A4'),
+                    ExpansionOption(id: 0, name: 'A3'),
                     ExpansionOption(id: 3, name: 'Letter'),
                   ],
                 ),
@@ -367,9 +368,13 @@ class _OrderDetailsPageViewState extends State<OrderDetailsPageView> {
               Row(
                 children: [
                   Expanded(
+                    child: FilledButton(onPressed: () => _generatePdf(orderId, sendToPrinter: true), child: Text('طباعة')),
+                  ),
+                  SizedBox(width: 8),
+                  Expanded(
                     child: FilledButton(onPressed: () => _generatePdf(orderId), child: Text('تصدير')),
                   ),
-                  SizedBox(width: 16),
+                  SizedBox(width: 8),
                   FilledButton(
                     style: FilledButton.styleFrom(
                       backgroundColor: AppColor.surface2,
@@ -390,7 +395,7 @@ class _OrderDetailsPageViewState extends State<OrderDetailsPageView> {
     );
   }
 
-  Future<void> _generatePdf(final int orderId) async {
+  Future<void> _generatePdf(final int orderId, {bool sendToPrinter = false}) async {
     Navigator.pop(context);
     try {
       // Show loading indicator
@@ -421,26 +426,42 @@ class _OrderDetailsPageViewState extends State<OrderDetailsPageView> {
       final orderListName = mandoob.user?.orderList?.name ?? '';
       final mandoobName = mandoob.user?.fullName ?? '';
 
-      // Generate PDF
-      final pdfPath = await ReceiptPdfGenerator.generateReceipt(
-        orderId: orderId,
-        buyerName: buyerName,
-        orderItemNames: orderItemNames,
-        totalAmount: totalAmount,
-        paidAmount: paidAmount,
-        unpaidAmount: unpaidAmount,
-        latestPaidAmount: latestPaidAmount,
-        latestPaidDate: latestPaidDate,
-        orderListName: orderListName,
-        mandoobName: mandoobName,
-        paymentHistory: last7DaysPayments,
-        pdfPageFormat: _getPageFormat(),
-        isLandScape: _isLandscape(),
-        logoPath: 'assets/images/logo.png', // Optional
-      );
-
-      // Open the PDF
-      await ReceiptPdfGenerator.openPdf(pdfPath);
+      if (sendToPrinter) {
+        await ReceiptPdfGenerator.printReceipt(
+          orderId: orderId,
+          buyerName: buyerName,
+          orderItemNames: orderItemNames,
+          totalAmount: totalAmount,
+          paidAmount: paidAmount,
+          unpaidAmount: unpaidAmount,
+          latestPaidAmount: latestPaidAmount,
+          latestPaidDate: latestPaidDate,
+          orderListName: orderListName,
+          mandoobName: mandoobName,
+          paymentHistory: last7DaysPayments,
+          pdfPageFormat: _getPageFormat(),
+          isLandScape: _isLandscape(),
+          logoPath: 'assets/images/logo.png',
+        );
+      } else {
+        final pdfPath = await ReceiptPdfGenerator.generateReceipt(
+          orderId: orderId,
+          buyerName: buyerName,
+          orderItemNames: orderItemNames,
+          totalAmount: totalAmount,
+          paidAmount: paidAmount,
+          unpaidAmount: unpaidAmount,
+          latestPaidAmount: latestPaidAmount,
+          latestPaidDate: latestPaidDate,
+          orderListName: orderListName,
+          mandoobName: mandoobName,
+          paymentHistory: last7DaysPayments,
+          pdfPageFormat: _getPageFormat(),
+          isLandScape: _isLandscape(),
+          logoPath: 'assets/images/logo.png',
+        );
+        await ReceiptPdfGenerator.openPdf(pdfPath);
+      }
 
       // Hide loading indicator
       Navigator.of(context).pop();
@@ -459,6 +480,10 @@ class _OrderDetailsPageViewState extends State<OrderDetailsPageView> {
 
   PdfPageFormat _getPageFormat() {
     switch (printPageSize.value.name) {
+      case 'حراري 80مم':
+        return PdfPageFormat(80 * PdfPageFormat.mm, double.infinity);
+      case 'حراري 58مم':
+        return PdfPageFormat(58 * PdfPageFormat.mm, double.infinity);
       case 'A3':
         return PdfPageFormat.a3;
       case 'A5':

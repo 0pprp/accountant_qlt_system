@@ -1,0 +1,8 @@
+- main [ref=e3]:
+  - img "background" [ref=e4]
+  - status [ref=e6]:
+    - heading "تعذر تجهيز الجلسة" [level=1] [ref=e7]
+    - paragraph [ref=e8]: لم نتمكن من التحقق من صلاحيات حسابك. يمكنك إعادة المحاولة أو العودة لتسجيل الدخول.
+    - generic [ref=e9]:
+      - button "إعادة المحاولة" [ref=e10] [cursor=pointer]
+      - button "تسجيل الدخول" [ref=e11] [cursor=pointer]

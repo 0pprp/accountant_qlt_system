@@ -1,0 +1,31 @@
+- generic [ref=f2e4]:
+  - generic: رجوع
+  - generic [ref=f2e5]:
+    - generic:
+      - generic:
+        - generic:
+          - generic: رجوع
+          - generic:
+            - generic:
+              - generic:
+                - button "رجوع رجوع" [active] [ref=f2e31]: رجوع
+                - 'heading "طلب #7" [level=2] [ref=f2e32]'
+              - generic:
+                - group:
+                  - generic [ref=f2e33]: 04F Live Customer
+                  - generic [ref=f2e35]: "الحالة الحالية: تم الكشف"
+                  - generic [ref=f2e36]: "الإجمالي: 0"
+                  - generic [ref=f2e37]: "التاريخ: 2026/11/05"
+                  - generic [ref=f2e38]: "الوقت: 3:16 صباحاً"
+                  - generic [ref=f2e39]: "هاتف الزبون: 07701112233"
+                  - generic [ref=f2e40]: "اسم المحل: biz"
+                  - generic [ref=f2e41]: "عنوان المحل: addr"
+                  - generic [ref=f2e42]: "أقرب نقطة دالة: near"
+                  - generic [ref=f2e43]: "المحافظة / الفرع: ??? ??????"
+                  - generic [ref=f2e44]: "البائع: Employee A"
+                  - generic [ref=f2e45]: "سبب آخر نقل: تم الكشف — حفظ تقدّم الزيارة"
+              - button "نقل الحالة" [ref=f2e46]
+              - checkbox "جاهز للبيع" [ref=f2e47]
+              - checkbox "تم الكشف" [checked] [disabled] [ref=f2e48]
+              - checkbox "معلقة" [ref=f2e49]
+              - checkbox "مرفوض" [ref=f2e50]

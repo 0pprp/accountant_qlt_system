@@ -1,7 +1,8 @@
-﻿using Application.Common.Interfaces;
+using Application.Common.Interfaces;
 using Application.Common.SeedData;
 using Application.Common.Settings;
 using Application.Common.Utilities;
+using Domain.Entities.MobileAppReleaseAggregate;
 using Domain.Entities.RoleAggregate;
 using Domain.Entities.SafeAggregate;
 using Domain.Entities.UserAggregate;
@@ -52,6 +53,8 @@ public class DatabaseInitializer
             await SeedSuperAdminAsync();
 
             await SeedMainSafeAsync();
+
+            await SeedMobileAppReleasesAsync();
         }
         catch (Exception ex)
         {
@@ -62,7 +65,41 @@ public class DatabaseInitializer
 
     private async Task SeedPermissionsAsync()
     {
-        foreach (var permission in Permissions.All)
+        var seedPermissions = Permissions.All
+            .Append(Permissions.User.ManagePermissionsPermission)
+            .Concat(Permissions.SalesRequest.OutsideAll)
+            .Concat(Permissions.SalesFollowup.OutsideAll)
+            .Concat(Permissions.SalesOverview.OutsideAll)
+            .Concat(Permissions.SalesEmployee.OutsideAll)
+            .Concat(Permissions.SalesLocation.OutsideAll)
+            .Concat(Permissions.SalesRoute.OutsideAll)
+            .Concat(Permissions.SalesSummary.OutsideAll)
+            .Concat(Permissions.ManagementTask.OutsideAll)
+            .Concat(Permissions.DelegateFollowup.OutsideAll)
+            .Concat(Permissions.ManagementSummary.OutsideAll)
+            .Concat(Permissions.ManagementRatings.OutsideAll)
+            .Concat(Permissions.FollowerWork.OutsideAll)
+            .Concat(Permissions.LegalFollowup.OutsideAll)
+            .Concat(Permissions.CommitteeTask.OutsideAll)
+            .Concat(Permissions.AppNote.OutsideAll)
+            .Concat(Permissions.Waiver.OutsideAll)
+            .Concat(Permissions.CustomerDecision.OutsideAll)
+            .Concat(Permissions.LegalNames.OutsideAll)
+            .Concat(Permissions.LegalConversion.OutsideAll)
+            .Concat(Permissions.PriceBoard.OutsideAll)
+            .Concat(Permissions.Announcement.OutsideAll)
+            .Concat(Permissions.Tutorial.OutsideAll)
+            .Concat(Permissions.MobileAppRelease.OutsideAll)
+            .Concat(Permissions.WrongSale.OutsideAll)
+            .Concat(Permissions.BranchNewSale.OutsideAll)
+            .Concat(Permissions.BranchDeclining.OutsideAll)
+            .Concat(Permissions.Complaint.OutsideAll)
+            .Concat(Permissions.BranchVisit.OutsideAll)
+            .Concat(Permissions.BranchManagerAccount.OutsideAll)
+            .Concat(Permissions.DelegateHome.OutsideAll)
+            .ToList();
+
+        foreach (var permission in seedPermissions)
         {
             var existingPermission = await _dbContext.Permissions.FirstOrDefaultAsync(x => x.Name == permission.Name);
             if (existingPermission is not null)
@@ -143,6 +180,32 @@ public class DatabaseInitializer
         
         var safe = new Safe(safeName);
         _dbContext.Safes.Add(safe);
+        await _dbContext.SaveChangesAsync();
+    }
+
+    private async Task SeedMobileAppReleasesAsync()
+    {
+        var at = _dateTimeProvider.UtcNowOffset;
+        foreach (var appKey in MobileAppKeys.All)
+        {
+            var exists = await _dbContext.MobileAppReleases.AnyAsync(x => x.AppKey == appKey);
+            if (exists)
+                continue;
+
+            _dbContext.MobileAppReleases.Add(new MobileAppRelease(
+                appKey,
+                latestVersionName: "1.0.0",
+                latestVersionCode: 1,
+                minimumSupportedVersionCode: 1,
+                forceUpdate: false,
+                apkUrl: "",
+                sha256: null,
+                releaseNotes: null,
+                updatedByUserId: null,
+                updatedByName: "seed",
+                updatedAtUtc: at));
+        }
+
         await _dbContext.SaveChangesAsync();
     }
 }

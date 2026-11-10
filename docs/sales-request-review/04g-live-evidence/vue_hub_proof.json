@@ -1,0 +1,28 @@
+{
+  "phase": "04G",
+  "vueHub": {
+    "status": "Live-verified",
+    "client": "panel salesRequestRealtime.ts (not standalone SignalR script)",
+    "hubUrlDev": "http://127.0.0.1:5174/hubs/sales-requests",
+    "mechanism": "Vite same-origin proxy /hubs → http://127.0.0.1:4200 + API MapHub.RequireCors",
+    "uiStatusShown": "متصل",
+    "connectedOnlyWhen": "HubConnectionState.Connected",
+    "priorFailure": "Failed to complete negotiation with the server: TypeError: Failed to fetch (cross-origin hub without effective CORS on MapHub / browser fetch isolation)",
+    "liveUpdateWithoutReload": {
+      "trigger": "second-session API soft-delete/restore #5 then employee cycle complete #7",
+      "observed": "status sync time advanced; counts sold 1→2; detail #7 shows تم البيع + Employee B + timeline; banner انتقل إلى تم البيع",
+      "panelRemainedConnected": true
+    },
+    "logoutClearsSession": "navigated to /auth after clearing auth storage; login form shown"
+  },
+  "standaloneSignalRClient": {
+    "status": "Separate evidence from 04F only — NOT counted as Vue proof in 04G"
+  },
+  "flutterUi": {
+    "status": "Live-blocked",
+    "windows": "Unable to find suitable Visual Studio toolchain",
+    "web": "project lacked web/ then chrome launch incomplete in Cursor browser",
+    "platformsScaffolded": "flutter create --platforms=windows,web applied",
+    "apiCycleSameContracts": "Live-verified via app/* endpoints (assign/view/prepare/inspect/ensure-draft×2/reassign/A blocked/complete) — documented separately from Flutter UI"
+  }
+}

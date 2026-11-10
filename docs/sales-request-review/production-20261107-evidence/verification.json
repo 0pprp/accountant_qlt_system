@@ -1,0 +1,35 @@
+{
+  "database": "qalaat_release_verify_20261107",
+  "environment": "Production",
+  "migrationVerified": true,
+  "login": true,
+  "submission": [
+    {
+      "source": "EmployeeSubmitted",
+      "unassigned": true,
+      "retryIdempotent": true
+    },
+    {
+      "source": "Delegate",
+      "unassigned": true,
+      "retryIdempotent": true
+    },
+    {
+      "source": "Follower",
+      "unassigned": true,
+      "retryIdempotent": true
+    }
+  ],
+  "fourMatchingCards": true,
+  "existingCountsBefore": {
+    "Users": 16,
+    "Customers": 3,
+    "Orders": 8
+  },
+  "existingCountsAfter": {
+    "Users": 16,
+    "Customers": 3,
+    "Orders": 8
+  },
+  "backupBytes": 127669
+}

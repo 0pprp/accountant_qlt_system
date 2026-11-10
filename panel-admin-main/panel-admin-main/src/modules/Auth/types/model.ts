@@ -24,6 +24,69 @@ export type PermissionAction =
   | 'Delete'
   | 'Collect'
   | 'CollectCash'
+  | 'ManagePermissions'
+  | 'ReadUnassigned'
+  | 'MatchRead'
+  | 'Assign'
+  | 'Reject'
+  | 'RequestException'
+  | 'ReadFinancial'
+  | 'ReadAuditProfile'
+  | 'ReadAuditDocuments'
+  | 'TabIncoming'
+  | 'TabPrepared'
+  | 'TabInspected'
+  | 'TabPending'
+  | 'TabRejected'
+  | 'TabSold'
+  | 'TimelineRead'
+  | 'TabSent'
+  | 'TabExceptions'
+  | 'TabDeleted'
+  | 'TabLegal'
+  | 'ExceptionDecide'
+  | 'SoftDelete'
+  | 'Restore'
+  | 'ManageAppBlock'
+  | 'UpsertManagerRating'
+  | 'Accept'
+  | 'Complete'
+  | 'Confirm'
+  | 'Transfer'
+  | 'ReadAttachment'
+  | 'UpsertBoardRating'
+  | 'Drilldown'
+  | 'DetailsRead'
+  | 'Authenticate'
+  | 'Write'
+  | 'Cancel'
+  | 'FieldRead'
+  | 'FieldUpload'
+  | 'FieldComplete'
+  | 'ManageEnabled'
+  | 'ManageAssignment'
+  | 'Decide'
+  | 'Apply'
+  | 'AppRead'
+  | 'Submit'
+  | 'MarkRead'
+  | 'MarkDelegateRead'
+  | 'MarkBranchReviewed'
+  | 'Open'
+  | 'Rate'
+  | 'Depart'
+
+/** وحدات عمل المتابعين — صلاحيات أقسام مستقلة عن الدليل */
+export type FollowerWorkPermissionModule =
+  | 'FollowerWork'
+  | 'FollowerSalesReview'
+  | 'FollowerDeclining'
+  | 'FollowerNotes'
+  | 'FollowerOldCustomers'
+  | 'FollowerDelegateNotes'
+  | 'FollowerCollection'
+  | 'FollowerLocation'
+  | 'FollowerRoute'
 
 export type PermissionModule =
   | 'Attachment'
@@ -45,6 +108,36 @@ export type PermissionModule =
   | 'Transaction'
   | 'ActivityLog'
   | 'Notification'
+  | 'Report'
+  | 'SalesRequest'
+  | 'SalesFollowup'
+  | 'SalesOverview'
+  | 'SalesEmployee'
+  | 'SalesLocation'
+  | 'SalesRoute'
+  | 'SalesSummary'
+  | 'LegalFollowup'
+  | 'Task'
+  | 'DelegateFollowup'
+  | 'ManagementSummary'
+  | 'ManagementRatings'
+  | 'CommitteeTask'
+  | 'AppNote'
+  | 'Waiver'
+  | 'CustomerDecision'
+  | 'LegalNames'
+  | 'LegalConversion'
+  | 'PriceBoard'
+  | 'Announcement'
+  | 'Tutorial'
+  | 'WrongSale'
+  | 'BranchNewSale'
+  | 'BranchDeclining'
+  | 'Complaint'
+  | 'BranchVisit'
+  | 'BranchManagerAccount'
+  | 'DelegateHome'
+  | FollowerWorkPermissionModule
 
 export interface ModulePermissions {
   Create?: boolean
@@ -53,6 +146,57 @@ export interface ModulePermissions {
   Delete?: boolean
   Collect?: boolean
   CollectCash?: boolean
+  ManagePermissions?: boolean
+  ReadUnassigned?: boolean
+  MatchRead?: boolean
+  Assign?: boolean
+  Reject?: boolean
+  RequestException?: boolean
+  ReadFinancial?: boolean
+  ReadAuditProfile?: boolean
+  ReadAuditDocuments?: boolean
+  TabIncoming?: boolean
+  TabPrepared?: boolean
+  TabInspected?: boolean
+  TabPending?: boolean
+  TabRejected?: boolean
+  TabSold?: boolean
+  TimelineRead?: boolean
+  TabSent?: boolean
+  TabExceptions?: boolean
+  TabDeleted?: boolean
+  TabLegal?: boolean
+  ExceptionDecide?: boolean
+  SoftDelete?: boolean
+  Restore?: boolean
+  ManageAppBlock?: boolean
+  UpsertManagerRating?: boolean
+  Accept?: boolean
+  Complete?: boolean
+  Confirm?: boolean
+  Transfer?: boolean
+  ReadAttachment?: boolean
+  UpsertBoardRating?: boolean
+  Drilldown?: boolean
+  DetailsRead?: boolean
+  Authenticate?: boolean
+  Write?: boolean
+  Cancel?: boolean
+  FieldRead?: boolean
+  FieldUpload?: boolean
+  FieldComplete?: boolean
+  ManageEnabled?: boolean
+  ManageAssignment?: boolean
+  Decide?: boolean
+  Apply?: boolean
+  AppRead?: boolean
+  Submit?: boolean
+  MarkRead?: boolean
+  MarkDelegateRead?: boolean
+  MarkBranchReviewed?: boolean
+  Open?: boolean
+  Rate?: boolean
+  Depart?: boolean
 }
 
 export interface PermissionTypes {
@@ -76,6 +220,44 @@ export interface PermissionTypes {
   Transaction?: Permissions[]
   ActivityLog?: Permissions[]
   Notification?: Permissions[]
+  Report?: Permissions[]
+  SalesRequest?: Permissions[]
+  SalesFollowup?: Permissions[]
+  SalesOverview?: Permissions[]
+  SalesEmployee?: Permissions[]
+  SalesLocation?: Permissions[]
+  SalesRoute?: Permissions[]
+  SalesSummary?: Permissions[]
+  LegalFollowup?: Permissions[]
+  Task?: Permissions[]
+  DelegateFollowup?: Permissions[]
+  ManagementSummary?: Permissions[]
+  ManagementRatings?: Permissions[]
+  CommitteeTask?: Permissions[]
+  AppNote?: Permissions[]
+  Waiver?: Permissions[]
+  CustomerDecision?: Permissions[]
+  LegalNames?: Permissions[]
+  LegalConversion?: Permissions[]
+  PriceBoard?: Permissions[]
+  Announcement?: Permissions[]
+  Tutorial?: Permissions[]
+  WrongSale?: Permissions[]
+  BranchNewSale?: Permissions[]
+  BranchDeclining?: Permissions[]
+  Complaint?: Permissions[]
+  BranchVisit?: Permissions[]
+  BranchManagerAccount?: Permissions[]
+  DelegateHome?: Permissions[]
+  FollowerWork?: Permissions[]
+  FollowerSalesReview?: Permissions[]
+  FollowerDeclining?: Permissions[]
+  FollowerNotes?: Permissions[]
+  FollowerOldCustomers?: Permissions[]
+  FollowerDelegateNotes?: Permissions[]
+  FollowerCollection?: Permissions[]
+  FollowerLocation?: Permissions[]
+  FollowerRoute?: Permissions[]
 }
 
 export interface ConvertedPermissionTypes {
@@ -99,4 +281,42 @@ export interface ConvertedPermissionTypes {
   Transaction?: ModulePermissions
   ActivityLog?: ModulePermissions
   Notification?: ModulePermissions
+  Report?: ModulePermissions
+  SalesRequest?: ModulePermissions
+  SalesFollowup?: ModulePermissions
+  SalesOverview?: ModulePermissions
+  SalesEmployee?: ModulePermissions
+  SalesLocation?: ModulePermissions
+  SalesRoute?: ModulePermissions
+  SalesSummary?: ModulePermissions
+  LegalFollowup?: ModulePermissions
+  Task?: ModulePermissions
+  DelegateFollowup?: ModulePermissions
+  ManagementSummary?: ModulePermissions
+  ManagementRatings?: ModulePermissions
+  CommitteeTask?: ModulePermissions
+  AppNote?: ModulePermissions
+  Waiver?: ModulePermissions
+  CustomerDecision?: ModulePermissions
+  LegalNames?: ModulePermissions
+  LegalConversion?: ModulePermissions
+  PriceBoard?: ModulePermissions
+  Announcement?: ModulePermissions
+  Tutorial?: ModulePermissions
+  WrongSale?: ModulePermissions
+  BranchNewSale?: ModulePermissions
+  BranchDeclining?: ModulePermissions
+  Complaint?: ModulePermissions
+  BranchVisit?: ModulePermissions
+  BranchManagerAccount?: ModulePermissions
+  DelegateHome?: ModulePermissions
+  FollowerWork?: ModulePermissions
+  FollowerSalesReview?: ModulePermissions
+  FollowerDeclining?: ModulePermissions
+  FollowerNotes?: ModulePermissions
+  FollowerOldCustomers?: ModulePermissions
+  FollowerDelegateNotes?: ModulePermissions
+  FollowerCollection?: ModulePermissions
+  FollowerLocation?: ModulePermissions
+  FollowerRoute?: ModulePermissions
 }

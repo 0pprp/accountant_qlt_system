@@ -1,0 +1,13 @@
+﻿
+{"ok":true,"step":"assign_A","body":[],"status":200}
+{"body":"","step":"A_sees"}
+{"body":"[]","step":"B_empty"}
+{"result":{"ok":true,"raw":[],"status":200,"json":{}},"step":"view"}
+{"result":{"ok":true,"raw":[],"status":200,"json":{}},"step":"prepare"}
+{"result":{"ok":true,"raw":[],"status":200,"json":{}},"step":"inspect"}
+{"body":"{\"requestId\":7,\"customerName\":\"04G Diverse Card — اسم طويل للمراجعة البصرية\",\"customerPhone\":\"07701112233\",\"status\":6,\"statusLabel\":\"تم الكشف\",\"tabKey\":\"inspected\",\"sourceType\":2,\"sourceTypeLabel\":\"متابع\",\"branchId\":1,\"branchName\":null,\"targetEmployeeId\":3,\"linkedOrderId\":5,\"createdAt\":\"2026-11-04T22:38:44.842397+00:00\",\"statusChangedAtUtc\":\"2026-11-04T22:40:23.794286+00:00\",\"viewedAtUtc\":\"2026-11-04T22:40:23.698004+00:00\",\"lastStatusNote\":\"04G prepare note long enough for design\",\"isReturned\":false}","step":"ensure_draft_1"}
+{"body":"{\"requestId\":7,\"customerName\":\"04G Diverse Card — اسم طويل للمراجعة البصرية\",\"customerPhone\":\"07701112233\",\"status\":6,\"statusLabel\":\"تم الكشف\",\"tabKey\":\"inspected\",\"sourceType\":2,\"sourceTypeLabel\":\"متابع\",\"branchId\":1,\"branchName\":null,\"targetEmployeeId\":3,\"linkedOrderId\":5,\"createdAt\":\"2026-11-04T22:38:44.842397+00:00\",\"statusChangedAtUtc\":\"2026-11-04T22:40:23.794286+00:00\",\"viewedAtUtc\":\"2026-11-04T22:40:23.698004+00:00\",\"lastStatusNote\":\"04G prepare note long enough for design\",\"isReturned\":false}","step":"ensure_draft_2"}
+{"ok":true,"step":"reassign_B","status":200}
+{"ok":false,"step":"A_blocked","body":"{\"errors\":[{\"message\":\"الطلب غير مملوك للموظف الحالي\",\"code\":\"SalesRequest_Not_Owner\"}],\"status\":400,\"type\":\"https://tools.ietf.org/html/rfc7231#section-6.5.1\"}","status":400}
+{"ok":false,"step":"complete","body":"{\"errors\":[{\"message\":\"الطلب ليس ملكك\",\"code\":\"Order_Does_Not_Belong_To_You\"}],\"status\":400,\"type\":\"https://tools.ietf.org/html/rfc7231#section-6.5.1\"}","status":400}
+{"reqId":7,"step":"DONE"}

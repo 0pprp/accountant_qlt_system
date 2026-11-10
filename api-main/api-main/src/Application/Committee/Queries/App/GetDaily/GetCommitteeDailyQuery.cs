@@ -23,4 +23,7 @@ public record CommitteeDailyCustomerDto
     public double DailyInstallment { get; set; }
     public double PaidToday { get; set; }
     public bool IsPaid { get; set; }
+    /// <summary>وجود CustomerNote للزبون (ليس DelegateNote ولا DirectorNote).</summary>
+    public bool HasNote { get; set; }
+    public string? LatestFieldFollowupNote { get; set; }
 }

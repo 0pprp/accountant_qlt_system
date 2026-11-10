@@ -1,11 +1,13 @@
 using Application.Users.Commands.Admin.CompletePersonalDocuments;
 using Application.Users.Commands.Admin.Create;
+using Application.Users.Commands.Admin.PatchPermissionOverrides;
 using Application.Users.Commands.Admin.Update;
 using Application.Users.Commands.Admin.UpdatePermissions;
 using Application.Users.Commands.Admin.UpdateSalaryDetail;
 using Application.Users.Queries.Admin.GetById;
 using Application.Users.Queries.Admin.GetAvailableColumns;
 using Application.Users.Queries.Admin.GetPaginated;
+using Application.Users.Queries.Admin.GetPermissionOverrides;
 using Application.Users.Queries.Admin.GetProfile;
 using Application.Users.Queries.Admin.GetUserDailyInstallmentCollectionsReport;
 
@@ -60,14 +62,42 @@ public class UsersController : ApiController
         return result.ToHttpResponse();
     }
 
-    [HasPermission(Permissions.User.Update)]
+    [HasPermission(Permissions.User.ManagePermissions)]
     [HttpPut("{id:int}/permissions")]
     public async Task<ActionResult> UpdatePermissions([FromRoute] int id, [FromBody] UpdateUserPermissionsDto dto)
     {
         var command = new UpdateUserPermissionsCommand
         {
             UserId = id,
-            PermissionIds = dto.PermissionIds
+            PermissionIds = dto.PermissionIds ?? [],
+            ExpectedVersion = dto.ExpectedVersion
+        };
+        var result = await _mediator.Send(command, CancellationToken);
+
+        return result.ToHttpResponse();
+    }
+
+    [HasPermission(Permissions.User.ManagePermissions)]
+    [HttpGet("{id:int}/permission-overrides")]
+    public async Task<ActionResult<GetUserPermissionOverridesResponse>> GetPermissionOverrides([FromRoute] int id)
+    {
+        var query = new GetUserPermissionOverridesQuery(id);
+        var result = await _mediator.Send(query, CancellationToken);
+
+        return result.ToHttpResponse();
+    }
+
+    [HasPermission(Permissions.User.ManagePermissions)]
+    [HttpPatch("{id:int}/permission-overrides")]
+    public async Task<ActionResult> PatchPermissionOverrides(
+        [FromRoute] int id,
+        [FromBody] PatchUserPermissionOverridesDto dto)
+    {
+        var command = new PatchUserPermissionOverridesCommand
+        {
+            UserId = id,
+            ExpectedVersion = dto.ExpectedVersion,
+            Changes = dto.Changes
         };
         var result = await _mediator.Send(command, CancellationToken);
 

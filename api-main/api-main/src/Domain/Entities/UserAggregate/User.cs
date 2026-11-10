@@ -1,4 +1,4 @@
-﻿using Domain.Common;
+using Domain.Common;
 using Domain.Entities.AttachmentAggregate;
 using Domain.Entities.BranchAggregate;
 using Domain.Entities.OrderAggregate;
@@ -31,8 +31,10 @@ public class User : AuditableEntity
         OrderListsAsMotaba = new HashSet<OrderList>();
         SoldOrders = new HashSet<Order>();
         UserPermissions = new HashSet<UserPermission>();
+        UserPermissionDenials = new HashSet<UserPermissionDenial>();
         UserBranches = new HashSet<UserBranch>();
         SellerCashDeliveryTransactions = new HashSet<SellerCashDeliveryTransaction>();
+        PermissionsVersion = 0;
     }
 
     public string FullName { get; set; }
@@ -47,6 +49,8 @@ public class User : AuditableEntity
     public string Address { get; set; }
     public string PhoneNumber { get; set; }
     public double UndeliveredCashAmount { get; set; }
+    /// <summary>إصدار تخصيصات الصلاحيات — Concurrency Token.</summary>
+    public int PermissionsVersion { get; set; }
 
     public OrderList? OrderListAsMandob { get; set; }
     public ICollection<OrderList> OrderListsAsMotaba { get; set; }
@@ -55,6 +59,7 @@ public class User : AuditableEntity
     public ICollection<Attachment> Attachments { get; set; }
     public ICollection<Order> SoldOrders { get; set; }
     public ICollection<UserPermission> UserPermissions { get; set; }
+    public ICollection<UserPermissionDenial> UserPermissionDenials { get; set; }
     public ICollection<UserBranch> UserBranches { get; set; }
     public ICollection<SellerCashDeliveryTransaction> SellerCashDeliveryTransactions { get; set; }
 
@@ -75,5 +80,10 @@ public class User : AuditableEntity
     public void InvalidateSessions()
     {
         SecurityStamp = Guid.NewGuid();
+    }
+
+    public void BumpPermissionsVersion()
+    {
+        PermissionsVersion++;
     }
 }

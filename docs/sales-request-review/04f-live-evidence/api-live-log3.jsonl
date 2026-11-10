@@ -1,0 +1,17 @@
+﻿
+{"ok":true,"step":"login_admin","status":200}
+{"ok":true,"step":"login_emp_a_04f","status":200}
+{"ok":true,"step":"login_emp_b_04f","status":200}
+{"ok":true,"step":"create_ex_decider","body":"{\"id\":5}","status":200}
+{"g":["    current_database     ","-------------------------"," qalaat_04f_sales_verify","(1 row)","","UPDATE 1","INSERT 0 4","    Username    |             Name             ","----------------+------------------------------"," ex_decider_04f | SalesRequest.ReadUnassigned"," ex_decider_04f | SalesRequest.TabExceptions"," ex_decider_04f | SalesRequest.ExceptionDecide"," ex_decider_04f | SalesRequest.TimelineRead","(4 rows)",""],"step":"grant_decider"}
+{"ok":true,"step":"login_ex_decider_04f","status":200}
+{"ok":true,"step":"approve_exception","body":[],"status":200}
+{"body":"{\"id\":4,\"customerName\":\"04F Ex Customer\",\"customerPhone\":\"07701112233\",\"sourceType\":0,\"sourceTypeLabel\":\"إدخال يدوي\",\"originalExternalId\":null,\"branchId\":1,\"branchName\":\"??? ??????\",\"provinceId\":null,\"provinceName\":null,\"status\":0,\"statusLabel\":\"غير مسند\",\"tabKey\":\"unassigned\",\"targetEmployeeId\":null,\"targetEmployeeName\":null,\"linkedOrderId\":null,\"existingCustomerId\":4,\"createdAt\":\"2026-11-04T21:31:41.047663+00:00\",\"statusChangedAtUtc\":null,\"lastStatusNote\":null,\"rejectReason\":\"need exception\",\"createdByName\":null,\"concurrencyStamp\":2,\"isDeleted\":false,\"deletedAtUtc\":null,\"deleteReason\":null,\"exceptionState\":\"approved\",\"exceptionDecidedAtUtc\":\"2026-11-04T21:34:08.292406+00:00\",\"exceptionCons","step":"exception_detail"}
+{"ok":true,"step":"reject_exception","body":[],"status":200,"ex2Id":"6"}
+{"ok":true,"step":"complete_sale","body":"{\"id\":4,\"status\":\"sold\",\"sellAmount\":0,\"dailyInstallmentAmount\":0,\"createdAt\":\"2026-11-04T21:32:56.633375+00:00\",\"reason\":null,\"customer\":{\"id\":4,\"fullName\":\"04F Live Customer\",\"phoneNumber\":\"07701112233\"}}","status":200}
+{"after":["3|4|9"],"step":"request_after_complete"}
+{"rows":["1|4|Invalidation|pub|0","2|5|Invalidation|pub|0","3|5|Invalidation|pub|0","4|3|Assigned|pub|0","5|3|StatusChanged|pub|0","6|3|StatusChanged|pub|0","7|3|StatusChanged|pub|0","8|3|DraftLinked|pub|0","9|3|Reassigned|pub|0","10|4|Invalidation|pub|0","11|6|Invalidation|null|0","12|6|Invalidation|null|0","13|3|Completed|null|0"],"step":"outbox_rows"}
+{"ok":true,"step":"login_emp_a_04f","status":200}
+{"ok":true,"step":"deny_AppRead_old_token","body":"[]","status":200}
+{"ok":false,"step":"deny_AppRead_new_token","body":"","status":403}
+{"step":"DONE3"}

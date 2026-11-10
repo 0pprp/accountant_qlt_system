@@ -1,0 +1,8 @@
+﻿\d "Provinces"
+\d "Branches"
+\d "Safes"
+\d "UserBranches"
+\d "UserRoles"
+\d "OrderLists"
+\d "SalesRequests"
+\d "Orders"

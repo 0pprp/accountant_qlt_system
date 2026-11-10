@@ -1,0 +1,2 @@
+import{_ as e}from"./index-CodRd4Kx.js";import{R as o,c as t,l as s,d as r}from"./vue-vendor-DWzzIv9s.js";import"./primevue-core-T01DRH7V.js";import"./primevue-components-DT8-55m5.js";import"./utils-Dl1GZEHJ.js";import"./i18n-CF-2Y5n5.js";const c={class:"p-4 md:p-6"},u=o({__name:"AccessDeniedView",setup(a){return(m,p)=>(r(),t("div",c,[s(e)]))}});export{u as default};
+//# sourceMappingURL=AccessDeniedView-BEXL6ecP.js.map

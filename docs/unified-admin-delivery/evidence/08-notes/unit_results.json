@@ -1,0 +1,9 @@
+{
+  "batch": 8,
+  "section": "FollowerNotes",
+  "apiFollowerWorkPassed": 58,
+  "uiPassed": 17,
+  "live": "not_verified",
+  "hasNoteWired": true,
+  "status": "implemented_unit_tested"
+}

@@ -1,0 +1,25 @@
+{
+  "database": "qalaat_22_23_iso",
+  "api": "http://127.0.0.1:4223",
+  "at": "2026-11-09T16:45:00Z",
+  "unitTests": {
+    "Application.Tests focused": "29 passed",
+    "Flutter form tests 3 apps": "3 passed"
+  },
+  "results": {
+    "submit.Delegate.admin": { "requestId": 3, "phoneNormalizedFromSpaces": "07801234567", "status": "New", "unassigned": true, "linkedOrderId": null },
+    "submit.idempotent": { "requestId": 6, "sameOnRetry": true },
+    "submit.Follower": { "requestIds": [4, 5], "sourceType": 2, "arabicPhoneOk": true },
+    "submit.Delegate.mandob": { "requestId": 6, "sourceType": 3, "createdByUserId": 3 },
+    "badPhone": 400,
+    "branchOutOfScope": 403,
+    "followerCannotSubmitDelegate": 403,
+    "createdByFromSession": true,
+    "sourceFromRoute": true,
+    "legalMine.follower": { "totalCount": 1 },
+    "adminList": { "totalCount": ">=4" }
+  },
+  "closedFrom21": ["FieldComplete path", "Document storage + Admin/App download + panel preview UI"],
+  "missing": ["Device-verified physical device for three create buttons", "Browser-live create button screenshots this session"],
+  "carryOpen": ["10-19 prior live gaps", "16 Followup Excel"]
+}

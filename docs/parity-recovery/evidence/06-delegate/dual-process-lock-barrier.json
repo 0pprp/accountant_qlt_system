@@ -1,0 +1,43 @@
+{
+  "database": "qalaat_22_23_iso",
+  "api_ports": [
+    4202,
+    4203
+  ],
+  "checks": [
+    {
+      "name": "concurrent_create_sync",
+      "waiting_processes": [
+        "PaymentLockVerify4202",
+        "PaymentLockVerify4203"
+      ],
+      "key_count": 1,
+      "same_payment_id": true,
+      "passed": true
+    },
+    {
+      "name": "over_remaining",
+      "waiting_processes": [
+        "PaymentLockVerify4202",
+        "PaymentLockVerify4203"
+      ],
+      "statuses": [
+        200,
+        400
+      ],
+      "paid_delta": 1000.0,
+      "passed": true
+    },
+    {
+      "name": "different_orders_same_cash_holder",
+      "waiting_processes": [
+        "PaymentLockVerify4202",
+        "PaymentLockVerify4203"
+      ],
+      "cash_delta": 2000.0,
+      "passed": true
+    }
+  ],
+  "passed": true,
+  "recorded_at_utc": "2026-11-09T23:36:00.205957+00:00"
+}

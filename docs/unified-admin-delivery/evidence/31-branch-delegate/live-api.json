@@ -1,0 +1,347 @@
+﻿{
+    "at":  "2026-11-09T18:53:55.8357619Z",
+    "api":  "http://127.0.0.1:15645",
+    "database":  "qalaat_22_23_iso",
+    "steps":  {
+                  "admin.claims.branchIds":  {
+                                                 "branchIds":  "1,2",
+                                                 "role":  "Admin"
+                                             },
+                  "visit.active.before":  {
+                                              "id":  1,
+                                              "branchId":  1,
+                                              "openedByUserId":  1,
+                                              "openedByName":  "admin",
+                                              "status":  "Open",
+                                              "arrivedAtUtc":  "2026-11-09T18:51:03.673736+00:00",
+                                              "departedAtUtc":  null,
+                                              "departNote":  null,
+                                              "expectedVersion":  0,
+                                              "ratings":  [
+
+                                                          ],
+                                              "members":  [
+
+                                                          ],
+                                              "assignedTasks":  [
+                                                                    {
+                                                                        "id":  1,
+                                                                        "title":  "مهمة تحقق 23",
+                                                                        "description":  "اختبار دورة",
+                                                                        "status":  "Sent",
+                                                                        "dueAtUtc":  null,
+                                                                        "priority":  "Medium"
+                                                                    }
+                                                                ],
+                                              "attachments":  [
+
+                                                              ]
+                                          },
+                  "visit.rate":  {
+                                     "ratings":  [
+                                                     {
+                                                         "orderListId":  1,
+                                                         "listName":  "قائمة تحقق",
+                                                         "score":  8,
+                                                         "ratedAtUtc":  "2026-11-09T18:53:55.9795466+00:00"
+                                                     }
+                                                 ],
+                                     "expectedVersion":  1,
+                                     "id":  1
+                                 },
+                  "visit.depart.bad-file":  {
+                                                "body":  null,
+                                                "status":  400
+                                            },
+                  "visit.depart.ok":  {
+                                          "status":  "Departed",
+                                          "attachments":  [
+                                                              {
+                                                                  "id":  1,
+                                                                  "originalFileName":  " depart.png",
+                                                                  "contentType":  "image/png",
+                                                                  "sizeBytes":  70,
+                                                                  "uploadedAtUtc":  "2026-11-09T18:53:56.0629113+00:00"
+                                                              }
+                                                          ],
+                                          "id":  1,
+                                          "expectedVersion":  2,
+                                          "departNoteLen":  102
+                                      },
+                  "visit.depart.idempotent":  {
+                                                  "error":  true,
+                                                  "message":  "The remote server returned an error: (400) Bad Request.",
+                                                  "status":  400
+                                              },
+                  "visit.open.first-after-bm":  {
+                                                    "status":  "Open",
+                                                    "members":  [
+                                                                    {
+                                                                        "userId":  4,
+                                                                        "displayName":  "مدير فرع تحقق"
+                                                                    }
+                                                                ],
+                                                    "id":  2,
+                                                    "expectedVersion":  0,
+                                                    "assignedTasks":  [
+                                                                          {
+                                                                              "id":  1,
+                                                                              "title":  "مهمة تحقق 23",
+                                                                              "description":  "اختبار دورة",
+                                                                              "status":  "Sent",
+                                                                              "dueAtUtc":  null,
+                                                                              "priority":  "Medium"
+                                                                          }
+                                                                      ]
+                                                },
+                  "visit.open.idempotent-same":  {
+                                                     "membersCount":  1,
+                                                     "tasksCount":  1,
+                                                     "sameId":  true,
+                                                     "id":  2
+                                                 },
+                  "visit.open.other-branch-AlreadyOpen":  {
+                                                              "body":  null,
+                                                              "status":  400
+                                                          },
+                  "visit.open.out-of-scope":  {
+                                                  "body":  null,
+                                                  "status":  400
+                                              },
+                  "visit.rate2":  {
+                                      "expectedVersion":  1,
+                                      "ratings":  [
+                                                      {
+                                                          "orderListId":  1,
+                                                          "listName":  "قائمة تحقق",
+                                                          "score":  7,
+                                                          "ratedAtUtc":  "2026-11-09T18:53:56.1441261+00:00"
+                                                      }
+                                                  ]
+                                  },
+                  "visit.depart2":  {
+                                        "error":  true,
+                                        "message":  "The remote server returned an error: (400) Bad Request.",
+                                        "status":  400
+                                    },
+                  "visit.list.for-delegate":  {
+                                                  "total":  2,
+                                                  "items":  [
+                                                                {
+                                                                    "id":  2,
+                                                                    "branchId":  1,
+                                                                    "status":  "Open",
+                                                                    "openedByName":  "admin",
+                                                                    "members":  1,
+                                                                    "attachments":  0
+                                                                },
+                                                                {
+                                                                    "id":  1,
+                                                                    "branchId":  1,
+                                                                    "status":  "Departed",
+                                                                    "openedByName":  "admin",
+                                                                    "members":  0,
+                                                                    "attachments":  1
+                                                                }
+                                                            ]
+                                              },
+                  "newsales.list":  {
+                                        "unread":  1,
+                                        "first":  {
+                                                      "orderId":  1,
+                                                      "branchId":  1,
+                                                      "customerId":  1,
+                                                      "customerName":  "احمد تحقق الفرع",
+                                                      "customerPhone":  "07709998887",
+                                                      "sellerId":  1,
+                                                      "sellerName":  "admin",
+                                                      "sellAmount":  150000,
+                                                      "dailyInstallmentAmount":  1000,
+                                                      "prepaymentAmount":  0,
+                                                      "salesCompletedAtUtc":  "2026-11-09T18:52:11.553818+00:00",
+                                                      "branchManagerReadAtUtc":  null,
+                                                      "isRead":  false,
+                                                      "items":  [
+
+                                                                ]
+                                                  },
+                                        "total":  1
+                                    },
+                  "newsales.mark-read":  {
+                                             "id":  null,
+                                             "commercialUnchanged":  false,
+                                             "afterUnread":  1,
+                                             "detailStatus":  null,
+                                             "detail":  {
+                                                            "items":  [
+                                                                          {
+                                                                              "orderId":  1,
+                                                                              "branchId":  1,
+                                                                              "customerId":  1,
+                                                                              "customerName":  "احمد تحقق الفرع",
+                                                                              "customerPhone":  "07709998887",
+                                                                              "sellerId":  1,
+                                                                              "sellerName":  "admin",
+                                                                              "sellAmount":  150000,
+                                                                              "dailyInstallmentAmount":  1000,
+                                                                              "prepaymentAmount":  0,
+                                                                              "salesCompletedAtUtc":  "2026-11-09T18:52:11.553818+00:00",
+                                                                              "branchManagerReadAtUtc":  null,
+                                                                              "isRead":  false,
+                                                                              "items":  [
+
+                                                                                        ]
+                                                                          }
+                                                                      ],
+                                                            "totalCount":  1,
+                                                            "unreadCount":  1,
+                                                            "page":  1,
+                                                            "pageSize":  50
+                                                        },
+                                             "beforeUnread":  1
+                                         },
+                  "customers.search":  {
+                                           "count":  1,
+                                           "items":  [
+                                                         {
+                                                             "customerId":  1,
+                                                             "customerName":  "احمد تحقق الفرع",
+                                                             "phoneNumber":  "07709998887",
+                                                             "totalSellAmount":  150000,
+                                                             "totalPaidAmount":  25000,
+                                                             "remainingAmount":  125000
+                                                         }
+                                                     ]
+                                       },
+                  "payments.sum":  {
+                                       "error":  true,
+                                       "message":  "The remote server returned an error: (400) Bad Request.",
+                                       "status":  400
+                                   },
+                  "ratings.catalog":  {
+                                          "branchId":  1,
+                                          "branchName":  "فرع تحقق 20-21",
+                                          "lists":  [
+                                                        {
+                                                            "id":  1,
+                                                            "name":  "قائمة تحقق",
+                                                            "assignedListIds":  null
+                                                        }
+                                                    ],
+                                          "followers":  [
+                                                            {
+                                                                "id":  2,
+                                                                "name":  "متابع تحقق",
+                                                                "assignedListIds":  [
+                                                                                        1
+                                                                                    ]
+                                                            }
+                                                        ],
+                                          "employees":  [
+                                                            {
+                                                                "id":  1,
+                                                                "name":  "admin",
+                                                                "assignedListIds":  null
+                                                            }
+                                                        ],
+                                          "generatedAt":  "2026-11-09T18:53:56.274228+00:00"
+                                      },
+                  "wrongSale.mandob.create":  {
+                                                  "id":  1,
+                                                  "orderId":  1,
+                                                  "createdBy":  null,
+                                                  "followerName":  "مندوب تحقق",
+                                                  "status":  "Pending",
+                                                  "sourceApp":  "mandob-first-collection"
+                                              },
+                  "wrongSale.mandob.dedupe":  {
+                                                  "id":  1,
+                                                  "sourceApp":  "mandob-first-collection"
+                                              },
+                  "wrongSale.mailbox":  {
+                                            "unread":  1,
+                                            "first":  {
+                                                          "id":  1,
+                                                          "orderId":  1,
+                                                          "customerId":  1,
+                                                          "branchId":  1,
+                                                          "customerName":  "احمد تحقق الفرع",
+                                                          "customerPhone":  "07709998887",
+                                                          "rating":  5,
+                                                          "note":  "??? ???? ?????? ?? ???? ???????",
+                                                          "shopStockEstimatedValue":  100000,
+                                                          "estimatedDailyRevenue":  15000,
+                                                          "reasonBlock":  "مبيعات خاطئة\nالزبون: احمد تحقق الفرع\nالهاتف: 07709998887\nالتقييم: 5\nالملاحظة: ??? ???? ?????? ?? ???? ???????\nبضاعة: 100000\nوارد يومي: 15000\nمبلغ البيع: 500000",
+                                                          "sourceApp":  "mandob-first-collection",
+                                                          "status":  "Pending",
+                                                          "followerName":  "مندوب تحقق",
+                                                          "createdAtUtc":  "2026-11-09T18:53:56.316834+00:00",
+                                                          "isDelegateUnread":  true,
+                                                          "isBranchUnreviewed":  true,
+                                                          "delegateReadAtUtc":  null,
+                                                          "branchManagerReviewedAtUtc":  null,
+                                                          "branchManagerReviewNote":  null,
+                                                          "expectedVersion":  0
+                                                      },
+                                            "total":  1,
+                                            "unreviewed":  1
+                                        },
+                  "wrongSale.mark-read-review":  {
+                                                     "conflictRetry":  {
+                                                                           "body":  null,
+                                                                           "status":  400
+                                                                       },
+                                                     "read":  {
+                                                                  "id":  1,
+                                                                  "orderId":  1,
+                                                                  "customerId":  1,
+                                                                  "branchId":  1,
+                                                                  "customerName":  "احمد تحقق الفرع",
+                                                                  "customerPhone":  "07709998887",
+                                                                  "rating":  5,
+                                                                  "note":  "??? ???? ?????? ?? ???? ???????",
+                                                                  "shopStockEstimatedValue":  100000,
+                                                                  "estimatedDailyRevenue":  15000,
+                                                                  "reasonBlock":  "مبيعات خاطئة\nالزبون: احمد تحقق الفرع\nالهاتف: 07709998887\nالتقييم: 5\nالملاحظة: ??? ???? ?????? ?? ???? ???????\nبضاعة: 100000\nوارد يومي: 15000\nمبلغ البيع: 500000",
+                                                                  "sourceApp":  "mandob-first-collection",
+                                                                  "status":  "Pending",
+                                                                  "followerName":  "مندوب تحقق",
+                                                                  "createdAtUtc":  "2026-11-09T18:53:56.316834+00:00",
+                                                                  "isDelegateUnread":  false,
+                                                                  "isBranchUnreviewed":  true,
+                                                                  "delegateReadAtUtc":  "2026-11-09T18:53:56.3885022+00:00",
+                                                                  "branchManagerReviewedAtUtc":  null,
+                                                                  "branchManagerReviewNote":  null,
+                                                                  "expectedVersion":  1
+                                                              },
+                                                     "id":  1,
+                                                     "review":  {
+                                                                    "id":  1,
+                                                                    "orderId":  1,
+                                                                    "customerId":  1,
+                                                                    "branchId":  1,
+                                                                    "customerName":  "احمد تحقق الفرع",
+                                                                    "customerPhone":  "07709998887",
+                                                                    "rating":  5,
+                                                                    "note":  "??? ???? ?????? ?? ???? ???????",
+                                                                    "shopStockEstimatedValue":  100000,
+                                                                    "estimatedDailyRevenue":  15000,
+                                                                    "reasonBlock":  "مبيعات خاطئة\nالزبون: احمد تحقق الفرع\nالهاتف: 07709998887\nالتقييم: 5\nالملاحظة: ??? ???? ?????? ?? ???? ???????\nبضاعة: 100000\nوارد يومي: 15000\nمبلغ البيع: 500000",
+                                                                    "sourceApp":  "mandob-first-collection",
+                                                                    "status":  "BranchReviewed",
+                                                                    "followerName":  "مندوب تحقق",
+                                                                    "createdAtUtc":  "2026-11-09T18:53:56.316834+00:00",
+                                                                    "isDelegateUnread":  false,
+                                                                    "isBranchUnreviewed":  false,
+                                                                    "delegateReadAtUtc":  "2026-11-09T18:53:56.388502+00:00",
+                                                                    "branchManagerReviewedAtUtc":  "2026-11-09T18:53:56.3948783+00:00",
+                                                                    "branchManagerReviewNote":  "?????? ??? iso",
+                                                                    "expectedVersion":  2
+                                                                }
+                                                 },
+                  "wrongSale.out-of-scope-user":  {
+                                                      "body":  null,
+                                                      "status":  403
+                                                  }
+              }
+}

@@ -1,4 +1,5 @@
-﻿using Domain.Entities.BranchAggregate;
+using Application.Users.Common;
+using Domain.Entities.BranchAggregate;
 using Domain.Entities.RoleAggregate;
 
 namespace Application.Common.Models.SignIn;
@@ -10,6 +11,8 @@ public record SignInRequest
     public required List<string> Roles { get; init; }
     public required List<Permission> UserPermissions { get; init; }
     public required List<Permission> RolePermissions { get; init; }
-    public List<Permission> Permissions => UserPermissions.Union(RolePermissions).ToList();
+    public List<Permission> DeniedPermissions { get; init; } = [];
+    public List<Permission> Permissions =>
+        EffectivePermissionCalculator.Compute(RolePermissions, UserPermissions, DeniedPermissions);
     public required List<Branch> Branches { get; init; }
 }

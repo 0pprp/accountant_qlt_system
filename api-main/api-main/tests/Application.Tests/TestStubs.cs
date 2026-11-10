@@ -23,7 +23,8 @@ internal sealed class ActivityLogServiceStub : IActivityLogService
         ActivityType activityType,
         TargetEntityType targetEntityType,
         int? targetEntityId,
-        ActivityLogActor? actorOverride = null)
+        ActivityLogActor? actorOverride = null,
+        string? details = null)
         => Task.CompletedTask;
 }
 

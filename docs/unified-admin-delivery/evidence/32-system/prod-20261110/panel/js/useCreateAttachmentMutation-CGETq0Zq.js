@@ -1,0 +1,2 @@
+import{c as a,b as n}from"./utils-Dl1GZEHJ.js";import{d as r}from"./index-CodRd4Kx.js";import{Q as o}from"./useUpdateAttachmentMutation-6crYK8yA.js";const s="/admin/Attachments";function i(t){return r.post(s,t,{headers:{"Content-Type":"multipart/form-data"}})}function p(t){const e=a();return n({mutationFn:i,onSuccess:async()=>{await e.invalidateQueries({queryKey:[o]})},...t})}export{p as u};
+//# sourceMappingURL=useCreateAttachmentMutation-CGETq0Zq.js.map

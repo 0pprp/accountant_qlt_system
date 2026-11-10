@@ -1,0 +1,22 @@
+﻿
+Name                          Mode   LastWriteTime         
+----                          ----   -------------         
+.cursor                       d----- 10/22/2026 3:01:31 PM 
+.git                          d--h-- 11/10/2026 1:01:31 AM 
+.playwright-cli               d----- 11/6/2026 4:03:56 PM  
+api-main                      d----- 11/8/2026 10:31:20 PM 
+app-dev                       d----- 8/16/2026 4:19:54 PM  
+committee_officer_application d----- 11/2/2026 4:49:18 PM  
+delegate_app                  d----- 10/29/2026 11:16:00 PM
+docs                          d----- 11/10/2026 1:01:31 AM 
+node_modules                  d----- 11/9/2026 12:39:57 AM 
+panel-admin-main              d----- 8/16/2026 4:19:54 PM  
+publish-out                   d----- 10/27/2026 4:55:16 PM 
+sales_employee_app            d----- 11/5/2026 2:01:24 AM  
+scripts                       d----- 10/27/2026 5:00:44 PM 
+_archive                      d----- 10/22/2026 5:12:04 PM 
+.gitignore                    -a---- 10/27/2026 4:54:47 PM 
+scalar-committee.yml          -a---- 11/2/2026 10:23:22 PM 
+
+
+

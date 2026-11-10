@@ -1,0 +1,6 @@
+Same test filter as 24: 16 passed (AppNote domain/handlers + OutsideAll checks)
+Create from session identity covered
+MarkRead idempotent covered
+List order CreatedAtUtc,Id + UnreadOnly covered
+API-live / Browser-live / Device-verified: Missing (infra/device unavailable this session)
+BranchManager SourceApp supported on POST /app/AppNotes by role; no dedicated BM UI app in repo

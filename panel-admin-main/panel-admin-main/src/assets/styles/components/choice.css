@@ -1,0 +1,31 @@
+/* Shared Select and MultiSelect visual language, including teleported panels. */
+.app-choice {display:inline-flex;align-items:center;direction:rtl;min-height:48px;max-width:100%;border:1px solid #cddbd7!important;border-radius:12px!important;background:#fff!important;color:#163c36!important;font-family:'ElMessiri','El Messiri',sans-serif;font-size:16px;box-shadow:0 1px 2px #00201e05;transition:border-color .16s,box-shadow .16s;cursor:pointer;}
+.app-choice:hover {border-color:#86aaa2!important;}
+.app-choice:focus-within,.app-choice[data-p-focused="true"] {border-color:#006a64!important;box-shadow:0 0 0 3px #006a6415!important;}
+.app-choice[data-p-disabled="true"] {opacity:.55;cursor:not-allowed;}
+.app-choice-label {flex:1;min-width:0;padding:11px 14px!important;text-align:start;font:inherit!important;line-height:1.65!important;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.app-choice-trigger {display:flex;align-items:center;justify-content:center;width:42px;flex-shrink:0;color:#50756c;}
+.app-choice-trigger svg {width:14px;height:14px;}
+.app-choice-panel {direction:rtl;background:#fff!important;border:1px solid #d7e4df!important;border-radius:16px!important;padding:6px!important;box-shadow:0 16px 42px #00201e1a,0 3px 8px #00201e08!important;margin-block:6px;max-width:calc(100vw - 24px)!important;font-family:'ElMessiri','El Messiri',sans-serif;color:#163c36;font-size:16px;overflow:hidden;}
+.app-choice-header {padding:8px 8px 12px!important;border-bottom:1px solid #e7eeeb;margin-bottom:5px;display:flex;align-items:center;gap:10px;}
+.app-choice-search {width:100%;min-width:0;min-height:44px!important;border:1px solid #dce6e2!important;border-radius:10px!important;background:#f5f8f7!important;padding:9px 12px!important;color:#163c36!important;font:inherit!important;outline:none;}
+.app-choice-search:focus {border-color:#006a64!important;box-shadow:0 0 0 2px #006a6412;}
+.app-choice-scroll {max-height:min(320px,50vh);overflow:auto;overscroll-behavior:contain;scrollbar-width:thin;scrollbar-color:#b6ccc4 transparent;}
+.app-choice-list {list-style:none;margin:0!important;padding:2px!important;display:flex;flex-direction:column;gap:3px;}
+.app-choice-option {display:flex;align-items:center;gap:10px;min-height:44px;padding:10px 12px!important;border-radius:9px!important;color:#163c36!important;background:transparent;cursor:pointer;line-height:1.6;transition:background .12s;}
+.app-choice-option-label {flex:1;white-space:normal;overflow-wrap:anywhere;}
+.app-choice-option:hover,.app-choice-option[data-p-focused="true"] {background:#f0f5f3!important;}
+.app-choice-option[aria-selected="true"] {background:#e6f3ee!important;color:#006a64!important;font-weight:600;}
+.app-choice-panel[data-pc-name="select"] .app-choice-option[aria-selected="true"]::after {content:'\e909';font-family:primeicons;font-size:13px;margin-inline-start:auto;color:#006a64;}
+.app-choice-option[aria-disabled="true"] {opacity:.45;cursor:not-allowed;}
+.app-choice-empty {padding:20px 12px!important;text-align:center;color:#637d75;line-height:1.8;}
+@media(prefers-reduced-motion:reduce){.app-choice,.app-choice-option{transition:none;}}
+.app-choice-label:focus {outline:none!important;}
+.app-choice-header [data-pc-name="iconfield"] {position:relative;flex:1;width:100%;min-width:0;}
+.app-choice-header input {width:100%;min-height:44px!important;border:1px solid #dce6e2!important;border-radius:10px!important;background:#f5f8f7!important;padding:10px 12px 10px 38px!important;color:#163c36!important;font:inherit!important;line-height:1.5!important;}
+.app-choice-header input::placeholder {color:#647e76!important;opacity:1;}
+.app-choice-header [data-pc-name="inputicon"] {position:absolute;inset-inline-end:12px;top:50%;transform:translateY(-50%);margin:0;color:#52776b;}
+.app-choice-panel [data-pc-section="filtercontainer"] {flex:1;min-width:0;width:100%;}
+.app-choice .app-choice-label {color:#244b42!important;}
+.app-choice-panel input::placeholder {color:#647e76!important;opacity:1!important;font-size:14px!important;}
+.app-choice-panel.p-select-overlay .app-choice-option[aria-selected="true"]::after {content:'\e909';font-family:primeicons;font-size:13px;margin-inline-start:auto;color:#006a64;}

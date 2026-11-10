@@ -1,0 +1,177 @@
+- generic [ref=f2e12]:
+  - navigation "قائمة التنقل" [ref=f2e14]:
+    - generic [ref=f2e16]:
+      - generic [ref=f2e17]:
+        - generic [ref=f2e18]: قلعة الضمان
+        - button "طي أو توسيع القائمة" [ref=f2e22] [cursor=pointer]: 
+      - menu [ref=f2e23]:
+        - menuitem [ref=f2e24]:
+          - link "الرئيسية" [ref=f2e27] [cursor=pointer]:
+            - /url: /
+        - menuitem [ref=f2e33]:
+          - link "الفروع" [ref=f2e36] [cursor=pointer]:
+            - /url: /branch
+        - menuitem [ref=f2e44]:
+          - link "التسديدات" [ref=f2e47] [cursor=pointer]:
+            - /url: /payment
+        - menuitem [ref=f2e55]:
+          - link "العملاء" [ref=f2e58] [cursor=pointer]:
+            - /url: /customer
+        - menuitem [ref=f2e66]:
+          - link "الحسابات" [ref=f2e69] [cursor=pointer]:
+            - /url: /purchases
+        - menuitem [ref=f2e76]:
+          - link "المصاريف" [ref=f2e79] [cursor=pointer]:
+            - /url: /expenses
+        - menuitem [ref=f2e86]:
+          - link "المبيعات" [ref=f2e89] [cursor=pointer]:
+            - /url: /sale
+        - menuitem [ref=f2e95]:
+          - link "طلبات البيع" [ref=f2e98] [cursor=pointer]:
+            - /url: /sale/requests
+        - menuitem [ref=f2e104]:
+          - link "المخزن" [ref=f2e107] [cursor=pointer]:
+            - /url: /warehouse
+        - menuitem [ref=f2e114]:
+          - link "القاصة الرئيسية" [ref=f2e117] [cursor=pointer]:
+            - /url: /safe/main
+        - menuitem [ref=f2e124]:
+          - link "القاصه" [ref=f2e127] [cursor=pointer]:
+            - /url: /safe
+        - menuitem [ref=f2e134]:
+          - link "القوائم" [ref=f2e137] [cursor=pointer]:
+            - /url: /order
+        - menuitem [ref=f2e143]:
+          - link "المستخدمين" [ref=f2e146] [cursor=pointer]:
+            - /url: /user
+        - menuitem [ref=f2e154]:
+          - link "سجل المستخدمين" [ref=f2e157] [cursor=pointer]:
+            - /url: /activity-log
+        - menuitem [ref=f2e164]:
+          - link "الأشعارات" [ref=f2e167] [cursor=pointer]:
+            - /url: /notifications
+      - generic [ref=f2e174]:
+        - button "??? ??????" [ref=f2e175] [cursor=pointer]
+        - button "تسجيل الخروج" [ref=f2e183] [cursor=pointer]
+  - text: 
+  - main [ref=f2e189]:
+    - generic [ref=f2e190]:
+      - generic [ref=f2e192]:
+        - heading "طلبات البيع" [level=1] [ref=f2e193]
+        - 'status "hub: http://127.0.0.1:5174" [ref=f2e194]':
+          - text: متصل
+          - generic [ref=f2e196]: "· آخر مزامنة: ٣:١٤ ص"
+      - generic [ref=f2e197]:
+        - tablist "تبويبات سير العمل" [ref=f2e198]:
+          - tab "غير المسند 1" [ref=f2e199] [cursor=pointer]:
+            - generic [ref=f2e201]: غير المسند
+            - generic [ref=f2e202]: "1"
+          - tab "طلبات البيع 2" [ref=f2e203] [cursor=pointer]:
+            - generic [ref=f2e205]: طلبات البيع
+            - generic [ref=f2e206]: "2"
+          - tab "جاهز للبيع 0" [ref=f2e207] [cursor=pointer]:
+            - generic [ref=f2e209]: جاهز للبيع
+            - generic [ref=f2e210]: "0"
+          - tab "تم الكشف 2" [active] [selected] [ref=f2e211] [cursor=pointer]:
+            - generic [ref=f2e213]: تم الكشف
+            - generic [ref=f2e214]: "2"
+          - tab "معلقة 0" [ref=f2e215] [cursor=pointer]:
+            - generic [ref=f2e217]: معلقة
+            - generic [ref=f2e218]: "0"
+          - tab "مرفوض 0" [ref=f2e219] [cursor=pointer]:
+            - generic [ref=f2e221]: مرفوض
+            - generic [ref=f2e222]: "0"
+          - tab "تم البيع 2" [ref=f2e223] [cursor=pointer]:
+            - generic [ref=f2e225]: تم البيع
+            - generic [ref=f2e226]: "2"
+        - group [ref=f2e228]:
+          - generic "عروض أخرى" [ref=f2e229]
+      - generic [ref=f2e232]:
+        - generic [ref=f2e233]:
+          - generic [ref=f2e234]: الفرع
+          - spinbutton "الفرع" [ref=f2e235]
+        - generic [ref=f2e236]:
+          - generic [ref=f2e237]: موظف المبيعات
+          - spinbutton "موظف المبيعات" [ref=f2e238]
+        - generic [ref=f2e239]:
+          - generic [ref=f2e240]: المحافظة
+          - spinbutton "المحافظة" [ref=f2e241]
+        - generic [ref=f2e242]:
+          - generic [ref=f2e243]: المصدر
+          - combobox "المصدر" [ref=f2e244]:
+            - option "كل المصادر" [selected]
+            - option "إدخال يدوي"
+            - option "تقديم موظف"
+            - option "متابع"
+            - option "مندوب"
+            - option "استيراد Excel"
+            - option "CRM خارجي"
+        - generic [ref=f2e245]:
+          - generic [ref=f2e246]: من تاريخ
+          - textbox "من تاريخ" [ref=f2e247]
+        - generic [ref=f2e248]:
+          - generic [ref=f2e249]: إلى تاريخ
+          - textbox "إلى تاريخ" [ref=f2e250]
+        - generic [ref=f2e251]:
+          - generic [ref=f2e252]: بحث بالاسم / الهاتف / رقم الطلب
+          - searchbox "بحث بالاسم / الهاتف / رقم الطلب" [ref=f2e253]
+      - paragraph [ref=f2e254]: 2 نتيجة
+      - generic [ref=f2e255]:
+        - generic [ref=f2e256]:
+          - list [ref=f2e257]:
+            - listitem [ref=f2e291] [cursor=pointer]:
+              - generic [ref=f2e292]:
+                - generic [ref=f2e293]:
+                  - heading "04H Web Cycle Customer — اسم طويل للمراجعة" [level=3] [ref=f2e294]
+                  - paragraph [ref=f2e295]: "#9"
+                - generic [ref=f2e296]: تم الكشف
+              - generic [ref=f2e297]:
+                - generic [ref=f2e298]:
+                  - term [ref=f2e299]: الهاتف
+                  - definition [ref=f2e300]: "07701112233"
+                - generic [ref=f2e301]:
+                  - term [ref=f2e302]: الموظف
+                  - definition [ref=f2e303]: Employee A
+                - generic [ref=f2e304]:
+                  - term [ref=f2e305]: المصدر
+                  - definition [ref=f2e306]: تقديم موظف
+                - generic [ref=f2e307]:
+                  - term [ref=f2e308]: الفرع
+                  - definition [ref=f2e309]: "??? ??????"
+                - generic [ref=f2e310]:
+                  - term [ref=f2e311]: وقت الإضافة
+                  - definition [ref=f2e312]: ٠٥‏/١١‏/٢٠٢٦، ٣:٠١ ص
+                - generic [ref=f2e313]:
+                  - term [ref=f2e314]: آخر تغيير حالة
+                  - definition [ref=f2e315]: ٠٥‏/١١‏/٢٠٢٦، ٣:٠٧ ص (8 د)
+            - listitem [ref=f2e316] [cursor=pointer]:
+              - generic [ref=f2e317]:
+                - generic [ref=f2e318]:
+                  - heading "04H Web Cycle Customer — اسم طويل للمراجعة" [level=3] [ref=f2e319]
+                  - paragraph [ref=f2e320]: "#8"
+                - generic [ref=f2e321]: تم الكشف
+              - generic [ref=f2e322]:
+                - generic [ref=f2e323]:
+                  - term [ref=f2e324]: الهاتف
+                  - definition [ref=f2e325]: "07701112233"
+                - generic [ref=f2e326]:
+                  - term [ref=f2e327]: الموظف
+                  - definition [ref=f2e328]: Employee B
+                - generic [ref=f2e329]:
+                  - term [ref=f2e330]: المصدر
+                  - definition [ref=f2e331]: تقديم موظف
+                - generic [ref=f2e332]:
+                  - term [ref=f2e333]: الفرع
+                  - definition [ref=f2e334]: "??? ??????"
+                - generic [ref=f2e335]:
+                  - term [ref=f2e336]: وقت الإضافة
+                  - definition [ref=f2e337]: ٠٥‏/١١‏/٢٠٢٦، ١:٥٤ ص
+                - generic [ref=f2e338]:
+                  - term [ref=f2e339]: آخر تغيير حالة
+                  - definition [ref=f2e340]: ٠٥‏/١١‏/٢٠٢٦، ٢:٢٤ ص (51 د)
+          - generic [ref=f2e283]:
+            - button "السابق" [disabled] [ref=f2e284] [cursor=pointer]
+            - generic [ref=f2e285]: "1"
+            - button "التالي" [disabled] [ref=f2e286] [cursor=pointer]
+        - complementary [ref=f2e288]:
+          - heading "اختر طلبًا لعرض التفاصيل" [level=2] [ref=f2e290]

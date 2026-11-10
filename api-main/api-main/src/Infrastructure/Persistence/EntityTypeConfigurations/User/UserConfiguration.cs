@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace Infrastructure.Persistence.EntityTypeConfigurations.User;
@@ -26,6 +26,10 @@ public class UserConfiguration : IEntityTypeConfiguration<Domain.Entities.UserAg
         });
         builder.Property(x => x.Address).HasMaxLength(400).IsRequired(false);
         builder.Property(x => x.PhoneNumber).HasMaxLength(30).IsRequired();
+        builder.Property(x => x.PermissionsVersion)
+            .IsConcurrencyToken()
+            .HasDefaultValue(0)
+            .IsRequired();
 
         builder.HasOne(x => x.OrderListAsMandob)
             .WithOne(x => x.Mandob)
@@ -53,6 +57,11 @@ public class UserConfiguration : IEntityTypeConfiguration<Domain.Entities.UserAg
             .OnDelete(DeleteBehavior.Cascade);
 
         builder.HasMany(x => x.UserPermissions)
+            .WithOne(x => x.User)
+            .HasForeignKey(x => x.UserId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        builder.HasMany(x => x.UserPermissionDenials)
             .WithOne(x => x.User)
             .HasForeignKey(x => x.UserId)
             .OnDelete(DeleteBehavior.Cascade);

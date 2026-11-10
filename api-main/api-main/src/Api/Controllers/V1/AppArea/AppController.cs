@@ -1,26 +1,39 @@
-﻿namespace Api.Controllers.V1.AppArea;
+﻿using Application.MobileAppReleases.Common;
+using Application.MobileAppReleases.Queries;
+using Domain.Entities.MobileAppReleaseAggregate;
+using Microsoft.AspNetCore.Authorization;
 
+namespace Api.Controllers.V1.AppArea;
+
+/// <summary>
+/// توافق قديم: checkVersion → مخزن MobileAppReleases.
+/// المسار الجديد المفضل: GET /app/mobile-updates/{appKey}.
+/// </summary>
 [ApiVersion(1)]
+[AllowAnonymous]
 public class AppController : ApiController
 {
-    private const int LatestAppBuildNumber = 5;
-    
-    [HttpGet("checkVersion")]
-    public ActionResult<AppVersionResponse> CheckVersion([FromQuery] int buildNumber)
-    {
-        var response = new AppVersionResponse
-        {
-            ShouldUpdate = buildNumber < LatestAppBuildNumber,
-            IsForce = true,
-            Url = ""
-        };
-        return Ok(response);
-    }
-}
+    private readonly IMediator _mediator;
 
-public record AppVersionResponse
-{
-    public bool ShouldUpdate { get; set; }
-    public bool IsForce { get; set; }
-    public required string Url { get; set; }
+    public AppController(IMediator mediator) => _mediator = mediator;
+
+    [HttpGet("checkVersion")]
+    public async Task<ActionResult<LegacyAppVersionResponse>> CheckVersion(
+        [FromQuery] int buildNumber,
+        [FromQuery] string? appKey = null)
+    {
+        var key = string.IsNullOrWhiteSpace(appKey)
+            ? MobileAppKeys.SalesEmployee
+            : appKey;
+        var result = await _mediator.Send(new EvaluateMobileUpdateQuery
+        {
+            AppKey = key,
+            CurrentVersionCode = buildNumber
+        }, CancellationToken);
+
+        if (result.IsFailed)
+            return Ok(new LegacyAppVersionResponse(false, false, ""));
+
+        return Ok(MobileAppReleaseMapper.ToLegacy(result.Data!));
+    }
 }

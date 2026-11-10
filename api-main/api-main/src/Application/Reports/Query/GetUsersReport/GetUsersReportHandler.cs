@@ -8,15 +8,25 @@ public class GetUsersReportHandler : IRequestHandler<GetUsersReportQuery, Result
 {
     private readonly IApplicationDbContextFactory _dbContextFactory;
     private readonly IDateTimeProvider _dateTimeProvider;
+    private readonly ICurrentUserService _currentUserService;
 
-    public GetUsersReportHandler(IApplicationDbContextFactory dbContextFactory, IDateTimeProvider dateTimeProvider)
+    public GetUsersReportHandler(
+        IApplicationDbContextFactory dbContextFactory,
+        IDateTimeProvider dateTimeProvider,
+        ICurrentUserService currentUserService)
     {
         _dbContextFactory = dbContextFactory;
         _dateTimeProvider = dateTimeProvider;
+        _currentUserService = currentUserService;
     }
 
     public async Task<Result<GetUsersReportResponse>> Handle(GetUsersReportQuery request, CancellationToken cancellationToken)
     {
+        var accessDenied = Application.Reports.Common.ReportBranchAccess.DenyIfOutOfScope(
+            _currentUserService, request.BranchId);
+        if (accessDenied is not null)
+            return accessDenied;
+
         var previousMonthEnd = new DateOnly(_dateTimeProvider.Today.Year, _dateTimeProvider.Today.Month, 1).AddDays(-1);
 
         var currentCustomerCountTask = GetCustomerCountAsync(request.BranchId, countUpToDate: null, cancellationToken);
@@ -77,7 +87,7 @@ public class GetUsersReportHandler : IRequestHandler<GetUsersReportQuery, Result
 
         return await dbContext.Users.AsNoTracking()
             .Where(x => x.UserBranches.Any(ub => ub.BranchId == branchId))
-            .Where(x => x.UserRoles.Any(ur => ur.Role!.Name == Common.SeedData.Roles.Mandob.Name))
+            .Where(x => x.UserRoles.Any(ur => ur.Role!.Name == Application.Common.SeedData.Roles.Mandob.Name))
             .When(countUpToDate is not null, x => DateOnly.FromDateTime(x.CreatedAt!.Value.DateTime) <= countUpToDate)
             .CountAsync(cancellationToken);
     }

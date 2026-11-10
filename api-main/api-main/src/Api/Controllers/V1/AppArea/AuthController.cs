@@ -18,6 +18,7 @@ public class AuthController : ApiController
     [HttpPost("login")]
     public async Task<ActionResult<LoginResponse>> Login([FromBody] LoginCommand command)
     {
+        command.EnforceSalesAppBlock = true;
         var result = await _mediator.Send(command, CancellationToken);
 
         return result.ToHttpResponse();

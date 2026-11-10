@@ -1,0 +1,1 @@
+﻿Announcement failure states: loading/forbidden/error/successEmpty/successData + retry in delegate_app + committee_officer_application. AppKey committee/motaba → follower.

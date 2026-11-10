@@ -1,0 +1,16 @@
+﻿المعلومة,مصدر القديم,مصدر API الجديد,مكان الواجهة,الحالة,شروط الظهور
+اسم الزبون,غير متاح في المستودع,Admin/App CustomerName,كارت+تفاصيل اللوحة؛ Flutter عنوان,موجود,دائمًا
+رقم الطلب,غير متاح,Admin Id / App RequestId,#id؛ Flutter subtitle,موجود,دائمًا
+الحالة,لوحات حالة موثّقة,Status+StatusLabel+TabKey,كارت/تفاصيل/Flutter,موجود,تبويب بصلاحية Tab*
+الهاتف,غير متاح,CustomerPhone,لوحة+Flutter تفاصيل,موجود,— إن null
+الموظف المستهدف,غير متاح,TargetEmployeeId+Name,لوحة فقط (Flutter بلا اسم),موجود باللوحة / ناقص Flutter,—
+المصدر,غير متاح,SourceType+Label,لوحة؛ غير مربوط Flutter,موجود باللوحة / غير مربوط Flutter,فلتر؛ IsSentSource
+الفرع,غير متاح,BranchId+Name,لوحة+Flutter,موجود,fallback Id
+وقت الإضافة,غير متاح,CreatedAt,لوحة؛ Flutter subtitle,موجود / ناقص تفاصيل Flutter,—
+آخر تغيير حالة,غير متاح,StatusChangedAtUtc,لوحة+Flutter,موجود,—
+ملاحظة الحالة,غير متاح,LastStatusNote,لوحة+Flutter,موجود,إن وُجدت
+سبب الرفض,غير متاح,RejectReason,لوحة,موجود باللوحة / ناقص Flutter,عند الرفض
+البيع المرتبط,غير متاح,LinkedOrderId,لوحة+Flutter,موجود,إن >0
+المبالغ على كارت الطلب,غير متاح كحقل طلب,لا على list DTO,لا,غير موجود في عقد الطلب,—
+Legal,غير منفّذ,Tab Not Implemented,زر معطل,Not implemented,—
+ingestion المرسلة,CRM/يدوي,فلتر فقط,تبويب مرسلة,Not implemented,—

@@ -1,0 +1,3 @@
+- generic [ref=e61] [cursor=pointer]:
+  - dialog:
+    - button "حسناً" [active] [ref=e62]

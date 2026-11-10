@@ -7,6 +7,7 @@ import {
 } from '@tanstack/vue-query'
 import { useToastStore } from './../store/index'
 import { DialogState } from '../types/model/dialog'
+import { isAbortError } from '@/modules/Auth/session/sessionAbort'
 
 interface Meta {
   noSuccessToast?: boolean
@@ -20,10 +21,8 @@ interface Meta {
   }
 }
 
-export function vueQuery(app: App) {
-  const toastStore = useToastStore()
-
-  const mutationCache = new MutationCache({
+function createMutationCache(toastStore: ReturnType<typeof useToastStore>) {
+  return new MutationCache({
     onSuccess(_, __, ___, { options }) {
       const meta = options.meta as Meta
       if (meta?.noSuccessToast) {
@@ -42,6 +41,8 @@ export function vueQuery(app: App) {
       }
     },
     onError(err, _variables, _context, { options }) {
+      if (isAbortError(err)) return
+
       const error = err as AxiosCustomError
       const meta = options.meta as Meta
 
@@ -60,8 +61,48 @@ export function vueQuery(app: App) {
       }
     },
   })
+}
 
-  const queryClient = new QueryClient({
+let queryClient: QueryClient | null = null
+
+export function getQueryClient(): QueryClient {
+  if (!queryClient) {
+    throw new Error('QueryClient لم يُهيَّأ بعد — استدعِ vueQuery أولًا')
+  }
+  return queryClient
+}
+
+/** إنهاء جلسة / تبديل حساب */
+export function clearSessionQueryCache() {
+  if (!queryClient) return
+  void queryClient.cancelQueries()
+  queryClient.clear()
+}
+
+/**
+ * تبديل فرع — إلغاء الجاري ومسح الكاش حتى لا تظهر بيانات الفرع السابق
+ * إذا وصلت استجابة متأخرة أو بقي مفتاح query مشترك.
+ */
+export function cancelBranchQueries() {
+  if (!queryClient) return
+  void queryClient.cancelQueries()
+  queryClient.clear()
+}
+
+/**
+ * إبطال بيانات قد تصبح غير مسموحة بعد تغيّر الصلاحيات/الفروع.
+ * لا يلغي طلبًا ينتظر إعادة المحاولة بعد refresh توكن فقط.
+ */
+export function invalidateSessionQueries() {
+  if (!queryClient) return
+  void queryClient.invalidateQueries()
+}
+
+export function vueQuery(app: App) {
+  const toastStore = useToastStore()
+
+  queryClient = new QueryClient({
+    mutationCache: createMutationCache(toastStore),
     defaultOptions: {
       queries: {
         retry: 0,
@@ -70,7 +111,6 @@ export function vueQuery(app: App) {
         staleTime: 0,
       },
     },
-    mutationCache,
   })
 
   const options: VueQueryPluginOptions = { queryClient }

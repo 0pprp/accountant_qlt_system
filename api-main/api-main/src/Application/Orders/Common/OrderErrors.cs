@@ -27,4 +27,9 @@ public static class OrderErrors
     public static Error YouCanNotDeleteThisOrder = new("لا يمكنك حذف هذا مبيع.", "You_Can_Not_Delete_This_Order");
     public static Error OrderInformationHasNotCompletedYet = new("معلومات الطلب غير مكتملة بعد.", "Order_Information_Has_Not_Completed_Yet");
     public static Error ApprovalStatusOfOrderHasBeenSetBefore = new("تم تحديد حالة الموافقة على الطلب مسبقًا", "ApprovalStatus_Of_Order_Has_Been_Set_Before");
+
+    /// <summary>نفس ClientPaymentId مع طلب/مبلغ/تاريخ مختلف — 409.</summary>
+    public static Error ClientPaymentPayloadConflict = new(
+        "مفتاح التسديد مستخدم ببيانات مالية مختلفة.",
+        "InstallmentPayment_ClientPayment_Conflict");
 }

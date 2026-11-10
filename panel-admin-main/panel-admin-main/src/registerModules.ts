@@ -8,6 +8,22 @@ import OrderModule from '@/modules/Order'
 import UserModule from '@/modules/User'
 import RoleModule from '@/modules/Role'
 import SaleModule from '@/modules/Sale'
+import SalesRequestsModule from '@/modules/SalesRequests'
+import SalesFollowupModule from '@/modules/SalesFollowup'
+import SalesOverviewModule from '@/modules/SalesOverview'
+import SalesEmployeesModule from '@/modules/SalesEmployees'
+import SalesLiveMapModule from '@/modules/SalesLiveMap'
+import SalesRoutesModule from '@/modules/SalesRoutes'
+import SalesRecordsModule from '@/modules/SalesRecords'
+import SalesSummaryModule from '@/modules/SalesSummary'
+import SalesLegalModule from '@/modules/SalesLegal'
+import SalesExcelSearchModule from '@/modules/SalesExcelSearch'
+import ManagementModule from '@/modules/Management'
+import ManagementTasksModule from '@/modules/ManagementTasks'
+import DelegateFollowupModule from '@/modules/DelegateFollowup'
+import ManagementSummaryModule from '@/modules/ManagementSummary'
+import ManagementRatingsModule from '@/modules/ManagementRatings'
+import FollowerWorkModule from '@/modules/FollowerWork'
 import PaymentModule from '@/modules/Payment'
 import CustomerModule from '@/modules/Customer'
 import PurchasesModule from '@/modules/Purchases'
@@ -64,6 +80,22 @@ registerModules({
   role: RoleModule,
   user: UserModule,
   sale: SaleModule,
+  salesRequests: SalesRequestsModule,
+  salesFollowup: SalesFollowupModule,
+  salesOverview: SalesOverviewModule,
+  salesEmployees: SalesEmployeesModule,
+  salesLiveMap: SalesLiveMapModule,
+  salesRoutes: SalesRoutesModule,
+  salesRecords: SalesRecordsModule,
+  salesSummary: SalesSummaryModule,
+  salesLegal: SalesLegalModule,
+  salesExcelSearch: SalesExcelSearchModule,
+  management: ManagementModule,
+  managementTasks: ManagementTasksModule,
+  delegateFollowup: DelegateFollowupModule,
+  managementSummary: ManagementSummaryModule,
+  managementRatings: ManagementRatingsModule,
+  followerWork: FollowerWorkModule,
   payment: PaymentModule,
   customer: CustomerModule,
   purchases: PurchasesModule,

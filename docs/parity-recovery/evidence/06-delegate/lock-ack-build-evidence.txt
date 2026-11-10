@@ -1,0 +1,3 @@
+API publish SHA256: FBB025D5C4D2B99E5D2F0B959641049249FED677464F8AD5BDCF3FE8C7337B45
+Processes started for this verification: PID 6796 on 4202, PID 6444 on 4203.
+Backend ClientPaymentIdSafetyTests: Passed 6/6 (dotnet test --filter FullyQualifiedName~ClientPaymentIdSafetyTests).

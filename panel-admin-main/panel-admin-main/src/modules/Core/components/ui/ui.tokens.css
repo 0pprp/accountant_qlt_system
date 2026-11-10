@@ -1,0 +1,26 @@
+/* Qalaat Al-Dhaman shared UI tokens — consume theme.css; do not invent palette. */
+.q-ui {
+  --q-primary: #006a64;
+  --q-ink: #00201e;
+  --q-card: #ffffff;
+  --q-search: #f8f8f8;
+  --q-muted: #6f797a;
+  --q-border: #d7e2e0;
+  --q-danger: #963d35;
+  --q-space-1: 8px;
+  --q-space-2: 12px;
+  --q-space-3: 16px;
+  --q-space-4: 24px;
+  --q-title: 26px;
+  --q-card-name: 20px;
+  --q-value: 16px;
+  --q-label: 14px;
+  --q-target: 44px;
+  color: var(--q-ink);
+  font-family: ElMessiri, Rubik, Tahoma, sans-serif;
+}
+
+.q-ui :focus-visible {
+  outline: 3px solid var(--q-primary);
+  outline-offset: 2px;
+}

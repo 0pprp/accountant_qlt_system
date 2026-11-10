@@ -1,0 +1,26 @@
+Area,Item,Implemented,Unit-tested,Integration-tested,Live-verified,Blocked,Not-implemented,Notes
+Build,Backend SalesRequest tests,Yes,Yes,Yes (InMemory),No,No,No,InMemory != PostgreSQL
+Build,Frontend vue-tsc/vitest,Yes,Yes,No,No,No,No,
+Build,Flutter analyze/tests,Yes,Yes,No,No,No,No,infos pre-existing; 24 tests passed
+DB,Host/name gate before SQL,Yes,No,Yes,Yes,No,No,localhost/::1 qalaat_04f_sales_verify
+DB,SCHEMA bundle + phase02 denials,Yes,No,Yes,Yes,No,No,04A/D/E alone insufficient for empty DB
+DB,Unique LinkedOrderId,Yes,No,Yes,Yes,No,No,UNIQUE_LINKEDORDER_OK
+DB,FK LinkedOrderId RESTRICT,Yes,No,Yes,Yes,No,No,SQLSTATE 23001
+DB,Permissions OutsideAll seed,Yes,Yes,Yes,Yes,No,No,Admin 28; Mandob 7 App; Chief 0 SR
+DB,EF migration,No,No,No,No,No,Yes,Manual SQL policy
+UI,Exception decide approve/reject,Yes,Yes,Yes,Partial,Panel hub,No,API live; UI shows state/actions gated
+UI,Soft-delete/restore,Yes,Yes,Yes,Partial,Panel hub,No,API live; UI blocks empty reason
+UI,Legal tab,No,Yes (TabMap NI),No,No,No,Yes,Disabled not ready
+UI,Sent tab honesty,Yes,Yes,Partial,Yes,No,No,caveat no_ingestion; empty list
+Live,A/B assign visibility transitions,Yes,Yes,Yes,Yes,No,No,emp A/B CreationStep completed fixture
+Live,ensure-draft idempotent,Yes,Yes,Yes,Yes,No,No,Orders count=1 LinkedOrderId stable
+Live,Complete sale links correct request,Yes,Yes,Yes,Yes,No,No,SR#3 status=9 via Order#4
+Live,Exception self-approval blocked,Yes,Yes,Yes,Yes,No,No,
+Live,Permission revoke mid-session API,Yes,Yes,No,Partial,Hub live revoke,No,old JWT until re-login; new token 403
+Realtime,WebSocket from panel origin (Node client),Yes,Yes,No,Yes,No,No,Origin 5173; transport WebSockets
+Realtime,Measured save→UI/event latency,Yes,No,No,Yes,No,No,336ms and 1466ms
+Realtime,Reconnect + RefreshSubscriptions,Yes,Yes,No,Yes,No,No,
+Realtime,Outbox publish failure recovery,Yes,Yes,Yes,Yes,No,No,row14 retry20→reset→pub
+Realtime,Panel Vue hub connected in browser,Yes,No,No,No,Yes,No,UI showed disconnected+polling
+Design,Panel screenshots 1440/768/360,Yes,No,No,Yes,No,No,04f-live-evidence/screenshots
+Design,Flutter device/emulator full cycle,Yes,Yes,No,No,Yes,No,devices available; cycle not live-run

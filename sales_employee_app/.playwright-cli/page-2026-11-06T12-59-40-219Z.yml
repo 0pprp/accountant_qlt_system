@@ -1,0 +1,12 @@
+- generic [ref=e4]:
+  - generic:
+    - generic:
+      - generic:
+        - generic:
+          - generic:
+            - generic:
+              - button "رجوع" [active] [ref=e47]
+              - heading "تم الكشف" [level=2] [ref=e48]
+            - generic:
+              - group:
+                - 'button "04H Flutter Complete Customer #13 • order #8 • تم الكشف • 2026-11-06 15:50:29 • 04H Flutter UI prepare #13" [ref=e49]'

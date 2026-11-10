@@ -1,0 +1,406 @@
+﻿ M api-main/api-main/src/Api/ConfigureServices.cs
+ M api-main/api-main/src/Api/Controllers/V1/AdminArea/CustomersController.cs
+ M api-main/api-main/src/Api/Controllers/V1/AdminArea/OrderListsController.cs
+ M api-main/api-main/src/Api/Controllers/V1/AdminArea/UsersController.cs
+ M api-main/api-main/src/Api/Controllers/V1/AppArea/AppController.cs
+ M api-main/api-main/src/Api/Controllers/V1/AppArea/AuthController.cs
+ M api-main/api-main/src/Api/Controllers/V1/AppArea/CommitteeController.cs
+ M api-main/api-main/src/Api/Controllers/V1/AppArea/SalesLocationsController.cs
+ M api-main/api-main/src/Api/Extensions/ResultExtensions.cs
+ M api-main/api-main/src/Api/Program.cs
+ M api-main/api-main/src/Application/Committee/Commands/App/AuthenticatePendingSale/AuthenticateCommitteePendingSaleCommand.cs
+ M api-main/api-main/src/Application/Committee/Commands/App/PostComplaint/PostCommitteeComplaintCommand.cs
+ M api-main/api-main/src/Application/Committee/Commands/App/PostDirectorNote/PostCommitteeDirectorNoteCommand.cs
+ M api-main/api-main/src/Application/Committee/Queries/App/GetCollectionLists/GetCommitteeCollectionListsHandler.cs
+ M api-main/api-main/src/Application/Committee/Queries/App/GetDecliningCustomers/GetCommitteeDecliningCustomersHandler.cs
+ M api-main/api-main/src/Application/Committee/Queries/App/GetDecliningCustomers/GetCommitteeDecliningCustomersQuery.cs
+ M api-main/api-main/src/Application/Committee/Queries/App/GetListCards/GetCommitteeListCardsHandler.cs
+ M api-main/api-main/src/Application/Committee/Queries/App/GetLists/GetCommitteeListsHandler.cs
+ M api-main/api-main/src/Application/Committee/Queries/App/GetPendingSales/GetCommitteePendingSalesHandler.cs
+ M api-main/api-main/src/Application/Common/Constants/AttachmentPath.cs
+ M api-main/api-main/src/Application/Common/Interfaces/IActivityLogService.cs
+ M api-main/api-main/src/Application/Common/Interfaces/IApplicationDbContext.cs
+ M api-main/api-main/src/Application/Common/Models/SignIn/SignInRequest.cs
+ M api-main/api-main/src/Application/Common/Models/SignIn/UserLoginDto.cs
+ M api-main/api-main/src/Application/Common/SeedData/Permissions.cs
+ M api-main/api-main/src/Application/Common/SeedData/RolePermissions.cs
+ M api-main/api-main/src/Application/Common/SeedData/Roles.cs
+ M api-main/api-main/src/Application/Common/Services/ActivityLogService.cs
+ M api-main/api-main/src/Application/ConfigureServices.cs
+ M api-main/api-main/src/Application/InstallmentPayments/Commands/App/Create/CreateInstallmentPaymentHandler.cs
+ M api-main/api-main/src/Application/Reports/Query/GetProductsReport/GetProductsReportHandler.cs
+ M api-main/api-main/src/Application/Reports/Query/GetSafeReport/GetSafeReportHandler.cs
+ M api-main/api-main/src/Application/Reports/Query/GetUsersReport/GetUsersReportHandler.cs
+ M api-main/api-main/src/Application/Reports/Query/GetYearlyFinancialReport/GetYearlyFinancialReportHandler.cs
+ M api-main/api-main/src/Application/SalesLocations/Commands/App/IngestBatch/IngestSalesLocationBatchCommand.cs
+ M api-main/api-main/src/Application/SalesLocations/Commands/App/IngestBatch/IngestSalesLocationBatchCommandValidator.cs
+ M api-main/api-main/src/Application/SalesLocations/Commands/App/IngestBatch/IngestSalesLocationBatchHandler.cs
+ M api-main/api-main/src/Application/SalesLocations/Commands/App/IngestLive/IngestSalesLiveLocationCommand.cs
+ M api-main/api-main/src/Application/SalesLocations/Commands/App/IngestLive/IngestSalesLiveLocationCommandValidator.cs
+ M api-main/api-main/src/Application/SalesLocations/Commands/App/IngestLive/IngestSalesLiveLocationHandler.cs
+ M api-main/api-main/src/Application/SalesRatings/Common/CustomerRatingCalculator.cs
+ M api-main/api-main/src/Application/SalesShifts/Commands/App/Start/StartSalesShiftHandler.cs
+ M api-main/api-main/src/Application/SalesShifts/Common/SalesShiftErrors.cs
+ M api-main/api-main/src/Application/SalesWorkflow/Commands/App/Complete/CompleteSalesWorkflowHandler.cs
+ M api-main/api-main/src/Application/SalesWorkflow/Commands/App/Transfer/TransferSalesWorkflowHandler.cs
+ M api-main/api-main/src/Application/Users/Commands/Admin/Create/CreateUserHandler.cs
+ M api-main/api-main/src/Application/Users/Commands/Admin/Update/UpdateUserHandler.cs
+ M api-main/api-main/src/Application/Users/Commands/Admin/UpdatePermissions/UpdateUserPermissionsCommand.cs
+ M api-main/api-main/src/Application/Users/Commands/Admin/UpdatePermissions/UpdateUserPermissionsCommandValidator.cs
+ M api-main/api-main/src/Application/Users/Commands/Admin/UpdatePermissions/UpdateUserPermissionsHandler.cs
+ M api-main/api-main/src/Application/Users/Commands/Common/Login/LoginCommand.cs
+ M api-main/api-main/src/Application/Users/Commands/Common/Login/LoginHandler.cs
+ M api-main/api-main/src/Application/Users/Common/UserErrors.cs
+ M api-main/api-main/src/Domain/Entities/ActivityLogAggregate/Enums/ActivityType.cs
+ M api-main/api-main/src/Domain/Entities/ActivityLogAggregate/Enums/TargetEntityType.cs
+ M api-main/api-main/src/Domain/Entities/CustomerAggregate/Customer.cs
+ M api-main/api-main/src/Domain/Entities/OrderAggregate/Order.cs
+ M api-main/api-main/src/Domain/Entities/OrderListAggregate/OrderList.cs
+ M api-main/api-main/src/Domain/Entities/RoleAggregate/Permission.cs
+ M api-main/api-main/src/Domain/Entities/SalesLocationAggregate/SalesLocationPoint.cs
+ M api-main/api-main/src/Domain/Entities/UserAggregate/User.cs
+ M api-main/api-main/src/Infrastructure/ApplicationDbContext.cs
+ M api-main/api-main/src/Infrastructure/ConfigureServices.cs
+ M api-main/api-main/src/Infrastructure/DatabaseInitializer.cs
+ M api-main/api-main/src/Infrastructure/Persistence/EntityTypeConfigurations/Order/OrderConfiguration.cs
+ M api-main/api-main/src/Infrastructure/Persistence/EntityTypeConfigurations/OrderList/OrderListConfiguration.cs
+ M api-main/api-main/src/Infrastructure/Persistence/EntityTypeConfigurations/SalesLocation/SalesLocationPointConfiguration.cs
+ M api-main/api-main/src/Infrastructure/Persistence/EntityTypeConfigurations/User/UserConfiguration.cs
+ M api-main/api-main/src/Infrastructure/Persistence/Migrations/ApplicationDbContextModelSnapshot.cs
+ M api-main/api-main/src/Infrastructure/Services/AuthService.cs
+ M api-main/api-main/tests/Application.Tests/Application.Tests.csproj
+ M api-main/api-main/tests/Application.Tests/Orders/SellerCashHolderTests.cs
+ M api-main/api-main/tests/Application.Tests/TestApplicationDbContext.cs
+ M api-main/api-main/tests/Application.Tests/TestStubs.cs
+ M app-dev/app-dev/analysis_options.yaml
+ M app-dev/app-dev/android/app/build.gradle.kts
+ M app-dev/app-dev/android/app/src/main/AndroidManifest.xml
+ M app-dev/app-dev/android/app/src/main/kotlin/com/qalaatal_dhaman/team/MainActivity.kt
+ M app-dev/app-dev/android/gradle/wrapper/gradle-wrapper.properties
+ M app-dev/app-dev/lib/common/utils/helpers/receipt_pdf_generator_enhanced.dart
+ M app-dev/app-dev/lib/home/infrastructure/providers/api_home_provider.dart
+ M app-dev/app-dev/lib/home/presentation/home/home_page.dart
+ M app-dev/app-dev/lib/order/presentation/order_details/order_details_page.dart
+ M app-dev/app-dev/lib/order/presentation/orders/widgets/order_info.dart
+ M app-dev/app-dev/linux/flutter/generated_plugin_registrant.cc
+ M app-dev/app-dev/linux/flutter/generated_plugin_registrant.h
+ M app-dev/app-dev/linux/flutter/generated_plugins.cmake
+ M app-dev/app-dev/macos/Flutter/GeneratedPluginRegistrant.swift
+ M app-dev/app-dev/pubspec.lock
+ M app-dev/app-dev/pubspec.yaml
+ M app-dev/app-dev/windows/flutter/generated_plugin_registrant.cc
+ M app-dev/app-dev/windows/flutter/generated_plugin_registrant.h
+ M app-dev/app-dev/windows/flutter/generated_plugins.cmake
+ M docs/delegate-rebuild/Clean_Architecture_Map.xlsx
+ M docs/delegate-rebuild/Delegate_API_Documentation.xlsx
+ M docs/delegate-rebuild/generate_excel_maps.py
+ M panel-admin-main/panel-admin-main/package-lock.json
+ M panel-admin-main/panel-admin-main/package.json
+ M panel-admin-main/panel-admin-main/src/assets/styles/main.css
+ M panel-admin-main/panel-admin-main/src/modules/Auth/requests/mutations/refreshMutation.ts
+ M panel-admin-main/panel-admin-main/src/modules/Auth/store/index.ts
+ M panel-admin-main/panel-admin-main/src/modules/Auth/types/api.ts
+ M panel-admin-main/panel-admin-main/src/modules/Auth/types/model.ts
+ M panel-admin-main/panel-admin-main/src/modules/Auth/views/LoginPage.vue
+ M panel-admin-main/panel-admin-main/src/modules/Core/components/Dashboard/DashboardContent/DashboardContent.vue
+ M panel-admin-main/panel-admin-main/src/modules/Core/components/layout/TheHeader/TheHeader.vue
+ M panel-admin-main/panel-admin-main/src/modules/Core/components/layout/TheSideBar/TheSideBar.vue
+ M panel-admin-main/panel-admin-main/src/modules/Core/components/layout/TheSideBar/TheSideBarFooter/TheSideBarFooter.vue
+ M panel-admin-main/panel-admin-main/src/modules/Core/composable/index.ts
+ M panel-admin-main/panel-admin-main/src/modules/Core/composable/usePermission.ts
+ M panel-admin-main/panel-admin-main/src/modules/Core/composable/useSideBar.ts
+ M panel-admin-main/panel-admin-main/src/modules/Core/layouts/TheDefaultLayout.vue
+ M panel-admin-main/panel-admin-main/src/modules/Core/localization/ar.json
+ M panel-admin-main/panel-admin-main/src/modules/Core/plugins/axios.ts
+ M panel-admin-main/panel-admin-main/src/modules/Core/plugins/primevue/primevue.constants.ts
+ M panel-admin-main/panel-admin-main/src/modules/Core/plugins/vue-query.ts
+ M panel-admin-main/panel-admin-main/src/modules/Core/requests/queries/useDashboardUsersReportQuery.ts
+ M panel-admin-main/panel-admin-main/src/modules/Core/requests/queries/useProductsReportQuery.ts
+ M panel-admin-main/panel-admin-main/src/modules/Core/requests/queries/useSafeReportQuery.ts
+ M panel-admin-main/panel-admin-main/src/modules/Core/requests/queries/useUserProfileQuery.ts
+ M panel-admin-main/panel-admin-main/src/modules/Core/requests/queries/useYearlyFinancialReportQuery.ts
+ M panel-admin-main/panel-admin-main/src/modules/Core/router.ts
+ M panel-admin-main/panel-admin-main/src/modules/Customer/router.ts
+ M panel-admin-main/panel-admin-main/src/modules/User/components/UserCreateStepper/UserCreateStepper.vue
+ M panel-admin-main/panel-admin-main/src/modules/User/components/UserForms/PowersForm/PowersForm.types.ts
+ M panel-admin-main/panel-admin-main/src/modules/User/components/UserForms/PowersForm/PowersForm.vue
+ M panel-admin-main/panel-admin-main/src/modules/User/components/UserTabs/UserTabs.vue
+ M panel-admin-main/panel-admin-main/src/modules/User/localization/ar.json
+ M panel-admin-main/panel-admin-main/src/modules/User/types/model/index.ts
+ M panel-admin-main/panel-admin-main/src/registerModules.ts
+ M panel-admin-main/panel-admin-main/src/router/guard.ts
+ M panel-admin-main/panel-admin-main/vite.config.ts
+ M panel-admin-main/panel-admin-main/yarn.lock
+?? .playwright-cli/
+?? _archive/
+?? api-main/api-main/Dockerfile.deploy
+?? api-main/api-main/src/Api/Controllers/V1/AdminArea/AnnouncementsController.cs
+?? api-main/api-main/src/Api/Controllers/V1/AdminArea/AppNotesController.cs
+?? api-main/api-main/src/Api/Controllers/V1/AdminArea/BranchCustomersController.cs
+?? api-main/api-main/src/Api/Controllers/V1/AdminArea/BranchDecliningController.cs
+?? api-main/api-main/src/Api/Controllers/V1/AdminArea/BranchManagerAccountsController.cs
+?? api-main/api-main/src/Api/Controllers/V1/AdminArea/BranchNewSalesController.cs
+?? api-main/api-main/src/Api/Controllers/V1/AdminArea/BranchPaymentsController.cs
+?? api-main/api-main/src/Api/Controllers/V1/AdminArea/BranchVisitsController.cs
+?? api-main/api-main/src/Api/Controllers/V1/AdminArea/CommitteeTasksController.cs
+?? api-main/api-main/src/Api/Controllers/V1/AdminArea/ComplaintsController.cs
+?? api-main/api-main/src/Api/Controllers/V1/AdminArea/CustomerDecisionsController.cs
+?? api-main/api-main/src/Api/Controllers/V1/AdminArea/DelegateFollowupController.cs
+?? api-main/api-main/src/Api/Controllers/V1/AdminArea/DelegateHomeController.cs
+?? api-main/api-main/src/Api/Controllers/V1/AdminArea/FollowerTrackingController.cs
+?? api-main/api-main/src/Api/Controllers/V1/AdminArea/FollowerWorkController.cs
+?? api-main/api-main/src/Api/Controllers/V1/AdminArea/LegalFollowupsController.cs
+?? api-main/api-main/src/Api/Controllers/V1/AdminArea/ManagementRatingsController.cs
+?? api-main/api-main/src/Api/Controllers/V1/AdminArea/ManagementSummaryController.cs
+?? api-main/api-main/src/Api/Controllers/V1/AdminArea/ManagementTasksController.cs
+?? api-main/api-main/src/Api/Controllers/V1/AdminArea/MobileAppReleasesController.cs
+?? api-main/api-main/src/Api/Controllers/V1/AdminArea/PriceBoardController.cs
+?? api-main/api-main/src/Api/Controllers/V1/AdminArea/SalesEmployeeTrackingController.cs
+?? api-main/api-main/src/Api/Controllers/V1/AdminArea/SalesEmployeesController.cs
+?? api-main/api-main/src/Api/Controllers/V1/AdminArea/SalesFollowupController.cs
+?? api-main/api-main/src/Api/Controllers/V1/AdminArea/SalesOverviewController.cs
+?? api-main/api-main/src/Api/Controllers/V1/AdminArea/SalesRecordsController.cs
+?? api-main/api-main/src/Api/Controllers/V1/AdminArea/SalesRequestsController.cs
+?? api-main/api-main/src/Api/Controllers/V1/AdminArea/SalesSummaryController.cs
+?? api-main/api-main/src/Api/Controllers/V1/AdminArea/TutorialVideosController.cs
+?? api-main/api-main/src/Api/Controllers/V1/AdminArea/WaiversController.cs
+?? api-main/api-main/src/Api/Controllers/V1/AdminArea/WrongSalesController.cs
+?? api-main/api-main/src/Api/Controllers/V1/AppArea/AnnouncementsController.cs
+?? api-main/api-main/src/Api/Controllers/V1/AppArea/AppNotesController.cs
+?? api-main/api-main/src/Api/Controllers/V1/AppArea/CommitteeLegalFollowupsController.cs
+?? api-main/api-main/src/Api/Controllers/V1/AppArea/ComplaintsController.cs
+?? api-main/api-main/src/Api/Controllers/V1/AppArea/ManagementTasksController.cs
+?? api-main/api-main/src/Api/Controllers/V1/AppArea/MobileUpdatesController.cs
+?? api-main/api-main/src/Api/Controllers/V1/AppArea/PriceBoardAdsController.cs
+?? api-main/api-main/src/Api/Controllers/V1/AppArea/SalesRequestsController.cs
+?? api-main/api-main/src/Api/Controllers/V1/AppArea/TutorialVideosController.cs
+?? api-main/api-main/src/Api/Controllers/V1/AppArea/WrongSalesController.cs
+?? api-main/api-main/src/Api/Hubs/
+?? api-main/api-main/src/Application/Announcements/
+?? api-main/api-main/src/Application/AppNotes/
+?? api-main/api-main/src/Application/BranchCustomers/
+?? api-main/api-main/src/Application/BranchDeclining/
+?? api-main/api-main/src/Application/BranchManagerAccounts/
+?? api-main/api-main/src/Application/BranchNewSales/
+?? api-main/api-main/src/Application/BranchPayments/
+?? api-main/api-main/src/Application/BranchVisits/
+?? api-main/api-main/src/Application/Committee/Commands/App/AddCustomerNote/
+?? api-main/api-main/src/Application/Committee/Commands/App/AddDelegateNote/
+?? api-main/api-main/src/Application/CommitteeTasks/
+?? api-main/api-main/src/Application/Common/Interfaces/ISalesRequestSubmissionLock.cs
+?? api-main/api-main/src/Application/Common/SeedData/RoleDefaultMatrix.cs
+?? api-main/api-main/src/Application/Common/Utilities/PendingModelChangesGate.cs
+?? api-main/api-main/src/Application/Complaints/
+?? api-main/api-main/src/Application/CustomerDecisions/
+?? api-main/api-main/src/Application/DelegateFollowup/
+?? api-main/api-main/src/Application/DelegateHome/
+?? api-main/api-main/src/Application/FollowerWork/
+?? api-main/api-main/src/Application/LegalFollowups/
+?? api-main/api-main/src/Application/ManagementRatings/
+?? api-main/api-main/src/Application/ManagementSummary/
+?? api-main/api-main/src/Application/ManagementTasks/
+?? api-main/api-main/src/Application/MobileAppReleases/
+?? api-main/api-main/src/Application/OrderLists/Commands/Admin/SetFollowerCollectionEnabled/
+?? api-main/api-main/src/Application/PriceBoard/
+?? api-main/api-main/src/Application/Reports/Common/
+?? api-main/api-main/src/Application/SalesEmployeeTracking/
+?? api-main/api-main/src/Application/SalesEmployees/
+?? api-main/api-main/src/Application/SalesFollowup/
+?? api-main/api-main/src/Application/SalesLocations/Common/
+?? api-main/api-main/src/Application/SalesOverview/
+?? api-main/api-main/src/Application/SalesRatings/Common/ActiveCustomerRules.cs
+?? api-main/api-main/src/Application/SalesRatings/Common/ActiveRatingCohort.cs
+?? api-main/api-main/src/Application/SalesRatings/Common/RatingAggregator.cs
+?? api-main/api-main/src/Application/SalesRatings/Common/RatingCustomerFact.cs
+?? api-main/api-main/src/Application/SalesRatings/Common/RatingTrendCalculator.cs
+?? api-main/api-main/src/Application/SalesRecords/
+?? api-main/api-main/src/Application/SalesRequests/
+?? api-main/api-main/src/Application/SalesSummary/
+?? api-main/api-main/src/Application/TutorialVideos/
+?? api-main/api-main/src/Application/Users/Commands/Admin/PatchPermissionOverrides/
+?? api-main/api-main/src/Application/Users/Common/EffectivePermissionCalculator.cs
+?? api-main/api-main/src/Application/Users/Common/PermissionOverrideMode.cs
+?? api-main/api-main/src/Application/Users/Common/UserAssignmentGuard.cs
+?? api-main/api-main/src/Application/Users/Common/UserPermissionGuard.cs
+?? api-main/api-main/src/Application/Users/Queries/Admin/GetPermissionOverrides/
+?? api-main/api-main/src/Application/Waivers/
+?? api-main/api-main/src/Application/WrongSales/
+?? api-main/api-main/src/Domain/Entities/AnnouncementAggregate/
+?? api-main/api-main/src/Domain/Entities/AppNoteAggregate/
+?? api-main/api-main/src/Domain/Entities/BranchVisitAggregate/
+?? api-main/api-main/src/Domain/Entities/CommitteeTaskAggregate/
+?? api-main/api-main/src/Domain/Entities/ComplaintAggregate/
+?? api-main/api-main/src/Domain/Entities/CustomerDecisionAggregate/
+?? api-main/api-main/src/Domain/Entities/DelegateFollowupAggregate/
+?? api-main/api-main/src/Domain/Entities/FollowerWorkAggregate/
+?? api-main/api-main/src/Domain/Entities/LegalConversionAggregate/
+?? api-main/api-main/src/Domain/Entities/LegalFollowupAggregate/
+?? api-main/api-main/src/Domain/Entities/ManagementTaskAggregate/
+?? api-main/api-main/src/Domain/Entities/MobileAppReleaseAggregate/
+?? api-main/api-main/src/Domain/Entities/PriceBoardAggregate/
+?? api-main/api-main/src/Domain/Entities/RoleAggregate/UserPermissionDenial.cs
+?? api-main/api-main/src/Domain/Entities/SalesEmployeeAggregate/
+?? api-main/api-main/src/Domain/Entities/SalesFollowupAggregate/
+?? api-main/api-main/src/Domain/Entities/SalesLocationAggregate/Enums/
+?? api-main/api-main/src/Domain/Entities/SalesRequestAggregate/
+?? api-main/api-main/src/Domain/Entities/TutorialVideoAggregate/
+?? api-main/api-main/src/Domain/Entities/WaiverAggregate/
+?? api-main/api-main/src/Domain/Entities/WrongSaleAggregate/
+?? api-main/api-main/src/Domain/Services/
+?? api-main/api-main/src/Infrastructure/Persistence/EntityTypeConfigurations/Announcement/
+?? api-main/api-main/src/Infrastructure/Persistence/EntityTypeConfigurations/BranchVisit/
+?? api-main/api-main/src/Infrastructure/Persistence/EntityTypeConfigurations/CommitteeTask/
+?? api-main/api-main/src/Infrastructure/Persistence/EntityTypeConfigurations/Complaint/
+?? api-main/api-main/src/Infrastructure/Persistence/EntityTypeConfigurations/CustomerDecision/
+?? api-main/api-main/src/Infrastructure/Persistence/EntityTypeConfigurations/DelegateFollowup/
+?? api-main/api-main/src/Infrastructure/Persistence/EntityTypeConfigurations/FollowerWork/
+?? api-main/api-main/src/Infrastructure/Persistence/EntityTypeConfigurations/LegalConversion/
+?? api-main/api-main/src/Infrastructure/Persistence/EntityTypeConfigurations/LegalFollowup/
+?? api-main/api-main/src/Infrastructure/Persistence/EntityTypeConfigurations/ManagementTask/
+?? api-main/api-main/src/Infrastructure/Persistence/EntityTypeConfigurations/MobileAppRelease/
+?? api-main/api-main/src/Infrastructure/Persistence/EntityTypeConfigurations/PriceBoard/
+?? api-main/api-main/src/Infrastructure/Persistence/EntityTypeConfigurations/Role/UserPermissionDenialConfiguration.cs
+?? api-main/api-main/src/Infrastructure/Persistence/EntityTypeConfigurations/SalesEmployee/
+?? api-main/api-main/src/Infrastructure/Persistence/EntityTypeConfigurations/SalesFollowup/
+?? api-main/api-main/src/Infrastructure/Persistence/EntityTypeConfigurations/SalesRequest/
+?? api-main/api-main/src/Infrastructure/Persistence/EntityTypeConfigurations/TutorialVideo/
+?? api-main/api-main/src/Infrastructure/Persistence/EntityTypeConfigurations/Waiver/
+?? api-main/api-main/src/Infrastructure/Persistence/EntityTypeConfigurations/WrongSale/
+?? api-main/api-main/src/Infrastructure/Persistence/Migrations/20261107190146_SalesRequestsAndPermissionOverrides.Designer.cs
+?? api-main/api-main/src/Infrastructure/Persistence/Migrations/20261107190146_SalesRequestsAndPermissionOverrides.cs
+?? api-main/api-main/src/Infrastructure/Persistence/Migrations/20261107222454_SalesFollowupAppBlockAndBoardRatings.Designer.cs
+?? api-main/api-main/src/Infrastructure/Persistence/Migrations/20261107222454_SalesFollowupAppBlockAndBoardRatings.cs
+?? api-main/api-main/src/Infrastructure/Persistence/Migrations/20261108175747_ManagementTasks.Designer.cs
+?? api-main/api-main/src/Infrastructure/Persistence/Migrations/20261108175747_ManagementTasks.cs
+?? api-main/api-main/src/Infrastructure/Persistence/Migrations/20261108183215_DelegateFollowupBoardOperatorRating.Designer.cs
+?? api-main/api-main/src/Infrastructure/Persistence/Migrations/20261108183215_DelegateFollowupBoardOperatorRating.cs
+?? api-main/api-main/src/Infrastructure/Persistence/Migrations/20261108191345_DelegateFollowupLegalAndCommitteeRatings.Designer.cs
+?? api-main/api-main/src/Infrastructure/Persistence/Migrations/20261108191345_DelegateFollowupLegalAndCommitteeRatings.cs
+?? api-main/api-main/src/Infrastructure/Persistence/Migrations/20261108201328_FollowerSaleAuthentications.Designer.cs
+?? api-main/api-main/src/Infrastructure/Persistence/Migrations/20261108201328_FollowerSaleAuthentications.cs
+?? api-main/api-main/src/Infrastructure/Persistence/Migrations/20261108202338_FollowerCustomerRatingSnapshots.Designer.cs
+?? api-main/api-main/src/Infrastructure/Persistence/Migrations/20261108202338_FollowerCustomerRatingSnapshots.cs
+?? api-main/api-main/src/Infrastructure/Persistence/Migrations/20261108203546_CustomerNotesAndLegalFollowups.Designer.cs
+?? api-main/api-main/src/Infrastructure/Persistence/Migrations/20261108203546_CustomerNotesAndLegalFollowups.cs
+?? api-main/api-main/src/Infrastructure/Persistence/Migrations/20261108204903_FollowerDelegateNotesAndCollection.Designer.cs
+?? api-main/api-main/src/Infrastructure/Persistence/Migrations/20261108204903_FollowerDelegateNotesAndCollection.cs
+?? api-main/api-main/src/Infrastructure/Persistence/Migrations/20261108205750_FollowerTrackingLocationFields.Designer.cs
+?? api-main/api-main/src/Infrastructure/Persistence/Migrations/20261108205750_FollowerTrackingLocationFields.cs
+?? api-main/api-main/src/Infrastructure/Persistence/Migrations/20261108213748_SalesEmployeeAssignmentAndLocationActor.Designer.cs
+?? api-main/api-main/src/Infrastructure/Persistence/Migrations/20261108213748_SalesEmployeeAssignmentAndLocationActor.cs
+?? api-main/api-main/src/Infrastructure/Persistence/Migrations/20261109163029_LegalFollowupFieldDocuments.Designer.cs
+?? api-main/api-main/src/Infrastructure/Persistence/Migrations/20261109163029_LegalFollowupFieldDocuments.cs
+?? api-main/api-main/src/Infrastructure/Persistence/Migrations/20261109170117_CommitteeTasksAndAppNotes.Designer.cs
+?? api-main/api-main/src/Infrastructure/Persistence/Migrations/20261109170117_CommitteeTasksAndAppNotes.cs
+?? api-main/api-main/src/Infrastructure/Persistence/Migrations/20261109171453_WaiversAndCustomerDecisions.Designer.cs
+?? api-main/api-main/src/Infrastructure/Persistence/Migrations/20261109171453_WaiversAndCustomerDecisions.cs
+?? api-main/api-main/src/Infrastructure/Persistence/Migrations/20261109174512_PriceBoardAndAnnouncements.Designer.cs
+?? api-main/api-main/src/Infrastructure/Persistence/Migrations/20261109174512_PriceBoardAndAnnouncements.cs
+?? api-main/api-main/src/Infrastructure/Persistence/Migrations/20261109180014_TutorialVideos.Designer.cs
+?? api-main/api-main/src/Infrastructure/Persistence/Migrations/20261109180014_TutorialVideos.cs
+?? api-main/api-main/src/Infrastructure/Persistence/Migrations/20261109180400_WrongSaleNotices.Designer.cs
+?? api-main/api-main/src/Infrastructure/Persistence/Migrations/20261109180400_WrongSaleNotices.cs
+?? api-main/api-main/src/Infrastructure/Persistence/Migrations/20261109182501_Branch31ComplaintsVisitsAndOrderRead.Designer.cs
+?? api-main/api-main/src/Infrastructure/Persistence/Migrations/20261109182501_Branch31ComplaintsVisitsAndOrderRead.cs
+?? api-main/api-main/src/Infrastructure/Persistence/Migrations/20261109184704_Branch31VisitMembersAttachmentsAndWrongSaleSource.Designer.cs
+?? api-main/api-main/src/Infrastructure/Persistence/Migrations/20261109184704_Branch31VisitMembersAttachmentsAndWrongSaleSource.cs
+?? api-main/api-main/src/Infrastructure/Persistence/Migrations/20261109201316_MobileAppReleases.Designer.cs
+?? api-main/api-main/src/Infrastructure/Persistence/Migrations/20261109201316_MobileAppReleases.cs
+?? api-main/api-main/src/Infrastructure/Services/ManagementTaskOutboxDispatcher.cs
+?? api-main/api-main/src/Infrastructure/Services/SalesRequestOutboxDispatcher.cs
+?? api-main/api-main/src/Infrastructure/Services/SalesRequestSubmissionLock.cs
+?? api-main/api-main/tests/Application.Tests/Announcements/
+?? api-main/api-main/tests/Application.Tests/AppNotes/
+?? api-main/api-main/tests/Application.Tests/BranchDelegate/
+?? api-main/api-main/tests/Application.Tests/CommitteeTasks/
+?? api-main/api-main/tests/Application.Tests/CustomerDecisions/
+?? api-main/api-main/tests/Application.Tests/DelegateFollowup/
+?? api-main/api-main/tests/Application.Tests/FollowerWork/
+?? api-main/api-main/tests/Application.Tests/LegalFollowups/
+?? api-main/api-main/tests/Application.Tests/ManagementRatings/
+?? api-main/api-main/tests/Application.Tests/ManagementSummary/
+?? api-main/api-main/tests/Application.Tests/ManagementTasks/
+?? api-main/api-main/tests/Application.Tests/MobileAppReleases/
+?? api-main/api-main/tests/Application.Tests/PriceBoard/
+?? api-main/api-main/tests/Application.Tests/Reports/
+?? api-main/api-main/tests/Application.Tests/SalesEmployeeTracking/
+?? api-main/api-main/tests/Application.Tests/SalesEmployees/
+?? api-main/api-main/tests/Application.Tests/SalesFollowup/
+?? api-main/api-main/tests/Application.Tests/SalesOverview/
+?? api-main/api-main/tests/Application.Tests/SalesRecords/
+?? api-main/api-main/tests/Application.Tests/SalesRequests/
+?? api-main/api-main/tests/Application.Tests/SalesSummary/
+?? api-main/api-main/tests/Application.Tests/TutorialVideos/
+?? api-main/api-main/tests/Application.Tests/Users/
+?? api-main/api-main/tests/Application.Tests/Waivers/
+?? api-main/api-main/tests/Application.Tests/WrongSales/
+?? app-dev/app-dev/android/app/src/main/kotlin/com/qalaatal_dhaman/team/ReceiptFileProvider.kt
+?? app-dev/app-dev/android/app/src/main/res/xml/
+?? app-dev/app-dev/lib/common/utils/helpers/receipt_thermal_printer.dart
+?? app-dev/app-dev/test/
+?? committee_officer_application/
+?? delegate_app/
+?? docs/delegate-app/
+?? docs/director-sales-followup/
+?? docs/management-rollout/
+?? docs/parity-recovery/
+?? docs/sales-employee-app/
+?? docs/sales-request-review/
+?? docs/unified-admin-delivery/
+?? docs/unified-admin-foundation/
+?? docs/unified-admin-permissions/
+?? panel-admin-main/panel-admin-main/src/assets/styles/components/choice.css
+?? panel-admin-main/panel-admin-main/src/modules/Announcements/
+?? panel-admin-main/panel-admin-main/src/modules/AppNotes/
+?? panel-admin-main/panel-admin-main/src/modules/Auth/session/
+?? panel-admin-main/panel-admin-main/src/modules/BranchCustomers/
+?? panel-admin-main/panel-admin-main/src/modules/BranchDeclining/
+?? panel-admin-main/panel-admin-main/src/modules/BranchManagerAccounts/
+?? panel-admin-main/panel-admin-main/src/modules/BranchNewSales/
+?? panel-admin-main/panel-admin-main/src/modules/BranchPayments/
+?? panel-admin-main/panel-admin-main/src/modules/BranchVisits/
+?? panel-admin-main/panel-admin-main/src/modules/CommitteeTasks/
+?? panel-admin-main/panel-admin-main/src/modules/Complaints/
+?? panel-admin-main/panel-admin-main/src/modules/Core/access/
+?? panel-admin-main/panel-admin-main/src/modules/Core/components/access/
+?? panel-admin-main/panel-admin-main/src/modules/Core/components/ui/
+?? panel-admin-main/panel-admin-main/src/modules/Core/composable/useRouteAccessRevalidation.ts
+?? panel-admin-main/panel-admin-main/src/modules/Core/navigation/
+?? panel-admin-main/panel-admin-main/src/modules/Core/views/AccessDeniedView.vue
+?? panel-admin-main/panel-admin-main/src/modules/Core/views/NotFoundView.vue
+?? panel-admin-main/panel-admin-main/src/modules/Core/views/SessionBootView.vue
+?? panel-admin-main/panel-admin-main/src/modules/Core/views/UiKitPreviewView.vue
+?? panel-admin-main/panel-admin-main/src/modules/Customer/components/AuditProfile/
+?? panel-admin-main/panel-admin-main/src/modules/Customer/requests/queries/useCustomerAuditProfileQuery.ts
+?? panel-admin-main/panel-admin-main/src/modules/Customer/views/CustomerAuditProfilePage.vue
+?? panel-admin-main/panel-admin-main/src/modules/CustomerDecisions/
+?? panel-admin-main/panel-admin-main/src/modules/DelegateFollowup/
+?? panel-admin-main/panel-admin-main/src/modules/DelegateHome/
+?? panel-admin-main/panel-admin-main/src/modules/DelegateSettings/
+?? panel-admin-main/panel-admin-main/src/modules/FollowerWork/
+?? panel-admin-main/panel-admin-main/src/modules/Management/
+?? panel-admin-main/panel-admin-main/src/modules/ManagementRatings/
+?? panel-admin-main/panel-admin-main/src/modules/ManagementSummary/
+?? panel-admin-main/panel-admin-main/src/modules/ManagementTasks/
+?? panel-admin-main/panel-admin-main/src/modules/PriceBoard/
+?? panel-admin-main/panel-admin-main/src/modules/SalesEmployees/
+?? panel-admin-main/panel-admin-main/src/modules/SalesFollowup/
+?? panel-admin-main/panel-admin-main/src/modules/SalesLegal/
+?? panel-admin-main/panel-admin-main/src/modules/SalesLiveMap/
+?? panel-admin-main/panel-admin-main/src/modules/SalesOverview/
+?? panel-admin-main/panel-admin-main/src/modules/SalesRecords/
+?? panel-admin-main/panel-admin-main/src/modules/SalesRequests/
+?? panel-admin-main/panel-admin-main/src/modules/SalesRoutes/
+?? panel-admin-main/panel-admin-main/src/modules/SalesSummary/
+?? panel-admin-main/panel-admin-main/src/modules/TutorialVideos/
+?? panel-admin-main/panel-admin-main/src/modules/User/components/UserForms/PowersForm/PermissionSwitch.vue
+?? panel-admin-main/panel-admin-main/src/modules/User/components/UserForms/PowersForm/__tests__/
+?? panel-admin-main/panel-admin-main/src/modules/User/components/UserForms/PowersForm/powersFormState.ts
+?? panel-admin-main/panel-admin-main/src/modules/User/requests/mutations/usePatchPermissionOverridesMutation.ts
+?? panel-admin-main/panel-admin-main/src/modules/User/requests/queries/useUserPermissionOverridesQuery.ts
+?? panel-admin-main/panel-admin-main/src/modules/User/types/permissionOverrides.ts
+?? panel-admin-main/panel-admin-main/src/modules/Waivers/
+?? panel-admin-main/panel-admin-main/src/modules/WrongSales/
+?? panel-admin-main/panel-admin-main/vitest.config.ts
+?? sales_employee_app/
+?? scalar-committee.yml

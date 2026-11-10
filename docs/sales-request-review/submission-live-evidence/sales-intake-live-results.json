@@ -1,0 +1,40 @@
+{
+  "results": [
+    {
+      "source": "EmployeeSubmitted",
+      "id": 26,
+      "unassigned": true,
+      "repeatSameId": true,
+      "conflict": 409,
+      "invalidPhone": 400,
+      "branchDenied": 403
+    },
+    {
+      "source": "Delegate",
+      "id": 27,
+      "unassigned": true,
+      "repeatSameId": true,
+      "conflict": 409,
+      "invalidPhone": 400,
+      "branchDenied": 403
+    },
+    {
+      "source": "Follower",
+      "id": 28,
+      "unassigned": true,
+      "repeatSameId": true,
+      "conflict": 409,
+      "invalidPhone": 400,
+      "branchDenied": 403
+    }
+  ],
+  "summaryHasFourCards": true,
+  "ids": [
+    26,
+    27,
+    28
+  ],
+  "concurrentSameRequest": true,
+  "anonymous": 401,
+  "unsupportedSource": 403
+}

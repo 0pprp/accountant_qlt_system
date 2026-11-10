@@ -1,0 +1,15 @@
+- generic [active] [ref=f1e5]:
+  - generic:
+    - generic:
+      - generic:
+        - generic:
+          - generic:
+            - generic:
+              - generic:
+                - group "طلبات البيع":
+                  - generic:
+                    - group:
+                      - generic [ref=f1e53]: لا توجد طلبات بيع
+            - button [ref=f1e54]
+            - button "الرئيسية" [ref=f1e55]
+            - button "تقييمات زبائني" [ref=f1e56]

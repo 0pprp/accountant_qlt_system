@@ -1,0 +1,18 @@
+{
+  "batch": "06-follower-sales-review",
+  "date": "2026-11-08",
+  "api": {
+    "filter": "FullyQualifiedName~FollowerWork",
+    "passed": 31,
+    "failed": 0
+  },
+  "ui": {
+    "passed": 21,
+    "failed": 0
+  },
+  "liveScreenshots": "pending_isolated_db_after_migration",
+  "sectionStatus": {
+    "sales": "ready",
+    "otherSeven": "not_implemented"
+  }
+}

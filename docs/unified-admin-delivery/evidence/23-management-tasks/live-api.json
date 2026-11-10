@@ -1,0 +1,17 @@
+{
+    "note":  "Motaba granted Task.Accept/Complete on iso only for live proof",
+    "database":  "qalaat_22_23_iso",
+    "api":  "http://127.0.0.1:4223",
+    "selfComplete":  {
+                         "status":  5,
+                         "taskId":  2
+                     },
+    "transferConfirm":  {
+                            "acceptAsBranch":  2,
+                            "confirmByAssignee":  1,
+                            "completeAwaitingConfirm":  true,
+                            "confirmedAt":  "2026-11-09T16:45:06.778276+00:00",
+                            "finalStatus":  5,
+                            "taskId":  3
+                        }
+}

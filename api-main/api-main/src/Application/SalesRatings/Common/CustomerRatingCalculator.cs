@@ -59,13 +59,30 @@ public static class CustomerRatingCalculator
         DateOnly? dateSaleDevice,
         DateOnly? lastPaymentDate,
         DateOnly asOf)
+        => ScoreFor(
+            amountTotalSales,
+            receiptsTotal,
+            amountRemaining,
+            dateSaleDevice,
+            lastPaymentDate,
+            asOf,
+            true);
+
+    public static int? ScoreFor(
+        double amountTotalSales,
+        double receiptsTotal,
+        double amountRemaining,
+        DateOnly? dateSaleDevice,
+        DateOnly? lastPaymentDate,
+        DateOnly asOf,
+        bool usePhantomSaleDate)
     {
         if (dateSaleDevice is null || amountTotalSales <= 0)
             return null;
         if (amountRemaining < 0)
             return 0;
 
-        var saleDate = AdjustSaleDate(dateSaleDevice.Value);
+        var saleDate = usePhantomSaleDate ? AdjustSaleDate(dateSaleDevice.Value) : dateSaleDevice.Value;
 
         if (amountRemaining == 0)
         {

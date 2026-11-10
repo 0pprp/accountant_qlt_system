@@ -1,0 +1,6 @@
+Filter: FullyQualifiedName~Waivers|FullyQualifiedName~CustomerDecisions
+Passed: 29  Failed: 0  Skipped: 0
+Includes: Waiver domain transitions, Cap, self-decide block, concurrency version,
+idempotent Apply, OutsideAll permissions, role templates (branch/director/accountant),
+WeakPayerRules, CustomerDecision labels, LegalConversion approve/reject.
+Date: 2026-11-09

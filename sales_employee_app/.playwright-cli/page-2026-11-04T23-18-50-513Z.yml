@@ -1,0 +1,30 @@
+- generic [active] [ref=f3e5]:
+  - generic:
+    - generic:
+      - generic:
+        - generic:
+          - generic:
+            - generic:
+              - generic:
+                - generic:
+                  - generic:
+                    - group:
+                      - button [ref=f3e30]
+                      - img "قلعة الضمان" [ref=f3e31]
+                      - button [ref=f3e32]
+                      - generic [ref=f3e33]: Employee A
+                      - generic:
+                        - generic:
+                          - generic [ref=f3e34]: طلبات البيع لحظية حالات الطلب تتحدّث تلقائياً عند أي تعديل من لوحة مدير المبيعات.
+                          - generic [ref=f3e35]: إتمام البيع من طلبات البيع اضغط إتمام البيع وعبّئ الخطوات الخمس للطلب التجريبي.
+                      - button "المخزن" [ref=f3e36]
+                      - button "لوحة الأسعار" [ref=f3e37]
+                      - button "طلب مبيع جديد قريباً" [ref=f3e38]
+                      - generic [ref=f3e39]:
+                        - textbox "بحث بالاسم أو الرقم عبر كل الحالات" [ref=f3e40]
+                        - button [ref=f3e41]
+                      - generic [ref=f3e42]: حالات الطلبات
+                      - generic [ref=f3e43]: تحديث لحظي كل بضع ثوانٍ
+            - button "طلبات البيع" [ref=f3e44]
+            - button [ref=f3e45]
+            - button "تقييمات زبائني" [ref=f3e46]

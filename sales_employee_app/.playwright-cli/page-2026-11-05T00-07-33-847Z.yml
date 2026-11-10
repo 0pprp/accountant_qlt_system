@@ -1,0 +1,22 @@
+- generic [ref=f1e5]:
+  - generic:
+    - generic:
+      - generic:
+        - generic:
+          - generic:
+            - generic:
+              - button "رجوع" [ref=f1e74]
+              - heading "04H Web Cycle Customer — اسم طويل للمراجعة" [level=2] [ref=f1e75]
+            - generic:
+              - group:
+                - generic [ref=f1e88]: "رقم الطلب #9"
+                - generic [ref=f1e89]: الحالة تم الكشف
+                - generic [ref=f1e90]: التبويب تم الكشف
+                - generic [ref=f1e91]: الهاتف 07701112233
+                - generic [ref=f1e92]: الفرع ??? ??????
+                - generic [ref=f1e93]: آخر تغيير 2026-11-05 03:07:32.860365
+                - generic [ref=f1e94]: ملاحظة 04H prepare via Flutter UI
+                - generic [ref=f1e95]: البيع المرتبط لا يوجد بعد
+            - button "بدء / استكمال البيع" [active] [ref=f1e96]
+            - button "تعليق" [ref=f1e85]
+            - button "رفض" [ref=f1e86]

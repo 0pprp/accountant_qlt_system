@@ -1,0 +1,67 @@
+[
+  {
+    "status": "Live-verified",
+    "id": "login-task-perms",
+    "detail": "admin_task=True gg_task=True gg_task_actions=[{'id': 111, 'name': 'Read'}, {'id': 112, 'name': 'Create'}, {'id': 113, 'name': 'Assign'}, {'id': 114, 'name': 'Accept'}, {'id': 115, 'name': 'Reject'}, {'id': 116, 'name': 'Complete'}, {'id': 117, 'name': 'Confirm'}, {'id': 118, 'name': 'Transfer'}, {'id': 119, 'name': 'ReadAttachment'}]"
+  },
+  {
+    "status": "Live-verified",
+    "id": "limited-no-task-perm",
+    "detail": "has_task=False"
+  },
+  {
+    "status": "Live-verified",
+    "id": "create-task",
+    "detail": "id=1 status=0 ver=0"
+  },
+  {
+    "status": "Live-verified",
+    "id": "limited-list-forbidden",
+    "detail": "status=403"
+  },
+  {
+    "status": "Live-verified",
+    "id": "accept",
+    "detail": "status=2 ver=1"
+  },
+  {
+    "status": "Live-verified",
+    "id": "transfer",
+    "detail": "status=1 ver=2"
+  },
+  {
+    "status": "Live-verified",
+    "id": "former-holder-blocked",
+    "detail": "status=400 body={\"errors\":[{\"message\":\"لا يمكن تنفيذ الإجراء في الحالة الحالية\",\"code\":\"Task_Invalid_Transition\"}],\"status\":400,\"type\":\"https://tools.ietf.org/html/rfc7231#sect"
+  },
+  {
+    "status": "Live-verified",
+    "id": "gg-accept",
+    "detail": "ver=3"
+  },
+  {
+    "status": "Live-verified",
+    "id": "gg-complete-awaiting-confirm",
+    "detail": "status=4 ver=4"
+  },
+  {
+    "status": "Live-verified",
+    "id": "concurrent-confirm",
+    "detail": "codes=[200, 409] bodies=['{\"id\":1,\"status\":5,\"expectedVersion\":5}', '{\"errors\":[{\"message\":\"تم تغيير حالة المهمة بواسطة عملية أخرى — أعد التحميل\",\"co']"
+  },
+  {
+    "status": "Live-verified",
+    "id": "detail-events",
+    "detail": "status=5 events=6 types=[1, 3, 5, 3, 6, 7]"
+  },
+  {
+    "status": "Live-verified",
+    "id": "branch-filter-no-leak",
+    "detail": "branch2_count=0 leaked=0"
+  },
+  {
+    "status": "Live-verified",
+    "id": "self-complete-no-confirm-and-retry-409",
+    "detail": "final_status=5 retry=409"
+  }
+]

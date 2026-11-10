@@ -1,0 +1,10 @@
+{
+  "batch": 9,
+  "section": "FollowerOldCustomers",
+  "apiFollowerWorkPassed": 58,
+  "uiPassed": 17,
+  "live": "not_verified",
+  "createCycle": "incomplete_dependency_legal_tab",
+  "cancel": "implemented",
+  "status": "implemented_unit_tested_create_gap"
+}

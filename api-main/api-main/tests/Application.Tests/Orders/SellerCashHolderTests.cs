@@ -4,6 +4,7 @@ using Application.InstallmentPayments.Commands.Admin.Delete;
 using Application.InstallmentPayments.Commands.Admin.Update;
 using Application.InstallmentPayments.Commands.App.Create;
 using Application.InstallmentPayments.Commands.App.Sync;
+using Application.InstallmentPayments.Common;
 using Application.Orders.Commands.Admin.ChangeApprovalStatus;
 using Application.Orders.Commands.Admin.SetSellerInfo;
 using Application.Orders.Commands.Admin.Update;
@@ -142,7 +143,8 @@ public class SellerCashHolderTests
         await using var db = CreateDbContext();
         var seed = await SeedInProgressOrderAsync(db, sellerIsMotaba: true);
 
-        var handler = new AppCreateInstallmentHandler(db, new DateTimeProviderStub(), new ActivityLogServiceStub());
+        var writer = new AppInstallmentPaymentWriter(db, new DateTimeProviderStub(), new ActivityLogServiceStub());
+        var handler = new AppCreateInstallmentHandler(writer);
         var result = await handler.Handle(new AppCreateInstallment
         {
             OrderId = seed.OrderId,
@@ -161,7 +163,8 @@ public class SellerCashHolderTests
         await using var db = CreateDbContext();
         var seed = await SeedInProgressOrderAsync(db, sellerIsMotaba: false);
 
-        var handler = new SyncInstallmentPaymentsHandler(db, new ActivityLogServiceStub());
+        var writer = new AppInstallmentPaymentWriter(db, new DateTimeProviderStub(), new ActivityLogServiceStub());
+        var handler = new SyncInstallmentPaymentsHandler(writer);
         var result = await handler.Handle(new SyncInstallmentPaymentsCommand
         {
             UserId = seed.MotabaId,
@@ -351,6 +354,7 @@ public class SellerCashHolderTests
     {
         var options = new DbContextOptionsBuilder<TestApplicationDbContext>()
             .UseInMemoryDatabase(Guid.NewGuid().ToString())
+            .ConfigureWarnings(w => w.Ignore(Microsoft.EntityFrameworkCore.Diagnostics.InMemoryEventId.TransactionIgnoredWarning))
             .Options;
 
         return new TestApplicationDbContext(options);

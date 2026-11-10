@@ -1,0 +1,18 @@
+{
+  "activated": true,
+  "publicApiLogin": true,
+  "salesRequestsCounts": true,
+  "panelHttp200": true,
+  "existingCountsBefore": {
+    "Users": 16,
+    "Customers": 3,
+    "Orders": 8
+  },
+  "existingCountsAfter": {
+    "Users": 16,
+    "Customers": 3,
+    "Orders": 8
+  },
+  "migration": "20261107190146_SalesRequestsAndPermissionOverrides",
+  "requestCount": 0
+}

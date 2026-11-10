@@ -1,4 +1,6 @@
-﻿using Application.OrderLists.Commands.Admin.Create;
+﻿using Application.FollowerWork.Common;
+using Application.OrderLists.Commands.Admin.Create;
+using Application.OrderLists.Commands.Admin.SetFollowerCollectionEnabled;
 using Application.OrderLists.Commands.Admin.Update;
 using Application.OrderLists.Queries.Admin.GetExcelReport;
 using Application.OrderLists.Queries.Admin.GetOrderListPaymentInstallments;
@@ -103,6 +105,28 @@ public class OrderListsController : ApiController
         };
         var result = await _mediator.Send(query, CancellationToken);
 
+        return result.ToHttpResponse();
+    }
+
+    /// <summary>
+    /// تشغيل/إيقاف جباية المتابع على القائمة. الصلاحية: FollowerCollection.ManageEnabled.
+    /// لا يقبل branchId/followerId من الجسم — النطاق من الجلسة وقاعدة البيانات.
+    /// </summary>
+    [HasPermission(Permissions.FollowerWork.CollectionManageEnabled)]
+    [HttpPatch("{id:int}/follower-collection")]
+    public async Task<ActionResult<SetFollowerCollectionEnabledResultDto>> SetFollowerCollection(
+        [FromRoute] int id,
+        [FromBody] SetFollowerCollectionEnabledBody? body)
+    {
+        body ??= new SetFollowerCollectionEnabledBody();
+        var result = await _mediator.Send(
+            new SetFollowerCollectionEnabledCommand
+            {
+                ListId = id,
+                Enabled = body.Enabled,
+                ExpectedVersion = body.ExpectedVersion
+            },
+            CancellationToken);
         return result.ToHttpResponse();
     }
 }

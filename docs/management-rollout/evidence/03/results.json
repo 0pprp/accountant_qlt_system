@@ -1,0 +1,62 @@
+[
+  {
+    "status": "Live-verified",
+    "id": "limited-no-delegate-followup-perm",
+    "detail": "has=False"
+  },
+  {
+    "status": "Live-verified",
+    "id": "limited-lists-forbidden",
+    "detail": "status=403"
+  },
+  {
+    "status": "Live-verified",
+    "id": "salesfollowup-untouched",
+    "detail": "status=200"
+  },
+  {
+    "status": "Live-verified",
+    "id": "lists",
+    "detail": "count=1"
+  },
+  {
+    "status": "Live-verified",
+    "id": "legal-unavailable-honest",
+    "detail": "legalAvailable=False count=None"
+  },
+  {
+    "status": "Live-verified",
+    "id": "committee-unavailable-honest",
+    "detail": "follower=False note=غير محسوم"
+  },
+  {
+    "status": "Live-verified",
+    "id": "unresolved-notes-present",
+    "detail": "n=7"
+  },
+  {
+    "status": "Live-verified",
+    "id": "customers",
+    "detail": "count=1"
+  },
+  {
+    "status": "Live-verified",
+    "id": "board-rating-reject-11",
+    "detail": "status=400"
+  },
+  {
+    "status": "Live-verified",
+    "id": "board-rating-upsert",
+    "detail": "score=8 has=True"
+  },
+  {
+    "status": "Live-verified",
+    "id": "board-rating-same-day-replace",
+    "detail": "score=9"
+  },
+  {
+    "status": "Live-verified",
+    "id": "cross-branch-summary",
+    "detail": "status=400"
+  }
+]

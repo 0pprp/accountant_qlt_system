@@ -1,0 +1,12 @@
+- generic [active] [ref=f1e5]:
+  - generic:
+    - generic:
+      - generic:
+        - generic:
+          - generic:
+            - img "قلعة الضمان" [ref=f1e15]
+            - generic [ref=f1e16]: بدء الدوام إلزامي اليوم
+            - generic [ref=f1e17]: ابدأ الدوام لفتح التطبيق وتسجيل مسار GPS بالتاريخ والوقت
+            - generic [ref=f1e18]: لا يوجد دوام
+            - generic [ref=f1e19]: "نقاط بالانتظار للمزامنة: 0"
+            - button "بدء الدوام" [ref=f1e20]

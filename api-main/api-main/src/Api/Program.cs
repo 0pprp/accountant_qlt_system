@@ -1,4 +1,5 @@
 using Api;
+using Api.Hubs;
 using Api.Middlewares;
 using Application;
 using Infrastructure;
@@ -9,7 +10,7 @@ using ConfigureServices = Api.ConfigureServices;
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddApplicationServices();
-builder.Services.AddInfrastructureService(builder.Configuration);
+builder.Services.AddInfrastructureService(builder.Configuration, builder.Environment);
 builder.Services.AddApiServices(builder.Configuration);
 
 builder.Services.AddOpenApi("v1", options => { options.AddDocumentTransformer<BearerSecuritySchemeTransformer>(); });
@@ -72,6 +73,23 @@ app.UseExceptionHandler(options => { });
 
 app.MapRazorPages();
 app.MapControllers();
+
+// SignalR يحتاج RequireCors صراحةً مع endpoint routing — وإلا المتصفح يفشل negotiate (Failed to fetch)
+// بينما REST قد يمر. لا توسيع لأصول جديدة هنا؛ نفس سياسة Development/Production أعلاه.
+if (app.Environment.IsProduction() == false)
+{
+    app.MapHub<SalesRequestHub>(SalesRequestHub.Route)
+        .RequireCors(ConfigureServices.DevelopmentCorsPolicy);
+    app.MapHub<ManagementTaskHub>(ManagementTaskHub.Route)
+        .RequireCors(ConfigureServices.DevelopmentCorsPolicy);
+}
+else
+{
+    app.MapHub<SalesRequestHub>(SalesRequestHub.Route)
+        .RequireCors(ConfigureServices.ProductionCorsPolicy);
+    app.MapHub<ManagementTaskHub>(ManagementTaskHub.Route)
+        .RequireCors(ConfigureServices.ProductionCorsPolicy);
+}
 
 app.Run();
 

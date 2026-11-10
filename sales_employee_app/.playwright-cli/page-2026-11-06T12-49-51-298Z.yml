@@ -1,0 +1,17 @@
+- generic [active] [ref=f1e5]:
+  - generic:
+    - generic:
+      - generic:
+        - generic:
+          - generic:
+            - generic:
+              - generic:
+                - generic:
+                  - heading "طلبات البيع" [level=2] [ref=f1e48]
+                  - generic:
+                    - group:
+                      - 'button "04H Reassign Block Customer #14 • مسند • 2026-11-06 15:46:10" [ref=f1e49]'
+                      - 'button "04H Flutter Complete Customer #13 • مسند • 2026-11-06 15:46:10" [ref=f1e50]'
+            - button [ref=f1e51]
+            - button "الرئيسية" [ref=f1e52]
+            - button "تقييمات زبائني" [ref=f1e47]

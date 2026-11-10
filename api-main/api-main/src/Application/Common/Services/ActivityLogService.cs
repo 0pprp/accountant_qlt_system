@@ -30,7 +30,8 @@ public class ActivityLogService : IActivityLogService
         ActivityType activityType,
         TargetEntityType targetEntityType,
         int? targetEntityId,
-        ActivityLogActor? actorOverride = null)
+        ActivityLogActor? actorOverride = null,
+        string? details = null)
     {
         var userId = actorOverride?.UserId ?? _currentUserService.UserId!.Value;
         var (userName, userRoles) = await ResolveActorAsync(userId, actorOverride);
@@ -39,9 +40,16 @@ public class ActivityLogService : IActivityLogService
             ? HttpRequestInfoExtractor.Extract(request)
             : new HttpRequestInfoExtractor.HttpRequestInfo();
 
+        var description = activityType.GetDisplayName();
+        if (string.IsNullOrWhiteSpace(details) == false)
+        {
+            var combined = $"{description} | {details}";
+            description = combined.Length <= 1000 ? combined : combined[..1000];
+        }
+
         var activityLog = new ActivityLog(
             activityType,
-            activityType.GetDisplayName(),
+            description,
             userName,
             userRoles,
             targetEntityType,

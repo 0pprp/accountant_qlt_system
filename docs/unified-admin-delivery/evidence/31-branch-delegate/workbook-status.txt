@@ -1,0 +1,5 @@
+﻿Batch 31 status update 2026-11-09T22:03:22.8126377+03:00
+Coverage_31 + 31-parity + evidence/31 updated after API-live/Browser-live on qalaat_22_23_iso.
+Unit 16 passed; vue-tsc 0; vite build OK.
+Device Flutter first-collection: Missing (no device).
+No batch 32 execution. No production deploy.

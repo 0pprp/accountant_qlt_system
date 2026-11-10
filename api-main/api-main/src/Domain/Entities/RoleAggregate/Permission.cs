@@ -1,4 +1,4 @@
-﻿using Domain.Common;
+using Domain.Common;
 
 namespace Domain.Entities.RoleAggregate;
 
@@ -12,6 +12,7 @@ public class Permission : Entity
         ScopeDisplayName = scopeDisplayName;
         RolePermissions = new HashSet<RolePermission>();
         UserPermissions = new HashSet<UserPermission>();
+        UserPermissionDenials = new HashSet<UserPermissionDenial>();
     }
 
     public string Name { get; set; }
@@ -21,6 +22,7 @@ public class Permission : Entity
 
     public ICollection<RolePermission> RolePermissions { get; set; }
     public ICollection<UserPermission> UserPermissions { get; set; }
+    public ICollection<UserPermissionDenial> UserPermissionDenials { get; set; }
 
     public void Update(string displayName, string scope, string scopeDisplayName)
     {

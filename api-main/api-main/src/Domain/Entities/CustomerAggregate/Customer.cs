@@ -42,6 +42,19 @@ public class Customer : AuditableEntity
     public Business Business { get; set; }
     public int BranchId { get; set; }
 
+    /// <summary>
+    /// حالة القانونية — مصدر العمل: Customers.IsLegal في النظام القديم.
+    /// true بعد اعتماد التحويل القانوني؛ لا تُستنتج من SalesRequest أو الملاحظات.
+    /// </summary>
+    public bool IsLegal { get; set; }
+
+    /// <summary>بيع وهمي — مصدر: Customers.IsFakeSale عند قرار «وهمي».</summary>
+    public bool IsFakeSale { get; set; }
+
+    public void MarkLegal() => IsLegal = true;
+
+    public void MarkFakeSale() => IsFakeSale = true;
+
     public Branch? Branch { get; set; }
     public ICollection<Attachment> Attachments { get; set; }
     public ICollection<Order> Orders { get; set; }

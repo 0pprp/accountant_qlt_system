@@ -1,16 +1,16 @@
 <template>
   <header
-    :class="`w-full bg-surface-3 rounded-2xl transition-all ${chips.length ? 'h-36' : 'h-20'}`"
+    class="list-header w-full bg-surface-3 rounded-2xl"
   >
     <!-- Top section -->
     <div
-      class="flex flex-row justify-between bg-white w-full py-5 px-6 border border-line rounded-2xl"
+      class="list-toolbar bg-white w-full border border-line rounded-2xl"
     >
-      <div class="flex gap-2">
+      <div class="list-toolbar-group">
         <form
           v-if="canSearch"
           @submit.prevent="handleSubmitForm"
-          class="relative w-[560px]"
+          class="list-search relative"
         >
           <SvgIcon
             name="search"
@@ -19,13 +19,13 @@
           <InputText
             v-model="searchValue"
             :placeholder="$t(searchPlaceholder)"
-            class="text-center h-10 w-full"
+            class="list-search-input h-11 w-full"
           />
         </form>
         <slot name="export"></slot>
       </div>
 
-      <div class="flex gap-2">
+      <div class="list-toolbar-actions">
         <slot name="create"></slot>
         <slot name="calendar"></slot>
       </div>
@@ -116,3 +116,18 @@ function handleSubmitForm() {
   searchValue.value = ''
 }
 </script>
+
+<style scoped>
+.list-header { min-width:0; height:auto; }
+.list-toolbar { display:flex; align-items:center; flex-wrap:wrap; gap:16px; padding:16px; }
+.list-toolbar-group { display:flex; align-items:center; gap:8px; flex:1 1 300px; min-width:0; }
+.list-search { width:100%; min-width:0; max-width:560px; }
+.list-search-input { background:#f8f8f8; padding-inline-start:42px; text-align:start; font-size:16px; }
+.list-toolbar-actions { display:flex; align-items:center; justify-content:flex-end; gap:8px; flex-wrap:wrap; }
+@media(max-width:600px) {
+  .list-toolbar { padding:12px; gap:12px; }
+  .list-toolbar-group { flex-basis:100%; }
+  .list-toolbar-actions { width:100%; justify-content:flex-start; }
+  .list-toolbar-actions :deep(button) { min-height:44px; }
+}
+</style>

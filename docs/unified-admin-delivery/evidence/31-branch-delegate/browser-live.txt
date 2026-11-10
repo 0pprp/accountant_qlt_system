@@ -1,0 +1,9 @@
+﻿Browser-live 2026-11-09T19:00Z
+Panel http://127.0.0.1:8080 against API http://127.0.0.1:15645
+Admin: /management/branch/customers search اح → احمد تحقق الفرع remaining 125000
+Payments: list قائة تحقق sum visible
+Sales: total 1 unread 0 مقروء
+Wrong-sales mailbox=all: total 1 reviewed
+Ratings: ManagementRatings cards for branch 1 and 2
+Viewports exercised: ~360 (default mobile chrome), 768, 1440
+Follower browser login: password field component resisted CDP fill; follower API 403 already proven for attachments and WrongSales

@@ -1,0 +1,44 @@
+{
+  "before": {
+    "hasPinia": true,
+    "storeKeys": [
+      "messages",
+      "auth"
+    ],
+    "branchId": 1,
+    "branchGen": 0,
+    "branches": [
+      {
+        "id": 1,
+        "name": "??? ??????"
+      },
+      {
+        "id": 2,
+        "name": "فرع اختبار ب"
+      }
+    ]
+  },
+  "switched": {
+    "ok": true,
+    "from": 0,
+    "to": 1,
+    "selected": 2
+  },
+  "after": {
+    "branchId": 2,
+    "branchGen": 1
+  },
+  "reqCount": 2,
+  "reqSample": [
+    {
+      "t": "req",
+      "u": "http://127.0.0.1:4200/api/v1/admin/Notifications/unread-count?branchId=2",
+      "ts": 1794158915102
+    },
+    {
+      "t": "req",
+      "u": "http://127.0.0.1:4200/api/v1/admin/Customers?pageSize=10&pageIndex=1&branchId=2",
+      "ts": 1794158915102
+    }
+  ]
+}

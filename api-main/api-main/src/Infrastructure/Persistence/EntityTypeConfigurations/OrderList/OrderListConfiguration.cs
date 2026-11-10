@@ -10,6 +10,8 @@ public class OrderListConfiguration : IEntityTypeConfiguration<Domain.Entities.O
         builder.HasKey(x => x.Id);
 
         builder.Property(x => x.Name).HasMaxLength(50).IsRequired();
+        builder.Property(x => x.FollowerCollectionEnabled).HasDefaultValue(false);
+        builder.Property(x => x.CollectionToggleVersion).HasDefaultValue(0);
 
         builder.HasOne(x => x.Mandob)
             .WithOne(x => x.OrderListAsMandob)

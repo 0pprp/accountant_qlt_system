@@ -1,0 +1,114 @@
+{
+  "title": "المهام الإدارية",
+  "loading": "جاري التحميل…",
+  "empty": "لا توجد مهام مطابقة للتصفية الحالية",
+  "listError": "تعذر تحميل المهام",
+  "noReadAccess": "لا تملك صلاحية عرض المهام الإدارية.",
+  "noAssignees": "لا يوجد مستخدمون متاحون في هذا الفرع",
+  "assigneesError": "تعذر تحميل مستخدمي الفرع",
+  "overdue": "متأخرة",
+  "priorityLabel": "الأولوية",
+  "status": {
+    "sent": "مرسلة",
+    "transferred": "منقولة",
+    "accepted": "مقبولة",
+    "returned": "معادة",
+    "awaitingDelegatedConfirm": "بانتظار التصديق",
+    "completed": "منجزة"
+  },
+  "priority": {
+    "high": "عالية",
+    "medium": "متوسطة",
+    "low": "منخفضة"
+  },
+  "event": {
+    "created": "إنشاء المهمة",
+    "updated": "تعديل / إعادة إرسال",
+    "accepted": "قبول",
+    "rejected": "رفض",
+    "transferred": "نقل لمستخدم الفرع",
+    "completed": "إنجاز",
+    "confirmed": "تصديق"
+  },
+  "filters": {
+    "all": "الكل",
+    "statusStrip": "تصفية حسب حالة المهمة",
+    "search": "بحث",
+    "searchPlaceholder": "ابحث بالعنوان أو الاسم…",
+    "inboxForMe": "مهامي"
+  },
+  "fields": {
+    "title": "عنوان المهمة",
+    "description": "الوصف",
+    "sender": "المرسل",
+    "receiver": "المستلم",
+    "holder": "الحامل الحالي",
+    "branch": "الفرع",
+    "time": "آخر تحديث",
+    "createdAt": "تاريخ الإنشاء",
+    "dueDate": "تاريخ الاستحقاق",
+    "assignee": "المكلَّف",
+    "assigneePlaceholder": "اختر المكلَّف",
+    "searchUser": "ابحث عن مستخدم…",
+    "transferTarget": "مستخدم الفرع",
+    "transferTargetPlaceholder": "اختر مستخدم الفرع",
+    "target": "إلى",
+    "note": "ملاحظة (اختياري)",
+    "rejectNote": "سبب الرفض",
+    "lastRejectReason": "آخر سبب رفض",
+    "customerId": "رقم الزبون (اختياري)",
+    "orderId": "رقم الطلب (اختياري)",
+    "attachments": "مرفقات (اختياري)",
+    "filesSelected": "تم اختيار {count} ملف"
+  },
+  "detail": {
+    "title": "تفاصيل المهمة",
+    "loadError": "تعذر تحميل تفاصيل المهمة",
+    "attachments": "المرفقات",
+    "noAttachments": "لا توجد مرفقات",
+    "addAttachment": "إضافة مرفق",
+    "history": "سجل الأحداث",
+    "noEvents": "لا توجد أحداث"
+  },
+  "actions": {
+    "create": "مهمة جديدة",
+    "openDetail": "عرض التفاصيل",
+    "accept": "قبول",
+    "reject": "رفض",
+    "complete": "إنجاز",
+    "confirm": "تصديق",
+    "transfer": "نقل لمستخدم الفرع",
+    "resend": "إعادة إرسال",
+    "cancel": "إلغاء",
+    "close": "إغلاق",
+    "submitting": "جاري التنفيذ…",
+    "download": "تنزيل",
+    "downloading": "جاري التنزيل…",
+    "uploading": "جاري رفع الملف…"
+  },
+  "confirmMessage": {
+    "accept": "هل تريد قبول المهمة «{title}»؟",
+    "complete": "هل تريد تأكيد إنجاز المهمة «{title}»؟",
+    "confirm": "هل تريد تصديق إنجاز المهمة «{title}»؟"
+  },
+  "validation": {
+    "rejectNoteRequired": "سبب الرفض مطلوب",
+    "formIncomplete": "أكمل الحقول المطلوبة: العنوان، تاريخ الاستحقاق، المكلَّف"
+  },
+  "success": {
+    "create": "تم إنشاء المهمة",
+    "accept": "تم قبول المهمة",
+    "reject": "تم رفض المهمة وإعادتها",
+    "complete": "تم تسجيل الإنجاز",
+    "confirm": "تم تصديق المهمة",
+    "transfer": "تم نقل المهمة",
+    "resend": "تمت إعادة إرسال المهمة",
+    "upload": "تم رفع المرفق"
+  },
+  "pager": {
+    "label": "التنقل بين الصفحات",
+    "prev": "السابق",
+    "next": "التالي",
+    "page": "صفحة {page} من {total}"
+  }
+}

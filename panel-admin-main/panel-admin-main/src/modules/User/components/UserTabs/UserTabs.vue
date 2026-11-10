@@ -51,6 +51,7 @@
         <PowersForm
           v-show="activeTab === UserSteps.power"
           :roleId="userInfo.roles[0].id"
+          :userId="userId"
           ref="powersFormRef"
           :userFormMode="getFormModeForPermission"
           :selectedPermissions="userInfo.allPermissions"
@@ -91,8 +92,8 @@ import {
   useSalaryDetailsMutation,
   useUpdateUserDocumentsStepMutation,
   useUpdateUserMutation,
-  useUserPermissionMutation,
 } from '../../requests/mutations'
+import { usePatchPermissionOverridesMutation } from '../../requests/mutations/usePatchPermissionOverridesMutation'
 import { FormMode, type Props } from './UserTabs.types'
 import AccountDetailsForm from '../UserForms/AccountDetailsForm/AccountDetailsForm.vue'
 import EmployeeDataForm from '../UserForms/EmployeeDataForm/EmployeeDataForm.vue'
@@ -176,7 +177,7 @@ const getFormModeForPermission = computed(() => {
   if (userFormMode.value === FormMode.IsView || isTargetAdmin.value) {
     return FormMode.IsView
   }
-  return canUpdateUser ? FormMode.IsUpdate : FormMode.IsView
+  return can('User', 'ManagePermissions') ? FormMode.IsUpdate : FormMode.IsView
 })
 
 const accountDetailsFormRef = ref<InstanceType<
@@ -382,8 +383,10 @@ const salaryForm = ref<SalaryDetailsFormTypes>({
 const { mutateAsync: updateUserDocumentsStep, isPending: isUpdatePending } =
   useUpdateUserDocumentsStepMutation()
 
-const { isPending: isUserPermission, mutateAsync: userPermission } =
-  useUserPermissionMutation()
+const {
+  isPending: isUserPermission,
+  mutateAsync: patchPermissionOverrides,
+} = usePatchPermissionOverridesMutation()
 
 const toastStore = useToastStore()
 
@@ -445,13 +448,67 @@ async function onSubmit() {
 
     await salaryDetails({ id: userId.value!, payload: salaryForm.value })
   } else if (activeTab.value === UserSteps.power) {
-    const permissionIds = powersFormRef.value?.permissionIds || []
+    if (can('User', 'ManagePermissions') === false) {
+      toastStore.setMassage({
+        title: t('errors.noPermission'),
+        description: t('user.permissionOverrides.readOnlyNotice'),
+        dialogState: DialogState.Error,
+        isOpen: true,
+      })
+      return
+    }
 
-    await userPermission({
-      id: userId.value!,
-      payload: { permissionIds },
-    })
-    await router.push({ name: 'UserListRoute' })
+    if (powersFormRef.value?.canSaveOverrides === false) {
+      toastStore.setMassage({
+        title: t('user.permissionOverrides.conflictTitle'),
+        description:
+          Number(powersFormRef.value?.unresolvedConflictCount ?? 0) > 0
+            ? t('user.permissionOverrides.unresolvedBlocksSave')
+            : t('user.permissionOverrides.pendingServerAdoption'),
+        dialogState: DialogState.Error,
+        isOpen: true,
+      })
+      return
+    }
+
+    const changes = powersFormRef.value?.getChanges?.() || []
+    if (changes.length === 0) {
+      // لا نجاح ولا إبطال جلسات عند عدم التغيير
+      await router.push({ name: 'UserListRoute' })
+      return
+    }
+
+    const summaryOk = window.confirm(
+      t('user.permissionOverrides.saveConfirm', { count: changes.length })
+    )
+    if (!summaryOk) return
+
+    try {
+      await patchPermissionOverrides({
+        id: userId.value!,
+        payload: {
+          expectedVersion: Number(
+            powersFormRef.value?.permissionsVersion ?? 0
+          ),
+          changes,
+        },
+      })
+      await router.push({ name: 'UserListRoute' })
+    } catch (err: unknown) {
+      const status = (err as { response?: { status?: number } })?.response
+        ?.status
+      if (status === 409) {
+        powersFormRef.value?.markConflict?.()
+        toastStore.setMassage({
+          title: t('user.permissionOverrides.conflictTitle'),
+          description: t('user.permissionOverrides.conflictMessage'),
+          dialogState: DialogState.Error,
+          isOpen: true,
+        })
+        return
+      }
+      throw err
+    }
     return
   }
   nextStep()

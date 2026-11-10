@@ -1,25 +1,32 @@
-﻿using Application.Common.Interfaces;
+using Application.Common.Interfaces;
 using Application.Common.Settings;
+using Application.Common.Utilities;
 using Infrastructure.Persistence;
 using Infrastructure.Persistence.Interceptors;
 using Infrastructure.Services;
 using Infrastructure.Utilities;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using Npgsql;
 
 namespace Infrastructure;
 
 public static class ConfigureServices
 {
-    public static void AddInfrastructureService(this IServiceCollection services, IConfiguration configuration)
+    public static void AddInfrastructureService(
+        this IServiceCollection services,
+        IConfiguration configuration,
+        IHostEnvironment? hostEnvironment = null)
     {
         var connectionString = configuration.GetConnectionString("Postgres");
 
         ArgumentNullException.ThrowIfNull(connectionString);
 
         services.AddScoped<AppSaveChangeInterceptor>();
+        services.AddScoped<ISalesRequestSubmissionLock, SalesRequestSubmissionLock>();
 
         var dataSourceBuilder = new NpgsqlDataSourceBuilder(connectionString);
         var dataSource = dataSourceBuilder
@@ -27,10 +34,16 @@ public static class ConfigureServices
             .Build();
         services.AddSingleton(dataSource);
 
-        services.AddDbContext<IApplicationDbContext, ApplicationDbContext>(ConfigureDbContextOptions);
+        var ignorePendingModelChanges = PendingModelChangesGate.ShouldIgnorePendingModelChanges(
+            configuration,
+            hostEnvironment?.EnvironmentName ?? configuration["ASPNETCORE_ENVIRONMENT"],
+            connectionString);
+
+        services.AddDbContext<IApplicationDbContext, ApplicationDbContext>((sp, options) =>
+            ConfigureDbContextOptions(sp, options, ignorePendingModelChanges));
 
         services.AddDbContextFactory<ApplicationDbContext>(
-            ConfigureDbContextOptions,
+            (sp, options) => ConfigureDbContextOptions(sp, options, ignorePendingModelChanges),
             ServiceLifetime.Scoped);
 
         services.AddScoped<IApplicationDbContextFactory, ApplicationDbContextFactory>();
@@ -44,6 +57,9 @@ public static class ConfigureServices
         services.AddSingleton<TokenFactoryService>();
         services.AddSingleton<ISecurityService, SecurityService>();
         services.AddSingleton<IFileManager, FileManager>();
+
+        services.AddHostedService<SalesRequestOutboxDispatcher>();
+        services.AddHostedService<ManagementTaskOutboxDispatcher>();
 
         services.AddMemoryCache();
 
@@ -66,9 +82,18 @@ public static class ConfigureServices
         });
     }
     
-    private static void ConfigureDbContextOptions(IServiceProvider serviceProvider, DbContextOptionsBuilder options)
+    private static void ConfigureDbContextOptions(
+        IServiceProvider serviceProvider,
+        DbContextOptionsBuilder options,
+        bool ignorePendingModelChanges)
     {
         options.UseNpgsql(serviceProvider.GetRequiredService<NpgsqlDataSource>());
+
+        if (ignorePendingModelChanges)
+        {
+            options.ConfigureWarnings(w =>
+                w.Ignore(RelationalEventId.PendingModelChangesWarning));
+        }
 
         options.AddInterceptors(serviceProvider.GetRequiredService<AppSaveChangeInterceptor>());
     }

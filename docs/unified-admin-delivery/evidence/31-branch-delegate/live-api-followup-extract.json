@@ -1,0 +1,27 @@
+{
+  "at": "2026-11-09T19:05:00Z",
+  "note": "Follow-up after SalesHaider extract",
+  "customers.search": {
+    "customerId": 1,
+    "mandobName": "مندوب تحقق",
+    "totalSellAmount": 150000,
+    "remainingAmount": 125000,
+    "ratingScore": 10,
+    "ratingLabel": "ممتاز"
+  },
+  "branchPayments.list": {
+    "listId": 1,
+    "listName": "قائمة تحقق",
+    "totalAmount": 25000,
+    "paymentCount": 1,
+    "items": [
+      {
+        "paymentId": 1,
+        "customerName": "احمد تحقق الفرع",
+        "amount": 25000,
+        "date": "2026-11-07"
+      }
+    ]
+  },
+  "attachments.maxFiles": "source has no count cap; MaxFilesPerDepart=40 memory guard; 20MiB/file; 25MiB request"
+}

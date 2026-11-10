@@ -1,0 +1,122 @@
+﻿[
+    {
+        "Id":  "login-superadmin",
+        "Status":  "PASS",
+        "Detail":  "ok"
+    },
+    {
+        "Id":  "seed-manage-permissions",
+        "Status":  "PASS",
+        "Detail":  "present=True"
+    },
+    {
+        "Id":  "dummy-branch",
+        "Status":  "PASS",
+        "Detail":  "branchId=1"
+    },
+    {
+        "Id":  "roles-loaded",
+        "Status":  "PASS",
+        "Detail":  "Mandob=7 Chief=2"
+    },
+    {
+        "Id":  "create-mandob",
+        "Status":  "PASS",
+        "Detail":  "id=3 status=200"
+    },
+    {
+        "Id":  "create-chief",
+        "Status":  "PASS",
+        "Detail":  "id=4"
+    },
+    {
+        "Id":  "open-overrides-editor",
+        "Status":  "PASS",
+        "Detail":  "v=0 canEdit=True"
+    },
+    {
+        "Id":  "resolve-permission-ids",
+        "Status":  "PASS",
+        "Detail":  "Order.Read=18 User.Create=37 Product.Read=26"
+    },
+    {
+        "Id":  "mandob-login-before-deny",
+        "Status":  "PASS",
+        "Detail":  "hasOrderRead=True"
+    },
+    {
+        "Id":  "deny-inherited",
+        "Status":  "PASS",
+        "Detail":  "status=200"
+    },
+    {
+        "Id":  "session-invalidate-after-override",
+        "Status":  "PASS",
+        "Detail":  "refreshStatus=400"
+    },
+    {
+        "Id":  "deny-effective-after-relogin",
+        "Status":  "PASS",
+        "Detail":  "hasOrderReadAfter=False"
+    },
+    {
+        "Id":  "allow-extra",
+        "Status":  "PASS",
+        "Detail":  "status=200"
+    },
+    {
+        "Id":  "allow-effective-after-relogin",
+        "Status":  "PASS",
+        "Detail":  "hasUserCreate=True"
+    },
+    {
+        "Id":  "inherit-restore",
+        "Status":  "PASS",
+        "Detail":  "status=200"
+    },
+    {
+        "Id":  "inherit-effective-after-relogin",
+        "Status":  "PASS",
+        "Detail":  "hasOrderReadRestored=True"
+    },
+    {
+        "Id":  "reject-non-super-manage",
+        "Status":  "PASS",
+        "Detail":  "status=403"
+    },
+    {
+        "Id":  "reject-role-change-non-super",
+        "Status":  "PASS",
+        "Detail":  "status=400 body={\"errors\":[{\"message\":\"غير مصرح بتعيين الدور أو الفروع. يتطلب سياسة إدارة معتمدة (سوبر أدمن).\",\"code\":\"Not_Authorized_To_Assign_Role_Or_Branches\"}],\"status\":400,\"type\":\"https://tools.ietf.org/html/rfc7231#section-6.5.1\"}"
+    },
+    {
+        "Id":  "conflict-409",
+        "Status":  "PASS",
+        "Detail":  "A=200 B=409"
+    },
+    {
+        "Id":  "conflict-merge-both-sides",
+        "Status":  "PASS",
+        "Detail":  "productMode=2 userCreateMode=0"
+    },
+    {
+        "Id":  "noop-no-version-bump",
+        "Status":  "PASS",
+        "Detail":  "before=5 after=5"
+    },
+    {
+        "Id":  "noop-no-session-invalidate",
+        "Status":  "PASS",
+        "Detail":  "refreshStatus=200"
+    },
+    {
+        "Id":  "create-then-powers-step",
+        "Status":  "PASS",
+        "Detail":  "create=200 patch=200 id=5"
+    },
+    {
+        "Id":  "protected-account-flag",
+        "Status":  "PASS",
+        "Detail":  "protected=True canEdit=False"
+    }
+]

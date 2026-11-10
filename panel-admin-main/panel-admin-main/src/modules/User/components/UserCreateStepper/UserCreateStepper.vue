@@ -29,6 +29,15 @@
           ref="salaryDetailsFormRef"
         />
 
+        <PowersForm
+          v-if="canManagePermissions && userId > 0"
+          v-show="activeStep === UserSteps.power"
+          :roleId="userForm.roleId"
+          :userId="userId"
+          :userFormMode="FormMode.IsCreate"
+          ref="powersFormRef"
+        />
+
         <div class="py-4 w-full flex flex-row gap-4 justify-center">
           <Button
             :disabled="isSubmitDisabled"
@@ -68,18 +77,27 @@ import EmployeeDataForm from '../UserForms/EmployeeDataForm/EmployeeDataForm.vue
 import { FormMode } from '../UserTabs/UserTabs.types'
 import EmployeeDocumentsForm from '../UserForms/EmployeeDocumentsForm/EmployeeDocumentsForm.vue'
 import SalaryDetailsForm from '../UserForms/SalaryDetailsForm/SalaryDetailsForm.vue'
+import PowersForm from '../UserForms/PowersForm/PowersForm.vue'
 import CustomStepper from '@/modules/Core/components/shared/CustomStepper/CustomStepper.vue'
 import type { StepItem } from '@/modules/Core/components/shared/CustomStepper/CustomStepper.types'
 import { usePermission } from '@/modules/Core/composable/usePermission'
+import { usePatchPermissionOverridesMutation } from '../../requests/mutations/usePatchPermissionOverridesMutation'
+import { useToastStore } from '@/modules/Core/store'
+import { DialogState } from '@/modules/Core/types/model/dialog'
+import useAuthStore from '@/modules/Auth/store'
 
 const { t } = useI18n()
 const router = useRouter()
+const toastStore = useToastStore()
+const authStore = useAuthStore()
 
 const activeStep = ref<UserSteps>(UserSteps.accountDetails)
 
 const { can } = usePermission()
 const canCreateUser = can('User', 'Create')
 const canCreateAttachment = can('Attachment', 'Create')
+const canManagePermissions =
+  authStore.isSuperAdmin === true || can('User', 'ManagePermissions')
 
 const accountDetailsFormRef = ref<InstanceType<
   typeof AccountDetailsForm
@@ -93,6 +111,7 @@ const employeeDocumentsFormRef = ref<{ hasError: boolean }>()
 const salaryDetailsFormRef = ref<InstanceType<typeof SalaryDetailsForm> | null>(
   null
 )
+const powersFormRef = ref<InstanceType<typeof PowersForm> | null>(null)
 
 const allSteps = ref<StepItem[]>([
   {
@@ -122,6 +141,13 @@ const allSteps = ref<StepItem[]>([
     icon: 'tagPrice',
     value: UserSteps.salaryDetails,
     enTitle: 'salaryDetails',
+    isLastStep: false,
+  },
+  {
+    title: t('user.userCreateSteps.powers.stepTitle'),
+    icon: 'securityShieldUser',
+    value: UserSteps.power,
+    enTitle: 'permissions',
     isLastStep: true,
   },
 ])
@@ -129,12 +155,9 @@ const allSteps = ref<StepItem[]>([
 const steps = computed(() => {
   return allSteps.value
     .filter((step) => {
+      if (step.enTitle === 'permissions') return canManagePermissions
       if (!step.permission) return true
-
-      if (step.permission === 'Attachment') {
-        return canCreateAttachment
-      }
-
+      if (step.permission === 'Attachment') return canCreateAttachment
       return true
     })
     .map((step, index, array) => ({
@@ -216,6 +239,9 @@ const salaryForm = ref<SalaryDetailsFormTypes>({
 const { mutateAsync: updateUserDocumentsStep, isPending: isUpdatePending } =
   useUpdateUserDocumentsStepMutation()
 
+const { isPending: isPatchingPermissions, mutateAsync: patchOverrides } =
+  usePatchPermissionOverridesMutation()
+
 const canSubmitCurrentStep = computed(() => {
   if (
     activeStep.value === UserSteps.accountDetails ||
@@ -227,6 +253,10 @@ const canSubmitCurrentStep = computed(() => {
 
   if (activeStep.value === UserSteps.employeeDocuments) {
     return canCreateAttachment
+  }
+
+  if (activeStep.value === UserSteps.power) {
+    return canManagePermissions
   }
 
   return false
@@ -241,7 +271,8 @@ const isSubmitLoading = computed(() => {
     isCreatingUser.value ||
     isUpdatingUser.value ||
     isCreatingSalaryDetails.value ||
-    isUpdatePending.value
+    isUpdatePending.value ||
+    isPatchingPermissions.value
   )
 })
 
@@ -279,6 +310,56 @@ async function onSubmit() {
       salaryDetailsFormRef.value!.formValues.installmentSharePercent
 
     await salaryDetails({ id: userId.value!, payload: salaryForm.value })
+    if (canManagePermissions === false) {
+      localStorage.removeItem('activeStep')
+      await router.push({ name: 'UserListRoute' })
+      return
+    }
+  } else if (activeStep.value === UserSteps.power) {
+    if (powersFormRef.value?.canSaveOverrides === false) {
+      toastStore.setMassage({
+        title: t('user.permissionOverrides.conflictTitle'),
+        description:
+          Number(powersFormRef.value?.unresolvedConflictCount ?? 0) > 0
+            ? t('user.permissionOverrides.unresolvedBlocksSave')
+            : t('user.permissionOverrides.pendingServerAdoption'),
+        dialogState: DialogState.Error,
+        isOpen: true,
+      })
+      return
+    }
+    const changes = powersFormRef.value?.getChanges?.() || []
+    if (changes.length > 0) {
+      const ok = window.confirm(
+        t('user.permissionOverrides.saveConfirm', { count: changes.length })
+      )
+      if (!ok) return
+      try {
+        await patchOverrides({
+          id: userId.value,
+          payload: {
+            expectedVersion: Number(
+              powersFormRef.value?.permissionsVersion ?? 0
+            ),
+            changes,
+          },
+        })
+      } catch (err: unknown) {
+        const status = (err as { response?: { status?: number } })?.response
+          ?.status
+        if (status === 409) {
+          powersFormRef.value?.markConflict?.()
+          toastStore.setMassage({
+            title: t('user.permissionOverrides.conflictTitle'),
+            description: t('user.permissionOverrides.conflictMessage'),
+            dialogState: DialogState.Error,
+            isOpen: true,
+          })
+          return
+        }
+        throw err
+      }
+    }
     localStorage.removeItem('activeStep')
     await router.push({ name: 'UserListRoute' })
     return

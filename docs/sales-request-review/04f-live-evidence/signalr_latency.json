@@ -1,0 +1,75 @@
+{
+  "origin": "http://127.0.0.1:5173",
+  "hub": "http://127.0.0.1:4200/hubs/sales-requests",
+  "steps": [
+    {
+      "step": "admin_login",
+      "at": "2026-11-04T21:35:34.948Z",
+      "ok": true
+    },
+    {
+      "step": "hub_connected",
+      "at": "2026-11-04T21:35:35.015Z",
+      "state": "Connected",
+      "connectionId": "TKAI1zipTtmeAp6Ga0zaow"
+    },
+    {
+      "step": "save_completed",
+      "at": "2026-11-04T21:35:35.022Z",
+      "ok": true,
+      "status": 200,
+      "httpMs": 7,
+      "body": ""
+    },
+    {
+      "step": "event_received",
+      "at": "2026-11-04T21:35:35.358Z",
+      "latencyMs": 336,
+      "changeType": "Invalidation",
+      "requestId": 5,
+      "eventId": "5e45d03f-1934-4555-8ebb-b6bef2ac442c"
+    },
+    {
+      "step": "latency_summary",
+      "at": "2026-11-04T21:35:35.371Z",
+      "measured": true,
+      "latencyMs": 336,
+      "claim_le_2s": true
+    },
+    {
+      "step": "disconnected",
+      "at": "2026-11-04T21:35:35.372Z"
+    },
+    {
+      "step": "reconnected",
+      "at": "2026-11-04T21:35:35.378Z",
+      "state": "Connected"
+    },
+    {
+      "step": "refresh_subscriptions",
+      "at": "2026-11-04T21:35:35.389Z",
+      "groups": 2
+    },
+    {
+      "step": "restore_completed",
+      "at": "2026-11-04T21:35:35.394Z",
+      "ok": true,
+      "status": 200,
+      "httpMs": 4
+    },
+    {
+      "step": "event_received",
+      "at": "2026-11-04T21:35:36.860Z",
+      "latencyMs": 1466,
+      "changeType": "Invalidation",
+      "requestId": 5,
+      "eventId": "3702ca48-bd63-40de-8a28-832a38b3185d"
+    },
+    {
+      "step": "second_event_latency",
+      "at": "2026-11-04T21:35:36.912Z",
+      "measured": true,
+      "latencyMs": 1466
+    }
+  ]
+}

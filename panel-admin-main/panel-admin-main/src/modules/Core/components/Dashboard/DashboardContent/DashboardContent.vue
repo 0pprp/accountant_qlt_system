@@ -1,26 +1,33 @@
 <template>
-  <div class="flex flex-col gap-4 px-6 py-4">
-    <div class="grid grid-cols-12 gap-4">
-      <div v-if="userData" class="col-span-12 lg:col-span-4">
-        <DashboardUserCard :user="userData" />
+  <div class="flex flex-col gap-4 px-4 md:px-6 py-4">
+    <PermissionGate :requirement="profileRequirement" silent>
+      <div class="grid grid-cols-12 gap-4">
+        <div v-if="userData" class="col-span-12 lg:col-span-4">
+          <DashboardUserCard :user="userData" />
+        </div>
+        <div
+          v-if="canReadReports && monthlyChartData"
+          class="col-span-12 lg:col-span-8"
+        >
+          <DashboardMonthlyChart :data="monthlyChartData" />
+        </div>
       </div>
-      <div v-if="monthlyChartData" class="col-span-12 lg:col-span-8">
-        <DashboardMonthlyChart :data="monthlyChartData" />
-      </div>
-    </div>
+    </PermissionGate>
 
-    <DashboardStatsCards v-if="statsData" :stats="statsData" />
+    <PermissionGate :requirement="reportRequirement" silent>
+      <DashboardStatsCards v-if="statsData" :stats="statsData" />
 
-    <div class="grid grid-cols-12 gap-4">
-      <div v-if="financialRows" class="col-span-12 lg:col-span-8">
-        <DashboardFinancialTable :rows="financialRows" />
+      <div class="grid grid-cols-12 gap-4">
+        <div v-if="financialRows" class="col-span-12 lg:col-span-8">
+          <DashboardFinancialTable :rows="financialRows" />
+        </div>
+        <div v-if="productsReportData" class="col-span-12 lg:col-span-4">
+          <DashboardWarehouseItems
+            :productsCount="productsReportData.productsCount"
+          />
+        </div>
       </div>
-      <div v-if="productsReportData" class="col-span-12 lg:col-span-4">
-        <DashboardWarehouseItems
-          :productsCount="productsReportData.productsCount"
-        />
-      </div>
-    </div>
+    </PermissionGate>
   </div>
 </template>
 
@@ -32,6 +39,7 @@ import DashboardMonthlyChart from '../DashboardMonthlyChart/DashboardMonthlyChar
 import DashboardStatsCards from '../DashboardStatsCards/DashboardStatsCards.vue'
 import DashboardWarehouseItems from '../DashboardWarehouseItems/DashboardWarehouseItems.vue'
 import DashboardFinancialTable from '../DashboardFinancialTable/DashboardFinancialTable.vue'
+import PermissionGate from '@/modules/Core/components/access/PermissionGate.vue'
 import {
   useDashboardUsersReportQuery,
   useProductsReportQuery,
@@ -40,6 +48,8 @@ import {
   useYearlyFinancialReportQuery,
 } from '@/modules/Core/requests/queries'
 import { useAuthStore } from '@/modules/Auth/store'
+import { usePermission } from '@/modules/Core/composable/usePermission'
+import type { AccessRequirement } from '@/modules/Core/access/access.types'
 import {
   mapProfileToDashboardUser,
   mapSafeReportToFinancialRows,
@@ -49,8 +59,20 @@ import {
 
 const { t } = useI18n()
 const authStore = useAuthStore()
+const { can } = usePermission()
+
+const profileRequirement: AccessRequirement = {
+  type: 'single',
+  permission: { module: 'User', action: 'Read' },
+}
+
+const reportRequirement: AccessRequirement = {
+  type: 'single',
+  permission: { module: 'Report', action: 'Read' },
+}
 
 const branchId = computed(() => authStore.selectedBranch?.id ?? 0)
+const canReadReports = computed(() => can('Report', 'Read'))
 
 const { data: profileData } = useUserProfileQuery(branchId)
 const { data: yearlyFinancialData } = useYearlyFinancialReportQuery(branchId)

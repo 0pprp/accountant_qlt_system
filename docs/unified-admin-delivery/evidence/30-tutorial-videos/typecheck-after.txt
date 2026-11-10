@@ -1,0 +1,1 @@
+﻿vue-tsc --noEmit: 0 errors (after batches 30-31). Baseline before: see typecheck-before-errors.txt

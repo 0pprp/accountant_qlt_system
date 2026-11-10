@@ -4,6 +4,8 @@ using Application.Customers.Queries.Admin.GetById;
 using Application.Customers.Queries.Admin.GetExcelReport;
 using Application.Customers.Queries.Admin.GetOrders;
 using Application.Customers.Queries.Admin.GetPaginated;
+using Application.SalesRequests.Queries.Admin.GetCustomerAuditProfile;
+using Microsoft.AspNetCore.Authorization;
 
 namespace Api.Controllers.V1.AdminArea;
 
@@ -93,6 +95,22 @@ public class CustomersController : ApiController
         var query = new GetCustomerOrdersQuery(id);
         var result = await _mediator.Send(query, CancellationToken);
 
+        return result.ToHttpResponse();
+    }
+
+    /// <summary>
+    /// بروفايل تدقيق الزبون — منفصل عن SalesRatings profile-lite.
+    /// الصلاحية تُتحقق في الـhandler: ReadAuditProfile أو Customer.Read أو MatchRead.
+    /// المستندات: ReadAuditDocuments؛ الماليات: ReadFinancial.
+    /// أقسام shop/notes: Not implemented / schema حسب التوثيق.
+    /// </summary>
+    [Authorize]
+    [HttpGet("{id:int}/audit-profile")]
+    public async Task<ActionResult<GetCustomerAuditProfileResponse>> GetAuditProfile(
+        [FromRoute] int id,
+        [FromQuery] string? sections)
+    {
+        var result = await _mediator.Send(new GetCustomerAuditProfileQuery(id, sections), CancellationToken);
         return result.ToHttpResponse();
     }
 }

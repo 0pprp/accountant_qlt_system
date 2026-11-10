@@ -1,4 +1,4 @@
-﻿using Application.Common.Interfaces;
+using Application.Common.Interfaces;
 using Application.Common.Utilities;
 using Domain.Entities.SafeAggregate.Enums;
 using Microsoft.EntityFrameworkCore;
@@ -9,15 +9,25 @@ public class GetSafeReportHandler : IRequestHandler<GetSafeReportQuery, Result<G
 {
     private readonly IApplicationDbContextFactory _dbContextFactory;
     private readonly IDateTimeProvider _dateTimeProvider;
+    private readonly ICurrentUserService _currentUserService;
 
-    public GetSafeReportHandler(IApplicationDbContextFactory dbContextFactory, IDateTimeProvider dateTimeProvider)
+    public GetSafeReportHandler(
+        IApplicationDbContextFactory dbContextFactory,
+        IDateTimeProvider dateTimeProvider,
+        ICurrentUserService currentUserService)
     {
         _dbContextFactory = dbContextFactory;
         _dateTimeProvider = dateTimeProvider;
+        _currentUserService = currentUserService;
     }
 
     public async Task<Result<GetSafeReportResponse>> Handle(GetSafeReportQuery request, CancellationToken cancellationToken)
     {
+        var accessDenied = Application.Reports.Common.ReportBranchAccess.DenyIfOutOfScope(
+            _currentUserService, request.BranchId);
+        if (accessDenied is not null)
+            return accessDenied;
+
         var today = _dateTimeProvider.Today;
         var yesterday = today.AddDays(-1);
         var thisWeekStart = today.GetWeekStartDate();

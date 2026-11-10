@@ -1,5 +1,8 @@
 ﻿using System.Text;
+using Api.Hubs;
 using Api.Services;
+using Application.ManagementTasks.Realtime;
+using Application.SalesRequests.Realtime;
 using Application.Common.Settings;
 using Infrastructure.Services;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -54,6 +57,11 @@ public static class ConfigureServices
 
         services.AddTransient<ICurrentUserService, CurrentUserService>();
 
+        services.AddSignalR();
+        services.AddSingleton<SalesRequestConnectionRegistry>();
+        services.AddScoped<ISalesRequestRealtimePublisher, SignalRSalesRequestRealtimePublisher>();
+        services.AddScoped<IManagementTaskRealtimePublisher, SignalRManagementTaskRealtimePublisher>();
+
         services.ConfigureAuthentication(configuration);
     }
 
@@ -84,6 +92,18 @@ public static class ConfigureServices
             };
             cfg.Events = new JwtBearerEvents
             {
+                OnMessageReceived = context =>
+                {
+                    var accessToken = context.Request.Query["access_token"];
+                    if (string.IsNullOrEmpty(accessToken) == false
+                        && (context.HttpContext.Request.Path.StartsWithSegments(SalesRequestHub.Route)
+                            || context.HttpContext.Request.Path.StartsWithSegments(ManagementTaskHub.Route)))
+                    {
+                        context.Token = accessToken;
+                    }
+
+                    return Task.CompletedTask;
+                },
                 OnTokenValidated = async context =>
                 {
                     var tokenValidatorService = context.HttpContext.RequestServices.GetRequiredService<TokenValidator>();

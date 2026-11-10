@@ -1,20 +1,28 @@
+using Domain.Entities.SalesLocationAggregate;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace Infrastructure.Persistence.EntityTypeConfigurations.SalesLocation;
 
-public class SalesLocationPointConfiguration : IEntityTypeConfiguration<Domain.Entities.SalesLocationAggregate.SalesLocationPoint>
+public class SalesLocationPointConfiguration : IEntityTypeConfiguration<SalesLocationPoint>
 {
-    public void Configure(EntityTypeBuilder<Domain.Entities.SalesLocationAggregate.SalesLocationPoint> builder)
+    public void Configure(EntityTypeBuilder<SalesLocationPoint> builder)
     {
         builder.HasKey(x => x.Id);
 
         builder.Property(x => x.Latitude).IsRequired();
         builder.Property(x => x.Longitude).IsRequired();
         builder.Property(x => x.RecordedAtUtc).IsRequired();
+        builder.Property(x => x.ReceivedAtUtc).IsRequired();
         builder.Property(x => x.IsLive).IsRequired();
+        builder.Property(x => x.ActorKind).IsRequired();
+        builder.Property(x => x.ClientEventId).HasMaxLength(SalesLocationPoint.MaxClientEventIdLength);
 
+        builder.HasIndex(x => new { x.ActorKind, x.UserId, x.RecordedAtUtc });
         builder.HasIndex(x => new { x.UserId, x.RecordedAtUtc });
+        builder.HasIndex(x => new { x.UserId, x.ClientEventId })
+            .IsUnique()
+            .HasFilter("\"ClientEventId\" IS NOT NULL");
 
         builder.HasOne(x => x.User)
             .WithMany()

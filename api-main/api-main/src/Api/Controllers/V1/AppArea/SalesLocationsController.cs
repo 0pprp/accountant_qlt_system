@@ -1,5 +1,6 @@
 using Application.SalesLocations.Commands.App.IngestBatch;
 using Application.SalesLocations.Commands.App.IngestLive;
+using Domain.Entities.SalesLocationAggregate.Enums;
 
 namespace Api.Controllers.V1.AppArea;
 
@@ -23,7 +24,8 @@ public class SalesLocationsController : ApiController
         var command = new IngestSalesLocationBatchCommand
         {
             UserId = _currentUserService.UserId!.Value,
-            Points = points
+            Points = points,
+            ActorKind = SalesLocationActorKind.SalesEmployee,
         };
         var result = await _mediator.Send(command, CancellationToken);
         return result.ToHttpResponse();
@@ -37,7 +39,11 @@ public class SalesLocationsController : ApiController
         {
             UserId = _currentUserService.UserId!.Value,
             Lat = dto.Lat,
-            Lng = dto.Lng
+            Lng = dto.Lng,
+            AccuracyMeters = dto.AccuracyMeters ?? dto.Accuracy,
+            CapturedAtUtc = dto.CapturedAtUtc,
+            ClientEventId = dto.ClientEventId,
+            ActorKind = SalesLocationActorKind.SalesEmployee,
         };
         var result = await _mediator.Send(command, CancellationToken);
         return result.ToHttpResponse();

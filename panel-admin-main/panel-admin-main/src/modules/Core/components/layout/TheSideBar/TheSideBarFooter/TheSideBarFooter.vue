@@ -47,6 +47,6 @@ const authStore = useAuthStore()
 async function logout() {
   authStore.logout()
   toggleIsOpen()
-  router.push('/auth')
+  await router.push({ name: 'AuthLoginRoute' })
 }
 </script>

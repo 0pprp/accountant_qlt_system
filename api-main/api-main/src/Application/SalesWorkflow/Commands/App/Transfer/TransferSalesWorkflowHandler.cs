@@ -31,7 +31,9 @@ public class TransferSalesWorkflowHandler : IRequestHandler<TransferSalesWorkflo
         if (order.SellerId != request.UserId)
             return OrderErrors.OrderDoesNotBelongToYou;
 
-        var requiresReason = normalized is SalesWorkflowStatusMapper.Rejected or SalesWorkflowStatusMapper.OnHold;
+        var requiresReason = normalized is SalesWorkflowStatusMapper.Rejected
+            or SalesWorkflowStatusMapper.OnHold
+            or SalesWorkflowStatusMapper.Ready;
         if (requiresReason && string.IsNullOrWhiteSpace(request.Reason))
             return SalesWorkflowErrors.ReasonRequired;
 

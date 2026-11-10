@@ -1,0 +1,58 @@
+name: sales_employee_app
+description: Qalaat Al-Dhaman sales employee field app.
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.13.1
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_localizations:
+    sdk: flutter
+  cupertino_icons: ^1.0.8
+  dio: ^5.11.1
+  flutter_secure_storage: ^11.2.0
+  sqflite: ^2.4.5
+  path: ^1.9.1
+  path_provider: ^2.1.6
+  uuid: ^4.6.0
+  intl: ^0.20.3
+  pdf: ^3.13.1
+  printing: ^5.15.1
+  geolocator: ^14.0.1
+  connectivity_plus: ^7.3.2
+  provider: ^6.1.5+1
+  shared_preferences: ^2.5.6
+  curved_navigation_bar: ^1.0.6
+  flutter_svg: ^2.2.0
+  url_launcher: ^6.3.2
+  audioplayers: ^6.5.1
+  image_picker: ^1.1.2
+  carousel_slider: ^5.1.1
+  signalr_netcore: ^1.4.4
+  package_info_plus: ^10.2.2
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/svg/
+    - assets/images/
+    - assets/sounds/sale_success.wav
+  fonts:
+    - family: ElMessiri
+      fonts:
+        - asset: assets/fonts/ElMessiri-Regular.ttf
+          weight: 400
+        - asset: assets/fonts/ElMessiri-Medium.ttf
+          weight: 500
+        - asset: assets/fonts/ElMessiri-SemiBold.ttf
+          weight: 600
+        - asset: assets/fonts/ElMessiri-Bold.ttf
+          weight: 700

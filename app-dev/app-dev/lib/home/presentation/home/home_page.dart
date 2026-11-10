@@ -67,7 +67,9 @@ class _HomePageViewState extends State<HomePageView> with AutomaticKeepAliveClie
             context: context,
             barrierDismissible: !versionData.isForce,
             builder: (context) {
-              return Center(
+              return PopScope(
+                canPop: !versionData.isForce,
+                child: Center(
                 child: Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 20),
                   child: Container(
@@ -155,7 +157,9 @@ class _HomePageViewState extends State<HomePageView> with AutomaticKeepAliveClie
                                                 Uri.parse(versionData.url),
                                                 mode: LaunchMode.externalApplication,
                                               );
-                                              Navigator.pop(context);
+                                              if (!versionData.isForce) {
+                                                Navigator.pop(context);
+                                              }
                                             },
                                             child: const Text('تحميل'),
                                           ),
@@ -172,6 +176,7 @@ class _HomePageViewState extends State<HomePageView> with AutomaticKeepAliveClie
                     ),
                   ),
                 ),
+              ),
               );
             },
           );

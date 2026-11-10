@@ -1,0 +1,38 @@
+{
+  "database": "qalaat_20_21_iso",
+  "api": "http://127.0.0.1:4200",
+  "panel": "http://127.0.0.1:5173",
+  "at": "2026-11-09T16:15:00Z",
+  "build": { "Api": "0 errors", "vue-tsc": "exit 0" },
+  "unitTests": {
+    "Application.Tests SalesSummary|LegalFollowup": "18 passed",
+    "FE nav+TabLegal+contracts": "20 passed"
+  },
+  "results": {
+    "SalesSummary.matrix": {
+      "monthTotal": 150000,
+      "metric": "salePrice",
+      "dayBoundNote": "SaleDate calendar + CreatedAt Baghdad 00:00 (not 03:00)",
+      "detailsMatchCell": true
+    },
+    "SalesSummary.metricReject": 400,
+    "LegalFollowup.create": { "caseId": 2, "status": "InProgress", "listed": 1 },
+    "LegalFollowup.cancel": {
+      "caseId": 1,
+      "status": "Cancelled",
+      "salesRequestReturnedToUnassigned": true,
+      "idempotentSecond": false
+    },
+    "dbAfterCancelCase1": {
+      "salesRequestStatus": 0,
+      "isDeleted": false,
+      "customerStillThere": 1,
+      "outboxStatusChanged": 2
+    },
+    "browser": {
+      "saleSummary": "PASS 360/768/1440",
+      "saleLegal": "PASS 360/768/1440"
+    }
+  },
+  "fix": "RolePermissions Admin missing SalesSummary.OutsideAll — fixed"
+}

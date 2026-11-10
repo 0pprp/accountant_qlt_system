@@ -14,12 +14,33 @@ class ApiHomeProvider {
   }
 
   Future<AppVersionResponse> checkForUpdates() async {
-    var response = await request.get(
-      'api/v1/app/checkVersion',
-      queryParameters: {
-        'buildNumber': (await PackageInfo.fromPlatform()).buildNumber,
-      },
-    );
-    return AppVersionResponse.fromJson(response.data);
+    final build = int.tryParse((await PackageInfo.fromPlatform()).buildNumber) ?? 0;
+    try {
+      final response = await request.get(
+        'api/v1/app/mobile-updates/follower',
+        queryParameters: {'currentVersionCode': build},
+      );
+      final m = Map<String, dynamic>.from(response.data as Map);
+      final available = m['updateAvailable'] == true || m['UpdateAvailable'] == true;
+      final mandatory = m['mandatory'] == true || m['Mandatory'] == true || m['forceUpdate'] == true;
+      final url = '${m['apkUrl'] ?? m['ApkUrl'] ?? m['url'] ?? ''}';
+      return AppVersionResponse(
+        shouldUpdate: available,
+        isForce: mandatory,
+        url: url,
+      );
+    } catch (_) {
+      // توافق قديم
+      final response = await request.get(
+        'api/v1/app/checkVersion',
+        queryParameters: {
+          'buildNumber': build,
+          'appKey': 'follower',
+        },
+      );
+      return AppVersionResponse.fromJson(
+        Map<String, Object?>.from(response.data as Map),
+      );
+    }
   }
 }

@@ -1,0 +1,118 @@
+﻿{
+    "BranchCustomers.search":  {
+                                   "error":  true,
+                                   "msg":  null,
+                                   "status":  400
+                               },
+    "BranchNewSales":  {
+                           "items":  [
+                                         {
+                                             "orderId":  1,
+                                             "branchId":  1,
+                                             "customerId":  1,
+                                             "customerName":  "احمد تحقق الفرع",
+                                             "customerPhone":  "07709998887",
+                                             "sellerId":  1,
+                                             "sellerName":  "admin",
+                                             "sellAmount":  150000,
+                                             "dailyInstallmentAmount":  1000,
+                                             "prepaymentAmount":  0,
+                                             "salesCompletedAtUtc":  "2026-11-09T18:52:11.553818+00:00",
+                                             "branchManagerReadAtUtc":  "2026-11-09T18:54:14.780941+00:00",
+                                             "isRead":  true,
+                                             "items":  [
+
+                                                       ]
+                                         }
+                                     ],
+                           "totalCount":  1,
+                           "unreadCount":  0,
+                           "page":  1,
+                           "pageSize":  50
+                       },
+    "BranchPayments":  {
+                           "listId":  1,
+                           "listName":  "قائمة تحقق",
+                           "fromDate":  null,
+                           "toDate":  null,
+                           "totalAmount":  25000,
+                           "paymentCount":  1,
+                           "items":  [
+                                         {
+                                             "paymentId":  1,
+                                             "customerId":  1,
+                                             "customerName":  "احمد تحقق الفرع",
+                                             "phoneNumber":  "07709998887",
+                                             "date":  "2026-11-07",
+                                             "amount":  25000
+                                         }
+                                     ]
+                       },
+    "LegalFollowups":  {
+                           "items":  [
+                                         {
+                                             "id":  2,
+                                             "salesRequestId":  2,
+                                             "customerId":  null,
+                                             "customerName":  "زبون قانونية 2",
+                                             "customerPhone":  "07701234568",
+                                             "customerAddress":  "العنوان الكامل للتحقق",
+                                             "followerUserId":  2,
+                                             "followerName":  "متابع تحقق",
+                                             "status":  "InProgress",
+                                             "statusLabel":  "قيد العمل",
+                                             "note":  "???? ????? ?? ???????",
+                                             "completionNote":  null,
+                                             "createdAtUtc":  "2026-11-09T16:13:42.743286+00:00",
+                                             "completedAtUtc":  null,
+                                             "rowVersion":  1,
+                                             "canCancel":  true,
+                                             "branchId":  1,
+                                             "shopLatitude":  null,
+                                             "shopLongitude":  null,
+                                             "documents":  null
+                                         }
+                                     ],
+                           "totalCount":  1,
+                           "page":  1,
+                           "pageSize":  5,
+                           "branchScope":  [
+                                               1,
+                                               2
+                                           ]
+                       },
+    "AppNotes.create":  {
+                            "id":  1,
+                            "sourceApp":  "Delegate",
+                            "sourceType":  "manager_note",
+                            "senderUserId":  3,
+                            "senderDisplayName":  "مندوب تحقق",
+                            "senderRole":  "Mandob",
+                            "branchId":  1,
+                            "branchName":  "فرع تحقق 20-21",
+                            "subject":  "batch32",
+                            "body":  "?????? ????? ???? 32 ?? ??????? ????????",
+                            "status":  "Unread",
+                            "isUnread":  true,
+                            "createdAtUtc":  "2026-11-09T19:18:33.3423779+00:00",
+                            "readAtUtc":  null,
+                            "expectedVersion":  0
+                        },
+    "AppNotes.follower":  {
+                              "id":  2,
+                              "sourceApp":  "Follower",
+                              "sourceType":  "manager_note",
+                              "senderUserId":  2,
+                              "senderDisplayName":  "متابع تحقق",
+                              "senderRole":  "Motaba",
+                              "branchId":  1,
+                              "branchName":  "فرع تحقق 20-21",
+                              "subject":  "batch32-f",
+                              "body":  "?????? ????? ???? 32",
+                              "status":  "Unread",
+                              "isUnread":  true,
+                              "createdAtUtc":  "2026-11-09T19:18:33.381862+00:00",
+                              "readAtUtc":  null,
+                              "expectedVersion":  0
+                          }
+}

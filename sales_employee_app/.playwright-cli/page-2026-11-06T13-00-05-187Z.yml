@@ -1,0 +1,23 @@
+- generic [ref=e4] [cursor=pointer]:
+  - generic:
+    - generic:
+      - generic:
+        - generic:
+          - generic:
+            - generic:
+              - button "رجوع" [ref=e94]
+              - heading "إتمام البيع — 1) بيانات المحل" [level=2] [ref=e95]
+            - progressbar "20" [ref=e96]
+            - generic:
+              - group:
+                - textbox "اسم المحل *" [ref=e98]
+                - textbox "طبيعة العمل *" [ref=e100]
+                - textbox "تقدير قيمة البضاعة *" [ref=e102]
+                - textbox "تقدير الوارد اليومي *" [ref=e104]
+                - textbox "طول المحل *" [ref=e106]
+                - textbox "عرض المحل *" [ref=e108]
+                - textbox "ملاحظة الموظف (اختياري)" [ref=e110]
+                - button "صورة المحل *" [ref=e112]
+                - button "تم تحديد الموقع" [ref=e114]
+            - button "تم الكشف (حفظ بلا إغلاق)" [ref=e115]
+            - button "التالي" [active] [ref=e116]

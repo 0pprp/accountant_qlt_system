@@ -1,0 +1,13 @@
+﻿[2026-11-05T02:23:24.8378731+03:00] tokens ok admin=True A=True B=True
+[2026-11-05T02:23:24.8586004+03:00] before status=1 emp=3 stamp=1
+[2026-11-05T02:23:24.9042080+03:00] assignA status=400 ok=False raw={"errors":[{"message":"'Employee Id' must be greater than '0'.","code":"GreaterThanValidator"}],"status":400,"type":"htt
+[2026-11-05T02:23:24.9277240+03:00] view=200
+[2026-11-05T02:23:24.9416635+03:00] prepare=200 raw=
+[2026-11-05T02:23:24.9555722+03:00] inspect=200
+[2026-11-05T02:23:25.0300523+03:00] ensure-draft=200 raw={"requestId":8,"customerName":"04H Web Cycle Customer — اسم طويل للمراجعة","customerPhone":"07701112233","status":6,"statusLabel":"تم الكشف","tabKey":"inspected","sourceType":1,"sourceTypeLabel":"تقدي
+[2026-11-05T02:23:25.0400008+03:00] mid status=6 linked=6 emp=3
+[2026-11-05T02:23:25.0468802+03:00] reassignB=400 raw={"errors":[{"message":"'Employee Id' must be greater than '0'.","code":"GreaterThanValidator"}],"status":400,"type":"https://tools.ietf.org/html/rfc7231#section-6.5.1"}
+
+[2026-11-05T02:23:25.0539398+03:00] blockPriorA=200
+[2026-11-05T02:23:25.0805208+03:00] incomingA count=0 incomingB sample=[]
+

@@ -1,0 +1,15 @@
+- generic [ref=e6]:
+  - generic:
+    - generic:
+      - generic:
+        - generic:
+          - generic:
+            - group:
+              - img "قلعة الضمان" [ref=e7]
+              - generic [ref=e8]: قلعة الضمان
+              - generic [ref=e9]: تطبيق موظف المبيعات
+              - textbox "اسم المستخدم" [ref=e11]: emp_a_04f
+              - generic [ref=e12]:
+                - textbox "كلمة المرور" [active] [ref=e13]
+                - button [ref=e14]
+              - button "تسجيل الدخول" [ref=e15]

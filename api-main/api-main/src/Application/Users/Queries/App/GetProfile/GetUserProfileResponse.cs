@@ -19,4 +19,6 @@ public record OrderListDto
 {
     public int Id { get; set; }
     public required string Name { get; set; }
+    /// <summary>عند true يُمنع المندوب من الجباية على هذه القائمة فقط (جباية المتابع).</summary>
+    public bool FollowerCollectionEnabled { get; set; }
 }

@@ -1,0 +1,15 @@
+- generic [active] [ref=e4]:
+  - generic:
+    - generic:
+      - generic:
+        - generic:
+          - generic:
+            - img "قلعة الضمان" [ref=e14]
+            - generic [ref=e15]: بدء الدوام إلزامي اليوم
+            - generic [ref=e16]: الدوام نشط — الموقع يُسجَّل أول بأول على السيرفر
+            - generic [ref=e17]: دوام مفتوح — تتبع حي
+            - generic [ref=e18]: "بدأ: 2026/11/05 3:05 صباحاً"
+            - generic [ref=e19]: "آخر نقطة: 2026/11/06 3:55 مساءً"
+            - generic [ref=e20]: "نقاط بالانتظار للمزامنة: 1"
+            - button "إنهاء الدوام" [ref=e21]
+            - button "مزامنة طابور GPS الآن" [ref=e22]

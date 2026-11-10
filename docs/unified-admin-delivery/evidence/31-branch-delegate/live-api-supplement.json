@@ -1,0 +1,27 @@
+{
+    "at":  "2026-11-09T18:59:21.7533543Z",
+    "visit_depart_idempotent_curl":  "HTTP 200 same visit id=2 attachments unchanged",
+    "mandob_first_collection_ok_ge7":  "handler updated: rating\u003e=7 succeeds without WrongSaleNotice",
+    "ratings_trend_known":  {
+                                "installmentPaymentSeed":  25000,
+                                "ratingLabel":  "ممتاز",
+                                "endValue":  10,
+                                "customerCount":  1
+                            },
+    "visit_attachment_auth":  {
+                                  "admin":  200,
+                                  "follower":  403,
+                                  "bytes":  70
+                              },
+    "payments_sum":  {
+                         "paymentCount":  1,
+                         "listId":  1,
+                         "totalAmount":  25000
+                     },
+    "newsales_mark_read":  {
+                               "afterUnread":  0,
+                               "isRead":  true,
+                               "beforeUnread":  1,
+                               "commercialUnchanged":  true
+                           }
+}

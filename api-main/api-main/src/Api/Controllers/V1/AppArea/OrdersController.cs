@@ -87,13 +87,16 @@ public class OrdersController : ApiController
 
     [HasPermission(Permissions.InstallmentPayment.Create)]
     [HttpPost("{id:int}/installment-payments")]
-    public async Task<ActionResult> CreateInstallmentPayment([FromRoute] int id, [FromBody] CreateInstallmentPaymentDto dto)
+    public async Task<ActionResult<Application.InstallmentPayments.Common.InstallmentPaymentWriteResultDto>>
+        CreateInstallmentPayment([FromRoute] int id, [FromBody] CreateInstallmentPaymentDto dto)
     {
         var command = new CreateInstallmentPaymentCommand
         {
             OrderId = id,
             Amount = dto.Amount,
-            UserId = _currentUserService.UserId!.Value
+            UserId = _currentUserService.UserId!.Value,
+            ClientPaymentId = dto.ClientPaymentId,
+            Date = dto.Date
         };
         var result = await _mediator.Send(command, CancellationToken);
 

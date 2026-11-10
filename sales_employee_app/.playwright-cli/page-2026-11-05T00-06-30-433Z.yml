@@ -1,0 +1,21 @@
+- generic [ref=f1e5]:
+  - generic:
+    - generic:
+      - generic:
+        - generic:
+          - generic:
+            - generic:
+              - button "رجوع" [active] [ref=f1e56]
+              - heading "04H Web Cycle Customer — اسم طويل للمراجعة" [level=2] [ref=f1e57]
+            - generic:
+              - group:
+                - generic [ref=f1e58]: "رقم الطلب #9"
+                - generic [ref=f1e59]: الحالة تمت المشاهدة
+                - generic [ref=f1e60]: التبويب طلبات البيع
+                - generic [ref=f1e61]: الهاتف 07701112233
+                - generic [ref=f1e62]: الفرع ??? ??????
+                - generic [ref=f1e63]: آخر تغيير 2026-11-05 03:06:29.415503
+                - generic [ref=f1e64]: البيع المرتبط لا يوجد بعد
+            - button "تجهيز للبيع" [ref=f1e65]
+            - button "تعليق" [ref=f1e66]
+            - button "رفض" [ref=f1e67]

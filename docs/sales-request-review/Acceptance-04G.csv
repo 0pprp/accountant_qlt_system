@@ -1,0 +1,16 @@
+Area,Item,Implemented,Unit-tested,Integration-tested,Live-verified,Blocked,Not-implemented,Notes
+Vue,salesRequestRealtime Hub connect,Yes,Yes (hubUrl),Yes,Yes,No,No,DEV proxy + MapHub RequireCors; UI shows متصل
+Vue,Connected only when HubConnected,Yes,No,No,Yes,No,No,statusLabel guards state
+Vue,Polling fallback announced,Yes,No,No,Yes,No,No,غير متصل (polling محدود)
+Vue,Live list/counts/detail no reload,Yes,No,No,Yes,No,No,complete #7 reflected while متصل
+Vue,Logout clears prior session hub,Yes,No,No,Partial,No,No,auth cleared → /auth
+Vue,Standalone SignalR script as Vue proof,No,No,No,No,No,Yes,Excluded; 04F only
+API,MapHub.RequireCors,Yes,No,Yes,Yes,No,No,No new origins added
+Flutter,AppEnv dart-define local API,Yes,No,No,No,UI,No,Code ready
+Flutter,Realtime without duty gate,Yes,No,No,No,UI,No,initState starts hub
+Flutter,Windows desktop run,No,No,No,No,Yes,No,VS toolchain missing
+Flutter,Web/chrome UI in harness,No,No,No,No,Yes,No,Incomplete in Cursor browser
+Flutter,A/B cycle via app contracts,Yes,Yes,Yes,Yes,No,No,Separate from Flutter UI evidence
+Design,Screenshots 1440/768/360 diverse card,Yes,No,No,Yes,No,No,04g-live-evidence/screenshots
+Legal,Tab legal,No,Yes,No,No,No,Yes,Still NI
+Sent,Ingestion,No,Yes,No,No,No,Yes,Still NI

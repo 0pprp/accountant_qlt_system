@@ -1,0 +1,13 @@
+{
+  "title": "عمل المتابعين",
+  "sections": {
+    "sales": "مصادقة البيع",
+    "declining": "المتدنية",
+    "notes": "الملاحظات",
+    "oldCustomers": "الزبائن القديمة",
+    "delegateNotes": "ملاحظات المندوبين",
+    "collection": "الجباية",
+    "liveMap": "الموقع المباشر",
+    "routes": "المسارات"
+  }
+}

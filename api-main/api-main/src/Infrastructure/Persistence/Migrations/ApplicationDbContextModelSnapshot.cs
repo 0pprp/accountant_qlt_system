@@ -102,6 +102,140 @@ namespace Infrastructure.Persistence.Migrations
                     b.ToTable("ActivityLogs");
                 });
 
+            modelBuilder.Entity("Domain.Entities.AnnouncementAggregate.Announcement", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("AppKey")
+                        .IsRequired()
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)");
+
+                    b.Property<string>("BannerStorageKey")
+                        .HasMaxLength(260)
+                        .HasColumnType("character varying(260)");
+
+                    b.Property<int>("ConcurrencyStamp")
+                        .IsConcurrencyToken()
+                        .HasColumnType("integer");
+
+                    b.Property<string>("ContentType")
+                        .IsRequired()
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)");
+
+                    b.Property<DateTimeOffset>("CreatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("CreatedByName")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<int>("CreatedByUserId")
+                        .HasColumnType("integer");
+
+                    b.Property<bool>("HasLink")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("IsEnabled")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("LinkUrl")
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
+
+                    b.Property<int>("SortOrder")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("TextBody")
+                        .IsRequired()
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)");
+
+                    b.Property<DateTimeOffset>("UpdatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("UpdatedByName")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<int>("UpdatedByUserId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("ZoomStorageKey")
+                        .HasMaxLength(260)
+                        .HasColumnType("character varying(260)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UpdatedAtUtc", "Id");
+
+                    b.HasIndex("AppKey", "IsEnabled", "SortOrder", "Id");
+
+                    b.ToTable("Announcements", (string)null);
+                });
+
+            modelBuilder.Entity("Domain.Entities.AppNoteAggregate.AppNote", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Body")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<int?>("BranchId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("BranchName")
+                        .HasColumnType("text");
+
+                    b.Property<int>("ConcurrencyStamp")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTimeOffset>("CreatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTimeOffset?>("ReadAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("SenderDisplayName")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("SenderRole")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<int>("SenderUserId")
+                        .HasColumnType("integer");
+
+                    b.Property<byte>("SourceApp")
+                        .HasColumnType("smallint");
+
+                    b.Property<string>("SourceType")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<byte>("Status")
+                        .HasColumnType("smallint");
+
+                    b.Property<string>("Subject")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("AppNotes");
+                });
+
             modelBuilder.Entity("Domain.Entities.AttachmentAggregate.Attachment", b =>
                 {
                     b.Property<int>("Id")
@@ -236,6 +370,286 @@ namespace Infrastructure.Persistence.Migrations
                     b.ToTable("UserBranches");
                 });
 
+            modelBuilder.Entity("Domain.Entities.BranchVisitAggregate.BranchVisit", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTimeOffset>("ArrivedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("BranchId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("ConcurrencyStamp")
+                        .IsConcurrencyToken()
+                        .HasColumnType("integer");
+
+                    b.Property<string>("DepartNote")
+                        .HasMaxLength(4000)
+                        .HasColumnType("character varying(4000)");
+
+                    b.Property<DateTimeOffset?>("DepartedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("OpenedByName")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<int>("OpenedByUserId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("BranchId", "ArrivedAtUtc");
+
+                    b.HasIndex("OpenedByUserId", "Status");
+
+                    b.ToTable("BranchVisits", (string)null);
+                });
+
+            modelBuilder.Entity("Domain.Entities.BranchVisitAggregate.BranchVisitAttachment", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("ContentSha256")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<string>("ContentType")
+                        .IsRequired()
+                        .HasMaxLength(120)
+                        .HasColumnType("character varying(120)");
+
+                    b.Property<string>("Extension")
+                        .IsRequired()
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)");
+
+                    b.Property<string>("OriginalFileName")
+                        .IsRequired()
+                        .HasMaxLength(260)
+                        .HasColumnType("character varying(260)");
+
+                    b.Property<string>("RelativePath")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<long>("SizeBytes")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("StoredFileName")
+                        .IsRequired()
+                        .HasMaxLength(260)
+                        .HasColumnType("character varying(260)");
+
+                    b.Property<DateTimeOffset>("UploadedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("UploadedByUserId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("VisitId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("VisitId", "ContentSha256")
+                        .IsUnique();
+
+                    b.ToTable("BranchVisitAttachments", (string)null);
+                });
+
+            modelBuilder.Entity("Domain.Entities.BranchVisitAggregate.BranchVisitMember", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("DisplayName")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("VisitId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("VisitId", "UserId")
+                        .IsUnique();
+
+                    b.ToTable("BranchVisitMembers", (string)null);
+                });
+
+            modelBuilder.Entity("Domain.Entities.BranchVisitAggregate.BranchVisitRating", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("ListName")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<int>("OrderListId")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTimeOffset>("RatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("RatedByUserId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("Score")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("VisitId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("VisitId", "OrderListId")
+                        .IsUnique();
+
+                    b.ToTable("BranchVisitRatings", (string)null);
+                });
+
+            modelBuilder.Entity("Domain.Entities.CommitteeTaskAggregate.CommitteeTaskItem", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Body")
+                        .IsRequired()
+                        .HasMaxLength(8000)
+                        .HasColumnType("character varying(8000)");
+
+                    b.Property<int>("ConcurrencyStamp")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTimeOffset>("CreatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<bool>("IsEnabled")
+                        .HasColumnType("boolean");
+
+                    b.Property<int>("SortOrder")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTimeOffset>("UpdatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("UpdatedByName")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<int>("UpdatedByUserId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("IsEnabled", "SortOrder", "Id");
+
+                    b.ToTable("CommitteeTaskItems", (string)null);
+                });
+
+            modelBuilder.Entity("Domain.Entities.ComplaintAggregate.ComplaintMessage", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Body")
+                        .IsRequired()
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)");
+
+                    b.Property<int?>("BranchId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("BranchName")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<int>("ConcurrencyStamp")
+                        .IsConcurrencyToken()
+                        .HasColumnType("integer");
+
+                    b.Property<DateTimeOffset>("CreatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTimeOffset?>("ReadAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int?>("ReadByUserId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("SenderDisplayName")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<string>("SenderRole")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<int>("SenderUserId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("SourceApp")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)");
+
+                    b.Property<string>("Subject")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("BranchId", "CreatedAtUtc");
+
+                    b.HasIndex("Status", "CreatedAtUtc");
+
+                    b.ToTable("ComplaintMessages", (string)null);
+                });
+
             modelBuilder.Entity("Domain.Entities.CustomerAggregate.Customer", b =>
                 {
                     b.Property<int>("Id")
@@ -260,6 +674,12 @@ namespace Infrastructure.Persistence.Migrations
                         .IsRequired()
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)");
+
+                    b.Property<bool>("IsFakeSale")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("IsLegal")
+                        .HasColumnType("boolean");
 
                     b.Property<DateTimeOffset?>("LastUpdatedAt")
                         .HasColumnType("timestamp with time zone");
@@ -312,6 +732,241 @@ namespace Infrastructure.Persistence.Migrations
                     b.HasIndex("BranchId");
 
                     b.ToTable("Customers");
+                });
+
+            modelBuilder.Entity("Domain.Entities.CustomerDecisionAggregate.CustomerDecision", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("ActorName")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<int>("ActorUserId")
+                        .HasColumnType("integer");
+
+                    b.Property<double?>("AmountTotalSales")
+                        .HasColumnType("double precision");
+
+                    b.Property<int>("BranchId")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTimeOffset>("CreatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("CustomerId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("DecisionType")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)");
+
+                    b.Property<string>("Note")
+                        .IsRequired()
+                        .HasMaxLength(4000)
+                        .HasColumnType("character varying(4000)");
+
+                    b.Property<double?>("PaidPercent")
+                        .HasColumnType("double precision");
+
+                    b.Property<int?>("RelatedLegalConversionId")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("RelatedWaiverRequestId")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTimeOffset?>("SnoozeUntil")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<double?>("WeekPaid")
+                        .HasColumnType("double precision");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("DecisionType");
+
+                    b.HasIndex("CustomerId", "CreatedAtUtc");
+
+                    b.HasIndex("BranchId", "CreatedAtUtc", "Id");
+
+                    b.ToTable("CustomerDecisions", (string)null);
+                });
+
+            modelBuilder.Entity("Domain.Entities.DelegateFollowupAggregate.DirectorBoardOperatorListRating", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("BranchId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Note")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<int>("OrderListId")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTimeOffset>("RatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("RatedByUserId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("RatedByUserName")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<DateOnly>("RatingDate")
+                        .HasColumnType("date");
+
+                    b.Property<int>("Score")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("BranchId", "RatingDate");
+
+                    b.HasIndex("OrderListId", "RatingDate")
+                        .IsUnique();
+
+                    b.ToTable("DirectorBoardOperatorListRatings", (string)null);
+                });
+
+            modelBuilder.Entity("Domain.Entities.DelegateFollowupAggregate.FollowerDelegateDayRating", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("BranchId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("FollowerUserId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Note")
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
+
+                    b.Property<int>("OrderListId")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTimeOffset>("RatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateOnly>("RatingDate")
+                        .HasColumnType("date");
+
+                    b.Property<int>("Score")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("BranchId");
+
+                    b.HasIndex("OrderListId", "RatingDate");
+
+                    b.HasIndex("FollowerUserId", "OrderListId", "RatingDate")
+                        .IsUnique();
+
+                    b.ToTable("FollowerDelegateDayRatings", (string)null);
+                });
+
+            modelBuilder.Entity("Domain.Entities.DelegateFollowupAggregate.ListSupervisionDayRating", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("BranchId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Note")
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
+
+                    b.Property<int>("OrderListId")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTimeOffset>("RatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int?>("RatedByUserId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("RatedByUserName")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<DateOnly>("RatingDate")
+                        .HasColumnType("date");
+
+                    b.Property<int>("Score")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("BranchId", "RatingDate");
+
+                    b.HasIndex("OrderListId", "RatingDate")
+                        .IsUnique();
+
+                    b.ToTable("ListSupervisionDayRatings", (string)null);
+                });
+
+            modelBuilder.Entity("Domain.Entities.DelegateFollowupAggregate.SalesEmployeeListDayRating", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("BranchId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("EmployeeUserId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Note")
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
+
+                    b.Property<int>("OrderListId")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTimeOffset>("RatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateOnly>("RatingDate")
+                        .HasColumnType("date");
+
+                    b.Property<int>("Score")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("BranchId");
+
+                    b.HasIndex("OrderListId", "RatingDate");
+
+                    b.HasIndex("EmployeeUserId", "OrderListId", "RatingDate")
+                        .IsUnique();
+
+                    b.ToTable("SalesEmployeeListDayRatings", (string)null);
                 });
 
             modelBuilder.Entity("Domain.Entities.ExpenseAggregate.Expense", b =>
@@ -394,6 +1049,265 @@ namespace Infrastructure.Persistence.Migrations
                     b.ToTable("ExpenseItems");
                 });
 
+            modelBuilder.Entity("Domain.Entities.FollowerWorkAggregate.CustomerNote", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("AuthorName")
+                        .HasMaxLength(150)
+                        .HasColumnType("character varying(150)");
+
+                    b.Property<int?>("AuthorUserId")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("BranchId")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTimeOffset>("CreatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("CustomerId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("NoteText")
+                        .IsRequired()
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)");
+
+                    b.Property<int?>("OrderListId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CustomerId", "CreatedAtUtc");
+
+                    b.HasIndex("OrderListId", "CreatedAtUtc");
+
+                    b.ToTable("CustomerNotes", (string)null);
+                });
+
+            modelBuilder.Entity("Domain.Entities.FollowerWorkAggregate.FollowerCustomerRatingSnapshot", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
+
+                    b.Property<DateOnly>("CaptureDate")
+                        .HasColumnType("date");
+
+                    b.Property<DateTimeOffset>("CapturedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("CustomerId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("CustomerName")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<int>("OrderListId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("PhoneNumber")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<string>("RatingLabel")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)");
+
+                    b.Property<int>("Score")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CustomerId", "CaptureDate")
+                        .IsUnique();
+
+                    b.HasIndex("OrderListId", "CaptureDate");
+
+                    b.ToTable("FollowerCustomerRatingSnapshots", (string)null);
+                });
+
+            modelBuilder.Entity("Domain.Entities.FollowerWorkAggregate.FollowerDelegateNote", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTimeOffset>("CreatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("CreatedByName")
+                        .HasMaxLength(150)
+                        .HasColumnType("character varying(150)");
+
+                    b.Property<string>("CreatedByRole")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<int>("CreatedByUserId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("MandobUserId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("NoteText")
+                        .IsRequired()
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)");
+
+                    b.Property<int>("OrderListId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CreatedByUserId", "CreatedAtUtc");
+
+                    b.HasIndex("OrderListId", "CreatedAtUtc");
+
+                    b.ToTable("FollowerDelegateNotes", (string)null);
+                });
+
+            modelBuilder.Entity("Domain.Entities.FollowerWorkAggregate.FollowerFieldFollowup", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTimeOffset?>("CompletedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("CompletionNote")
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
+
+                    b.Property<DateTimeOffset>("CreatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("CustomerId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("CustomerName")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<int>("FollowerUserId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("ListId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("ListName")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<string>("PhoneNumber")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("FollowerUserId", "Status")
+                        .HasDatabaseName("IX_FollowerFieldFollowups_Follower_Status");
+
+                    b.HasIndex("FollowerUserId", "ListId", "Status")
+                        .HasDatabaseName("IX_FollowerFieldFollowups_List_Status");
+
+                    b.HasIndex("FollowerUserId", "ListId", "CustomerId", "Status")
+                        .HasDatabaseName("IX_FollowerFieldFollowups_PendingLookup");
+
+                    b.ToTable("FollowerFieldFollowups", (string)null);
+                });
+
+            modelBuilder.Entity("Domain.Entities.FollowerWorkAggregate.FollowerSaleAuthentication", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTimeOffset>("AuthenticatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("BranchId")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTimeOffset?>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("CreatedBy")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("CustomerId")
+                        .HasColumnType("integer");
+
+                    b.Property<decimal>("EstimatedDailyRevenue")
+                        .HasPrecision(18)
+                        .HasColumnType("numeric(18,0)");
+
+                    b.Property<string>("FollowerName")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<int>("FollowerUserId")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTimeOffset?>("LastUpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("LastUpdatedBy")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Note")
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)");
+
+                    b.Property<int>("OrderId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("OrderListId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("Rating")
+                        .HasColumnType("integer");
+
+                    b.Property<decimal>("ShopStockEstimatedValue")
+                        .HasPrecision(18)
+                        .HasColumnType("numeric(18,0)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("OrderId")
+                        .IsUnique();
+
+                    b.HasIndex("BranchId", "OrderListId");
+
+                    b.HasIndex("FollowerUserId", "AuthenticatedAtUtc");
+
+                    b.HasIndex("OrderListId", "AuthenticatedAtUtc");
+
+                    b.ToTable("FollowerSaleAuthentications", (string)null);
+                });
+
             modelBuilder.Entity("Domain.Entities.InstallmentPaymentAggregate.InstallmentPayment", b =>
                 {
                     b.Property<int>("Id")
@@ -404,6 +1318,9 @@ namespace Infrastructure.Persistence.Migrations
 
                     b.Property<double>("Amount")
                         .HasColumnType("double precision");
+
+                    b.Property<Guid?>("ClientPaymentId")
+                        .HasColumnType("uuid");
 
                     b.Property<DateTimeOffset?>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
@@ -429,9 +1346,563 @@ namespace Infrastructure.Persistence.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("ClientPaymentId")
+                        .IsUnique()
+                        .HasDatabaseName("UX_InstallmentPayments_ClientPaymentId")
+                        .HasFilter("\"ClientPaymentId\" IS NOT NULL");
+
                     b.HasIndex("OrderId");
 
                     b.ToTable("InstallmentPayments");
+                });
+
+            modelBuilder.Entity("Domain.Entities.LegalConversionAggregate.LegalConversionRequest", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("BranchId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("ConcurrencyStamp")
+                        .IsConcurrencyToken()
+                        .HasColumnType("integer");
+
+                    b.Property<DateTimeOffset>("CreatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("CustomerId")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTimeOffset?>("DecidedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("DecidedByName")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<int?>("DecidedByUserId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("DecisionNote")
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
+
+                    b.Property<string>("RequestNote")
+                        .IsRequired()
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)");
+
+                    b.Property<string>("RequesterName")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<int>("RequesterUserId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("BranchId");
+
+                    b.HasIndex("CustomerId", "Status");
+
+                    b.HasIndex("Status", "CreatedAtUtc", "Id");
+
+                    b.ToTable("LegalConversionRequests", (string)null);
+                });
+
+            modelBuilder.Entity("Domain.Entities.LegalFollowupAggregate.LegalFollowupCase", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTimeOffset?>("CompletedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("CompletionNote")
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)");
+
+                    b.Property<DateTimeOffset?>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTimeOffset>("CreatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("CreatedBy")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("CreatedByName")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<int>("CreatedByUserId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("CustomerAddress")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<int?>("CustomerId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("CustomerName")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<string>("CustomerPhone")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<string>("FollowerName")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<int>("FollowerUserId")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTimeOffset?>("LastUpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("LastUpdatedBy")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Note")
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)");
+
+                    b.Property<int>("RowVersion")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("SalesRequestId")
+                        .HasColumnType("integer");
+
+                    b.Property<double?>("ShopLatitude")
+                        .HasColumnType("double precision");
+
+                    b.Property<double?>("ShopLongitude")
+                        .HasColumnType("double precision");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CustomerId");
+
+                    b.HasIndex("SalesRequestId", "Status");
+
+                    b.HasIndex("FollowerUserId", "Status", "CreatedAtUtc");
+
+                    b.ToTable("LegalFollowupCases", (string)null);
+                });
+
+            modelBuilder.Entity("Domain.Entities.LegalFollowupAggregate.LegalFollowupCaseDocument", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("CaseId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("ContentType")
+                        .IsRequired()
+                        .HasMaxLength(120)
+                        .HasColumnType("character varying(120)");
+
+                    b.Property<string>("DocumentType")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<string>("Extension")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<string>("FileName")
+                        .IsRequired()
+                        .HasMaxLength(260)
+                        .HasColumnType("character varying(260)");
+
+                    b.Property<string>("RelativePath")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<long>("SizeBytes")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("StoredFileName")
+                        .IsRequired()
+                        .HasMaxLength(260)
+                        .HasColumnType("character varying(260)");
+
+                    b.Property<DateTimeOffset>("UploadedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("UploadedByUserId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CaseId", "DocumentType");
+
+                    b.ToTable("LegalFollowupCaseDocuments", (string)null);
+                });
+
+            modelBuilder.Entity("Domain.Entities.ManagementTaskAggregate.ManagementTask", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTimeOffset?>("AssigneeCompletedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("AssigneeDisplayName")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<int>("AssigneeUserId")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTimeOffset?>("BranchCompletedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("BranchId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("ConcurrencyStamp")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(0);
+
+                    b.Property<DateTimeOffset?>("ConfirmedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTimeOffset?>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("CreatedBy")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("CreatedByUserId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("CurrentHolderDisplayName")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<int>("CurrentHolderUserId")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("CustomerId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasMaxLength(8000)
+                        .HasColumnType("character varying(8000)");
+
+                    b.Property<DateTimeOffset?>("DueAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateOnly>("DueDate")
+                        .HasColumnType("date");
+
+                    b.Property<DateTimeOffset?>("LastUpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("LastUpdatedBy")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("OrderId")
+                        .HasColumnType("integer");
+
+                    b.Property<byte>("Priority")
+                        .HasColumnType("smallint");
+
+                    b.Property<string>("RejectNote")
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
+
+                    b.Property<byte>("Status")
+                        .HasColumnType("smallint");
+
+                    b.Property<DateTimeOffset?>("StatusChangedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<DateTimeOffset?>("TransferredAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AssigneeUserId");
+
+                    b.HasIndex("CreatedByUserId");
+
+                    b.HasIndex("CustomerId");
+
+                    b.HasIndex("DueDate");
+
+                    b.HasIndex("OrderId");
+
+                    b.HasIndex("BranchId", "Status");
+
+                    b.HasIndex("CurrentHolderUserId", "Status");
+
+                    b.ToTable("ManagementTasks", (string)null);
+                });
+
+            modelBuilder.Entity("Domain.Entities.ManagementTaskAggregate.ManagementTaskAttachment", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("ContentType")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<string>("FileExtension")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)");
+
+                    b.Property<string>("OriginalFileName")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<string>("RelativePath")
+                        .IsRequired()
+                        .HasMaxLength(300)
+                        .HasColumnType("character varying(300)");
+
+                    b.Property<long>("SizeBytes")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("StoredFileName")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<int>("TaskId")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTimeOffset>("UploadedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("UploadedByUserId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TaskId");
+
+                    b.ToTable("ManagementTaskAttachments", (string)null);
+                });
+
+            modelBuilder.Entity("Domain.Entities.ManagementTaskAggregate.ManagementTaskChangeOutbox", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("AssigneeUserId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("BranchId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("ChangeType")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)");
+
+                    b.Property<int>("CurrentHolderUserId")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid>("EventId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset?>("LastAttemptAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("LastError")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<DateTimeOffset>("OccurredAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTimeOffset?>("PublishedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("RetryCount")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(0);
+
+                    b.Property<int>("Revision")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("TaskId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("EventId")
+                        .IsUnique();
+
+                    b.HasIndex("PublishedAtUtc", "Id");
+
+                    b.HasIndex("TaskId", "Revision");
+
+                    b.ToTable("ManagementTaskChangeOutboxes", (string)null);
+                });
+
+            modelBuilder.Entity("Domain.Entities.ManagementTaskAggregate.ManagementTaskEvent", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("ActorDisplayName")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<int?>("ActorUserId")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTimeOffset>("AtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<byte>("EventType")
+                        .HasColumnType("smallint");
+
+                    b.Property<byte?>("NewStatus")
+                        .HasColumnType("smallint");
+
+                    b.Property<string>("Note")
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
+
+                    b.Property<byte?>("PreviousStatus")
+                        .HasColumnType("smallint");
+
+                    b.Property<string>("TargetDisplayName")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<int?>("TargetUserId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("TaskId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TaskId", "AtUtc");
+
+                    b.ToTable("ManagementTaskEvents", (string)null);
+                });
+
+            modelBuilder.Entity("Domain.Entities.MobileAppReleaseAggregate.MobileAppRelease", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("ApkUrl")
+                        .IsRequired()
+                        .HasMaxLength(2048)
+                        .HasColumnType("character varying(2048)");
+
+                    b.Property<string>("AppKey")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<int>("ConcurrencyStamp")
+                        .IsConcurrencyToken()
+                        .HasColumnType("integer");
+
+                    b.Property<bool>("ForceUpdate")
+                        .HasColumnType("boolean");
+
+                    b.Property<int>("LatestVersionCode")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("LatestVersionName")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<int>("MinimumSupportedVersionCode")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("ReleaseNotes")
+                        .HasMaxLength(4000)
+                        .HasColumnType("character varying(4000)");
+
+                    b.Property<string>("Sha256")
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)");
+
+                    b.Property<DateTimeOffset>("UpdatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("UpdatedByName")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<int?>("UpdatedByUserId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AppKey")
+                        .IsUnique();
+
+                    b.ToTable("MobileAppReleases", (string)null);
                 });
 
             modelBuilder.Entity("Domain.Entities.NotificationAggregate.Notification", b =>
@@ -499,6 +1970,9 @@ namespace Infrastructure.Persistence.Migrations
                     b.Property<int>("BranchId")
                         .HasColumnType("integer");
 
+                    b.Property<DateTimeOffset?>("BranchManagerReadAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<double>("BuyAmount")
                         .HasColumnType("double precision");
 
@@ -542,6 +2016,9 @@ namespace Infrastructure.Persistence.Migrations
                     b.Property<TimeOnly?>("SaleTime")
                         .HasColumnType("time without time zone");
 
+                    b.Property<DateTimeOffset?>("SalesCompletedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<double>("SellAmount")
                         .HasColumnType("double precision");
 
@@ -562,13 +2039,13 @@ namespace Infrastructure.Persistence.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("BranchId");
-
                     b.HasIndex("CustomerId");
 
                     b.HasIndex("OrderListId");
 
                     b.HasIndex("SellerId");
+
+                    b.HasIndex("BranchId", "WorkflowStatus", "BranchManagerReadAtUtc", "SalesCompletedAtUtc");
 
                     b.ToTable("Orders");
                 });
@@ -641,11 +2118,24 @@ namespace Infrastructure.Persistence.Migrations
                     b.Property<int>("BranchId")
                         .HasColumnType("integer");
 
+                    b.Property<int>("CollectionToggleVersion")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(0);
+
                     b.Property<DateTimeOffset?>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
 
                     b.Property<int>("CreatedBy")
                         .HasColumnType("integer");
+
+                    b.Property<DateTimeOffset?>("FollowerCollectionAssignedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<bool>("FollowerCollectionEnabled")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false);
 
                     b.Property<DateTimeOffset?>("LastUpdatedAt")
                         .HasColumnType("timestamp with time zone");
@@ -674,6 +2164,72 @@ namespace Infrastructure.Persistence.Migrations
                     b.HasIndex("MotabaId");
 
                     b.ToTable("OrderLists");
+                });
+
+            modelBuilder.Entity("Domain.Entities.PriceBoardAggregate.PriceBoardEntry", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("ConcurrencyStamp")
+                        .IsConcurrencyToken()
+                        .HasColumnType("integer");
+
+                    b.Property<DateTimeOffset>("CreatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("CreatedByName")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<int>("CreatedByUserId")
+                        .HasColumnType("integer");
+
+                    b.Property<decimal>("DailyInstallment")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)");
+
+                    b.Property<decimal>("DownPayment")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)");
+
+                    b.Property<string>("ProductName")
+                        .IsRequired()
+                        .HasMaxLength(400)
+                        .HasColumnType("character varying(400)");
+
+                    b.Property<decimal>("SalePrice")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("numeric(18,2)");
+
+                    b.Property<int>("TargetProvinceId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("TargetProvinceName")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<DateTimeOffset>("UpdatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("UpdatedByName")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<int?>("UpdatedByUserId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UpdatedAtUtc", "Id");
+
+                    b.HasIndex("TargetProvinceId", "UpdatedAtUtc", "Id");
+
+                    b.ToTable("PriceBoardEntries", (string)null);
                 });
 
             modelBuilder.Entity("Domain.Entities.ProductAggregate.Product", b =>
@@ -958,6 +2514,21 @@ namespace Infrastructure.Persistence.Migrations
                     b.ToTable("UserPermissions");
                 });
 
+            modelBuilder.Entity("Domain.Entities.RoleAggregate.UserPermissionDenial", b =>
+                {
+                    b.Property<int>("UserId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("PermissionId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("UserId", "PermissionId");
+
+                    b.HasIndex("PermissionId");
+
+                    b.ToTable("UserPermissionDenials", (string)null);
+                });
+
             modelBuilder.Entity("Domain.Entities.RoleAggregate.UserRole", b =>
                 {
                     b.Property<int>("UserId")
@@ -1150,6 +2721,112 @@ namespace Infrastructure.Persistence.Migrations
                     b.ToTable("Transactions");
                 });
 
+            modelBuilder.Entity("Domain.Entities.SalesEmployeeAggregate.SalesEmployeeAssignment", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("BranchId")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTimeOffset>("CreatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int?>("CreatedByUserId")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTimeOffset?>("EndsAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Note")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<DateTimeOffset>("StartsAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("BranchId", "EndsAtUtc", "StartsAtUtc");
+
+                    b.HasIndex("UserId", "BranchId", "EndsAtUtc");
+
+                    b.ToTable("SalesEmployeeAssignments", (string)null);
+                });
+
+            modelBuilder.Entity("Domain.Entities.SalesFollowupAggregate.DirectorSalesEmployeeBoardRating", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("EmployeeUserId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Note")
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
+
+                    b.Property<DateTimeOffset>("RatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int?>("RatedByUserId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("RatedByUserName")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<int>("Score")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("EmployeeUserId", "RatedAtUtc");
+
+                    b.ToTable("DirectorSalesEmployeeBoardRatings", (string)null);
+                });
+
+            modelBuilder.Entity("Domain.Entities.SalesFollowupAggregate.SalesEmployeeAppBlock", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("EmployeeUserId")
+                        .HasColumnType("integer");
+
+                    b.Property<bool>("IsBlocked")
+                        .HasColumnType("boolean");
+
+                    b.Property<DateTimeOffset>("UpdatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("UpdatedByName")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<int?>("UpdatedByUserId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("EmployeeUserId")
+                        .IsUnique();
+
+                    b.ToTable("SalesEmployeeAppBlocks", (string)null);
+                });
+
             modelBuilder.Entity("Domain.Entities.SalesLocationAggregate.SalesLocationPoint", b =>
                 {
                     b.Property<int>("Id")
@@ -1158,8 +2835,18 @@ namespace Infrastructure.Persistence.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
+                    b.Property<double?>("AccuracyMeters")
+                        .HasColumnType("double precision");
+
+                    b.Property<byte>("ActorKind")
+                        .HasColumnType("smallint");
+
                     b.Property<int?>("BranchId")
                         .HasColumnType("integer");
+
+                    b.Property<string>("ClientEventId")
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
 
                     b.Property<bool>("IsLive")
                         .HasColumnType("boolean");
@@ -1170,8 +2857,14 @@ namespace Infrastructure.Persistence.Migrations
                     b.Property<double>("Longitude")
                         .HasColumnType("double precision");
 
+                    b.Property<DateTimeOffset>("ReceivedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<DateTimeOffset>("RecordedAtUtc")
                         .HasColumnType("timestamp with time zone");
+
+                    b.Property<int?>("ShiftId")
+                        .HasColumnType("integer");
 
                     b.Property<int>("UserId")
                         .HasColumnType("integer");
@@ -1180,9 +2873,279 @@ namespace Infrastructure.Persistence.Migrations
 
                     b.HasIndex("BranchId");
 
+                    b.HasIndex("UserId", "ClientEventId")
+                        .IsUnique()
+                        .HasFilter("\"ClientEventId\" IS NOT NULL");
+
                     b.HasIndex("UserId", "RecordedAtUtc");
 
+                    b.HasIndex("ActorKind", "UserId", "RecordedAtUtc");
+
                     b.ToTable("SalesLocationPoints");
+                });
+
+            modelBuilder.Entity("Domain.Entities.SalesRequestAggregate.SalesRequest", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Address")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<int>("BranchId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("ConcurrencyStamp")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(0);
+
+                    b.Property<DateTimeOffset?>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("CreatedBy")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("CreatedByUserId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("CustomerName")
+                        .IsRequired()
+                        .HasMaxLength(120)
+                        .HasColumnType("character varying(120)");
+
+                    b.Property<string>("CustomerPhone")
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)");
+
+                    b.Property<string>("DeleteReason")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<DateTimeOffset?>("DeletedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int?>("DeletedByUserId")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTimeOffset?>("ExceptionConsumedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTimeOffset?>("ExceptionDecidedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int?>("ExceptionDecidedByUserId")
+                        .HasColumnType("integer");
+
+                    b.Property<byte?>("ExceptionHoldStatus")
+                        .HasColumnType("smallint");
+
+                    b.Property<int?>("ExistingCustomerId")
+                        .HasColumnType("integer");
+
+                    b.Property<bool>("IsDeleted")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(false);
+
+                    b.Property<string>("LastStatusNote")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<DateTimeOffset?>("LastUpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("LastUpdatedBy")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("LinkedOrderId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("OriginalExternalId")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<int?>("ProvinceId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("RejectReason")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<string>("RequestedProduct")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<byte>("SourceType")
+                        .HasColumnType("smallint");
+
+                    b.Property<byte>("Status")
+                        .HasColumnType("smallint");
+
+                    b.Property<DateTimeOffset?>("StatusChangedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("SubmissionFingerprint")
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<Guid?>("SubmissionKey")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("SubmissionNote")
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
+
+                    b.Property<int?>("TargetEmployeeId")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTimeOffset?>("ViewedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CustomerName");
+
+                    b.HasIndex("CustomerPhone");
+
+                    b.HasIndex("ExistingCustomerId");
+
+                    b.HasIndex("LinkedOrderId")
+                        .IsUnique()
+                        .HasFilter("\"LinkedOrderId\" IS NOT NULL");
+
+                    b.HasIndex("OriginalExternalId");
+
+                    b.HasIndex("ProvinceId");
+
+                    b.HasIndex("TargetEmployeeId");
+
+                    b.HasIndex("BranchId", "DeletedAtUtc")
+                        .HasFilter("\"IsDeleted\" = true");
+
+                    b.HasIndex("BranchId", "ExceptionHoldStatus")
+                        .HasFilter("\"ExceptionHoldStatus\" IS NOT NULL");
+
+                    b.HasIndex("CreatedByUserId", "SubmissionKey")
+                        .IsUnique();
+
+                    b.HasIndex("BranchId", "Status", "TargetEmployeeId");
+
+                    b.ToTable("SalesRequests", (string)null);
+                });
+
+            modelBuilder.Entity("Domain.Entities.SalesRequestAggregate.SalesRequestChangeOutbox", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("BranchId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("ChangeType")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)");
+
+                    b.Property<Guid>("EventId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTimeOffset?>("LastAttemptAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("LastError")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<DateTimeOffset>("OccurredAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int?>("PreviousTargetEmployeeId")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTimeOffset?>("PublishedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("RequestId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("RetryCount")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(0);
+
+                    b.Property<int>("Revision")
+                        .HasColumnType("integer");
+
+                    b.Property<int?>("TargetEmployeeId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("EventId")
+                        .IsUnique();
+
+                    b.HasIndex("PublishedAtUtc", "Id");
+
+                    b.HasIndex("RequestId", "Revision");
+
+                    b.ToTable("SalesRequestChangeOutbox", (string)null);
+                });
+
+            modelBuilder.Entity("Domain.Entities.SalesRequestAggregate.SalesRequestTimelineEntry", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("ActorUserId")
+                        .HasColumnType("integer");
+
+                    b.Property<byte>("EventType")
+                        .HasColumnType("smallint");
+
+                    b.Property<int?>("NewEmployeeId")
+                        .HasColumnType("integer");
+
+                    b.Property<byte?>("NewStatus")
+                        .HasColumnType("smallint");
+
+                    b.Property<DateTimeOffset>("OccurredAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("OperationId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int?>("PreviousEmployeeId")
+                        .HasColumnType("integer");
+
+                    b.Property<byte?>("PreviousStatus")
+                        .HasColumnType("smallint");
+
+                    b.Property<string>("Reason")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<int>("SalesRequestId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("OperationId");
+
+                    b.HasIndex("SalesRequestId", "OccurredAtUtc");
+
+                    b.ToTable("SalesRequestTimelineEntries", (string)null);
                 });
 
             modelBuilder.Entity("Domain.Entities.SalesShiftAggregate.SalesShift", b =>
@@ -1212,6 +3175,66 @@ namespace Infrastructure.Persistence.Migrations
                     b.HasIndex("UserId", "EndedAtUtc");
 
                     b.ToTable("SalesShifts");
+                });
+
+            modelBuilder.Entity("Domain.Entities.TutorialVideoAggregate.TutorialVideo", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("AppKey")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)");
+
+                    b.Property<int>("ConcurrencyStamp")
+                        .IsConcurrencyToken()
+                        .HasColumnType("integer");
+
+                    b.Property<DateTimeOffset>("CreatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("CreatedByName")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<int>("CreatedByUserId")
+                        .HasColumnType("integer");
+
+                    b.Property<bool>("IsEnabled")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("QuestionAr")
+                        .IsRequired()
+                        .HasMaxLength(400)
+                        .HasColumnType("character varying(400)");
+
+                    b.Property<int>("SortOrder")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTimeOffset>("UpdatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("UpdatedByName")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<int>("UpdatedByUserId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("VideoUrl")
+                        .IsRequired()
+                        .HasMaxLength(1024)
+                        .HasColumnType("character varying(1024)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AppKey", "IsEnabled", "SortOrder", "Id");
+
+                    b.ToTable("TutorialVideos", (string)null);
                 });
 
             modelBuilder.Entity("Domain.Entities.UserAggregate.User", b =>
@@ -1262,6 +3285,12 @@ namespace Infrastructure.Persistence.Migrations
                     b.Property<string>("PasswordHash")
                         .HasMaxLength(300)
                         .HasColumnType("character varying(300)");
+
+                    b.Property<int>("PermissionsVersion")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasDefaultValue(0);
 
                     b.Property<string>("PhoneNumber")
                         .IsRequired()
@@ -1327,6 +3356,91 @@ namespace Infrastructure.Persistence.Migrations
                     b.ToTable("UserLogins");
                 });
 
+            modelBuilder.Entity("Domain.Entities.WaiverAggregate.CustomerWaiverRequest", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<bool>("Applied")
+                        .HasColumnType("boolean");
+
+                    b.Property<double?>("AppliedAmount")
+                        .HasColumnType("double precision");
+
+                    b.Property<DateTimeOffset?>("AppliedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("AppliedByName")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<int?>("AppliedByUserId")
+                        .HasColumnType("integer");
+
+                    b.Property<double?>("ApprovedAmount")
+                        .HasColumnType("double precision");
+
+                    b.Property<int>("BranchId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("ConcurrencyStamp")
+                        .IsConcurrencyToken()
+                        .HasColumnType("integer");
+
+                    b.Property<DateTimeOffset>("CreatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("CustomerId")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTimeOffset?>("DecidedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("DecidedByName")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<int?>("DecidedByUserId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("DecisionNote")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<int?>("OrderId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("RequestNote")
+                        .IsRequired()
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)");
+
+                    b.Property<string>("RequesterName")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<int>("RequesterUserId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CustomerId");
+
+                    b.HasIndex("BranchId", "Status");
+
+                    b.HasIndex("Status", "CreatedAtUtc", "Id");
+
+                    b.ToTable("CustomerWaiverRequests", (string)null);
+                });
+
             modelBuilder.Entity("Domain.Entities.WarehouseAggregate.Warehouse", b =>
                 {
                     b.Property<int>("Id")
@@ -1348,6 +3462,104 @@ namespace Infrastructure.Persistence.Migrations
                     b.HasIndex("BranchId");
 
                     b.ToTable("Warehouses");
+                });
+
+            modelBuilder.Entity("Domain.Entities.WrongSaleAggregate.WrongSaleNotice", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("BranchId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("BranchManagerReviewNote")
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
+
+                    b.Property<DateTimeOffset?>("BranchManagerReviewedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int?>("BranchManagerReviewedByUserId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("ConcurrencyStamp")
+                        .IsConcurrencyToken()
+                        .HasColumnType("integer");
+
+                    b.Property<DateTimeOffset>("CreatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("CustomerId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("CustomerName")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<string>("CustomerPhone")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
+
+                    b.Property<DateTimeOffset?>("DelegateReadAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int?>("DelegateReadByUserId")
+                        .HasColumnType("integer");
+
+                    b.Property<decimal>("EstimatedDailyRevenue")
+                        .HasPrecision(18)
+                        .HasColumnType("numeric(18,0)");
+
+                    b.Property<string>("FollowerName")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<int>("FollowerUserId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Note")
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
+
+                    b.Property<int>("OrderId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("Rating")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("ReasonBlock")
+                        .IsRequired()
+                        .HasMaxLength(4000)
+                        .HasColumnType("character varying(4000)");
+
+                    b.Property<decimal>("ShopStockEstimatedValue")
+                        .HasPrecision(18)
+                        .HasColumnType("numeric(18,0)");
+
+                    b.Property<string>("SourceApp")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("OrderId")
+                        .IsUnique();
+
+                    b.HasIndex("DelegateReadAtUtc", "CreatedAtUtc");
+
+                    b.HasIndex("BranchId", "Status", "CreatedAtUtc");
+
+                    b.ToTable("WrongSaleNotices", (string)null);
                 });
 
             modelBuilder.Entity("Domain.Entities.ActivityLogAggregate.ActivityLog", b =>
@@ -1427,6 +3639,33 @@ namespace Infrastructure.Persistence.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("Domain.Entities.BranchVisitAggregate.BranchVisitAttachment", b =>
+                {
+                    b.HasOne("Domain.Entities.BranchVisitAggregate.BranchVisit", null)
+                        .WithMany("Attachments")
+                        .HasForeignKey("VisitId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Domain.Entities.BranchVisitAggregate.BranchVisitMember", b =>
+                {
+                    b.HasOne("Domain.Entities.BranchVisitAggregate.BranchVisit", null)
+                        .WithMany("Members")
+                        .HasForeignKey("VisitId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Domain.Entities.BranchVisitAggregate.BranchVisitRating", b =>
+                {
+                    b.HasOne("Domain.Entities.BranchVisitAggregate.BranchVisit", null)
+                        .WithMany("Ratings")
+                        .HasForeignKey("VisitId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("Domain.Entities.CustomerAggregate.Customer", b =>
                 {
                     b.HasOne("Domain.Entities.BranchAggregate.Branch", "Branch")
@@ -1436,6 +3675,78 @@ namespace Infrastructure.Persistence.Migrations
                         .IsRequired();
 
                     b.Navigation("Branch");
+                });
+
+            modelBuilder.Entity("Domain.Entities.DelegateFollowupAggregate.DirectorBoardOperatorListRating", b =>
+                {
+                    b.HasOne("Domain.Entities.BranchAggregate.Branch", null)
+                        .WithMany()
+                        .HasForeignKey("BranchId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Domain.Entities.OrderListAggregate.OrderList", null)
+                        .WithMany()
+                        .HasForeignKey("OrderListId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Domain.Entities.DelegateFollowupAggregate.FollowerDelegateDayRating", b =>
+                {
+                    b.HasOne("Domain.Entities.BranchAggregate.Branch", null)
+                        .WithMany()
+                        .HasForeignKey("BranchId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Domain.Entities.UserAggregate.User", null)
+                        .WithMany()
+                        .HasForeignKey("FollowerUserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Domain.Entities.OrderListAggregate.OrderList", null)
+                        .WithMany()
+                        .HasForeignKey("OrderListId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Domain.Entities.DelegateFollowupAggregate.ListSupervisionDayRating", b =>
+                {
+                    b.HasOne("Domain.Entities.BranchAggregate.Branch", null)
+                        .WithMany()
+                        .HasForeignKey("BranchId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Domain.Entities.OrderListAggregate.OrderList", null)
+                        .WithMany()
+                        .HasForeignKey("OrderListId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Domain.Entities.DelegateFollowupAggregate.SalesEmployeeListDayRating", b =>
+                {
+                    b.HasOne("Domain.Entities.BranchAggregate.Branch", null)
+                        .WithMany()
+                        .HasForeignKey("BranchId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Domain.Entities.UserAggregate.User", null)
+                        .WithMany()
+                        .HasForeignKey("EmployeeUserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Domain.Entities.OrderListAggregate.OrderList", null)
+                        .WithMany()
+                        .HasForeignKey("OrderListId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("Domain.Entities.ExpenseAggregate.Expense", b =>
@@ -1468,6 +3779,88 @@ namespace Infrastructure.Persistence.Migrations
                         .IsRequired();
 
                     b.Navigation("Order");
+                });
+
+            modelBuilder.Entity("Domain.Entities.LegalFollowupAggregate.LegalFollowupCaseDocument", b =>
+                {
+                    b.HasOne("Domain.Entities.LegalFollowupAggregate.LegalFollowupCase", "Case")
+                        .WithMany()
+                        .HasForeignKey("CaseId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Case");
+                });
+
+            modelBuilder.Entity("Domain.Entities.ManagementTaskAggregate.ManagementTask", b =>
+                {
+                    b.HasOne("Domain.Entities.UserAggregate.User", "AssigneeUser")
+                        .WithMany()
+                        .HasForeignKey("AssigneeUserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Domain.Entities.BranchAggregate.Branch", "Branch")
+                        .WithMany()
+                        .HasForeignKey("BranchId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Domain.Entities.UserAggregate.User", "CreatedByUser")
+                        .WithMany()
+                        .HasForeignKey("CreatedByUserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Domain.Entities.UserAggregate.User", "CurrentHolderUser")
+                        .WithMany()
+                        .HasForeignKey("CurrentHolderUserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Domain.Entities.CustomerAggregate.Customer", "Customer")
+                        .WithMany()
+                        .HasForeignKey("CustomerId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("Domain.Entities.OrderAggregate.Order", "LinkedOrder")
+                        .WithMany()
+                        .HasForeignKey("OrderId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("AssigneeUser");
+
+                    b.Navigation("Branch");
+
+                    b.Navigation("CreatedByUser");
+
+                    b.Navigation("CurrentHolderUser");
+
+                    b.Navigation("Customer");
+
+                    b.Navigation("LinkedOrder");
+                });
+
+            modelBuilder.Entity("Domain.Entities.ManagementTaskAggregate.ManagementTaskAttachment", b =>
+                {
+                    b.HasOne("Domain.Entities.ManagementTaskAggregate.ManagementTask", "Task")
+                        .WithMany("Attachments")
+                        .HasForeignKey("TaskId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Task");
+                });
+
+            modelBuilder.Entity("Domain.Entities.ManagementTaskAggregate.ManagementTaskEvent", b =>
+                {
+                    b.HasOne("Domain.Entities.ManagementTaskAggregate.ManagementTask", "Task")
+                        .WithMany("Events")
+                        .HasForeignKey("TaskId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Task");
                 });
 
             modelBuilder.Entity("Domain.Entities.NotificationAggregate.Notification", b =>
@@ -1666,6 +4059,25 @@ namespace Infrastructure.Persistence.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("Domain.Entities.RoleAggregate.UserPermissionDenial", b =>
+                {
+                    b.HasOne("Domain.Entities.RoleAggregate.Permission", "Permission")
+                        .WithMany("UserPermissionDenials")
+                        .HasForeignKey("PermissionId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Domain.Entities.UserAggregate.User", "User")
+                        .WithMany("UserPermissionDenials")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Permission");
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("Domain.Entities.RoleAggregate.UserRole", b =>
                 {
                     b.HasOne("Domain.Entities.RoleAggregate.Role", "Role")
@@ -1783,6 +4195,63 @@ namespace Infrastructure.Persistence.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("Domain.Entities.SalesRequestAggregate.SalesRequest", b =>
+                {
+                    b.HasOne("Domain.Entities.BranchAggregate.Branch", "Branch")
+                        .WithMany()
+                        .HasForeignKey("BranchId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Domain.Entities.UserAggregate.User", "CreatedByUser")
+                        .WithMany()
+                        .HasForeignKey("CreatedByUserId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("Domain.Entities.CustomerAggregate.Customer", "ExistingCustomer")
+                        .WithMany()
+                        .HasForeignKey("ExistingCustomerId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("Domain.Entities.OrderAggregate.Order", "LinkedOrder")
+                        .WithMany()
+                        .HasForeignKey("LinkedOrderId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("Domain.Entities.ProvinceAggregate.Province", "Province")
+                        .WithMany()
+                        .HasForeignKey("ProvinceId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("Domain.Entities.UserAggregate.User", "TargetEmployee")
+                        .WithMany()
+                        .HasForeignKey("TargetEmployeeId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("Branch");
+
+                    b.Navigation("CreatedByUser");
+
+                    b.Navigation("ExistingCustomer");
+
+                    b.Navigation("LinkedOrder");
+
+                    b.Navigation("Province");
+
+                    b.Navigation("TargetEmployee");
+                });
+
+            modelBuilder.Entity("Domain.Entities.SalesRequestAggregate.SalesRequestTimelineEntry", b =>
+                {
+                    b.HasOne("Domain.Entities.SalesRequestAggregate.SalesRequest", "SalesRequest")
+                        .WithMany()
+                        .HasForeignKey("SalesRequestId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("SalesRequest");
+                });
+
             modelBuilder.Entity("Domain.Entities.SalesShiftAggregate.SalesShift", b =>
                 {
                     b.HasOne("Domain.Entities.BranchAggregate.Branch", "Branch")
@@ -1846,6 +4315,15 @@ namespace Infrastructure.Persistence.Migrations
                     b.Navigation("Warehouses");
                 });
 
+            modelBuilder.Entity("Domain.Entities.BranchVisitAggregate.BranchVisit", b =>
+                {
+                    b.Navigation("Attachments");
+
+                    b.Navigation("Members");
+
+                    b.Navigation("Ratings");
+                });
+
             modelBuilder.Entity("Domain.Entities.CustomerAggregate.Customer", b =>
                 {
                     b.Navigation("Attachments");
@@ -1860,6 +4338,13 @@ namespace Infrastructure.Persistence.Migrations
                     b.Navigation("ExpenseItems");
 
                     b.Navigation("Transactions");
+                });
+
+            modelBuilder.Entity("Domain.Entities.ManagementTaskAggregate.ManagementTask", b =>
+                {
+                    b.Navigation("Attachments");
+
+                    b.Navigation("Events");
                 });
 
             modelBuilder.Entity("Domain.Entities.OrderAggregate.Order", b =>
@@ -1906,6 +4391,8 @@ namespace Infrastructure.Persistence.Migrations
                 {
                     b.Navigation("RolePermissions");
 
+                    b.Navigation("UserPermissionDenials");
+
                     b.Navigation("UserPermissions");
                 });
 
@@ -1943,6 +4430,8 @@ namespace Infrastructure.Persistence.Migrations
                     b.Navigation("UserBranches");
 
                     b.Navigation("UserLogins");
+
+                    b.Navigation("UserPermissionDenials");
 
                     b.Navigation("UserPermissions");
 

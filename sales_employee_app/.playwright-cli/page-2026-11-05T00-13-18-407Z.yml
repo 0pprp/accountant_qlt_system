@@ -1,0 +1,7 @@
+- main [ref=f1e3]:
+  - img "background" [ref=f1e4]
+  - status [ref=f1e6]:
+    - heading "الصفحة غير موجودة" [level=1] [ref=f1e7]
+    - paragraph [ref=f1e8]: المسار المطلوب غير معروف أو غير متاح.
+    - link "الرئيسية" [ref=f1e9] [cursor=pointer]:
+      - /url: /

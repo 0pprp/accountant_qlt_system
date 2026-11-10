@@ -1,0 +1,8 @@
+- generic [ref=e3]:
+  - generic [ref=e6]:
+    - heading "This api.qalataldhaman.com page can’t be found" [level=1] [ref=e7]
+    - paragraph [ref=e9]:
+      - text: "No webpage was found for the web address:"
+      - strong [ref=e10]: https://api.qalataldhaman.com/scalar/
+    - generic [ref=e11]: HTTP ERROR 404
+  - button "Reload" [ref=e14] [cursor=pointer]

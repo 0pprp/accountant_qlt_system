@@ -1,0 +1,23 @@
+{
+  "title": "متابعة المبيعات",
+  "selectBranch": "اختر الفرع",
+  "allBranches": "كل الفروع",
+  "employees": "موظفو المبيعات",
+  "noEmployees": "لا يوجد موظفو مبيعات ضمن النطاق المحدد",
+  "customers": "زبائن",
+  "avgScore": "متوسط التقييم",
+  "blockApp": "إيقاف التطبيق",
+  "unblockApp": "تفعيل التطبيق",
+  "lowAuth": "تقييمات منخفضة",
+  "systemAvg": "متوسط النظام 30 يوم",
+  "byList": "المبيعات حسب القائمة",
+  "conversion": "التحويلات",
+  "focusTable": "جدول التركيز",
+  "exportExcel": "تصدير Excel",
+  "search": "بحث",
+  "profile": "بروفايل",
+  "blocked": "موقوف",
+  "active": "نشط",
+  "openDetail": "عرض التفاصيل",
+  "detailOpen": "التفاصيل مفتوحة"
+}

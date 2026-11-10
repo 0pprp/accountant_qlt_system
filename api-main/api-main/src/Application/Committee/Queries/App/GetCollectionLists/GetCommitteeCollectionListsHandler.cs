@@ -15,8 +15,10 @@ public class GetCommitteeCollectionListsHandler
         GetCommitteeCollectionListsQuery request,
         CancellationToken cancellationToken)
     {
+        // قوائم جباية المتابع = مفعّلة + لديها طلبات قيد التحصيل
         var lists = await _db.OrderLists.AsNoTracking()
-            .Where(x => x.MotabaId == request.UserId || x.MandobId == request.UserId)
+            .Where(x => x.MotabaId == request.UserId)
+            .Where(x => x.FollowerCollectionEnabled)
             .Where(x => x.Orders.Any(o => o.ExecutionStatus == OrderExecutionStatus.InProgress))
             .Select(x => new CommitteeCollectionListDto
             {

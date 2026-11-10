@@ -1,0 +1,49 @@
+{
+  "normalLogin": true,
+  "routes": [
+    {
+      "route": "/management/summary",
+      "finalPath": "/management/oversight/summary",
+      "textLength": 2981,
+      "screenshot": "management-summary.png"
+    },
+    {
+      "route": "/management/ratings",
+      "finalPath": "/management/oversight/ratings",
+      "textLength": 1361,
+      "screenshot": "management-ratings.png"
+    },
+    {
+      "route": "/management/follower-work",
+      "finalPath": "/management/oversight/follower-work",
+      "textLength": 943,
+      "screenshot": "management-follower-work.png"
+    },
+    {
+      "route": "/sale/overview",
+      "finalPath": "/sale/overview",
+      "textLength": 783,
+      "screenshot": "sale-overview.png"
+    },
+    {
+      "route": "/sale/employees",
+      "finalPath": "/sale/employees",
+      "textLength": 671,
+      "screenshot": "sale-employees.png"
+    },
+    {
+      "route": "/sale/completed",
+      "finalPath": "/sale/completed",
+      "textLength": 1386,
+      "screenshot": "sale-completed.png"
+    },
+    {
+      "route": "/sale/requests",
+      "finalPath": "/sale/requests",
+      "textLength": 578,
+      "screenshot": "sale-requests.png"
+    }
+  ],
+  "pageErrors": [],
+  "serverErrors": []
+}

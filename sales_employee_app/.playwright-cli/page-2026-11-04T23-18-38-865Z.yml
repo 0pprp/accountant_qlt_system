@@ -1,0 +1,3 @@
+- generic [ref=f3e15]:
+  - dialog:
+    - button "حسناً" [active] [ref=f3e16]

@@ -1,5 +1,4 @@
 using Application.Common.Interfaces;
-using Domain.Entities.OrderAggregate.Enums;
 using Microsoft.EntityFrameworkCore;
 
 namespace Application.Committee.Queries.App.GetLists;
@@ -20,8 +19,8 @@ public class GetCommitteeListsHandler : IRequestHandler<GetCommitteeListsQuery, 
                 Name = x.Name,
                 MandobName = x.Mandob!.FullName,
                 BranchId = x.BranchId,
-                // الجباية مفعّلة تشغيلياً عند وجود طلبات قيد التحصيل في القائمة
-                CollectionEnabled = x.Orders.Any(o => o.ExecutionStatus == OrderExecutionStatus.InProgress)
+                // FollowerCollectionEnabled على القائمة — يوم جباية المتابع / قفل المندوب
+                CollectionEnabled = x.FollowerCollectionEnabled
             })
             .ToListAsync(cancellationToken);
 

@@ -22,7 +22,7 @@ const authStore = useAuthStore()
 async function onSubmit(values: AuthLoginForm) {
   const { data } = await mutateAsync(values)
 
-  authStore.setLoginState(data)
+  authStore.replaceSession(data)
   router.push({ name: 'HomeMainRoute' })
 }
 </script>

@@ -1,0 +1,10 @@
+﻿البند,الحالة,الدليل
+Flutter Android,Live-blocked,لا جهاز/cmdline-tools — ليس Mobile-verified
+Flutter Windows,Live-blocked,VS C++ toolchain ناقص — لم يُثبت VS
+Web shell verified,Verified,login+duty(GPS stub)+عدادات Dio+تنقل SalesRequests؛ سجلات البيع=Orders في الدرج
+Sales lifecycle verified,Verified,Flutter UI #13 prepare→inspect→تم البيع؛ لوحة sold #13 Hub متصل؛ #14 إعادة إسناد B ومنع A؛ offline→رسالة+إعادة محاولة
+تشخيص Dio,Fixed,SessionStore Web قبل الإرسال؛ Type/bytes للمرفقات؛ orderListId null للمندوب
+CardParityMatrix,Implemented,MD+CSV محفوظة لمراجعة التصميم
+Legal,Not implemented,زر معطل
+ingestion المرسلة,Not implemented,فلتر فقط
+GPS,Stub only,webFallback — الموقع غير مثبت

@@ -1,62 +1,47 @@
-using Application.Common.Interfaces;
-using Domain.Entities.OrderAggregate.Enums;
-using Microsoft.EntityFrameworkCore;
+using Application.FollowerWork.Common;
 
 namespace Application.Committee.Queries.App.GetDecliningCustomers;
 
+/// <summary>
+/// تطبيق المتابع — نفس قاعدة DirectorFollowerOpsDeclineRules / FollowerDeclineRules
+/// (ليست أيام التسديد الفائتة). يلتقط لقطة اليوم ثم يقارن بلقطات مخزّنة خلال 7 أيام.
+/// </summary>
 public class GetCommitteeDecliningCustomersHandler
     : IRequestHandler<GetCommitteeDecliningCustomersQuery, Result<List<CommitteeDecliningCustomerDto>>>
 {
-    private readonly IApplicationDbContext _db;
-    private readonly IDateTimeProvider _clock;
+    private readonly FollowerDecliningDataService _declining;
 
-    public GetCommitteeDecliningCustomersHandler(IApplicationDbContext db, IDateTimeProvider clock)
+    public GetCommitteeDecliningCustomersHandler(FollowerDecliningDataService declining)
     {
-        _db = db;
-        _clock = clock;
+        _declining = declining;
     }
 
     public async Task<Result<List<CommitteeDecliningCustomerDto>>> Handle(
         GetCommitteeDecliningCustomersQuery request,
         CancellationToken cancellationToken)
     {
-        var today = DateOnly.FromDateTime(_clock.UtcNow);
-        var from = today.AddDays(-14);
+        var result = await _declining.GetDecliningForMotabaAsync(request.UserId, cancellationToken);
+        if (result.IsFailed)
+            return result.Error ?? FollowerWorkErrors.FollowerNotFound;
 
-        var rows = await _db.Orders.AsNoTracking()
-            .Where(o => o.OrderList != null
-                        && (o.OrderList.MotabaId == request.UserId || o.OrderList.MandobId == request.UserId)
-                        && o.ExecutionStatus == OrderExecutionStatus.InProgress)
-            .Select(o => new
-            {
-                o.CustomerId,
-                ListId = o.OrderListId!.Value,
-                ListName = o.OrderList!.Name,
-                FullName = o.Customer!.FullName,
-                Phone = o.Customer.PhoneNumber,
-                o.DailyInstallmentAmount,
-                PaidDays = o.InstallmentPayments.Count(ip => ip.Date >= from && ip.Date <= today && ip.Amount > 0)
-            })
-            .ToListAsync(cancellationToken);
-
-        var expected = 14;
-        return rows
-            .Select(r =>
-            {
-                var missed = Math.Max(0, expected - r.PaidDays);
-                return new CommitteeDecliningCustomerDto
-                {
-                    CustomerId = r.CustomerId,
-                    ListId = r.ListId,
-                    ListName = r.ListName,
-                    FullName = r.FullName,
-                    Phone = r.Phone,
-                    MissedDays = missed,
-                    RiskLabel = missed >= 7 ? "سيء" : missed >= 4 ? "متلكئ" : "ضعيف"
-                };
-            })
-            .Where(x => x.MissedDays >= 3)
-            .OrderByDescending(x => x.MissedDays)
-            .ToList();
+        var data = result.Data!;
+        return data.Items.Select(r => new CommitteeDecliningCustomerDto
+        {
+            CustomerId = r.CustomerId,
+            ListId = r.ListId,
+            ListName = r.ListName ?? "",
+            FullName = r.CustomerName,
+            Phone = r.Phone,
+            FromLabel = r.FromLabel,
+            ToLabel = r.ToLabel,
+            FromScore = r.FromScore,
+            ToScore = r.ToScore,
+            DaysBetween = r.DaysBetween,
+            PriorCaptureDate = r.PriorCaptureDate,
+            CurrentCaptureDate = r.CurrentCaptureDate,
+            // حقول توافق قديمة — ليست تعريف المتدنية
+            MissedDays = r.DaysBetween,
+            RiskLabel = r.ToLabel
+        }).ToList();
     }
 }

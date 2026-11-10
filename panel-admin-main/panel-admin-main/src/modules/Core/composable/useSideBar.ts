@@ -1,12 +1,18 @@
 import { useI18n } from 'vue-i18n'
 import { computed } from 'vue'
-import type { SideBarList, SideBarItem } from '../types/model/sidebar'
 import { useAuthStore } from '@/modules/Auth/store'
+import { usePermission } from '@/modules/Core/composable/usePermission'
+import { getReadyNavigationSections } from '@/modules/Core/navigation/navigation.registry'
+import type {
+  NavigationSectionDefinition,
+  NavigationSidebarItem,
+} from '@/modules/Core/navigation/navigation.types'
 import { useNotificationUnreadCountQuery } from '@/modules/Notification/requests/queries'
 
 export default function useSideBar() {
   const { t } = useI18n()
   const authStore = useAuthStore()
+  const { decide, permissionsReady } = usePermission()
 
   const branchId = computed(() => authStore.selectedBranch?.id ?? 0)
 
@@ -22,154 +28,91 @@ export default function useSideBar() {
     () => unreadCountData.value?.unreadCount ?? 0
   )
 
-  const allSideBarItems = computed(() => [
-    {
-      title: t('sidebar.home'),
-      icon: 'home',
-      value: 'home',
-      link: 'HomeMainRoute',
-    },
-    {
-      title: t('sidebar.branch'),
-      icon: 'branch',
-      value: 'branch',
-      link: 'BranchListRoute',
-      permission: {
-        module: 'Branch',
-        action: 'Read',
-      },
-    },
-    {
-      title: t('sidebar.payment'),
-      icon: 'payment',
-      value: 'payment',
-      link: 'PaymentListRoute',
-      permission: {
-        module: 'OrderList',
-        action: 'Read',
-      },
-    },
-    {
-      title: t('sidebar.customer'),
-      icon: 'customer',
-      value: 'customer',
-      link: 'CustomerMainRoute',
-      permission: {
-        module: 'Customer',
-        action: 'Read',
-      },
-    },
-    {
-      title: t('sidebar.purchases'),
-      icon: 'purchases',
-      value: 'purchases',
-      link: 'PurchasesListRoute',
-      permission: {
-        module: 'Purchase',
-        action: 'Read',
-      },
-    },
-    {
-      title: t('sidebar.sale'),
-      icon: 'sale',
-      value: 'sale',
-      link: 'SaleListRoute',
-      permission: {
-        module: 'Order',
-        action: 'Read',
-      },
-    },
-    {
-      title: t('sidebar.warehouse'),
-      icon: 'warehouse',
-      value: 'warehouse',
-      link: 'WarehouseListRoute',
-      permission: {
-        module: 'ProductCategory',
-        action: 'Read',
-      },
-    },
+  function toSidebarItem(
+    section: NavigationSectionDefinition
+  ): NavigationSidebarItem | null {
+    const decision = decide(section.requirement)
+    const state =
+      decision === 'allowed'
+        ? 'allowed'
+        : decision === 'denied'
+          ? 'locked'
+          : 'hidden'
 
-    ...(authStore.isSuperAdmin
-      ? [
-          {
-            title: t('sidebar.safeMain'),
-            icon: 'safe',
-            value: 'safeMain',
-            link: 'SafeMainMainRoute',
-            permission: {
-              module: 'Safe',
-              action: 'Read',
-            },
-          },
-        ]
-      : []),
+    if (state === 'hidden') return null
 
-    {
-      title: t('sidebar.safe'),
-      icon: 'safe',
-      value: 'safe',
-      link: 'SafeMainRoute',
-      permission: {
-        module: 'Safe',
-        action: 'Read',
-      },
-    },
-    {
-      title: t('sidebar.order'),
-      icon: 'order',
-      value: 'order',
-      link: 'OrderListRoute',
-      permission: {
-        module: 'OrderList',
-        action: 'Read',
-      },
-    },
-    {
-      title: t('sidebar.user'),
-      icon: 'user',
-      value: 'user',
-      link: 'UserListRoute',
-      permission: {
-        module: 'User',
-        action: 'Read',
-      },
-    },
-    {
-      title: t('sidebar.activityLog'),
-      icon: 'activityLog',
-      value: 'activityLog',
-      link: 'ActivityLogListRoute',
-      permission: {
-        module: 'ActivityLog',
-        action: 'Read',
-      },
-    },
-    {
-      title: t('sidebar.notifications'),
-      icon: 'notification',
-      value: 'notifications',
-      link: 'NotificationListRoute',
-      badgeCount: notificationBadgeCount.value,
-      permission: {
-        module: 'Notification',
-        action: 'Read',
-      },
-    },
-  ])
+    const item: NavigationSidebarItem = {
+      id: section.id,
+      title: t(section.translationKey),
+      icon: section.icon,
+      value: section.id,
+      link: section.routeName,
+      query: section.routeQuery ? { ...section.routeQuery } : undefined,
+      group: section.group,
+      state,
+      displayOrder: section.displayOrder,
+    }
 
-  const sideBarList = computed<SideBarList>(() => {
-    return (allSideBarItems.value as Array<SideBarItem>).filter((item) => {
-      if (!item.permission) return true
+    if (section.supportsBadge && state === 'allowed') {
+      item.badgeCount = notificationBadgeCount.value
+    }
 
-      return authStore.hasPermission(
-        item.permission.module,
-        item.permission.action
-      )
-    })
+    return item
+  }
+
+  /**
+   * يفتح الحاوية عند وجود ابن جاهز واحد على الأقل.
+   * فتح الحاوية لا يمنح صلاحيات بقية التبويبات.
+   * not_implemented مُستبعد قبل الوصول هنا عبر getReadyNavigationSections.
+   */
+  function flattenSections(
+    sections: readonly NavigationSectionDefinition[]
+  ): NavigationSidebarItem[] {
+    const items: NavigationSidebarItem[] = []
+
+    for (const section of sections) {
+      if (section.children && section.children.length > 0) {
+        const childItems = flattenSections(section.children)
+        if (childItems.length === 0) continue
+
+        const parent = toSidebarItem(section)
+        if (parent) {
+          // حاوية: إن وُجد ابن مسموح اعرض الأب مسموحًا كمجموعة دون منح بقية الأبناء
+          if (
+            parent.state === 'locked' &&
+            childItems.some((c) => c.state === 'allowed')
+          ) {
+            parent.state = 'allowed'
+          }
+          parent.children = childItems
+          items.push(parent)
+        }
+        continue
+      }
+
+      const item = toSidebarItem(section)
+      if (item) items.push(item)
+    }
+
+    return items
+  }
+
+  const sideBarList = computed<NavigationSidebarItem[]>(() => {
+    if (!permissionsReady.value) return []
+
+    return flattenSections(getReadyNavigationSections()).sort(
+      (a, b) => a.displayOrder - b.displayOrder
+    )
   })
+
+  const isSidebarLoading = computed(
+    () =>
+      authStore.isAuthenticated &&
+      (authStore.permissionsStatus === 'loading' || !permissionsReady.value)
+  )
 
   return {
     sideBarList,
+    isSidebarLoading,
   }
 }

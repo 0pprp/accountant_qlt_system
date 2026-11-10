@@ -1,0 +1,24 @@
+{
+  "batch": 7,
+  "section": "FollowerDeclining",
+  "api": {
+    "filter": "FullyQualifiedName~FollowerWork",
+    "passed": 48,
+    "failed": 0,
+    "note": "Includes FollowerDeclineRulesTests + prior FollowerWork suites"
+  },
+  "ui": {
+    "passed": 17,
+    "failed": 0,
+    "files": [
+      "FollowerWork/sections.test.ts",
+      "FollowerWork/useFollowerReturnContext.test.ts",
+      "navigation.registry.test.ts"
+    ]
+  },
+  "live": {
+    "status": "not_verified",
+    "blocker": "Apply migration FollowerCustomerRatingSnapshots on isolated DB + screenshots 360/768/1440"
+  },
+  "sourceMatch": "DirectorFollowerOpsDeclineRules / FollowerDeclineRules — مطابقة مصدرية"
+}
