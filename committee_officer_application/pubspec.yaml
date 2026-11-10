@@ -1,7 +1,7 @@
 name: committee_officer_application
 description: تطبيق مسؤول اللجنة — قلعة الضمان.
 publish_to: 'none'
-version: 1.0.2+3
+version: 1.0.3+4
 
 environment:
   sdk: ^3.13.1
