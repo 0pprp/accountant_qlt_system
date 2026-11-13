@@ -1,8 +1,8 @@
 import 'package:package_info_plus/package_info_plus.dart';
 
 class AppVersion {
-  static const String name = '1.0.3';
-  static const int code = 4;
+  static const String name = '1.0.5';
+  static const int code = 6;
   static const String appKey = 'sales-employee';
 
   static int? _resolvedCode;

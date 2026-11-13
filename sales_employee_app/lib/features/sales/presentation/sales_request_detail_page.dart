@@ -348,7 +348,7 @@ class _SalesRequestDetailPageState extends State<SalesRequestDetailPage> {
           await showAppMessage(
             context,
             title: 'مسودة البيع',
-            message: 'لا يمكن بدء البيع دون زبون مرتبط بالطلب. أكمل المطابقة/الربط من اللوحة أو أنشئ البيع بعد توفر الزبون.',
+            message: 'تعذر إنشاء مسودة البيع. أعد المحاولة أو تحقق من اتصال الشبكة.',
           );
           if (mounted) await _bootstrap();
           return;

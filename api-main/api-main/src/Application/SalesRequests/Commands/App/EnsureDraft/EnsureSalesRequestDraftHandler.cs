@@ -3,6 +3,7 @@ using Application.Common.Interfaces;
 using Application.SalesRequests.Common;
 using Application.SalesRequests.Realtime;
 using Application.SalesRequests.Queries.App.GetByTab;
+using Domain.Entities.CustomerAggregate;
 using Domain.Entities.OrderAggregate;
 using Domain.Entities.SalesRequestAggregate.Enums;
 using Domain.Services.SalesRequestLifecycle;
@@ -69,20 +70,15 @@ public class EnsureSalesRequestDraftHandler
                 return ToDto(entity);
             }
 
-            if (entity.ExistingCustomerId is null or <= 0)
+            var customerId = await ResolveOrCreateCustomerAsync(entity, cancellationToken);
+            if (customerId <= 0)
                 return SalesRequestErrors.CustomerRequiredForDraft;
 
-            var customerOk = await _db.Customers.AsNoTracking()
-                .AnyAsync(
-                    c => c.Id == entity.ExistingCustomerId && c.BranchId == entity.BranchId,
-                    cancellationToken);
-            if (!customerOk)
-                return SalesRequestErrors.CustomerRequiredForDraft;
+            entity.ExistingCustomerId = customerId;
 
-            // إنشاء المسودة فقط بعد إعادة التحقق تحت القفل.
             var order = Order.CreateByAppUser(
                 0, 0, 0, 0,
-                entity.ExistingCustomerId.Value,
+                customerId,
                 entity.BranchId,
                 userId.Value,
                 []);
@@ -142,6 +138,63 @@ public class EnsureSalesRequestDraftHandler
             if (transaction is not null)
                 await transaction.DisposeAsync();
         }
+    }
+
+    private async Task<int> ResolveOrCreateCustomerAsync(
+        Domain.Entities.SalesRequestAggregate.SalesRequest entity,
+        CancellationToken cancellationToken)
+    {
+        if (entity.ExistingCustomerId is int linked && linked > 0)
+        {
+            var ok = await _db.Customers.AsNoTracking()
+                .AnyAsync(c => c.Id == linked && c.BranchId == entity.BranchId, cancellationToken);
+            if (ok)
+                return linked;
+        }
+
+        var phone = (entity.CustomerPhone ?? string.Empty).Trim();
+        if (phone.Length > 0)
+        {
+            var byPhone = await _db.Customers.AsNoTracking()
+                .Where(c => c.BranchId == entity.BranchId && c.PhoneNumber == phone)
+                .Select(c => c.Id)
+                .FirstOrDefaultAsync(cancellationToken);
+            if (byPhone > 0)
+                return byPhone;
+        }
+
+        var fullName = Clip(entity.CustomerName, 50);
+        if (string.IsNullOrWhiteSpace(fullName))
+            fullName = $"طلب #{entity.Id}";
+
+        var nationalCode = Clip($"TEMP-SR-{entity.Id}", 50);
+        var nationalTaken = await _db.Customers.AsNoTracking()
+            .AnyAsync(c => c.NationalCode == nationalCode, cancellationToken);
+        if (nationalTaken)
+            nationalCode = Clip($"TEMP-SR-{entity.Id}-{Guid.NewGuid():N}", 50);
+
+        var safePhone = Clip(string.IsNullOrWhiteSpace(phone) ? $"0{entity.Id:D10}" : phone, 30);
+        var address = Clip(string.IsNullOrWhiteSpace(entity.Address) ? "—" : entity.Address!, 300);
+
+        var customer = new Customer(
+            fullName,
+            "غير محدد",
+            nationalCode,
+            new DateOnly(1990, 1, 1),
+            safePhone,
+            safePhone,
+            new Business(Clip(fullName, 100), address, "—"),
+            entity.BranchId);
+
+        _db.Customers.Add(customer);
+        await _db.SaveChangesAsync(cancellationToken);
+        return customer.Id;
+    }
+
+    private static string Clip(string value, int max)
+    {
+        var v = value.Trim();
+        return v.Length <= max ? v : v[..max];
     }
 
     private bool IsNpgsql()

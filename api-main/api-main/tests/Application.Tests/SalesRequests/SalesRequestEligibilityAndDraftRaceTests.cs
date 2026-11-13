@@ -152,6 +152,38 @@ public class SalesRequestEligibilityAndDraftRaceTests
     }
 
     [Fact]
+    public async Task Ensure_draft_creates_provisional_customer_without_admin_match()
+    {
+        await using var db = Db();
+        var a = await AddEligibleAsync(db, "a");
+
+        var request = new SalesRequest("ضياء فالح حسن", "07748017384", SalesRequestSourceType.Manual, 1, null, null, null);
+        request.Assign(a.Id, T0);
+        request.Prepare("جاهز", T0.AddMinutes(1));
+        db.SalesRequests.Add(request);
+        await db.SaveChangesAsync();
+
+        Assert.Null(request.ExistingCustomerId);
+
+        var draft = await new EnsureSalesRequestDraftHandler(
+                db, Actor(a.Id, SeedPermissions.SalesRequest.AppLinkDraft), new ClockStub(T0.AddMinutes(2)))
+            .Handle(new EnsureSalesRequestDraftCommand(request.Id), default);
+
+        Assert.True(draft.IsSucceeded, draft.Error?.Message);
+        Assert.True(draft.Data!.LinkedOrderId is > 0);
+        Assert.True(request.ExistingCustomerId is > 0);
+        Assert.Equal(1, await db.Customers.CountAsync());
+        Assert.Equal(1, await db.Orders.CountAsync());
+
+        var snapshot = await db.Customers.AsNoTracking()
+            .Where(c => c.Id == request.ExistingCustomerId)
+            .Select(c => new { c.Id, c.FullName, c.PhoneNumber })
+            .FirstAsync();
+        Assert.Equal("ضياء فالح حسن", snapshot.FullName);
+        Assert.Equal("07748017384", snapshot.PhoneNumber);
+    }
+
+    [Fact]
     public async Task Assign_and_transfer_share_same_eligible_query()
     {
         await using var db = Db();

@@ -21,6 +21,7 @@ abstract final class SalesRequestActions {
           SalesRequestEmployeeAction.pend,
           SalesRequestEmployeeAction.reject,
           SalesRequestEmployeeAction.transferName,
+          SalesRequestEmployeeAction.startSale,
           if (hasLinkedOrder) SalesRequestEmployeeAction.openLinkedSale,
         ];
       case SalesRequestTabMap.prepared:
@@ -45,6 +46,7 @@ abstract final class SalesRequestActions {
           SalesRequestEmployeeAction.prepare,
           SalesRequestEmployeeAction.reject,
           SalesRequestEmployeeAction.transferName,
+          SalesRequestEmployeeAction.startSale,
           if (hasLinkedOrder) SalesRequestEmployeeAction.openLinkedSale,
         ];
       case SalesRequestTabMap.rejected:
