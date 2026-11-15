@@ -1,4 +1,5 @@
 import 'widgets/sales_request_card.dart';
+import '../domain/sales_request_actions.dart';
 
 import 'package:flutter/material.dart';
 import 'package:sales_employee_app/core/network/dio_client.dart';
@@ -127,6 +128,13 @@ class _SalesRequestsBinPageState extends State<SalesRequestsBinPage> {
                   return SalesRequestCard(
                     item: item,
                     onOpen: () => _open(item),
+                    onCheckout: SalesRequestActions.forTab(item.tabKey, hasLinkedOrder: item.hasLinkedOrder)
+                        .contains(SalesRequestEmployeeAction.startSale)
+                        ? () async {
+                            await Navigator.of(context).push(SalesNav.checkoutRequest(item));
+                            if (mounted) await _load();
+                          }
+                        : null,
                   );
                 },
               ),

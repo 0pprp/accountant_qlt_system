@@ -63,24 +63,23 @@ class _HomeDrawerState extends State<HomeDrawer> with SingleTickerProviderStateM
   Widget build(BuildContext context) {
     return Drawer(
       backgroundColor: const Color(0xFFF3FAF9),
-      child: Column(
-        children: [
-          AnimatedBuilder(
-            animation: _wave,
-            builder: (context, _) {
-              return SizedBox(
-                width: double.infinity,
-                height: 188,
-                child: CustomPaint(
-                  painter: _DrawerWavePainter(t: _wave.value),
-                  child: SafeArea(
-                    bottom: false,
+      child: SafeArea(
+        child: Column(
+          children: [
+            AnimatedBuilder(
+              animation: _wave,
+              builder: (context, _) {
+                return SizedBox(
+                  width: double.infinity,
+                  height: 160,
+                  child: CustomPaint(
+                    painter: _DrawerWavePainter(t: _wave.value),
                     child: Padding(
-                      padding: const EdgeInsets.fromLTRB(20, 18, 20, 16),
+                      padding: const EdgeInsets.fromLTRB(20, 14, 20, 14),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const BrandLogo(height: 52, tone: BrandLogoTone.white),
+                          const BrandLogo(height: 44, tone: BrandLogoTone.white),
                           const Spacer(),
                           Text(
                             widget.displayName,
@@ -99,148 +98,163 @@ class _HomeDrawerState extends State<HomeDrawer> with SingleTickerProviderStateM
                       ),
                     ),
                   ),
-                ),
-              );
-            },
-          ),
-          Expanded(
-            child: ListView(
-              padding: const EdgeInsets.fromLTRB(10, 10, 10, 8),
-              children: [
-                _item(
-                  icon: Icons.schedule_rounded,
-                  title: 'الدوام',
-                  onTap: () {
-                    Navigator.pop(context);
-                    Navigator.of(context).push(
-                      MaterialPageRoute(
-                        builder: (_) => ShiftPage(onDutyChanged: widget.onDutyChanged),
-                      ),
-                    );
-                  },
-                ),
-                _item(
-                  icon: Icons.receipt_long_rounded,
-                  title: 'طلبات البيع',
-                  onTap: () {
-                    Navigator.pop(context);
-                    Navigator.of(context).push(
-                      MaterialPageRoute(
-                        settings: const RouteSettings(name: '/sales-requests/inbox'),
-                        builder: (_) => SalesNav.salesRequestsInbox(),
-                      ),
-                    );
-                  },
-                ),
-                _item(
-                  icon: Icons.shopping_bag_outlined,
-                  title: 'سجلات البيع',
-                  onTap: () {
-                    Navigator.pop(context);
-                    Navigator.of(context).push(
-                      MaterialPageRoute(
-                        settings: const RouteSettings(name: '/orders'),
-                        builder: (_) => const OrdersTab(),
-                      ),
-                    );
-                  },
-                ),
-                _item(
-                  icon: Icons.inventory_2_rounded,
-                  title: 'المخزن',
-                  onTap: () {
-                    Navigator.pop(context);
-                    Navigator.of(context).push(
-                      MaterialPageRoute(builder: (_) => const WarehousePage()),
-                    );
-                  },
-                ),
-                _item(
-                  icon: Icons.price_change_rounded,
-                  title: 'لوحة الأسعار',
-                  onTap: () {
-                    Navigator.pop(context);
-                    Navigator.of(context).push(
-                      MaterialPageRoute(builder: (_) => const PriceBoardPage()),
-                    );
-                  },
-                ),
-                _item(
-                  icon: Icons.archive_outlined,
-                  title: 'الأرشيف',
-                  onTap: () {
-                    Navigator.pop(context);
-                    Navigator.of(context).push(
-                      MaterialPageRoute(builder: (_) => const SubmittedSalesRequestsPage()),
-                    );
-                  },
-                ),
-                const SizedBox(height: 8),
-                const Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                  child: Text(
-                    'المزيد',
-                    style: TextStyle(
-                      color: AppColors.muted,
-                      fontWeight: FontWeight.w700,
-                      fontSize: 12,
-                    ),
-                  ),
-                ),
-                _item(
-                  icon: Icons.ondemand_video_rounded,
-                  title: 'فيديوهات تعليمية',
-                  onTap: () {
-                    Navigator.pop(context);
-                    Navigator.of(context).push(
-                      MaterialPageRoute(builder: (_) => const TutorialVideosPage()),
-                    );
-                  },
-                ),
-                _item(
-                  icon: Icons.report_gmailerrorred_rounded,
-                  title: 'شكوى',
-                  onTap: () {
-                    Navigator.pop(context);
-                    Navigator.of(context).push(
-                      MaterialPageRoute(builder: (_) => const SubmitComplaintPage()),
-                    );
-                  },
-                ),
-                _item(
-                  icon: Icons.sticky_note_2_outlined,
-                  title: 'ملاحظة المدير',
-                  onTap: () {
-                    Navigator.pop(context);
-                    Navigator.of(context).push(
-                      MaterialPageRoute(builder: (_) => const SendManagerNotePage()),
-                    );
-                  },
-                ),
-              ],
-            ),
-          ),
-          const Divider(height: 1),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(10, 4, 10, 12),
-            child: _item(
-              icon: Icons.logout_rounded,
-              title: 'تسجيل الخروج',
-              danger: true,
-              onTap: () async {
-                Navigator.pop(context);
-                final ok = await showConfirmDialog(
-                  context,
-                  title: 'تسجيل الخروج',
-                  message: 'هل تريد الخروج من الحساب؟',
                 );
-                if (!ok) return;
-                await Injection.authRepository.logout();
-                widget.onLogout();
               },
             ),
-          ),
-        ],
+            Expanded(
+              child: ListView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                padding: const EdgeInsets.fromLTRB(10, 10, 10, 16),
+                children: [
+                  _item(
+                    icon: Icons.schedule_rounded,
+                    title: 'الدوام',
+                    onTap: () {
+                      Navigator.pop(context);
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) =>
+                              ShiftPage(onDutyChanged: widget.onDutyChanged),
+                        ),
+                      );
+                    },
+                  ),
+                  _item(
+                    icon: Icons.receipt_long_rounded,
+                    title: 'طلبات البيع',
+                    onTap: () {
+                      Navigator.pop(context);
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          settings: const RouteSettings(
+                            name: '/sales-requests/inbox',
+                          ),
+                          builder: (_) => SalesNav.salesRequestsInbox(),
+                        ),
+                      );
+                    },
+                  ),
+                  _item(
+                    icon: Icons.shopping_bag_outlined,
+                    title: 'سجلات البيع',
+                    onTap: () {
+                      Navigator.pop(context);
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          settings: const RouteSettings(name: '/orders'),
+                          builder: (_) => const OrdersTab(),
+                        ),
+                      );
+                    },
+                  ),
+                  _item(
+                    icon: Icons.inventory_2_rounded,
+                    title: 'المخزن',
+                    onTap: () {
+                      Navigator.pop(context);
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => const WarehousePage(),
+                        ),
+                      );
+                    },
+                  ),
+                  _item(
+                    icon: Icons.price_change_rounded,
+                    title: 'لوحة الأسعار',
+                    onTap: () {
+                      Navigator.pop(context);
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => const PriceBoardPage(),
+                        ),
+                      );
+                    },
+                  ),
+                  _item(
+                    icon: Icons.archive_outlined,
+                    title: 'الأرشيف',
+                    onTap: () {
+                      Navigator.pop(context);
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => const SubmittedSalesRequestsPage(),
+                        ),
+                      );
+                    },
+                  ),
+                  const SizedBox(height: 8),
+                  const Padding(
+                    padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    child: Text(
+                      'المزيد',
+                      style: TextStyle(
+                        color: AppColors.muted,
+                        fontWeight: FontWeight.w700,
+                        fontSize: 12,
+                      ),
+                    ),
+                  ),
+                  _item(
+                    icon: Icons.ondemand_video_rounded,
+                    title: 'فيديوهات تعليمية',
+                    onTap: () {
+                      Navigator.pop(context);
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => const TutorialVideosPage(),
+                        ),
+                      );
+                    },
+                  ),
+                  _item(
+                    icon: Icons.report_gmailerrorred_rounded,
+                    title: 'شكوى',
+                    onTap: () {
+                      Navigator.pop(context);
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => const SubmitComplaintPage(),
+                        ),
+                      );
+                    },
+                  ),
+                  _item(
+                    icon: Icons.sticky_note_2_outlined,
+                    title: 'ملاحظة المدير',
+                    onTap: () {
+                      Navigator.pop(context);
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => const SendManagerNotePage(),
+                        ),
+                      );
+                    },
+                  ),
+                  const SizedBox(height: 12),
+                  const Divider(height: 1),
+                  const SizedBox(height: 8),
+                  _item(
+                    icon: Icons.logout_rounded,
+                    title: 'تسجيل الخروج',
+                    danger: true,
+                    onTap: () async {
+                      Navigator.pop(context);
+                      final ok = await showConfirmDialog(
+                        context,
+                        title: 'تسجيل الخروج',
+                        message: 'هل تريد الخروج من الحساب؟',
+                      );
+                      if (!ok) return;
+                      await Injection.authRepository.logout();
+                      widget.onLogout();
+                    },
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

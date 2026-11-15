@@ -14,15 +14,23 @@ class RatingsTab extends StatefulWidget {
 }
 
 class _RatingsTabState extends State<RatingsTab> {
-  List<RatingSummary> _summary = const [];
+  RatingsSummaryPayload? _payload;
   List<Map<String, dynamic>> _items = const [];
   String? _level;
   bool _loading = true;
+
+  List<RatingSummary> get _summary => _payload?.levels ?? const [];
 
   @override
   void initState() {
     super.initState();
     _load();
+  }
+
+  String _formatAvg(double v) {
+    final r = double.parse(v.toStringAsFixed(2));
+    if (r == r.roundToDouble()) return '${r.round()}';
+    return r.toStringAsFixed(2);
   }
 
   Future<void> _load() async {
@@ -31,10 +39,10 @@ class _RatingsTabState extends State<RatingsTab> {
       final s = await Injection.ratingsRemote.summary();
       if (!mounted) return;
       setState(() {
-        _summary = s;
+        _payload = s;
         _loading = false;
       });
-      if (s.isNotEmpty) await _open(s.first.level);
+      if (s.levels.isNotEmpty) await _open(s.levels.first.level);
     } catch (e) {
       if (!mounted) return;
       setState(() => _loading = false);
@@ -57,6 +65,7 @@ class _RatingsTabState extends State<RatingsTab> {
 
   @override
   Widget build(BuildContext context) {
+    final payload = _payload;
     return QalaatPatternBackground(
       child: SafeArea(
         child: Column(
@@ -71,6 +80,53 @@ class _RatingsTabState extends State<RatingsTab> {
                 ),
               ),
             ),
+            if (payload != null)
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 0, 16, 10),
+                child: Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.92),
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: AppColors.primary.withValues(alpha: 0.25)),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'متوسط تقييمي',
+                        style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
+                      ),
+                      const SizedBox(height: 2),
+                      Row(
+                        children: [
+                          Text(
+                            _formatAvg(payload.averageScore),
+                            style: const TextStyle(
+                              fontSize: 26,
+                              fontWeight: FontWeight.w800,
+                              color: AppColors.primary,
+                            ),
+                          ),
+                          const SizedBox(width: 10),
+                          Text(
+                            payload.averageLabel,
+                            style: const TextStyle(
+                              fontWeight: FontWeight.w600,
+                              color: AppColors.textSecondary,
+                            ),
+                          ),
+                        ],
+                      ),
+                      Text(
+                        'من ${payload.ratedCustomerCount} زبون عليهم باقي',
+                        style: const TextStyle(color: AppColors.textSecondary, fontSize: 12),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
             SizedBox(
               height: 56,
               child: ListView.separated(

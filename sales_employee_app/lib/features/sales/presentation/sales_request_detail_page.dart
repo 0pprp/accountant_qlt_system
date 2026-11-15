@@ -339,23 +339,7 @@ class _SalesRequestDetailPageState extends State<SalesRequestDetailPage> {
   Future<void> _startOrContinueSale(SalesRequestItem item) async {
     setState(() => _busy = true);
     try {
-      var linked = item.linkedOrderId;
-      if (linked == null || linked == 0) {
-        final ensured = await Injection.salesRemote.ensureDraft(item.requestId);
-        linked = ensured?.linkedOrderId;
-        if (linked == null || linked == 0) {
-          if (!mounted) return;
-          await showAppMessage(
-            context,
-            title: 'مسودة البيع',
-            message: 'تعذر إنشاء مسودة البيع. أعد المحاولة أو تحقق من اتصال الشبكة.',
-          );
-          if (mounted) await _bootstrap();
-          return;
-        }
-      }
-      if (!mounted) return;
-      await Navigator.of(context).push(SalesNav.toCompleteSale(linked));
+      await Navigator.of(context).push(SalesNav.checkoutRequest(item));
       if (mounted) await _bootstrap();
     } catch (e) {
       if (!mounted) return;

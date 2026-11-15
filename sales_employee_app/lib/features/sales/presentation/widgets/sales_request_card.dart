@@ -8,9 +8,10 @@ import '../../domain/entities/sales_request_item.dart';
 
 /// Full request summary. Opening it preserves the existing workflow/detail route.
 class SalesRequestCard extends StatelessWidget {
-  const SalesRequestCard({super.key, required this.item, required this.onOpen});
+  const SalesRequestCard({super.key, required this.item, required this.onOpen, this.onCheckout});
   final SalesRequestItem item;
   final VoidCallback onOpen;
+  final VoidCallback? onCheckout;
 
   String date(DateTime value) {
     final d = value.toUtc().add(const Duration(hours: 3));
@@ -81,8 +82,9 @@ class SalesRequestCard extends StatelessWidget {
               ],
             ),
             actions: ActionRow(
-              primaryLabel: 'فتح الطلب والإجراءات',
-              onPrimary: onOpen,
+              primaryLabel: onCheckout == null ? 'فتح الطلب والإجراءات' : 'استكمال البيع',
+              onPrimary: onCheckout ?? onOpen,
+              secondary: [if (onCheckout != null) ('تفاصيل الطلب والإجراءات', onOpen)],
             ),
           ),
         ),

@@ -365,6 +365,16 @@ class SalesRemoteDataSource {
     return rows;
   }
 
+  Future<List<OrderListLite>> checkoutLists(int orderId, {int? requestId}) async {
+    final res = await _dio.dio.get(requestId != null ? 'api/v1/app/SalesRequests/$requestId/checkout-lists' : 'api/v1/app/SalesRequests/orders/$orderId/checkout-lists');
+    return _extractList(res.data).map(OrderListLite.fromJson).toList();
+  }
+
+  Future<void> checkout(int orderId, Map<String, dynamic> body) async {
+    await _dio.dio.post('api/v1/app/SalesRequests/orders/$orderId/checkout', data: body);
+    await _cache?.invalidatePrefix('orders:');
+  }
+
   Future<void> setSellerInfo({
     required int orderId,
     required String creationAddress,

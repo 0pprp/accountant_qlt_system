@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../domain/entities/sales_request_item.dart';
 import 'package:sales_employee_app/features/sales/presentation/complete_sale_wizard_page.dart';
 import 'package:sales_employee_app/features/sales/presentation/sale_details_page.dart';
 import 'package:sales_employee_app/features/sales/presentation/sales_request_detail_page.dart';
@@ -30,11 +31,17 @@ abstract final class SalesNav {
     );
   }
 
+  static MaterialPageRoute<void> checkoutRequest(SalesRequestItem request) =>
+      MaterialPageRoute<void>(
+        settings: RouteSettings(name: '/sales-requests/${request.requestId}/checkout'),
+        builder: (_) => CompleteSaleWizardPage(orderId: request.linkedOrderId ?? 0, fromRequest: true, request: request),
+      );
+
   static MaterialPageRoute<void> toCompleteSale(int orderId) {
     assert(orderId > 0, 'complete-sale uses linked Order id');
     return MaterialPageRoute<void>(
       settings: RouteSettings(name: '/orders/$orderId/complete'),
-      builder: (_) => CompleteSaleWizardPage(orderId: orderId),
+      builder: (_) => CompleteSaleWizardPage(orderId: orderId, fromRequest: true),
     );
   }
 

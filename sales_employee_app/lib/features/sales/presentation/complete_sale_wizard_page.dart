@@ -1,3 +1,4 @@
+import '../domain/entities/sales_request_item.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:sales_employee_app/core/network/dio_client.dart';
@@ -14,15 +15,18 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 /// C1 محل → C2 زبون → C3 منتجات → C4 أسعار → C5 مراجعة → تم البيع | تم الكشف
 class CompleteSaleWizardPage extends StatefulWidget {
-  const CompleteSaleWizardPage({super.key, required this.orderId});
+  const CompleteSaleWizardPage({super.key, required this.orderId, this.fromRequest = false, this.request});
 
   final int orderId;
+  final bool fromRequest;
+  final SalesRequestItem? request;
 
   @override
   State<CompleteSaleWizardPage> createState() => _CompleteSaleWizardPageState();
 }
 
 class _CompleteSaleWizardPageState extends State<CompleteSaleWizardPage> {
+  late int _orderId = widget.orderId;
   int _step = 0;
   bool _busy = false;
   bool _nameLocked = true;
@@ -51,6 +55,8 @@ class _CompleteSaleWizardPageState extends State<CompleteSaleWizardPage> {
   final _nearest = TextEditingController();
   final _mukhtar = TextEditingController();
   final _rationCenter = TextEditingController();
+  final Map<int, XFile> _uploadedSaleDocuments = {};
+  final Map<int, XFile> _saleDocuments = {};
   final List<XFile> _customerDocs = [];
 
   String get _selectedListLabel {
@@ -79,7 +85,7 @@ class _CompleteSaleWizardPageState extends State<CompleteSaleWizardPage> {
     '5) المراجعة',
   ];
 
-  bool get _isDemo => widget.orderId < 0;
+  bool get _isDemo => _orderId < 0;
 
   List<ProductItem> get _filtered {
     final q = _productQuery.trim();
@@ -96,7 +102,7 @@ class _CompleteSaleWizardPageState extends State<CompleteSaleWizardPage> {
   }
 
   Future<void> _bootstrap() async {
-    if (!SalesWorkflowRules.hasLinkedOrder(widget.orderId)) {
+    if (widget.request == null && !SalesWorkflowRules.hasLinkedOrder(_orderId)) {
       if (mounted) {
         await showAppMessage(context, title: 'مرفوض', message: 'لا بيع بدون طلب مبيع مرتبط');
         if (mounted) Navigator.of(context).pop(false);
@@ -105,8 +111,20 @@ class _CompleteSaleWizardPageState extends State<CompleteSaleWizardPage> {
     }
 
     String? status;
-    if (_isDemo) {
-      final o = await Injection.demoOrders.byId(widget.orderId);
+    final source = widget.request;
+    if (source != null) {
+      status = SalesWorkflowRules.pending;
+      _fullName.text = source.customerName;
+      _phone.text = source.customerPhone ?? '';
+      _address.text = source.address ?? '';
+      _province.text = source.branchName ?? '';
+      try {
+        await _loadOrderLists();
+      } catch (e) {
+        if (mounted) await showAppMessage(context, title: 'قوائم المحافظة', message: DioClient.mapError(e));
+      }
+    } else if (_isDemo) {
+      final o = await Injection.demoOrders.byId(_orderId);
       if (o == null) {
         if (mounted) {
           await showAppMessage(context, title: 'غير موجود', message: 'الطلب غير مرتبط أو نُقل لزميل');
@@ -119,13 +137,13 @@ class _CompleteSaleWizardPageState extends State<CompleteSaleWizardPage> {
       _nameLocked = true;
       if (o.customerPhone != null) _phone.text = o.customerPhone!;
       if (o.branchName != null) _province.text = o.branchName!;
-      final draft = await Injection.demoOrders.draftOf(widget.orderId);
+      final draft = await Injection.demoOrders.draftOf(_orderId);
       if (draft != null) _hydrateDraft(draft);
-      _maxSell = await Injection.demoOrders.maxSellOf(widget.orderId) ?? 2000000;
+      _maxSell = await Injection.demoOrders.maxSellOf(_orderId) ?? 2000000;
       await _loadOrderLists(preferName: draft?['orderListName']?.toString());
     } else {
       try {
-        final o = await Injection.salesRemote.getOrder(widget.orderId);
+        final o = await Injection.salesRemote.getOrder(_orderId);
         if (o == null) {
           if (mounted) {
             await showAppMessage(context, title: 'غير موجود', message: 'لا يوجد طلب مرتبط');
@@ -165,7 +183,7 @@ class _CompleteSaleWizardPageState extends State<CompleteSaleWizardPage> {
     }
 
     try {
-      final list = await Injection.catalogRemote.getInventory();
+      final list = await Injection.catalogRemote.getInventory(requestId: source?.requestId, orderId: source == null && widget.fromRequest ? _orderId : null);
       if (list.isEmpty) {
         if (!mounted) return;
         await showAppMessage(
@@ -186,7 +204,7 @@ class _CompleteSaleWizardPageState extends State<CompleteSaleWizardPage> {
       );
       _catalog = const [];
     }
-    if (_selected.isEmpty && _catalog.isNotEmpty) {
+    if (!widget.fromRequest && _selected.isEmpty && _catalog.isNotEmpty) {
       _qty[_catalog.first.id] = 1;
       _applyDefaultPrices();
     }
@@ -220,8 +238,9 @@ class _CompleteSaleWizardPageState extends State<CompleteSaleWizardPage> {
     setState(() => _listsLoading = true);
     List<OrderListLite> rows = const [];
     try {
-      rows = await Injection.salesRemote.getOrderLists(forceRefresh: true);
+      rows = widget.fromRequest ? await Injection.salesRemote.checkoutLists(_orderId, requestId: widget.request?.requestId) : await Injection.salesRemote.getOrderLists(forceRefresh: true);
     } catch (_) {
+      if (widget.fromRequest) rethrow;
       rows = const [];
     }
     // قوائم سالبة للتجريبي فقط — الطلب الحي يعتمد قائمة المندوب من السيرفر (Mandob).
@@ -345,7 +364,7 @@ class _CompleteSaleWizardPageState extends State<CompleteSaleWizardPage> {
           await showAppMessage(context, title: 'القائمة/المندوب', message: 'اختر القائمة/المندوب من قوائم المحافظة');
           return false;
         }
-        if (!_isDemo && _orderLists.isNotEmpty && (_orderListId == null || _orderListId! <= 0)) {
+        if (!_isDemo && (widget.fromRequest || _orderLists.isNotEmpty) && (_orderListId == null || _orderListId! <= 0)) {
           await showAppMessage(context, title: 'القائمة/المندوب', message: 'اختر القائمة/المندوب من قوائم المحافظة');
           return false;
         }
@@ -411,7 +430,7 @@ class _CompleteSaleWizardPageState extends State<CompleteSaleWizardPage> {
     try {
       final payload = _payload();
       if (_isDemo) {
-        await Injection.demoOrders.completeSale(negativeId: widget.orderId, payload: payload);
+        await Injection.demoOrders.completeSale(negativeId: _orderId, payload: payload);
       } else {
         // ترتيب عقود السيرفر: Attachments(0) → complete-attachments → SellerInfo(1) → setSellerInfo(=Sold)
         // ثم SalesWorkflow/complete لمزامنة SalesRequest المرتبط.
@@ -422,22 +441,31 @@ class _CompleteSaleWizardPageState extends State<CompleteSaleWizardPage> {
         }
         // PurchaseReceipt=4, TrustReceipt=5, SaleContract=6
         const requiredTypes = ['4', '5', '6'];
+        if (widget.fromRequest && _saleDocuments.length != 3) {
+          await showAppMessage(context, title: 'مستندات البيع', message: 'أرفق وصل الشراء ووصل الأمانة وعقد البيع');
+          return;
+        }
         final extras = _customerDocs;
         for (var i = 0; i < requiredTypes.length; i++) {
-          final src = i < extras.length ? extras[i] : evidence;
+          final src = widget.fromRequest ? _saleDocuments[i]! : (i < extras.length ? extras[i] : evidence);
+          if (widget.fromRequest && identical(_uploadedSaleDocuments[i], src)) continue;
           final bytes = await src.readAsBytes();
           await Injection.salesRemote.uploadAttachment(
-            orderId: widget.orderId,
+            orderId: _orderId,
             fileName: src.name.isEmpty ? 'attach_$i.jpg' : src.name,
             bytes: bytes,
             attachmentType: requiredTypes[i],
           );
+          if (widget.fromRequest) _uploadedSaleDocuments[i] = src;
         }
-        await Injection.salesRemote.completeAttachments(widget.orderId);
+        if (widget.fromRequest) {
+          await Injection.salesRemote.checkout(_orderId, payload);
+        } else {
+        await Injection.salesRemote.completeAttachments(_orderId);
         // موظفو التطبيق هنا Mandob: إرسال orderListId يُرفض بـ MandobCanNotSetOrderListId.
         // السيرفر يحل قائمة المندوب تلقائياً — لا تمرّر حتى لو اختار المستخدم قائمة في الواجهة.
         await Injection.salesRemote.setSellerInfo(
-          orderId: widget.orderId,
+          orderId: _orderId,
           creationAddress: _address.text.trim().isEmpty ? '—' : _address.text.trim(),
           lat: _lat,
           lng: _lng,
@@ -446,12 +474,13 @@ class _CompleteSaleWizardPageState extends State<CompleteSaleWizardPage> {
               '${baghdadNow().hour.toString().padLeft(2, '0')}:${baghdadNow().minute.toString().padLeft(2, '0')}:00',
           orderListId: null,
         );
-        await Injection.salesRemote.complete(widget.orderId);
+        await Injection.salesRemote.complete(_orderId);
+        }
       }
       if (!mounted) return;
-      await showSaleSuccessDialog(context, orderId: widget.orderId.abs());
+      await showSaleSuccessDialog(context, orderId: _orderId.abs());
       if (!mounted) return;
-      await _mandateListRatingGate();
+      if (!widget.fromRequest) await _mandateListRatingGate();
       if (!mounted) return;
       Navigator.of(context).pop(true);
     } catch (e) {
@@ -473,13 +502,13 @@ class _CompleteSaleWizardPageState extends State<CompleteSaleWizardPage> {
       final payload = _payload();
       if (_isDemo) {
         await Injection.demoOrders.saveDraft(
-          negativeId: widget.orderId,
+          negativeId: _orderId,
           draft: payload,
           status: SalesWorkflowRules.disclosure,
         );
       } else {
         await Injection.salesRemote.transfer(
-          id: widget.orderId,
+          id: _orderId,
           targetStatus: SalesWorkflowRules.disclosure,
           reason: 'تم الكشف — حفظ تقدّم الزيارة',
         );
@@ -557,7 +586,7 @@ class _CompleteSaleWizardPageState extends State<CompleteSaleWizardPage> {
             padding: EdgeInsets.fromLTRB(12, 8, 12, 10 + bottom),
             child: Column(
               children: [
-                if (_shopName.text.trim().isNotEmpty && _lat != null)
+                if (!widget.fromRequest && _shopName.text.trim().isNotEmpty && _lat != null)
                   SizedBox(
                     width: double.infinity,
                     child: OutlinedButton.icon(
@@ -566,7 +595,7 @@ class _CompleteSaleWizardPageState extends State<CompleteSaleWizardPage> {
                       label: const Text('تم الكشف (حفظ بلا إغلاق)'),
                     ),
                   ),
-                if (_shopName.text.trim().isNotEmpty && _lat != null) const SizedBox(height: 8),
+                if (!widget.fromRequest && _shopName.text.trim().isNotEmpty && _lat != null) const SizedBox(height: 8),
                 Row(
                   children: [
                     if (_step > 0)
@@ -585,7 +614,20 @@ class _CompleteSaleWizardPageState extends State<CompleteSaleWizardPage> {
                                 if (_step < 4) {
                                   if (!await _validateStep()) return;
                                   if (_step == 2) _applyDefaultPrices();
-                                  setState(() => _step++);
+                                  if (_step == 3 && widget.request != null && _orderId <= 0) {
+                                    setState(() => _busy = true);
+                                    try {
+                                      final draft = await Injection.salesRemote.ensureDraft(widget.request!.requestId);
+                                      _orderId = draft?.linkedOrderId ?? 0;
+                                      if (_orderId <= 0) throw StateError('تعذر حفظ المسودة');
+                                    } catch (e) {
+                                      if (mounted) await showAppMessage(context, title: 'مسودة البيع', message: DioClient.mapError(e));
+                                      return;
+                                    } finally {
+                                      if (mounted) setState(() => _busy = false);
+                                    }
+                                  }
+                                  if (mounted) setState(() => _step++);
                                 } else {
                                   await _finishSold();
                                 }
@@ -659,7 +701,7 @@ class _CompleteSaleWizardPageState extends State<CompleteSaleWizardPage> {
                         hint: const Text('اختر القائمة/المندوب من قوائم المحافظة'),
                         items: [
                           for (final list in _orderLists)
-                            DropdownMenuItem(value: list.id, child: Text(list.label)),
+                            DropdownMenuItem(value: list.id, child: Text(list.mandobFullName?.isNotEmpty == true ? '${list.label} · ${list.mandobFullName}' : list.label)),
                         ],
                         onChanged: (value) => setState(() => _orderListId = value),
                       ),
@@ -692,6 +734,15 @@ class _CompleteSaleWizardPageState extends State<CompleteSaleWizardPage> {
             _field(_nearest, 'أقرب نقطة دالة *'),
             _field(_mukhtar, 'اسم المختار *'),
             _field(_rationCenter, 'رقم مركز التموين (اختياري)'),
+            if (widget.fromRequest)
+              for (final entry in ['وصل الشراء', 'وصل الأمانة', 'عقد البيع'].asMap().entries)
+                ListTile(leading: const Icon(Icons.attach_file), title: Text(entry.value),
+                  subtitle: Text(_saleDocuments[entry.key]?.name ?? 'اختر صورة المستند'),
+                  onTap: () async {
+                    final file = await ImagePicker().pickImage(source: ImageSource.gallery, imageQuality: 85);
+                    if (mounted && file != null) setState(() => _saleDocuments[entry.key] = file);
+                  }),
+            if (!widget.fromRequest)
             OutlinedButton.icon(
               onPressed: _pickDoc,
               icon: const Icon(Icons.attach_file),

@@ -16,11 +16,12 @@ class CatalogRemoteDataSource {
     return _mapList(res.data);
   }
 
-  Future<List<ProductItem>> getInventory() async {
+  Future<List<ProductItem>> getInventory({int? orderId, int? requestId}) async {
     try {
-      final res = await _dio.dio.get('api/v1/app/SalesInventory/inventory');
+      final res = await _dio.dio.get('api/v1/app/SalesInventory/inventory', queryParameters: {if (orderId != null) 'orderId': orderId, if (requestId != null) 'requestId': requestId});
       return _mapList(res.data);
     } catch (_) {
+      if (orderId != null || requestId != null) rethrow;
       return getProducts();
     }
   }
