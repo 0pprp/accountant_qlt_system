@@ -76,8 +76,8 @@
     </template>
 
     <template #actions>
-      <slot name="matching" />
       <slot name="actions" />
+      <slot name="matching" />
       <slot v-if="expanded" />
     </template>
   </EntityCard>
@@ -147,6 +147,9 @@ function exceptionStateLabel(state: string) {
 }
 .sr-card-host :deep(.q-entity-card__actions) {
   margin-top: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
 }
 .sr-note {
   border-inline-start: 3px solid #b5cec8;

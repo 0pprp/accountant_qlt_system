@@ -90,7 +90,7 @@ function stateLabel(state: MatchCardState) {
 .sr-match-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 0.85rem;
+  gap: 0.5rem;
 }
 
 @media (min-width: 768px) {
@@ -102,11 +102,11 @@ function stateLabel(state: MatchCardState) {
 .sr-match-card {
   display: flex;
   flex-direction: column;
-  gap: 0.35rem;
+  gap: 0.2rem;
   align-items: stretch;
   text-align: start;
-  min-height: 130px;
-  padding: 0.95rem 0.85rem;
+  min-height: 0;
+  padding: 0.65rem 0.7rem;
   border: 0;
   border-radius: 16px;
   background: var(--neo-bg);
@@ -134,14 +134,14 @@ function stateLabel(state: MatchCardState) {
 }
 
 .sr-match-label {
-  font-size: 0.92rem;
-  line-height: 1.55;
+  font-size: 0.8rem;
+  line-height: 1.35;
   font-weight: 700;
-  min-height: 2.6em;
+  min-height: 0;
 }
 
 .sr-match-count {
-  font-size: 1.75rem;
+  font-size: 1.35rem;
   font-weight: 800;
   color: var(--neo-brand);
   line-height: 1;

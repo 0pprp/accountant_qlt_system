@@ -576,9 +576,12 @@
     color: var(--q-primary);
   }
   /* Close control: global .p-button rules wash out the icon — force a red X */
+  .p-dialog .p-dialog-header button,
   .p-dialog .p-dialog-header-actions .p-button,
   .p-dialog .p-dialog-close-button,
-  .p-dialog .p-dialog-header-close {
+  .p-dialog .p-dialog-header-close,
+  .p-dialog [data-pc-name='pcclosebutton'],
+  .p-dialog [data-pc-section='closebutton'] {
     min-width: 2.35rem !important;
     min-height: 2.35rem !important;
     width: 2.35rem !important;
@@ -593,16 +596,21 @@
     align-items: center !important;
     justify-content: center !important;
   }
+  .p-dialog .p-dialog-header button svg,
   .p-dialog .p-dialog-header-actions .p-button svg,
   .p-dialog .p-dialog-close-button svg,
   .p-dialog .p-dialog-header-close svg,
+  .p-dialog .p-dialog-header button .p-icon,
   .p-dialog .p-dialog-header-actions .p-button .p-icon,
-  .p-dialog .p-dialog-close-button .p-icon {
+  .p-dialog .p-dialog-close-button .p-icon,
+  .p-dialog [data-pc-section='closebutton'] svg {
     display: none !important;
   }
+  .p-dialog .p-dialog-header button::before,
   .p-dialog .p-dialog-header-actions .p-button::before,
   .p-dialog .p-dialog-close-button::before,
-  .p-dialog .p-dialog-header-close::before {
+  .p-dialog .p-dialog-header-close::before,
+  .p-dialog [data-pc-section='closebutton']::before {
     content: '×';
     font-size: 1.55rem;
     line-height: 1;

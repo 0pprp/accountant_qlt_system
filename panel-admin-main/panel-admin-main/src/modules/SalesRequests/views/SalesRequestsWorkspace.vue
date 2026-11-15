@@ -620,10 +620,21 @@ function formatSync(ts: number) {
 
 .sr-card-toolbar {
   display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 0.45rem;
+  flex-wrap: nowrap;
+  align-items: stretch;
+  gap: 0.35rem;
   width: 100%;
+}
+.sr-card-toolbar > button,
+.sr-card-toolbar :deep(button.sr-neu-btn) {
+  flex: 1 1 0;
+  min-width: 0;
+  padding: 0.3rem 0.4rem;
+  font-size: 0.78rem;
+  line-height: 1.25;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 .sr-match-block {
   display: grid;

@@ -20,7 +20,7 @@
       :disabled="busy"
       @click="reasonMode = 'reject'"
     >
-      رفض
+      {{ $t('salesRequests.actions.reject') }}
     </button>
     <button
       v-if="canException"
@@ -29,7 +29,7 @@
       :disabled="busy"
       @click="reasonMode = 'exception'"
     >
-      طلب استثناء
+      {{ $t('salesRequests.actions.exception') }}
     </button>
 
     <Dialog
@@ -240,17 +240,20 @@ async function onException() {
   margin-top: 1.1rem;
 }
 .sr-neu-btn {
-  min-height: 40px;
+  min-height: 36px;
   border: none;
-  border-radius: 14px;
-  padding: 0.35rem 0.85rem;
+  border-radius: 12px;
+  padding: 0.3rem 0.4rem;
   font: inherit;
+  font-size: 0.78rem;
   font-weight: 700;
+  line-height: 1.25;
+  white-space: nowrap;
   cursor: pointer;
   background: #e8f0ef;
   box-shadow:
-    5px 5px 12px rgba(0, 32, 30, 0.12),
-    -5px -5px 12px rgba(255, 255, 255, 0.92);
+    4px 4px 10px rgba(0, 32, 30, 0.12),
+    -4px -4px 10px rgba(255, 255, 255, 0.92);
   transition:
     box-shadow 0.15s ease,
     transform 0.15s ease;
