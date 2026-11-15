@@ -174,7 +174,7 @@ defineEmits<{
 
 function formatDate(value?: string | null) {
   if (!value) return '—'
-  return new Intl.DateTimeFormat('ar-IQ', {
+  return new Intl.DateTimeFormat('en-US', {
     dateStyle: 'medium',
     timeStyle: 'short',
   }).format(new Date(value))
@@ -198,13 +198,16 @@ function exceptionStateLabel(state: string) {
 
 <style scoped>
 .sr-details {
-  border-radius: 1rem;
-  border: 1px solid #d7e2e0;
-  background: #fff;
+  border-radius: 18px;
+  border: 0;
+  background: #e8f0ef;
   padding: 1rem;
   color: #00201e;
-  font-family: 'ElMessiri', 'El Messiri', sans-serif;
+  font-family: inherit;
   min-height: 12rem;
+  box-shadow:
+    8px 8px 18px rgba(0, 32, 30, 0.12),
+    -8px -8px 18px rgba(255, 255, 255, 0.9);
 }
 .sr-details-head {
   display: flex;

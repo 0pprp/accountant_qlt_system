@@ -27,6 +27,11 @@
         "
       />
       <DataField label="أُرسل بواسطة" :value="request.createdByName" />
+      <DataField
+        v-if="request.exceptionState"
+        label="حالة الاستثناء"
+        :value="exceptionStateLabel(request.exceptionState)"
+      />
       <DataField label="مصدر الطلب" :value="request.sourceTypeLabel" />
       <DataField
         label="الفرع والمحافظة"
@@ -112,20 +117,54 @@ const statusTone = computed(() => {
 
 function formatDate(value?: string | null) {
   if (!value || Number.isNaN(new Date(value).getTime())) return 'غير مسجل'
-  return new Intl.DateTimeFormat('ar-IQ', {
+  return new Intl.DateTimeFormat('en-US', {
     dateStyle: 'medium',
     timeStyle: 'short',
     timeZone: 'Asia/Baghdad',
   }).format(new Date(value))
 }
+
+function exceptionStateLabel(state: string) {
+  switch (state) {
+    case 'pending':
+      return 'بانتظار قرار المفوض'
+    case 'approved':
+      return 'مقبول — بانتظار الاستهلاك'
+    case 'approved_consumed':
+      return 'مقبول ومُستهلك'
+    case 'rejected':
+      return 'مرفوض'
+    default:
+      return state
+  }
+}
 </script>
 
 <style scoped>
+.sr-card-host :deep(.q-entity-card) {
+  border: 0;
+  border-inline-start: 0;
+  background: #e8f0ef;
+  border-radius: 18px;
+  box-shadow:
+    8px 8px 18px rgba(0, 32, 30, 0.12),
+    -8px -8px 18px rgba(255, 255, 255, 0.9);
+}
+.sr-card-host :deep(.q-entity-card.selected) {
+  background: linear-gradient(145deg, #dfecea, #edf5f3);
+  box-shadow:
+    inset 5px 5px 12px rgba(0, 32, 30, 0.12),
+    inset -5px -5px 12px rgba(255, 255, 255, 0.85);
+}
 .sr-note {
   border-inline-start: 3px solid #b5cec8;
   padding: 10px 14px;
   margin-top: 12px;
-  background: #fafcfb;
+  background: #f4f8f7;
+  border-radius: 12px;
+  box-shadow:
+    inset 2px 2px 5px rgba(0, 32, 30, 0.06),
+    inset -2px -2px 5px rgba(255, 255, 255, 0.85);
   font-size: 15px;
   line-height: 1.8;
 }

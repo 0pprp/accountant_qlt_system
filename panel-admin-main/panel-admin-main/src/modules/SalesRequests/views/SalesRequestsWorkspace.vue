@@ -64,7 +64,14 @@
           @select="onSelect"
         >
           <template #matching="{ item }">
-            <MatchingSummary v-if="tab === 'unassigned' && canMatchRead" :cards="cardsFor(item.id)" :selected-key="selectedId === item.id ? selectedCriterion : null" @select="selectedCriterion = $event as MatchCriterion; searchSource = 'priorAccounts'; onSelect(item)" />
+            <MatchingSummary
+              v-if="tab === 'unassigned' && canMatchRead"
+              :cards="cardsFor(item.id)"
+              :selected-key="selectedId === item.id ? selectedCriterion : null"
+              :customer-name="item.customerName"
+              :customer-phone="item.customerPhone"
+              @select="selectedCriterion = $event as MatchCriterion; searchSource = 'priorAccounts'; onSelect(item)"
+            />
           </template>
           <template #actions="{ item }">
             <RequestActions v-if="!item.isDeleted && tab !== 'deleted'" :request="item" :draft="getDraft(item.id)" @done="onActionDone" @draft-change="Object.assign(getDraft(item.id), $event)" />
@@ -139,6 +146,8 @@
                 v-if="searchSource === 'priorAccounts'"
                 :cards="cardsFor(detailRequest.id)"
                 :selected-key="selectedCriterion"
+                :customer-name="detailRequest.customerName"
+                :customer-phone="detailRequest.customerPhone"
                 @select="selectedCriterion = $event as MatchCriterion"
               />
               <MatchingResults
@@ -253,9 +262,16 @@ const filtersForUi = computed({
     toDate: filters.value.toDate,
     search: filters.value.search,
     employeeId: filters.value.employeeId,
+    exceptionStatus: filters.value.exceptionStatus,
   }),
   set: (v) => {
-    if (filters.value.branchId !== v.branchId || filters.value.search !== v.search) pageIndex.value = 1
+    if (
+      filters.value.branchId !== v.branchId ||
+      filters.value.search !== v.search ||
+      filters.value.exceptionStatus !== v.exceptionStatus
+    ) {
+      pageIndex.value = 1
+    }
     filters.value = {
       ...filters.value,
       branchId: v.branchId,
@@ -265,6 +281,7 @@ const filtersForUi = computed({
       toDate: v.toDate,
       search: v.search,
       employeeId: (v as { employeeId?: number | null }).employeeId ?? null,
+      exceptionStatus: v.exceptionStatus ?? null,
     }
   },
 })
@@ -511,7 +528,7 @@ function openProfile(customerId: number) {
 }
 
 function formatSync(ts: number) {
-  return new Intl.DateTimeFormat('ar-IQ', {
+  return new Intl.DateTimeFormat('en-US', {
     timeStyle: 'short',
   }).format(new Date(ts))
 }
@@ -523,7 +540,7 @@ watch(tab, () => {
 
 <style scoped>
 .sr-workspace {
-  font-family: 'ElMessiri', 'El Messiri', sans-serif;
+  font-family: inherit;
   color: #00201e;
   background: linear-gradient(180deg, #f3f7f6 0%, #f8f8f8 40%);
   min-height: 100%;
