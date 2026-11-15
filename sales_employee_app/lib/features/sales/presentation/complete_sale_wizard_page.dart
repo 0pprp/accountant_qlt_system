@@ -58,9 +58,10 @@ class _CompleteSaleWizardPageState extends State<CompleteSaleWizardPage> {
   final _nearest = TextEditingController();
   final _mukhtar = TextEditingController();
   final _rationCenter = TextEditingController();
-  final Map<int, XFile> _uploadedSaleDocuments = {};
-  final Map<int, XFile> _saleDocuments = {};
-  /// مستمسكات اختيارية — نفس خانات التطبيق القديم (كاميرا + معرض).
+  final Map<String, XFile> _uploadedSaleDocuments = {};
+  /// وصل الأمانة (5) وعقد البيع (6) اختياريان — بلا وصل شراء.
+  final Map<String, XFile> _saleDocuments = {};
+  /// مستمسكات اختيارية — نفس خانات التطبيق القديمة (كاميرا + معرض).
   final Map<String, XFile> _kycDocs = {};
   static const _kycDefs = <(String key, String label, String? attachmentType)>[
     ('nationalIdFront', 'البطاقة الوطنية - أمامية', '0'),
@@ -69,7 +70,10 @@ class _CompleteSaleWizardPageState extends State<CompleteSaleWizardPage> {
     ('residenceCardBack', 'بطاقة السكن - خلفية', null),
     ('residenceCertificate', 'تأييد السكن', '2'),
   ];
-  static const _saleDocLabels = ['وصل الشراء', 'وصل الأمانة', 'عقد البيع'];
+  static const _saleDocDefs = <(String type, String label)>[
+    ('5', 'وصل الأمانة'),
+    ('6', 'عقد البيع'),
+  ];
   bool _restoringDraft = false;
   bool _dirty = false;
 
@@ -279,9 +283,9 @@ class _CompleteSaleWizardPageState extends State<CompleteSaleWizardPage> {
         final map = Map<String, dynamic>.from(photos);
         final shop = map['shopPhoto']?.toString();
         if (shop != null && shop.isNotEmpty) _shopPhoto = XFile(shop);
-        for (var i = 0; i < _saleDocLabels.length; i++) {
-          final path = map['saleDoc_$i']?.toString();
-          if (path != null && path.isNotEmpty) _saleDocuments[i] = XFile(path);
+        for (final def in _saleDocDefs) {
+          final path = map['saleDoc_${def.$1}']?.toString();
+          if (path != null && path.isNotEmpty) _saleDocuments[def.$1] = XFile(path);
         }
         for (final def in _kycDefs) {
           final path = map[def.$1]?.toString();
@@ -296,8 +300,7 @@ class _CompleteSaleWizardPageState extends State<CompleteSaleWizardPage> {
 
   Map<String, String?> _photoPathsForDraft() => {
         'shopPhoto': _shopPhoto?.path,
-        for (var i = 0; i < _saleDocLabels.length; i++)
-          'saleDoc_$i': _saleDocuments[i]?.path,
+        for (final def in _saleDocDefs) 'saleDoc_${def.$1}': _saleDocuments[def.$1]?.path,
         for (final def in _kycDefs) def.$1: _kycDocs[def.$1]?.path,
       };
 
@@ -523,23 +526,19 @@ class _CompleteSaleWizardPageState extends State<CompleteSaleWizardPage> {
           await showAppMessage(context, title: 'مرفقات', message: 'صورة المحل إلزامية كمرفق بيع');
           return;
         }
-        // PurchaseReceipt=4, TrustReceipt=5, SaleContract=6
-        const requiredTypes = ['4', '5', '6'];
-        if (_saleDocuments.length != 3) {
-          await showAppMessage(context, title: 'مستندات البيع', message: 'أرفق وصل الشراء ووصل الأمانة وعقد البيع');
-          return;
-        }
-        for (var i = 0; i < requiredTypes.length; i++) {
-          final src = _saleDocuments[i]!;
-          if (identical(_uploadedSaleDocuments[i], src)) continue;
+        // TrustReceipt=5, SaleContract=6 — اختياريان؛ وصل الشراء محذوف.
+        for (final def in _saleDocDefs) {
+          final src = _saleDocuments[def.$1];
+          if (src == null) continue;
+          if (identical(_uploadedSaleDocuments[def.$1], src)) continue;
           final bytes = await src.readAsBytes();
           await Injection.salesRemote.uploadAttachment(
             orderId: _orderId,
-            fileName: src.name.isEmpty ? 'attach_$i.jpg' : src.name,
+            fileName: src.name.isEmpty ? 'attach_${def.$1}.jpg' : src.name,
             bytes: bytes,
-            attachmentType: requiredTypes[i],
+            attachmentType: def.$1,
           );
-          _uploadedSaleDocuments[i] = src;
+          _uploadedSaleDocuments[def.$1] = src;
         }
         if (widget.fromRequest) {
           await Injection.salesRemote.checkout(_orderId, payload);
@@ -871,20 +870,25 @@ class _CompleteSaleWizardPageState extends State<CompleteSaleWizardPage> {
             _field(_mukhtar, 'اسم المختار *'),
             _field(_rationCenter, 'رقم مركز التموين (اختياري)'),
             const SizedBox(height: 8),
-            const Text('مستندات البيع *', style: TextStyle(fontWeight: FontWeight.w700)),
+            const Text('مستندات البيع (اختياري)', style: TextStyle(fontWeight: FontWeight.w700)),
+            const SizedBox(height: 4),
+            const Text(
+              'وصل الأمانة وعقد البيع اختياريان — بلا وصل شراء',
+              style: TextStyle(color: AppColors.textSecondary, fontSize: 12.5),
+            ),
             const SizedBox(height: 8),
-            for (final entry in _saleDocLabels.asMap().entries)
+            for (final def in _saleDocDefs)
               SalePhotoSlot(
-                label: entry.value,
-                required: true,
+                label: def.$2,
+                required: false,
                 preferCamera: true,
-                file: _saleDocuments[entry.key],
+                file: _saleDocuments[def.$1],
                 onChanged: (f) {
                   setState(() {
                     if (f == null) {
-                      _saleDocuments.remove(entry.key);
+                      _saleDocuments.remove(def.$1);
                     } else {
-                      _saleDocuments[entry.key] = f;
+                      _saleDocuments[def.$1] = f;
                     }
                   });
                   _markDirty();
@@ -1004,7 +1008,7 @@ class _CompleteSaleWizardPageState extends State<CompleteSaleWizardPage> {
             Text('الإجمالي: ${p['total']} | القسط: ${p['dailyInstallment']} | المقدمة: ${p['prepayment']}'),
             Text(
               'صورة محل: ${_shopPhoto != null ? 'نعم' : 'لا'} | '
-              'مستندات بيع: ${_saleDocuments.length}/3 | '
+              'مستندات بيع: ${_saleDocuments.length} | '
               'مستمسكات: ${_kycDocs.length}',
             ),
             const SizedBox(height: 12),

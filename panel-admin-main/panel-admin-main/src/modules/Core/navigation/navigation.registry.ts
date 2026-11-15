@@ -559,14 +559,14 @@ export const NAVIGATION_REGISTRY: readonly NavigationSectionDefinition[] = [
         icon: 'user',
         group: 'management',
         routeName: 'ManagementCommitteeTasksRoute',
-        routePath: '/management/oversight/committee-tasks',
+        routePath: '/management/oversight/tasks',
         requirement: {
           type: 'single',
-          permission: { module: 'CommitteeTask', action: 'Read' },
+          permission: { module: 'Task', action: 'Read' },
         },
         displayOrder: 110,
         implementationStatus: 'ready',
-        notes: 'نشرة مهام اللجنة — CommitteeTask.Read؛ الكتابة Write',
+        notes: 'المهام الإدارية — Task.Read؛ إرسال لجمهور اللجنة وباقي الميدان',
       },
       {
         id: 'managementAppNotes',

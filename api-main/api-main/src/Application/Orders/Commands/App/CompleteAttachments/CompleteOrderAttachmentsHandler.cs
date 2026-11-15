@@ -1,7 +1,6 @@
 using Application.Common.Interfaces;
 using Application.Orders.Common;
 using Domain.Entities.ActivityLogAggregate.Enums;
-using Domain.Entities.AttachmentAggregate.Enums;
 using Domain.Entities.OrderAggregate.Enums;
 using Microsoft.EntityFrameworkCore;
 
@@ -9,13 +8,6 @@ namespace Application.Orders.Commands.App.CompleteAttachments;
 
 public class CompleteOrderAttachmentsHandler : IRequestHandler<CompleteOrderAttachmentsCommand, Result>
 {
-    private static readonly HashSet<AttachmentType> RequiredAttachmentTypes =
-    [
-        AttachmentType.PurchaseReceipt,
-        AttachmentType.TrustReceipt,
-        AttachmentType.SaleContract
-    ];
-
     private readonly IApplicationDbContext _dbContext;
     private readonly IActivityLogService _activityLogService;
 
@@ -39,12 +31,7 @@ public class CompleteOrderAttachmentsHandler : IRequestHandler<CompleteOrderAtta
         if (order.Step != OrderStep.Attachments)
             return OrderErrors.AttachmentsStepAlreadyCompleted;
 
-        if (order.Attachments.Count != RequiredAttachmentTypes.Count)
-            return OrderErrors.RequiredOrderAttachmentsAreMissing;
-
-        if (order.Attachments.Select(x => x.Type).ToHashSet().SetEquals(RequiredAttachmentTypes) == false)
-            return OrderErrors.RequiredOrderAttachmentsAreMissing;
-
+        // مرفقات البيع (وصل أمانة / عقد بيع) اختيارية — لا يُرفض إكمال الخطوة بدونها.
         order.CompleteAttachmentsStep();
 
         await _activityLogService.AddAsync(

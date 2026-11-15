@@ -106,8 +106,8 @@ onBeforeUnmount(() => {
 .msm-canvas {
   width: 100%;
   height: 100%;
-  min-height: 360px;
-  border-radius: 16px;
+  min-height: 480px;
+  border-radius: 10px;
   overflow: hidden;
   background: #e8f0ef;
 }

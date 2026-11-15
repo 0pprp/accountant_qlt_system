@@ -104,8 +104,8 @@ function goTab(tab: ManagementTabDefinition) {
 </script>
 
 <style scoped>
-.mgmt-workspace { --mgmt-brand:#006a64; --mgmt-ink:#00201e; --mgmt-line:#dce7e4; color:var(--mgmt-ink); min-width:0; display:flex; flex-direction:column; gap:24px; }
-.mgmt-header { display:flex; align-items:center; gap:14px; padding-block:8px; }
+.mgmt-workspace { --mgmt-brand:#006a64; --mgmt-ink:#00201e; --mgmt-line:#dce7e4; color:var(--mgmt-ink); min-width:0; display:flex; flex-direction:column; gap:14px; }
+.mgmt-header { display:flex; align-items:center; gap:12px; padding-block:4px; }
 .mgmt-heading-icon { display:grid; place-items:center; width:48px; height:48px; flex:none; background:#e6f1ef; color:var(--mgmt-brand); border-radius:14px; font-size:23px; }
 .mgmt-title { margin:0; font-size:26px; font-weight:700; line-height:1.5; }
 .mgmt-sub { margin:2px 0 0; font-size:15px; line-height:1.8; color:#526b67; }

@@ -401,7 +401,7 @@ class SalesRemoteDataSource {
   }
 
   /// مرفقات الطلب — حقل النموذج `Type` (AttachmentType) وليس attachmentType.
-  /// الأنواع الإلزامية لإكمال خطوة Attachments: 4 PurchaseReceipt، 5 TrustReceipt، 6 SaleContract.
+  /// أنواع البيع الاختيارية: 5 TrustReceipt، 6 SaleContract (وصل الشراء لم يعد مستخدماً).
   /// على Web استخدم [bytes] (XFile.readAsBytes) — MultipartFile.fromFile يفشل على مسارات blob.
   Future<void> uploadAttachment({
     required int orderId,

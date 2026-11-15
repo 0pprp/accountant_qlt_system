@@ -1,4 +1,4 @@
-﻿namespace Application.Orders.Common;
+namespace Application.Orders.Common;
 
 public static class OrderErrors
 {
@@ -14,7 +14,7 @@ public static class OrderErrors
     public static Error OrderInfoHasBeenCompletedBefore = new("تم تنفيذ معلومات الطلب مسبقًا", "Order_Info_Has_Been_Completed_Before");
     public static Error CustomerDoesNotBelongToYourBranch = new("العميل لا ينتمي إلى فرعكم", "Customer_Does_Not_Belong_To_Your_Branch");
     public static Error AttachmentsStepAlreadyCompleted = new("تم إكمال مرحلة مرفقات الطلب مسبقًا", "Attachments_Step_Already_Completed");
-    public static Error RequiredOrderAttachmentsAreMissing = new("يجب رفع مرفقات وصل الشراء و وصل أمانة و عقد البيع", "Required_Order_Attachments_Are_Missing");
+    public static Error RequiredOrderAttachmentsAreMissing = new("مرفقات البيع غير مكتملة إن وُجدت متطلبات", "Required_Order_Attachments_Are_Missing");
     public static Error OrderDoesNotBelongToYou = new("الطلب ليس ملكك", "Order_Does_Not_Belong_To_You");
     public static Error CanNotSetSellerInfoInCurrentStep = new("لا يمكن تحديد معلومات البائع في هذه المرحلة.", "Can_Not_Set_SellerInfo_In_Current_Step");
     public static Error YouDoNotHaveAnyOrderList = new("ليس لديك أي قائمة طلبات", "You_Have_Not_Any_OrderList");
@@ -29,6 +29,8 @@ public static class OrderErrors
     public static Error ApprovalStatusOfOrderHasBeenSetBefore = new("تم تحديد حالة الموافقة على الطلب مسبقًا", "ApprovalStatus_Of_Order_Has_Been_Set_Before");
 
     /// <summary>نفس ClientPaymentId مع طلب/مبلغ/تاريخ مختلف — 409.</summary>
+    public static Error LegacyPaymentNeedsReview = new("توجد تسديدة سابقة بنفس المبلغ لهذا الطلب. راجع وصل القبض قبل تسويتها.", "InstallmentPayment_LegacyReview");
+
     public static Error ClientPaymentPayloadConflict = new(
         "مفتاح التسديد مستخدم ببيانات مالية مختلفة.",
         "InstallmentPayment_ClientPayment_Conflict");

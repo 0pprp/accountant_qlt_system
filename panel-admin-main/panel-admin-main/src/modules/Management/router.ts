@@ -174,6 +174,18 @@ const aliases: RouteRecordRaw[] = [
     },
   },
   {
+    path: 'oversight/committee-tasks',
+    name: 'ManagementCommitteeTasksLegacyAliasRoute',
+    redirect: { name: 'ManagementCommitteeTasksRoute' },
+    meta: {
+      requiresAuth: true,
+      accessRequirement: {
+        type: 'single',
+        permission: { module: 'Task', action: 'Read' },
+      },
+    },
+  },
+  {
     path: 'oversight/delegate-followup',
     name: 'ManagementOversightDelegateFollowupAliasRoute',
     redirect: { name: 'ManagementDirectorDelegateFollowupRoute' },

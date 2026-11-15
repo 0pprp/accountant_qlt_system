@@ -1,5 +1,5 @@
 {
-  "title": "المهام الإدارية",
+  "title": "المهام",
   "loading": "جاري التحميل…",
   "empty": "لا توجد مهام مطابقة للتصفية الحالية",
   "listError": "تعذر تحميل المهام",
@@ -20,6 +20,13 @@
     "high": "عالية",
     "medium": "متوسطة",
     "low": "منخفضة"
+  },
+  "audienceOptions": {
+    "user": "شخص محدد",
+    "delegate": "كل مندوبي الفرع",
+    "committee": "كل مسؤولي اللجنة في الفرع",
+    "salesEmployee": "كل موظفي المبيعات في الفرع",
+    "allFieldApps": "كل التطبيقات الميدانية في الفرع"
   },
   "event": {
     "created": "إنشاء المهمة",
@@ -47,6 +54,10 @@
     "time": "آخر تحديث",
     "createdAt": "تاريخ الإنشاء",
     "dueDate": "تاريخ الاستحقاق",
+    "audience": "نوع الإرسال",
+    "audiencePreview": "سيُنشأ {count} مهمة شخصية",
+    "audiencePreviewEmpty": "لا مستلمين لهذا الجمهور في الفرع",
+    "audiencePreviewLoading": "جاري احتساب المستلمين…",
     "assignee": "المكلَّف",
     "assigneePlaceholder": "اختر المكلَّف",
     "searchUser": "ابحث عن مستخدم…",
@@ -93,10 +104,11 @@
   },
   "validation": {
     "rejectNoteRequired": "سبب الرفض مطلوب",
-    "formIncomplete": "أكمل الحقول المطلوبة: العنوان، تاريخ الاستحقاق، المكلَّف"
+    "formIncomplete": "أكمل الحقول المطلوبة: العنوان، تاريخ الاستحقاق، والمستلم"
   },
   "success": {
     "create": "تم إنشاء المهمة",
+    "createFanout": "تم إنشاء {count} مهمة شخصية",
     "accept": "تم قبول المهمة",
     "reject": "تم رفض المهمة وإعادتها",
     "complete": "تم تسجيل الإنجاز",

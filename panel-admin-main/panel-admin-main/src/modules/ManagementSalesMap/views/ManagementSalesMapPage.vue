@@ -389,12 +389,22 @@ watch(
 
 <style scoped>
 .msm-page {
-  padding: 16px 20px 32px;
+  /* امتداد نحو اليسار (inline-end في RTL) مع بادينغ خفيف */
+  margin-block: -4px;
+  margin-inline-end: -1rem;
+  padding: 8px 8px 12px 4px;
   color: #00201e;
+  min-width: 0;
+}
+@media (min-width: 768px) {
+  .msm-page {
+    margin-inline-end: -1.5rem;
+    padding: 6px 10px 10px 4px;
+  }
 }
 .msm-page__head h1 {
-  margin: 0 0 8px;
-  font-size: 1.5rem;
+  margin: 0 0 6px;
+  font-size: 1.35rem;
   color: #006a64;
 }
 .msm-page__sub {
@@ -438,8 +448,8 @@ watch(
 .msm-toolbar {
   display: flex;
   align-items: center;
-  gap: 12px;
-  margin-bottom: 12px;
+  gap: 10px;
+  margin-bottom: 8px;
 }
 .msm-toolbar h2 {
   margin: 0;
@@ -456,8 +466,8 @@ watch(
 }
 .msm-filters {
   display: grid;
-  gap: 12px;
-  margin-bottom: 12px;
+  gap: 8px;
+  margin-bottom: 8px;
 }
 .msm-lists__head {
   display: flex;
@@ -522,18 +532,20 @@ watch(
 .msm-stage {
   display: grid;
   grid-template-columns: 1fr;
-  gap: 12px;
-  min-height: 480px;
+  gap: 8px;
+  min-height: 520px;
+  width: 100%;
 }
 @media (min-width: 1024px) {
   .msm-stage {
-    grid-template-columns: 1fr 320px;
+    grid-template-columns: minmax(0, 1fr) 280px;
   }
 }
 .msm-map-wrap {
   position: relative;
-  min-height: 420px;
-  height: min(70vh, 640px);
+  min-height: 520px;
+  height: min(78vh, 860px);
+  width: 100%;
 }
 .msm-map-overlay {
   position: absolute;

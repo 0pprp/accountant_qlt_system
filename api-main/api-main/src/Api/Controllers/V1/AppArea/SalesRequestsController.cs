@@ -1,3 +1,4 @@
+using Application.SalesRequests.Commands.App.Checkout;
 using Application.SalesRequests.Queries.App.Submitted;
 using Application.SalesRequests.Commands.App.EnsureDraft;
 using Application.SalesRequests.Commands.App.Submit;
@@ -40,6 +41,31 @@ public class SalesRequestsController : ApiController
 
     public record SubmitBody(Guid SubmissionKey, int BranchId, string CustomerName, string CustomerPhone,
         string Address, string RequestedProduct, string? Note);
+
+    [HasPermission(Permissions.SalesRequest.AppLinkDraft)]
+    [HttpGet("{requestId:int}/checkout-lists")]
+    public async Task<ActionResult<List<ListChoice>>> RequestLists(int requestId)
+        => (await _mediator.Send(new CheckoutLists(0, requestId), CancellationToken)).ToHttpResponse();
+
+    [HasPermission(Permissions.SalesRequest.AppLinkDraft)]
+    [HttpGet("orders/{orderId:int}/checkout-lists")]
+    public async Task<ActionResult<List<ListChoice>>> CheckoutLists(int orderId)
+        => (await _mediator.Send(new CheckoutLists(orderId), CancellationToken)).ToHttpResponse();
+
+    [HasPermission(Permissions.SalesRequest.AppLinkDraft)]
+    [HasPermission(Permissions.Order.Update)]
+    [HttpPost("orders/{orderId:int}/checkout")]
+    public async Task<ActionResult<int>> Checkout(int orderId, [FromBody] CheckoutBody body)
+        => (await _mediator.Send(new CheckoutSale(orderId, body), CancellationToken)).ToHttpResponse();
+    [HasPermission(Permissions.InstallmentPayment.Create)]
+    [HttpGet("delegate/new-sales")]
+    public async Task<ActionResult<List<DelegateSale>>> NewSales([FromQuery] int afterId = 0)
+        => (await _mediator.Send(new DueDelegateSales(afterId), CancellationToken)).ToHttpResponse();
+
+    [HasPermission(Permissions.InstallmentPayment.Create)]
+    [HttpPost("delegate/new-sales/{orderId:int}/evaluate")]
+    public async Task<ActionResult<int>> Evaluate(int orderId, [FromBody] EvaluateDelegateSale body)
+        => (await _mediator.Send(body with { OrderId = orderId }, CancellationToken)).ToHttpResponse();
 
     private readonly IMediator _mediator;
 

@@ -715,15 +715,13 @@ export const MANAGEMENT_TABS: readonly ManagementTabDefinition[] = [
     id: 'committeeTasks',
     sectionId: 'oversight',
     labelKey: 'tabs.committeeTasks',
-    tabPath: 'committee-tasks',
+    tabPath: 'tasks',
     routeName: 'ManagementCommitteeTasksRoute',
-    requirement: {
-      type: 'single',
-      permission: { module: 'CommitteeTask', action: 'Read' },
-    },
+    requirement: TASK_READ,
     implementationStatus: 'ready',
-    reuse: 'CommitteeTasksPage',
-    notes: 'نشرة مهام اللجنة — ليست ManagementTasks؛ CRUD للوحة + AppRead للتطبيق',
+    reuse: 'ManagementTasksPage',
+    notes:
+      'المهام الإدارية — إنشاء/تحديث وإرسال لجمهور اللجنة (Audience=Committee) وباقي التطبيقات الميدانية',
   },
   {
     id: 'appNotes',
