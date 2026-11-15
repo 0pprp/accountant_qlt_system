@@ -4,11 +4,13 @@ using Application.ManagementTasks.Commands.Admin.AddAttachment;
 using Application.ManagementTasks.Commands.Admin.Complete;
 using Application.ManagementTasks.Commands.Admin.Confirm;
 using Application.ManagementTasks.Commands.Admin.Create;
+using Application.ManagementTasks.Commands.Admin.CreateFanout;
 using Application.ManagementTasks.Commands.Admin.Reject;
 using Application.ManagementTasks.Commands.Admin.Resend;
 using Application.ManagementTasks.Commands.Admin.Transfer;
 using Application.ManagementTasks.Common;
 using Application.ManagementTasks.Queries.Admin.Assignees;
+using Application.ManagementTasks.Queries.Admin.AudiencePreview;
 using Application.ManagementTasks.Queries.Admin.DownloadAttachment;
 using Application.ManagementTasks.Queries.Admin.GetById;
 using Application.ManagementTasks.Queries.Admin.List;
@@ -81,6 +83,30 @@ public class ManagementTasksController : ApiController
         [FromBody] CreateManagementTaskCommand command)
     {
         var result = await _mediator.Send(command, CancellationToken);
+        return result.ToHttpResponse();
+    }
+
+    /// <summary>إنشاء نسخ شخصية لكل مستلم حسب الجمهور (شخص / تطبيق / كل التطبيقات الميدانية).</summary>
+    [HasPermission(Permissions.ManagementTask.Create)]
+    [HttpPost("fanout")]
+    public async Task<ActionResult<ManagementTaskFanoutResultDto>> CreateFanout(
+        [FromBody] CreateManagementTasksFanoutCommand command)
+    {
+        var result = await _mediator.Send(command, CancellationToken);
+        return result.ToHttpResponse();
+    }
+
+    [HasPermission(Permissions.ManagementTask.Create)]
+    [HttpGet("audience-preview")]
+    public async Task<ActionResult<ManagementTaskAudiencePreviewDto>> AudiencePreview(
+        [FromQuery] int branchId,
+        [FromQuery] ManagementTaskAudience audience)
+    {
+        var result = await _mediator.Send(new GetManagementTaskAudiencePreviewQuery
+        {
+            BranchId = branchId,
+            Audience = audience
+        }, CancellationToken);
         return result.ToHttpResponse();
     }
 

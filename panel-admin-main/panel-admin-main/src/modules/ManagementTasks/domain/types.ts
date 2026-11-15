@@ -140,6 +140,18 @@ export interface ManagementTaskListFilters {
   inboxForMe: boolean
 }
 
+/** يطابق ManagementTaskAudience في الخادم */
+export const ManagementTaskAudience = {
+  User: 0,
+  Delegate: 1,
+  Committee: 2,
+  SalesEmployee: 3,
+  AllFieldApps: 4,
+} as const
+
+export type ManagementTaskAudienceValue =
+  (typeof ManagementTaskAudience)[keyof typeof ManagementTaskAudience]
+
 export interface CreateManagementTaskPayload {
   title: string
   description: string
@@ -150,6 +162,34 @@ export interface CreateManagementTaskPayload {
   assigneeUserId: number
   customerId?: number | null
   orderId?: number | null
+}
+
+export interface CreateManagementTaskFanoutPayload {
+  title: string
+  description: string
+  priority: ManagementTaskPriorityValue
+  dueDate: string
+  dueAtUtc?: string | null
+  branchId: number
+  audience: ManagementTaskAudienceValue
+  assigneeUserId?: number | null
+  customerId?: number | null
+  orderId?: number | null
+}
+
+export interface ManagementTaskFanoutResult {
+  createdCount: number
+  taskIds: number[]
+}
+
+export interface ManagementTaskAudiencePreview {
+  audience: ManagementTaskAudienceValue
+  recipientCount: number
+  sample: Array<{
+    userId: number
+    displayName: string
+    branchId: number
+  }>
 }
 
 export interface ResendManagementTaskPayload {

@@ -40,23 +40,13 @@
 
     <template v-else>
       <section class="mt-toolbar">
-        <label class="mt-field">
-          <span>{{ $t('managementTasks.filters.search') }}</span>
-          <span class="mt-search-wrap">
-            <input
-              v-model="searchInput"
-              type="search"
-              class="mt-input"
-              :placeholder="$t('managementTasks.filters.searchPlaceholder')"
-              :aria-label="$t('managementTasks.filters.search')"
-              autocomplete="off"
-            >
-            <i
-              class="pi pi-search mt-search-icon"
-              aria-hidden="true"
-            />
-          </span>
-        </label>
+        <AppSearchField
+          v-model="searchInput"
+          :grow="false"
+          autocomplete="off"
+          :label="$t('managementTasks.filters.search')"
+          :placeholder="$t('managementTasks.filters.searchPlaceholder')"
+        />
         <button
           v-if="canUseInbox && !props.inboxOnly"
           type="button"
@@ -186,7 +176,9 @@ import { useI18n } from 'vue-i18n'
 import { useAuthStore } from '@/modules/Auth/store'
 import { useToastStore } from '@/modules/Core/store'
 import { DialogState } from '@/modules/Core/types/model/dialog'
+import { AppSearchField } from '@/modules/Core/components/ui'
 import {
+  ManagementTaskAudience,
   type ManagementTaskAttachment,
   type ManagementTaskListFilters,
   type ManagementTaskListItem,
@@ -198,9 +190,7 @@ import { useManagementTasksQuery } from '../requests/queries/useManagementTasksQ
 import { useManagementTaskDetailQuery } from '../requests/queries/useManagementTaskDetailQuery'
 import { useManagementTaskRealtime } from '../realtime/managementTaskRealtime'
 import { useManagementTaskActionMutation } from '../requests/mutations/useManagementTaskActionMutation'
-import {
-  useCreateManagementTaskMutation,
-} from '../requests/mutations/useCreateManagementTaskMutation'
+import { useCreateManagementTaskFanoutMutation } from '../requests/mutations/useCreateManagementTaskFanoutMutation'
 import { useResendManagementTaskMutation } from '../requests/mutations/useResendManagementTaskMutation'
 import {
   uploadManagementTaskAttachment,
@@ -292,7 +282,7 @@ function closeDetail() {
 
 // —— الإجراءات ——
 const actionMutation = useManagementTaskActionMutation()
-const createMutation = useCreateManagementTaskMutation()
+const fanoutMutation = useCreateManagementTaskFanoutMutation()
 const resendMutation = useResendManagementTaskMutation()
 const uploadMutation = useUploadManagementTaskAttachmentMutation()
 
@@ -305,7 +295,7 @@ const downloadingId = ref<number | null>(null)
 
 const formBusy = computed(
   () =>
-    createMutation.isPending.value ||
+    fanoutMutation.isPending.value ||
     resendMutation.isPending.value ||
     creatingWithFiles.value
 )
@@ -405,7 +395,7 @@ async function submitForm(payload: TaskFormSubmit) {
   if (formBusy.value) return
   if (formMode.value === 'resend') {
     const current = task.value
-    if (!current) return
+    if (!current || payload.assigneeUserId == null) return
     try {
       await resendMutation.mutateAsync({
         taskId: current.id,
@@ -430,27 +420,44 @@ async function submitForm(payload: TaskFormSubmit) {
 
   const targetBranch = branchId.value
   if (targetBranch == null) return
+  if (
+    payload.audience === ManagementTaskAudience.User &&
+    payload.assigneeUserId == null
+  ) {
+    return
+  }
   creatingWithFiles.value = true
   try {
-    const created = await createMutation.mutateAsync({
+    const created = await fanoutMutation.mutateAsync({
       title: payload.title,
       description: payload.description,
       priority: payload.priority,
       dueDate: payload.dueDate,
       branchId: targetBranch,
+      audience: payload.audience,
       assigneeUserId: payload.assigneeUserId,
       customerId: payload.customerId,
       orderId: payload.orderId,
     })
-    for (const file of payload.files) {
-      try {
-        await uploadManagementTaskAttachment(created.id, file)
-      } catch {
-        /* toast من axios — المهمة أُنشئت، يمكن إعادة رفع المرفق من التفاصيل */
+    if (payload.files.length > 0) {
+      for (const taskId of created.taskIds) {
+        for (const file of payload.files) {
+          try {
+            await uploadManagementTaskAttachment(taskId, file)
+          } catch {
+            /* toast من axios — المهمة أُنشئت */
+          }
+        }
       }
     }
     formMode.value = null
-    notifySuccess('managementTasks.success.create')
+    toast.setMassage({
+      title: t('managementTasks.success.createFanout', {
+        count: created.createdCount,
+      }),
+      dialogState: DialogState.Success,
+      isOpen: true,
+    })
   } catch {
     /* toast من axios */
   } finally {

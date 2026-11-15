@@ -15,6 +15,7 @@ public enum SalesRequestTimelineEventType : byte
     Inspected = 8,
     DraftLinked = 9,
     Completed = 10,
+    DelegateSaleRated = 42,
     Returned = 11,
     ExceptionRequested = 12,
     ExceptionApproved = 13,

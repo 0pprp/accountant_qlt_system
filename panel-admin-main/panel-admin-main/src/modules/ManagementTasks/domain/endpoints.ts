@@ -1,6 +1,8 @@
 export const ManagementTaskEndpoints = {
   list: '/admin/ManagementTasks',
   detail: (id: number) => `/admin/ManagementTasks/${id}`,
+  fanout: '/admin/ManagementTasks/fanout',
+  audiencePreview: '/admin/ManagementTasks/audience-preview',
   assigneeOptions: '/admin/ManagementTasks/assignee-options',
   accept: (id: number) => `/admin/ManagementTasks/${id}/accept`,
   reject: (id: number) => `/admin/ManagementTasks/${id}/reject`,

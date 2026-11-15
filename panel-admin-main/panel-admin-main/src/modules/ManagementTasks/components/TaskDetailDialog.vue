@@ -123,11 +123,12 @@
               {{ file.fileName }}
               <small>· {{ formatSize(file.sizeBytes) }} · {{ formatDateTime(file.uploadedAtUtc) }}</small>
             </span>
-            <button
+            <AppButton
               v-if="canReadAttachment"
-              type="button"
-              class="mt-btn outline"
+              variant="secondary"
+              size="sm"
               :disabled="downloadingId === file.id"
+              :loading="downloadingId === file.id"
               @click="emit('download', file)"
             >
               {{
@@ -135,7 +136,7 @@
                   ? $t('managementTasks.actions.downloading')
                   : $t('managementTasks.actions.download')
               }}
-            </button>
+            </AppButton>
           </li>
         </ul>
 
@@ -162,67 +163,42 @@
       </section>
 
       <footer class="mt-dialog-foot">
-        <button
-          v-if="actions.accept"
-          type="button"
-          class="mt-btn primary"
-          :disabled="busy"
-          @click="emit('action', 'accept')"
-        >
+        <AppButton v-if="actions.accept" :disabled="busy" @click="emit('action', 'accept')">
           {{ $t('managementTasks.actions.accept') }}
-        </button>
-        <button
-          v-if="actions.complete"
-          type="button"
-          class="mt-btn primary"
-          :disabled="busy"
-          @click="emit('action', 'complete')"
-        >
+        </AppButton>
+        <AppButton v-if="actions.complete" :disabled="busy" @click="emit('action', 'complete')">
           {{ $t('managementTasks.actions.complete') }}
-        </button>
-        <button
-          v-if="actions.confirm"
-          type="button"
-          class="mt-btn primary"
-          :disabled="busy"
-          @click="emit('action', 'confirm')"
-        >
+        </AppButton>
+        <AppButton v-if="actions.confirm" :disabled="busy" @click="emit('action', 'confirm')">
           {{ $t('managementTasks.actions.confirm') }}
-        </button>
-        <button
+        </AppButton>
+        <AppButton
           v-if="actions.transfer"
-          type="button"
-          class="mt-btn outline"
+          variant="secondary"
           :disabled="busy"
           @click="emit('action', 'transfer')"
         >
           {{ $t('managementTasks.actions.transfer') }}
-        </button>
-        <button
+        </AppButton>
+        <AppButton
           v-if="actions.resend"
-          type="button"
-          class="mt-btn outline"
+          variant="secondary"
           :disabled="busy"
           @click="emit('action', 'resend')"
         >
           {{ $t('managementTasks.actions.resend') }}
-        </button>
-        <button
+        </AppButton>
+        <AppButton
           v-if="actions.reject"
-          type="button"
-          class="mt-btn danger"
+          variant="danger"
           :disabled="busy"
           @click="emit('action', 'reject')"
         >
           {{ $t('managementTasks.actions.reject') }}
-        </button>
-        <button
-          type="button"
-          class="mt-btn ghost"
-          @click="emit('close')"
-        >
+        </AppButton>
+        <AppButton variant="ghost" @click="emit('close')">
           {{ $t('managementTasks.actions.close') }}
-        </button>
+        </AppButton>
       </footer>
     </div>
   </Dialog>
@@ -231,6 +207,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { Dialog } from 'primevue'
+import { AppButton } from '@/modules/Core/components/ui'
 import {
   MANAGEMENT_TASK_PRIORITY_KEYS,
   type ManagementTaskAttachment,

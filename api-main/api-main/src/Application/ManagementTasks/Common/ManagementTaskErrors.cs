@@ -29,4 +29,9 @@ public static class ManagementTaskErrors
     public static Error TitleRequired = new("عنوان المهمة مطلوب", "Task_Title_Required");
     public static Error DueRequired = new("تاريخ الاستحقاق مطلوب.", "Task_Due_Required");
     public static Error InvalidPriority = new("أولوية غير صالحة.", "Task_Invalid_Priority");
+    public static Error AudienceEmpty = new("لا يوجد مستلمون لهذا الجمهور في الفرع المحدد", "Task_Audience_Empty");
+    public static Error AudienceTooLarge = new(
+        "عدد المستلمين يتجاوز الحد المسموح (500)",
+        "Task_Audience_TooLarge");
+    public static Error InvalidAudience = new("جمهور الإرسال غير صالح", "Task_Audience_Invalid");
 }

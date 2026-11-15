@@ -17,27 +17,16 @@
       novalidate
       @submit.prevent="submit"
     >
-      <label class="mt-field">
-        <span>{{ $t('managementTasks.fields.transferTarget') }} *</span>
-        <Select
-          v-model="targetUserId"
-          :options="options"
-          option-label="displayName"
-          option-value="userId"
-          :unstyled="false"
-          :placeholder="$t('managementTasks.fields.transferTargetPlaceholder')"
-          filter
-          :filter-placeholder="$t('managementTasks.fields.searchUser')"
-          :empty-filter-message="$t('managementTasks.noAssignees')"
-          :empty-message="$t('managementTasks.noAssignees')"
-          :loading="loading"
-          :disabled="busy"
-          :aria-label="$t('managementTasks.fields.transferTarget')"
-          class="w-full"
-          :reset-filter-on-hide="true"
-          append-to="body"
-        />
-      </label>
+      <AppSelect
+        v-model="targetUserId"
+        :label="$t('managementTasks.fields.transferTarget')"
+        :options="menuOptions"
+        :placeholder="$t('managementTasks.fields.transferTargetPlaceholder')"
+        :filter-placeholder="$t('managementTasks.fields.searchUser')"
+        :empty-message="$t('managementTasks.noAssignees')"
+        :disabled="busy || loading"
+        required
+      />
       <p
         v-if="error"
         class="mt-error"
@@ -45,36 +34,28 @@
       >
         {{ $t('managementTasks.assigneesError') }}
       </p>
-      <label class="mt-field">
-        <span>{{ $t('managementTasks.fields.note') }}</span>
-        <textarea
-          v-model="note"
-          class="mt-textarea"
-          rows="3"
-          maxlength="1000"
-          :disabled="busy"
-        />
-      </label>
+      <AppTextarea
+        v-model="note"
+        :label="$t('managementTasks.fields.note')"
+        :rows="3"
+        maxlength="1000"
+        :disabled="busy"
+      />
       <footer class="mt-dialog-foot">
-        <button
-          type="button"
-          class="mt-btn ghost"
-          :disabled="busy"
-          @click="emit('close')"
-        >
+        <AppButton variant="ghost" :disabled="busy" @click="emit('close')">
           {{ $t('managementTasks.actions.cancel') }}
-        </button>
-        <button
+        </AppButton>
+        <AppButton
           type="submit"
-          class="mt-btn primary"
           :disabled="busy || targetUserId == null"
+          :loading="busy"
         >
           {{
             busy
               ? $t('managementTasks.actions.submitting')
               : $t('managementTasks.actions.transfer')
           }}
-        </button>
+        </AppButton>
       </footer>
     </form>
   </Dialog>
@@ -83,8 +64,7 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 import { Dialog } from 'primevue'
-import Select from 'primevue/select'
-import type { ManagementTaskAssigneeOption } from '../domain/types'
+import { AppButton, AppSelect, AppTextarea } from '@/modules/Core/components/ui'
 import { useManagementTaskAssigneesQuery } from '../requests/queries/useManagementTaskAssigneesQuery'
 
 const props = defineProps<{
@@ -113,10 +93,10 @@ const query = useManagementTaskAssigneesQuery(branchRef, enabled)
 
 const loading = computed(() => query.isLoading.value)
 const error = computed(() => query.isError.value)
-const options = computed<ManagementTaskAssigneeOption[]>(() =>
-  (query.data.value ?? []).filter(
-    (o) => props.excludeUserIds.includes(o.userId) === false
-  )
+const menuOptions = computed(() =>
+  (query.data.value ?? [])
+    .filter((o) => props.excludeUserIds.includes(o.userId) === false)
+    .map((o) => ({ label: o.displayName, value: o.userId })),
 )
 
 watch(

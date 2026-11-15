@@ -1,11 +1,11 @@
 import { MANAGEMENT_TASK_STATUS_KEYS, type ManagementTaskStatusValue } from '../domain/types'
 
 export function useManagementTaskFormat() {
-  const dateTime = new Intl.DateTimeFormat('ar-IQ', {
+  const dateTime = new Intl.DateTimeFormat('en-US', {
     dateStyle: 'medium',
     timeStyle: 'short',
   })
-  const dateOnly = new Intl.DateTimeFormat('ar-IQ', { dateStyle: 'medium' })
+  const dateOnly = new Intl.DateTimeFormat('en-US', { dateStyle: 'medium' })
 
   function formatDateTime(value: string | null | undefined): string {
     if (!value) return '—'

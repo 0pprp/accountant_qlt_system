@@ -17,6 +17,7 @@ namespace Application.WrongSales.Commands;
 public sealed class ReportMandobFirstCollectionWrongSaleCommand
     : IRequest<Result<MandobFirstCollectionEvalResultDto>>
 {
+    public int? ExactOrderId { get; init; }
     public int CustomerId { get; init; }
     public int ListId { get; init; }
     public int Rating { get; init; }
@@ -84,7 +85,7 @@ public sealed class ReportMandobFirstCollectionWrongSaleHandler
         var order = await _db.Orders.AsNoTracking()
             .Where(o => o.CustomerId == request.CustomerId
                         && o.OrderListId == list.Id
-                        && o.WorkflowStatus == SalesWorkflowStatus.Sold)
+                        && o.WorkflowStatus == SalesWorkflowStatus.Sold && (request.ExactOrderId == null || o.Id == request.ExactOrderId))
             .OrderByDescending(o => o.SalesCompletedAtUtc ?? o.CreatedAt)
             .ThenByDescending(o => o.Id)
             .Select(o => new { o.Id, o.BranchId, o.CustomerId })
@@ -109,7 +110,7 @@ public sealed class ReportMandobFirstCollectionWrongSaleHandler
         // تكرار: نفس OrderId أو نفس الزبون من مصدر المندوب مسبقاً
         var existing = await _db.WrongSaleNotices.AsNoTracking()
             .Where(n => n.OrderId == order.Id
-                        || (n.CustomerId == order.CustomerId
+                        || (request.ExactOrderId == null && n.CustomerId == order.CustomerId
                             && n.SourceApp == WrongSaleNotice.SourceMandobFirstCollection))
             .OrderByDescending(n => n.Id)
             .FirstOrDefaultAsync(ct);
