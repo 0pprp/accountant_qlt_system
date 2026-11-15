@@ -16,7 +16,6 @@
       role="listitem"
       :request="item"
       :selected="selectedId === item.id"
-      @select="$emit('select', item)"
     >
       <template #matching><slot name="matching" :item="item" /></template>
       <template #actions><slot name="actions" :item="item" /></template>
@@ -37,9 +36,6 @@ defineProps<{
   emptyHintKey?: string
 }>()
 
-defineEmits<{
-  select: [SalesRequestListItem]
-}>()
 </script>
 
 <style scoped>

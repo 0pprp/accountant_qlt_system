@@ -1,21 +1,22 @@
 <template>
   <Dialog :visible="open" modal :closable="!busy" :close-on-escape="!busy" :header="mode === 'reassign' ? 'إعادة إسناد الطلب' : 'إسناد الطلب'" :style="{width:'min(520px, 92vw)'}" class="bg-white rounded-3xl p-6" dir="rtl" :pt="{mask:{class:'bg-[#C6C6C680] backdrop-blur-[2px]'}}" @update:visible="!$event && !busy && $emit('close')">
-      <label class="sr-field">
-        {{ $t('salesRequests.actions.searchEmployee') }}
-        <input
-          v-model="search"
-          type="search"
-          class="sr-input"
-          autocomplete="off"
-        />
-      </label>
+      <AppSearchField
+        v-model="search"
+        :label="$t('salesRequests.actions.searchEmployee')"
+      />
 
-      <p v-if="loading" class="sr-hint">
-        {{ $t('salesRequests.actions.loadingEmployees') }}
-      </p>
-      <p v-else-if="error" class="sr-hint error">
-        {{ $t('salesRequests.actions.employeesError') }}
-      </p>
+      <DataState
+        v-if="loading"
+        kind="loading"
+        title="جاري التحميل"
+        :message="$t('salesRequests.actions.loadingEmployees')"
+      />
+      <DataState
+        v-else-if="error"
+        kind="error"
+        title="تعذر التحميل"
+        :message="$t('salesRequests.actions.employeesError')"
+      />
       <ul
         v-else
         class="sr-emp-list"
@@ -39,36 +40,28 @@
         </li>
         <li
           v-if="!employees.length"
-          class="sr-hint"
         >
-          {{ $t('salesRequests.actions.noEmployees') }}
+          <DataState
+            kind="empty"
+            title="لا نتائج"
+            :message="$t('salesRequests.actions.noEmployees')"
+          />
         </li>
       </ul>
 
-      <label
+      <AppInput
         v-if="mode === 'reassign'"
-        class="sr-field"
-      >
-        {{ $t('salesRequests.actions.reason') }}
-        <input
-          v-model="reason"
-          type="text"
-          class="sr-input"
-        />
-      </label>
+        v-model="reason"
+        :label="$t('salesRequests.actions.reason')"
+      />
 
       <footer class="sr-dlg-foot">
-        <button
-          type="button"
-          class="sr-btn ghost"
-          @click="$emit('close')"
-        >
+        <AppButton variant="ghost" @click="$emit('close')">
           {{ $t('salesRequests.actions.cancel') }}
-        </button>
-        <button
-          type="button"
-          class="sr-btn primary"
+        </AppButton>
+        <AppButton
           :disabled="!selectedId || busy || (mode === 'reassign' && !reason.trim())"
+          :loading="busy"
           @click="confirm"
         >
           {{
@@ -76,7 +69,7 @@
               ? $t('salesRequests.actions.submitting')
               : $t('salesRequests.actions.confirm')
           }}
-        </button>
+        </AppButton>
       </footer>
   </Dialog>
 </template>
@@ -84,6 +77,7 @@
 <script setup lang="ts">
 import { Dialog } from 'primevue'
 import { computed, ref, watch } from 'vue'
+import { AppButton, AppInput, AppSearchField, DataState } from '@/modules/Core/components/ui'
 import { useAssignableEmployeesQuery } from '../requests/queries/useAssignableEmployeesQuery'
 
 const props = defineProps<{
@@ -154,7 +148,7 @@ function confirm() {
   border-radius: 1rem;
   padding: 1rem;
   color: #00201e;
-  font-family: 'ElMessiri', 'El Messiri', sans-serif;
+  font-family: inherit;
 }
 .sr-dlg-head {
   display: flex;

@@ -41,6 +41,10 @@ export function useSalesRequestFilters(
       typeof route.query.fromDate === 'string' ? route.query.fromDate : null,
     toDate: typeof route.query.toDate === 'string' ? route.query.toDate : null,
     search: typeof route.query.search === 'string' ? route.query.search : null,
+    exceptionStatus:
+      typeof route.query.exceptionStatus === 'string'
+        ? route.query.exceptionStatus
+        : null,
   })
 
   const listFilters = computed<SalesRequestListFilters>(() => ({
@@ -63,6 +67,8 @@ export function useSalesRequestFilters(
     if (filters.value.fromDate) q.fromDate = filters.value.fromDate
     if (filters.value.toDate) q.toDate = filters.value.toDate
     if (filters.value.search) q.search = filters.value.search
+    if (filters.value.exceptionStatus)
+      q.exceptionStatus = filters.value.exceptionStatus
 
     void router.replace({ query: q })
   }
@@ -89,6 +95,7 @@ export function useSalesRequestFilters(
       fromDate: null,
       toDate: null,
       search: null,
+      exceptionStatus: null,
     }
     pageIndex.value = 1
   }

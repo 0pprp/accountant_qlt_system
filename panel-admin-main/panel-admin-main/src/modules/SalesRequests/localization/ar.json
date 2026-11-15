@@ -3,8 +3,6 @@
   "tabUnassigned": "غير المسند",
   "lastSync": "آخر مزامنة",
   "resultsCount": "{count} نتيجة",
-  "auditRequest": "تدقيق الطلب",
-  "closeAudit": "إغلاق التدقيق",
   "priorAccounts": "حسابات سابقة",
   "duplicateRequests": "طلبات مكررة",
   "filters": {

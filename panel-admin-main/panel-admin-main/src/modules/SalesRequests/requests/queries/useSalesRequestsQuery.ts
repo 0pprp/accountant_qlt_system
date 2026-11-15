@@ -15,6 +15,8 @@ export interface SalesRequestListFilters {
   fromDate?: string | null
   toDate?: string | null
   search?: string | null
+  /** Pending | Approved | Rejected — فلتر حالة الاستثناء عند تبويب exceptions */
+  exceptionStatus?: string | null
 }
 
 interface Paginated<T> {
@@ -45,6 +47,7 @@ export function fetchSalesRequests(
         fromDate: filters.fromDate || undefined,
         toDate: filters.toDate || undefined,
         search: filters.search || undefined,
+        exceptionStatus: filters.exceptionStatus || undefined,
       },
     })
     .then((r) => r.data)

@@ -13,6 +13,7 @@ export interface UnassignedFilters {
   fromDate?: string | null
   toDate?: string | null
   search?: string | null
+  exceptionStatus?: string | null
 }
 
 interface Paginated<T> {

@@ -21,20 +21,15 @@
         {{ formatDate(request.exceptionConsumedAtUtc) }}
       </p>
       <template v-if="canDecide && request.exceptionState === 'pending'">
-        <label class="sr-field">
-          {{ $t('salesRequests.actions.reason') }}
-          <input
-            v-model="decisionReason"
-            type="text"
-            class="sr-input"
-            :disabled="busy"
-          />
-        </label>
+        <AppInput
+          v-model="decisionReason"
+          :label="$t('salesRequests.actions.reason')"
+          :disabled="busy"
+        />
         <div class="sr-row">
-          <button
-            type="button"
-            class="sr-btn primary"
+          <AppButton
             :disabled="busy || !decisionReason.trim()"
+            :loading="busy && pending === 'approve'"
             @click="onApprove"
           >
             {{
@@ -42,11 +37,11 @@
                 ? $t('salesRequests.actions.submitting')
                 : $t('salesRequests.lifecycle.approveException')
             }}
-          </button>
-          <button
-            type="button"
-            class="sr-btn danger"
+          </AppButton>
+          <AppButton
+            variant="danger"
             :disabled="busy || !decisionReason.trim()"
+            :loading="busy && pending === 'rejectEx'"
             @click="onRejectException"
           >
             {{
@@ -54,7 +49,7 @@
                 ? $t('salesRequests.actions.submitting')
                 : $t('salesRequests.lifecycle.rejectException')
             }}
-          </button>
+          </AppButton>
         </div>
         <p
           v-if="errorMsg"
@@ -79,19 +74,15 @@
     >
       <h4 class="sr-life-title">{{ $t('salesRequests.lifecycle.deleteTitle') }}</h4>
       <p class="sr-life-meta">{{ $t('salesRequests.lifecycle.deleteImpact') }}</p>
-      <label class="sr-field">
-        {{ $t('salesRequests.actions.reason') }}
-        <input
-          v-model="deleteReason"
-          type="text"
-          class="sr-input"
-          :disabled="busy"
-        />
-      </label>
-      <button
-        type="button"
-        class="sr-btn danger"
+      <AppInput
+        v-model="deleteReason"
+        :label="$t('salesRequests.actions.reason')"
+        :disabled="busy"
+      />
+      <AppButton
+        variant="danger"
         :disabled="busy || !deleteReason.trim()"
+        :loading="busy && pending === 'delete'"
         @click="onSoftDelete"
       >
         {{
@@ -99,7 +90,7 @@
             ? $t('salesRequests.actions.submitting')
             : $t('salesRequests.lifecycle.softDelete')
         }}
-      </button>
+      </AppButton>
       <p
         v-if="errorMsg && pending === 'delete'"
         class="sr-err"
@@ -129,19 +120,14 @@
         {{ formatDate(request.deletedAtUtc) }}
       </p>
       <p class="sr-life-meta">{{ $t('salesRequests.lifecycle.restoreImpact') }}</p>
-      <label class="sr-field">
-        {{ $t('salesRequests.actions.reason') }}
-        <input
-          v-model="restoreReason"
-          type="text"
-          class="sr-input"
-          :disabled="busy"
-        />
-      </label>
-      <button
-        type="button"
-        class="sr-btn primary"
+      <AppInput
+        v-model="restoreReason"
+        :label="$t('salesRequests.actions.reason')"
         :disabled="busy"
+      />
+      <AppButton
+        :disabled="busy"
+        :loading="busy && pending === 'restore'"
         @click="onRestore"
       >
         {{
@@ -149,7 +135,7 @@
             ? $t('salesRequests.actions.submitting')
             : $t('salesRequests.lifecycle.restore')
         }}
-      </button>
+      </AppButton>
       <p
         v-if="errorMsg && pending === 'restore'"
         class="sr-err"
@@ -165,36 +151,21 @@
     >
       <h4 class="sr-life-title">إرسال للمتابعة القانونية</h4>
       <p class="sr-life-meta">لغير المسند أو المرفوض فقط — ينشئ قضية ويصفّر تكليف الموظف.</p>
-      <label class="sr-field">
-        المتابع
-        <select
-          v-model="followerId"
-          class="sr-input"
-          :disabled="busy || followersLoading"
-        >
-          <option :value="0">اختر متابعًا</option>
-          <option
-            v-for="f in followers"
-            :key="f.followerUserId"
-            :value="f.followerUserId"
-          >
-            {{ f.followerName }}
-          </option>
-        </select>
-      </label>
-      <label class="sr-field">
-        ملاحظة (اختياري)
-        <input
-          v-model="legalNote"
-          type="text"
-          class="sr-input"
-          :disabled="busy"
-        />
-      </label>
-      <button
-        type="button"
-        class="sr-btn primary"
+      <AppSelect
+        v-model="followerId"
+        label="المتابع"
+        placeholder="اختر متابعًا"
+        :options="followerOptions"
+        :disabled="busy || followersLoading"
+      />
+      <AppInput
+        v-model="legalNote"
+        label="ملاحظة (اختياري)"
+        :disabled="busy"
+      />
+      <AppButton
         :disabled="busy || !followerId"
+        :loading="busy && pending === 'legal'"
         @click="onSendLegal"
       >
         {{
@@ -202,7 +173,7 @@
             ? $t('salesRequests.actions.submitting')
             : 'إرسال للقانونية'
         }}
-      </button>
+      </AppButton>
       <p
         v-if="errorMsg && pending === 'legal'"
         class="sr-err"
@@ -217,6 +188,8 @@
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue'
 import { usePermission } from '@/modules/Core/composable/usePermission'
+import { AppButton, AppInput, AppSelect } from '@/modules/Core/components/ui'
+import { formatDateTime } from '@/modules/Core/utils/formatDisplay'
 import type { SalesRequestListItem } from '../types'
 import { useApproveExceptionMutation } from '../requests/mutations/useApproveExceptionMutation'
 import { useRejectExceptionMutation } from '../requests/mutations/useRejectExceptionMutation'
@@ -247,9 +220,15 @@ const decisionReason = ref('')
 const deleteReason = ref('')
 const restoreReason = ref('')
 const legalNote = ref('')
-const followerId = ref(0)
+const followerId = ref<number | null>(null)
 const followers = ref<LegalFollowupFollowerOption[]>([])
 const followersLoading = ref(false)
+const followerOptions = computed(() =>
+  followers.value.map((f) => ({
+    label: f.followerName,
+    value: f.followerUserId,
+  })),
+)
 const pending = ref<'approve' | 'rejectEx' | 'delete' | 'restore' | 'legal' | null>(null)
 const errorMsg = ref<string | null>(null)
 
@@ -348,11 +327,7 @@ const exceptionLabel = computed(() => {
 })
 
 function formatDate(value?: string | null) {
-  if (!value) return '—'
-  return new Intl.DateTimeFormat('ar-IQ', {
-    dateStyle: 'medium',
-    timeStyle: 'short',
-  }).format(new Date(value))
+  return formatDateTime(value)
 }
 
 function mapError(e: unknown): string {

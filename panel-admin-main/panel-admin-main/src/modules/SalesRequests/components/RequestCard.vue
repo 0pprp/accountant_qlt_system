@@ -78,16 +78,6 @@
     <template #actions>
       <slot name="matching" />
       <slot name="actions" />
-      <ActionRow
-        :primary="{
-          label: selected
-            ? 'تفاصيل الطلب مفتوحة'
-            : request.isDeleted || request.tabKey === 'deleted'
-              ? 'تفاصيل الطلب وسجل الحركة'
-              : 'تدقيق الطلب ونتائج المطابقة',
-        }"
-        @primary="$emit('select'); $emit('audit')"
-      />
       <slot v-if="expanded" />
     </template>
   </EntityCard>
@@ -97,7 +87,6 @@
 import { computed } from 'vue'
 import EntityCard from '@/modules/Core/components/ui/EntityCard.vue'
 import DataField from '@/modules/Core/components/ui/DataField.vue'
-import ActionRow from '@/modules/Core/components/ui/ActionRow.vue'
 import { formatDurationInStatus, type SalesRequestListItem } from '../types'
 
 const props = defineProps<{
@@ -105,7 +94,7 @@ const props = defineProps<{
   selected?: boolean
   expanded?: boolean
 }>()
-defineEmits<{ select: []; audit: [] }>()
+defineEmits<{ select: [] }>()
 
 const statusTone = computed(() => {
   const tab = props.request.tabKey
