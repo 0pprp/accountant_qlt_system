@@ -3,64 +3,54 @@
     v-if="visible"
     class="sr-life"
   >
-    <div class="sr-life-btns">
-      <template v-if="showExceptionDecide && canDecide && request.exceptionState === 'pending'">
-        <button
-          type="button"
-          class="sr-btn primary"
-          :disabled="busy"
-          @click="openDialog('approve')"
-        >
-          {{ $t('salesRequests.lifecycle.approveException') }}
-        </button>
-        <button
-          type="button"
-          class="sr-btn danger"
-          :disabled="busy"
-          @click="openDialog('rejectEx')"
-        >
-          {{ $t('salesRequests.lifecycle.rejectException') }}
-        </button>
-      </template>
-
+    <template v-if="showExceptionDecide && canDecide && request.exceptionState === 'pending'">
       <button
-        v-if="showSoftDelete"
         type="button"
-        class="sr-btn danger"
+        class="sr-neu-btn primary"
         :disabled="busy"
-        @click="openDialog('delete')"
+        @click="openDialog('approve')"
       >
-        {{ $t('salesRequests.lifecycle.softDelete') }}
+        {{ $t('salesRequests.lifecycle.approveException') }}
       </button>
-
       <button
-        v-if="showRestore"
         type="button"
-        class="sr-btn primary"
+        class="sr-neu-btn danger"
         :disabled="busy"
-        @click="openDialog('restore')"
+        @click="openDialog('rejectEx')"
       >
-        {{ $t('salesRequests.lifecycle.restore') }}
+        {{ $t('salesRequests.lifecycle.rejectException') }}
       </button>
+    </template>
 
-      <button
-        v-if="showSendLegal"
-        type="button"
-        class="sr-btn warn"
-        :disabled="busy"
-        @click="openDialog('legal')"
-      >
-        إرسال للقانونية
-      </button>
-    </div>
-
-    <p
-      v-if="showExceptionDecide && request.exceptionState"
-      class="sr-life-meta"
+    <button
+      v-if="showSoftDelete"
+      type="button"
+      class="sr-neu-btn danger"
+      :disabled="busy"
+      @click="openDialog('delete')"
     >
-      {{ $t('salesRequests.lifecycle.exceptionState') }}:
-      <strong>{{ exceptionLabel }}</strong>
-    </p>
+      {{ $t('salesRequests.lifecycle.softDelete') }}
+    </button>
+
+    <button
+      v-if="showRestore"
+      type="button"
+      class="sr-neu-btn primary"
+      :disabled="busy"
+      @click="openDialog('restore')"
+    >
+      {{ $t('salesRequests.lifecycle.restore') }}
+    </button>
+
+    <button
+      v-if="showSendLegal"
+      type="button"
+      class="sr-neu-btn warn"
+      :disabled="busy"
+      @click="openDialog('legal')"
+    >
+      إرسال للقانونية
+    </button>
 
     <Dialog
       :visible="dialogMode != null"
@@ -83,7 +73,7 @@
         </p>
         <p
           v-if="dialogHint"
-          class="sr-life-meta"
+          class="sr-dialog-hint"
         >
           {{ dialogHint }}
         </p>
@@ -119,7 +109,7 @@
         <div class="sr-row">
           <button
             type="submit"
-            class="sr-btn"
+            class="sr-neu-btn"
             :class="dialogSubmitClass"
             :disabled="busy || !canSubmitDialog"
           >
@@ -127,7 +117,7 @@
           </button>
           <button
             type="button"
-            class="sr-btn ghost"
+            class="sr-neu-btn primary"
             :disabled="busy"
             @click="closeDialog()"
           >
@@ -245,8 +235,7 @@ const visible = computed(
       props.request.exceptionState === 'pending') ||
     showSoftDelete.value ||
     showRestore.value ||
-    showSendLegal.value ||
-    (showExceptionDecide.value && props.request.exceptionState != null)
+    showSendLegal.value
 )
 
 const dialogTitle = computed(() => {
@@ -308,21 +297,6 @@ const canSubmitDialog = computed(() => {
   if (dialogMode.value === 'legal') return followerId.value != null
   if (dialogMode.value === 'restore') return true
   return reasonText.value.trim().length > 0
-})
-
-const exceptionLabel = computed(() => {
-  switch (props.request.exceptionState) {
-    case 'pending':
-      return 'بانتظار القرار'
-    case 'approved':
-      return 'موافق عليه (غير مستهلك)'
-    case 'approved_consumed':
-      return 'موافق عليه ومُستهلك'
-    case 'rejected':
-      return 'مرفوض'
-    default:
-      return '—'
-  }
 })
 
 async function loadFollowers() {
@@ -429,20 +403,7 @@ async function submitDialog() {
 
 <style scoped>
 .sr-life {
-  margin-top: 0.75rem;
-  display: flex;
-  flex-direction: column;
-  gap: 0.55rem;
-}
-.sr-life-btns {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-}
-.sr-life-meta {
-  margin: 0;
-  font-size: 0.8rem;
-  opacity: 0.85;
+  display: contents;
 }
 .sr-dialog-form {
   display: flex;
@@ -453,37 +414,50 @@ async function submitDialog() {
   margin: 0;
   font-weight: 700;
 }
+.sr-dialog-hint {
+  margin: 0;
+  font-size: 0.85rem;
+  opacity: 0.85;
+}
 .sr-row {
   display: flex;
   flex-wrap: wrap;
   gap: 0.5rem;
 }
-.sr-btn {
-  min-height: 44px;
+.sr-neu-btn {
+  min-height: 40px;
   border: none;
-  border-radius: 0.85rem;
-  padding: 0.45rem 1rem;
-  color: #fff;
+  border-radius: 14px;
+  padding: 0.35rem 0.85rem;
   font: inherit;
   font-weight: 700;
   cursor: pointer;
+  background: #e8f0ef;
+  box-shadow:
+    5px 5px 12px rgba(0, 32, 30, 0.12),
+    -5px -5px 12px rgba(255, 255, 255, 0.92);
+  transition:
+    box-shadow 0.15s ease,
+    transform 0.15s ease;
 }
-.sr-btn:disabled {
+.sr-neu-btn:disabled {
   opacity: 0.55;
   cursor: not-allowed;
 }
-.sr-btn.primary {
-  background: #006a64;
+.sr-neu-btn:active:not(:disabled) {
+  transform: translateY(1px);
+  box-shadow:
+    inset 3px 3px 7px rgba(0, 32, 30, 0.14),
+    inset -3px -3px 7px rgba(255, 255, 255, 0.85);
 }
-.sr-btn.danger {
-  background: #9b1c1c;
-}
-.sr-btn.warn {
-  background: #004f4a;
-}
-.sr-btn.ghost {
-  background: #edf5f3;
+.sr-neu-btn.primary {
   color: #006a64;
+}
+.sr-neu-btn.danger {
+  color: #9b1c1c;
+}
+.sr-neu-btn.warn {
+  color: #8a4b00;
 }
 .sr-err {
   color: #9b1c1c;

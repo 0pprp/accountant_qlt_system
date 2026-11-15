@@ -166,7 +166,7 @@
         <slot name="audit" />
       </div>
 
-      <div class="sr-section">
+      <div class="sr-section sr-card-toolbar">
         <RequestLifecycleActions
           :request="request"
           :active-tab="activeTab"

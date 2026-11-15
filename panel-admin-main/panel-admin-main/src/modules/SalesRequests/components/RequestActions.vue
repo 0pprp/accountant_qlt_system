@@ -1,28 +1,49 @@
 <template>
   <footer class="sr-actions">
-    <div class="sr-actions-inner">
-      <div
-        v-if="canAssign"
-        class="sr-row"
-      >
-        <button
-          type="button"
-          class="sr-btn primary"
-          :disabled="busy"
-          @click="dialogOpen = true"
-        >
-          {{
-            isReassign
-              ? $t('salesRequests.actions.reassign')
-              : $t('salesRequests.actions.assign')
-          }}
-        </button>
-      </div>
+    <button
+      v-if="canAssign"
+      type="button"
+      class="sr-neu-btn primary"
+      :disabled="busy"
+      @click="dialogOpen = true"
+    >
+      {{
+        isReassign
+          ? $t('salesRequests.actions.reassign')
+          : $t('salesRequests.actions.assign')
+      }}
+    </button>
+    <button
+      v-if="canReject"
+      type="button"
+      class="sr-neu-btn danger"
+      :disabled="busy"
+      @click="reasonMode = 'reject'"
+    >
+      رفض
+    </button>
+    <button
+      v-if="canException"
+      type="button"
+      class="sr-neu-btn warn"
+      :disabled="busy"
+      @click="reasonMode = 'exception'"
+    >
+      طلب استثناء
+    </button>
 
-      <button v-if="canReject" type="button" class="sr-btn danger" :disabled="busy" @click="reasonMode = 'reject'">رفض</button>
-      <button v-if="canException" type="button" class="sr-btn warn" :disabled="busy" @click="reasonMode = 'exception'">طلب استثناء</button>
-    </div>
-    <Dialog :visible="reasonMode != null" modal :closable="!busy" :close-on-escape="!busy" :header="reasonMode === 'reject' ? 'رفض الطلب' : 'طلب استثناء'" :style="{width:'min(480px, 92vw)'}" class="bg-white rounded-3xl p-6" :pt="{mask:{class:'bg-[#C6C6C680] backdrop-blur-[2px]'}}" dir="rtl" @update:visible="!$event && !busy && (reasonMode = null)">
+    <Dialog
+      :visible="reasonMode != null"
+      modal
+      :closable="!busy"
+      :close-on-escape="!busy"
+      :header="reasonMode === 'reject' ? 'رفض الطلب' : 'طلب استثناء'"
+      :style="{ width: 'min(480px, 92vw)' }"
+      class="bg-white rounded-3xl p-6"
+      :pt="{ mask: { class: 'bg-[#C6C6C680] backdrop-blur-[2px]' } }"
+      dir="rtl"
+      @update:visible="!$event && !busy && (reasonMode = null)"
+    >
       <form @submit.prevent="submitReason">
         <p class="mb-4">{{ request.customerName }} · طلب #{{ request.id }}</p>
         <AppTextarea
@@ -35,9 +56,23 @@
           :disabled="busy"
           required
         />
-        <div class="flex gap-3 mt-5">
-          <button type="submit" class="sr-btn" :class="reasonMode === 'reject' ? 'danger' : 'warn'" :disabled="busy || !reasonText.trim()">{{ busy ? 'جارٍ الإرسال…' : 'تأكيد' }}</button>
-          <button type="button" class="sr-btn primary" :disabled="busy" @click="reasonMode = null">إلغاء</button>
+        <div class="sr-dialog-row">
+          <button
+            type="submit"
+            class="sr-neu-btn"
+            :class="reasonMode === 'reject' ? 'danger' : 'warn'"
+            :disabled="busy || !reasonText.trim()"
+          >
+            {{ busy ? 'جارٍ الإرسال…' : 'تأكيد' }}
+          </button>
+          <button
+            type="button"
+            class="sr-neu-btn primary"
+            :disabled="busy"
+            @click="reasonMode = null"
+          >
+            إلغاء
+          </button>
         </div>
       </form>
     </Dialog>
@@ -102,15 +137,6 @@ function emitDraft() {
   emit('draft-change', { ...localDraft })
 }
 
-function onRejectInput(e: Event) {
-  localDraft.reject = (e.target as HTMLInputElement).value
-  emitDraft()
-}
-function onExceptionInput(e: Event) {
-  localDraft.exception = (e.target as HTMLInputElement).value
-  emitDraft()
-}
-
 const isReassign = computed(
   () =>
     props.request.targetEmployeeId != null &&
@@ -124,10 +150,22 @@ watch(reasonMode, (mode) => {
   if (!mode) return
   void nextTick(() => reasonField.value?.focus())
 })
-const reasonText = computed({get: () => reasonMode.value ? localDraft[reasonMode.value] : '', set: (value: string) => {if (reasonMode.value) localDraft[reasonMode.value] = value; emitDraft()}})
+const reasonText = computed({
+  get: () => (reasonMode.value ? localDraft[reasonMode.value] : ''),
+  set: (value: string) => {
+    if (reasonMode.value) localDraft[reasonMode.value] = value
+    emitDraft()
+  },
+})
 async function submitReason() {
   if (!reasonText.value.trim() || busy.value) return
-  try { if (reasonMode.value === 'reject') await onReject(); else await onException(); reasonMode.value = null } catch { /* mutation reports the error; preserve the draft */ }
+  try {
+    if (reasonMode.value === 'reject') await onReject()
+    else await onException()
+    reasonMode.value = null
+  } catch {
+    /* mutation reports the error; preserve the draft */
+  }
 }
 const dialogOpen = ref(false)
 const pending = ref<'assign' | 'reject' | 'exception' | null>(null)
@@ -193,50 +231,47 @@ async function onException() {
 
 <style scoped>
 .sr-actions {
-  position: static;
-  bottom: 0;
-  padding-bottom: max(0.75rem, env(safe-area-inset-bottom));
-  margin-top: 1rem;
-  background: linear-gradient(180deg, transparent, #fff 30%);
+  display: contents;
 }
-.sr-actions-inner {
-  display: flex;
-  flex-direction: row;
-  flex-wrap: wrap;
-  gap: 0.75rem;
-  border-radius: 1rem;
-  background: #fff;
-  padding: 0.75rem 0;
-}
-.sr-row {
+.sr-dialog-row {
   display: flex;
   flex-wrap: wrap;
-  align-items: flex-end;
   gap: 0.5rem;
+  margin-top: 1.1rem;
 }
-.sr-btn {
-  border-radius: 0.85rem;
-  padding: 0.55rem 1rem;
-  min-height: 44px;
-  color: #fff;
-  font-family: inherit;
+.sr-neu-btn {
+  min-height: 40px;
   border: none;
+  border-radius: 14px;
+  padding: 0.35rem 0.85rem;
+  font: inherit;
+  font-weight: 700;
   cursor: pointer;
+  background: #e8f0ef;
+  box-shadow:
+    5px 5px 12px rgba(0, 32, 30, 0.12),
+    -5px -5px 12px rgba(255, 255, 255, 0.92);
+  transition:
+    box-shadow 0.15s ease,
+    transform 0.15s ease;
 }
-.sr-btn:disabled {
-  opacity: 0.6;
+.sr-neu-btn:disabled {
+  opacity: 0.55;
   cursor: not-allowed;
 }
-.sr-btn.primary {
-  background: #006a64;
+.sr-neu-btn:active:not(:disabled) {
+  transform: translateY(1px);
+  box-shadow:
+    inset 3px 3px 7px rgba(0, 32, 30, 0.14),
+    inset -3px -3px 7px rgba(255, 255, 255, 0.85);
 }
-.sr-btn.danger {
-  background: #9b1c1c;
+.sr-neu-btn.primary {
+  color: #006a64;
 }
-.sr-btn.warn {
-  background: #9a6700;
+.sr-neu-btn.danger {
+  color: #9b1c1c;
 }
-.grow {
-  flex: 1;
+.sr-neu-btn.warn {
+  color: #8a4b00;
 }
 </style>

@@ -145,6 +145,9 @@ function exceptionStateLabel(state: string) {
     inset 5px 5px 12px rgba(0, 32, 30, 0.12),
     inset -5px -5px 12px rgba(255, 255, 255, 0.85);
 }
+.sr-card-host :deep(.q-entity-card__actions) {
+  margin-top: 12px;
+}
 .sr-note {
   border-inline-start: 3px solid #b5cec8;
   padding: 10px 14px;

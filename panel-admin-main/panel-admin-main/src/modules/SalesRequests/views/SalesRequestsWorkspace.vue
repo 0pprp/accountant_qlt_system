@@ -113,18 +113,20 @@
             </div>
           </template>
           <template #actions="{ item }">
-            <RequestActions
-              v-if="!item.isDeleted && tab !== 'deleted'"
-              :request="item"
-              :draft="getDraft(item.id)"
-              @done="onActionDone"
-              @draft-change="Object.assign(getDraft(item.id), $event)"
-            />
-            <RequestLifecycleActions
-              :request="item"
-              :active-tab="tab"
-              @done="onActionDone"
-            />
+            <div class="sr-card-toolbar">
+              <RequestActions
+                v-if="!item.isDeleted && tab !== 'deleted'"
+                :request="item"
+                :draft="getDraft(item.id)"
+                @done="onActionDone"
+                @draft-change="Object.assign(getDraft(item.id), $event)"
+              />
+              <RequestLifecycleActions
+                :request="item"
+                :active-tab="tab"
+                @done="onActionDone"
+              />
+            </div>
           </template>
         </RequestList>
 
@@ -616,6 +618,13 @@ function formatSync(ts: number) {
 .sr-layout { align-items:start; gap:24px; }
 @media(min-width:1024px) { .sr-layout { grid-template-columns:minmax(360px,1fr) minmax(0,1.2fr); } }
 
+.sr-card-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.45rem;
+  width: 100%;
+}
 .sr-match-block {
   display: grid;
   gap: 0.75rem;
