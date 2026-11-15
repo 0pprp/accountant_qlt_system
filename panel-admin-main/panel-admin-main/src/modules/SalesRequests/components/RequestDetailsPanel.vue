@@ -1,17 +1,21 @@
 <template>
   <aside class="sr-details" aria-live="polite">
     <header class="sr-details-head">
+      <div class="sr-details-head__text">
+        <p v-if="request" class="sr-details-eyebrow">طلب #{{ request.id }}</p>
+        <h2 class="sr-details-title">
+          {{ request?.customerName || $t('salesRequests.details.empty') }}
+        </h2>
+      </div>
       <button
-        v-if="showBack"
         type="button"
-        class="sr-back"
+        class="sr-exit"
+        :aria-label="$t('salesRequests.details.exit')"
         @click="$emit('back')"
       >
-        {{ $t('salesRequests.details.back') }}
+        <i class="pi pi-times" aria-hidden="true" />
+        <span>{{ $t('salesRequests.details.exit') }}</span>
       </button>
-      <h2 class="sr-details-title">
-        {{ request?.customerName || $t('salesRequests.details.empty') }}
-      </h2>
     </header>
 
     <div
@@ -31,75 +35,100 @@
     </div>
 
     <template v-if="request">
-      <dl class="sr-dl">
-        <div><dt>رقم الطلب</dt><dd>#{{ request.id }}</dd></div>
-        <div><dt>أُرسل بواسطة</dt><dd>{{ request.createdByName || 'غير مسجل' }}</dd></div>
-        <div><dt>المنتج المطلوب</dt><dd>{{ request.requestedProduct || 'غير مسجل' }}</dd></div>
-        <div><dt>العنوان</dt><dd>{{ request.address || 'غير مسجل' }}</dd></div>
-        <div v-if="request.submissionNote" class="sr-full-field"><dt>ملاحظة المُرسل</dt><dd>{{ request.submissionNote }}</dd></div>
-        <div v-if="request.provinceName"><dt>المحافظة</dt><dd>{{ request.provinceName }}</dd></div>
-        <div v-if="request.originalExternalId"><dt>مرجع المصدر</dt><dd>{{ request.originalExternalId }}</dd></div>
-        <div>
-          <dt>{{ $t('salesRequests.card.status') }}</dt>
-          <dd>{{ request.statusLabel }}</dd>
-        </div>
-        <div>
-          <dt>{{ $t('salesRequests.card.phone') }}</dt>
-          <dd>{{ request.customerPhone || '—' }}</dd>
-        </div>
-        <div>
-          <dt>{{ $t('salesRequests.card.employee') }}</dt>
-          <dd>{{ request.targetEmployeeName || '—' }}</dd>
-        </div>
-        <div>
-          <dt>{{ $t('salesRequests.card.source') }}</dt>
-          <dd>{{ request.sourceTypeLabel }}</dd>
-        </div>
-        <div>
-          <dt>{{ $t('salesRequests.card.branch') }}</dt>
-          <dd>{{ request.branchName || request.branchId }}</dd>
-        </div>
-        <div>
-          <dt>{{ $t('salesRequests.card.addedAt') }}</dt>
-          <dd>{{ formatDate(request.createdAt) }}</dd>
-        </div>
-        <div>
-          <dt>{{ $t('salesRequests.card.lastStatus') }}</dt>
-          <dd>{{ formatDate(request.statusChangedAtUtc) }}</dd>
-        </div>
-        <div v-if="request.lastStatusNote">
-          <dt>{{ $t('salesRequests.details.note') }}</dt>
-          <dd>{{ request.lastStatusNote }}</dd>
-        </div>
-        <div v-if="request.rejectReason">
-          <dt>{{ $t('salesRequests.details.rejectReason') }}</dt>
-          <dd>{{ request.rejectReason }}</dd>
-        </div>
-        <div v-if="request.exceptionState">
-          <dt>{{ $t('salesRequests.lifecycle.exceptionState') }}</dt>
-          <dd>{{ exceptionStateLabel(request.exceptionState) }}</dd>
-        </div>
-        <div v-if="request.deleteReason">
-          <dt>{{ $t('salesRequests.lifecycle.deleteReason') }}</dt>
-          <dd>{{ request.deleteReason }}</dd>
-        </div>
-        <div
-          v-if="activeTab === 'sent'"
-          class="sr-sent-note"
-        >
-          <dt>{{ $t('salesRequests.sent.caveatTitle') }}</dt>
-          <dd>{{ $t('salesRequests.sent.caveatBody') }}</dd>
-        </div>
-      </dl>
+      <section class="sr-section" aria-label="بيانات الطلب">
+        <h3 class="sr-section__title">بيانات الطلب</h3>
+        <dl class="sr-dl">
+          <div>
+            <dt>المنتج المطلوب</dt>
+            <dd>{{ request.requestedProduct || 'غير مسجل' }}</dd>
+          </div>
+          <div>
+            <dt>العنوان</dt>
+            <dd>{{ request.address || 'غير مسجل' }}</dd>
+          </div>
+          <div>
+            <dt>{{ $t('salesRequests.card.status') }}</dt>
+            <dd>{{ request.statusLabel }}</dd>
+          </div>
+          <div>
+            <dt>{{ $t('salesRequests.card.phone') }}</dt>
+            <dd>{{ request.customerPhone || '—' }}</dd>
+          </div>
+          <div>
+            <dt>{{ $t('salesRequests.card.employee') }}</dt>
+            <dd>{{ request.targetEmployeeName || '—' }}</dd>
+          </div>
+          <div>
+            <dt>{{ $t('salesRequests.card.source') }}</dt>
+            <dd>{{ request.sourceTypeLabel }}</dd>
+          </div>
+          <div>
+            <dt>{{ $t('salesRequests.card.branch') }}</dt>
+            <dd>
+              {{ request.branchName || request.branchId
+              }}{{ request.provinceName ? ` · ${request.provinceName}` : '' }}
+            </dd>
+          </div>
+          <div>
+            <dt>أُرسل بواسطة</dt>
+            <dd>{{ request.createdByName || 'غير مسجل' }}</dd>
+          </div>
+          <div>
+            <dt>{{ $t('salesRequests.card.addedAt') }}</dt>
+            <dd>{{ formatDate(request.createdAt) }}</dd>
+          </div>
+          <div>
+            <dt>{{ $t('salesRequests.card.lastStatus') }}</dt>
+            <dd>{{ formatDate(request.statusChangedAtUtc) }}</dd>
+          </div>
+          <div
+            v-if="request.submissionNote"
+            class="sr-full-field"
+          >
+            <dt>ملاحظة المُرسل</dt>
+            <dd>{{ request.submissionNote }}</dd>
+          </div>
+          <div v-if="request.originalExternalId">
+            <dt>مرجع المصدر</dt>
+            <dd>{{ request.originalExternalId }}</dd>
+          </div>
+          <div v-if="request.lastStatusNote">
+            <dt>{{ $t('salesRequests.details.note') }}</dt>
+            <dd>{{ request.lastStatusNote }}</dd>
+          </div>
+          <div v-if="request.rejectReason">
+            <dt>{{ $t('salesRequests.details.rejectReason') }}</dt>
+            <dd>{{ request.rejectReason }}</dd>
+          </div>
+          <div v-if="request.exceptionState">
+            <dt>{{ $t('salesRequests.lifecycle.exceptionState') }}</dt>
+            <dd>{{ exceptionStateLabel(request.exceptionState) }}</dd>
+          </div>
+          <div v-if="request.deleteReason">
+            <dt>{{ $t('salesRequests.lifecycle.deleteReason') }}</dt>
+            <dd>{{ request.deleteReason }}</dd>
+          </div>
+          <div
+            v-if="activeTab === 'sent'"
+            class="sr-full-field"
+          >
+            <dt>{{ $t('salesRequests.sent.caveatTitle') }}</dt>
+            <dd>{{ $t('salesRequests.sent.caveatBody') }}</dd>
+          </div>
+        </dl>
+      </section>
 
-      <div class="sr-links">
+      <div
+        v-if="(request.existingCustomerId && canProfile) || (request.linkedOrderId && canOrder)"
+        class="sr-links"
+      >
         <RouterLink
           v-if="request.existingCustomerId && canProfile"
           :to="{
             name: 'CustomerAuditProfileRoute',
             params: { id: request.existingCustomerId },
           }"
-          class="sr-link"
+          class="sr-chip-link"
         >
           {{ $t('salesRequests.details.profile') }}
         </RouterLink>
@@ -109,33 +138,47 @@
             name: 'SaleViewRoute',
             params: { saleId: request.linkedOrderId },
           }"
-          class="sr-link"
+          class="sr-chip-link"
         >
           {{ $t('salesRequests.details.linkedSale') }} #{{ request.linkedOrderId }}
         </RouterLink>
       </div>
 
-      <RequestTimeline
-        :items="timeline"
-        :loading="timelineLoading"
-        :error="timelineError"
-        :can-read="canTimeline"
-      />
+      <section class="sr-section">
+        <RequestTimeline
+          :items="timeline"
+          :loading="timelineLoading"
+          :error="timelineError"
+          :can-read="canTimeline"
+        />
+      </section>
 
       <div
         v-if="showAudit"
-        class="sr-audit-slot"
+        class="sr-section sr-audit-slot"
       >
+        <h3 class="sr-section__title">المطابقة والتدقيق</h3>
         <slot name="audit" />
       </div>
 
-      <RequestLifecycleActions
-        :request="request"
-        :active-tab="activeTab"
-        @done="$emit('action-done')"
-      />
+      <div class="sr-section">
+        <RequestLifecycleActions
+          :request="request"
+          :active-tab="activeTab"
+          @done="$emit('action-done')"
+        />
+      </div>
 
-
+      <footer class="sr-details-foot">
+        <button
+          type="button"
+          class="sr-exit sr-exit--block"
+          @click="$emit('back')"
+        >
+          <i class="pi pi-times" aria-hidden="true" />
+          <span>{{ $t('salesRequests.details.exit') }}</span>
+        </button>
+      </footer>
     </template>
   </aside>
 </template>
@@ -143,7 +186,6 @@
 <script setup lang="ts">
 import type { SalesRequestListItem, SalesRequestTimelineItem } from '../types'
 import RequestTimeline from './RequestTimeline.vue'
-import RequestActions from './RequestActions.vue'
 import RequestLifecycleActions from './RequestLifecycleActions.vue'
 
 withDefaults(
@@ -198,89 +240,187 @@ function exceptionStateLabel(state: string) {
 
 <style scoped>
 .sr-details {
+  --neo-bg: #e8f0ef;
+  --neo-ink: #00201e;
+  --neo-brand: #006a64;
+  --neo-soft: #f4f8f7;
+  --neo-dark: rgba(0, 32, 30, 0.12);
+  --neo-light: rgba(255, 255, 255, 0.92);
+  color: var(--neo-ink);
+  background: var(--neo-bg);
   border-radius: 18px;
-  border: 0;
-  background: #e8f0ef;
-  padding: 1rem;
-  color: #00201e;
-  font-family: inherit;
+  padding: 1.1rem 1.15rem 1.25rem;
   min-height: 12rem;
   box-shadow:
-    8px 8px 18px rgba(0, 32, 30, 0.12),
-    -8px -8px 18px rgba(255, 255, 255, 0.9);
+    8px 8px 18px var(--neo-dark),
+    -8px -8px 18px var(--neo-light);
 }
+
 .sr-details-head {
   display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 0.5rem;
-  margin-bottom: 0.75rem;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
 }
+
+.sr-details-head__text {
+  min-width: 0;
+  flex: 1;
+}
+
+.sr-details-eyebrow {
+  margin: 0 0 0.2rem;
+  font-size: 0.85rem;
+  color: #5f736f;
+  font-weight: 650;
+}
+
 .sr-details-title {
   margin: 0;
-  font-size: 1.15rem;
+  font-size: 1.35rem;
+  line-height: 1.55;
+  font-weight: 800;
+  overflow-wrap: anywhere;
 }
-.sr-back {
+
+.sr-exit {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  flex: none;
   min-height: 44px;
   min-width: 44px;
-  border-radius: 0.75rem;
-  border: 1px solid #d7e2e0;
-  background: #f8f8f8;
-  padding: 0.35rem 0.75rem;
-  font-family: inherit;
+  padding: 0.45rem 0.95rem;
+  border: 0;
+  border-radius: 14px;
+  background: var(--neo-soft);
+  color: var(--neo-brand);
+  font: inherit;
+  font-weight: 800;
+  cursor: pointer;
+  box-shadow:
+    5px 5px 12px var(--neo-dark),
+    -5px -5px 12px var(--neo-light);
 }
+
+.sr-exit:active,
+.sr-exit--block:active {
+  box-shadow:
+    inset 3px 3px 8px rgba(0, 32, 30, 0.12),
+    inset -3px -3px 8px rgba(255, 255, 255, 0.85);
+}
+
+.sr-exit--block {
+  width: 100%;
+  min-height: 48px;
+}
+
 .sr-moved {
   display: flex;
   flex-wrap: wrap;
   gap: 0.5rem;
   align-items: center;
-  margin-bottom: 0.75rem;
-  padding: 0.55rem 0.75rem;
-  border-radius: 0.75rem;
+  margin-bottom: 0.85rem;
+  padding: 0.7rem 0.85rem;
+  border-radius: 14px;
   background: #fff8e6;
-  font-size: 0.85rem;
+  font-size: 0.9rem;
+  box-shadow:
+    inset 2px 2px 6px rgba(138, 75, 0, 0.08),
+    inset -2px -2px 6px rgba(255, 255, 255, 0.7);
 }
+
+.sr-section {
+  margin-bottom: 0.95rem;
+  padding: 0.95rem 1rem;
+  border-radius: 16px;
+  background: var(--neo-soft);
+  box-shadow:
+    inset 3px 3px 8px rgba(0, 32, 30, 0.07),
+    inset -3px -3px 8px rgba(255, 255, 255, 0.88);
+}
+
+.sr-section__title {
+  margin: 0 0 0.75rem;
+  font-size: 1rem;
+  font-weight: 800;
+  color: var(--neo-brand);
+}
+
 .sr-dl {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 0.55rem;
-  margin: 0 0 0.85rem;
-  font-size: 0.85rem;
+  gap: 0.85rem 1.1rem;
+  margin: 0;
 }
+
 .sr-dl dt {
-  opacity: 0.65;
-  font-size: 0.75rem;
+  margin: 0;
+  font-size: 0.78rem;
+  color: #61756f;
 }
+
 .sr-dl dd {
-  margin: 0.1rem 0 0;
+  margin: 0.15rem 0 0;
+  font-size: 0.98rem;
+  line-height: 1.65;
+  font-weight: 650;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
 }
+
+.sr-full-field {
+  grid-column: 1 / -1;
+}
+
 .sr-links {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.75rem;
-  margin-bottom: 1rem;
+  gap: 0.55rem;
+  margin-bottom: 0.95rem;
 }
+
+.sr-chip-link,
 .sr-link {
-  color: #006a64;
-  text-decoration: underline;
-  background: none;
-  border: none;
-  font-family: inherit;
-  cursor: pointer;
-  min-height: 44px;
   display: inline-flex;
   align-items: center;
+  min-height: 42px;
+  padding: 0.35rem 0.85rem;
+  border-radius: 999px;
+  background: var(--neo-soft);
+  color: var(--neo-brand);
+  font-weight: 700;
+  text-decoration: none;
+  box-shadow:
+    4px 4px 10px var(--neo-dark),
+    -4px -4px 10px var(--neo-light);
 }
+
+.sr-link {
+  border: 0;
+  font: inherit;
+  cursor: pointer;
+}
+
 .sr-audit-slot {
-  margin: 1rem 0;
-  padding-top: 0.75rem;
-  border-top: 1px solid #d7e2e0;
+  margin-top: 0;
 }
-.sr-details { padding:24px; border-radius:18px; }
-.sr-details-title { font-size:24px; line-height:1.7; overflow-wrap:anywhere; }
-.sr-dl { gap:20px; }
-.sr-dl dt { font-size:14px; color:#61756f; }
-.sr-dl dd { font-size:16px; line-height:1.8; white-space:pre-wrap; overflow-wrap:anywhere; }
-.sr-full-field { grid-column:1 / -1; }
-@media(max-width:480px) { .sr-details { padding:18px 15px; } }
+
+.sr-details-foot {
+  margin-top: 0.35rem;
+}
+
+@media (max-width: 560px) {
+  .sr-details {
+    padding: 0.95rem 0.85rem 1.1rem;
+  }
+  .sr-dl {
+    grid-template-columns: 1fr;
+  }
+  .sr-details-title {
+    font-size: 1.15rem;
+  }
+}
 </style>

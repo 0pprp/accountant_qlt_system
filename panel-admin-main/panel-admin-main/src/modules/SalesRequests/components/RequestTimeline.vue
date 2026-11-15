@@ -54,7 +54,7 @@ defineProps<{
 }>()
 
 function formatDate(value: string) {
-  return new Intl.DateTimeFormat('ar-IQ', {
+  return new Intl.DateTimeFormat('en-US', {
     dateStyle: 'medium',
     timeStyle: 'short',
   }).format(new Date(value))
@@ -63,8 +63,10 @@ function formatDate(value: string) {
 
 <style scoped>
 .sr-tl-title {
-  margin: 0 0 0.5rem;
+  margin: 0 0 0.65rem;
   font-size: 1rem;
+  font-weight: 800;
+  color: #006a64;
 }
 .sr-tl-msg {
   font-size: 0.85rem;
@@ -78,28 +80,24 @@ function formatDate(value: string) {
   list-style: none;
   margin: 0;
   padding: 0;
-  border-inline-start: 2px solid #d7e2e0;
+  display: grid;
+  gap: 0.55rem;
 }
 .sr-tl-item {
   position: relative;
-  padding: 0.55rem 0 0.55rem 0.85rem;
-}
-.sr-tl-item::before {
-  content: '';
-  position: absolute;
-  inset-inline-start: -5px;
-  top: 0.85rem;
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: #006a64;
+  padding: 0.7rem 0.8rem;
+  border-radius: 14px;
+  background: #eef5f3;
+  box-shadow:
+    4px 4px 10px rgba(0, 32, 30, 0.1),
+    -4px -4px 10px rgba(255, 255, 255, 0.9);
 }
 .sr-tl-head {
   display: flex;
   flex-wrap: wrap;
   justify-content: space-between;
   gap: 0.35rem;
-  font-size: 0.9rem;
+  font-size: 0.92rem;
 }
 .sr-tl-head time {
   font-size: 0.75rem;
@@ -108,8 +106,8 @@ function formatDate(value: string) {
 .sr-tl-actor,
 .sr-tl-status,
 .sr-tl-reason {
-  margin: 0.2rem 0 0;
-  font-size: 0.8rem;
-  opacity: 0.85;
+  margin: 0.25rem 0 0;
+  font-size: 0.82rem;
+  opacity: 0.88;
 }
 </style>

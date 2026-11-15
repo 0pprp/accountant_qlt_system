@@ -99,7 +99,20 @@
         </div>
       </section>
 
-      <Dialog :visible="selectedId != null" modal header="تفاصيل الطلب والمطابقة" :style="{width:'min(960px, 94vw)'}" :pt="{mask:{class:'bg-[#C6C6C680] backdrop-blur-[2px]'}}" class="bg-white rounded-3xl p-5" dir="rtl" @update:visible="!$event && (selectedId = null)">
+      <Dialog
+        :visible="selectedId != null"
+        modal
+        closable
+        dismissable-mask
+        close-on-escape
+        :show-header="false"
+        :style="{ width: 'min(960px, 96vw)', maxHeight: '92vh' }"
+        :content-style="{ overflow: 'auto', padding: '0.75rem', background: '#e8f0ef' }"
+        :pt="{ mask: { class: 'bg-[#00201E66] backdrop-blur-[2px]' } }"
+        class="sr-detail-dialog"
+        dir="rtl"
+        @update:visible="!$event && (selectedId = null)"
+      >
         <RequestDetailsPanel
           :request="detailRequest"
           :timeline="timelineItems"
@@ -108,7 +121,7 @@
           :can-timeline="canTimeline"
           :can-profile="canProfile"
           :can-order="canOrder"
-          :show-back="isNarrow"
+          :show-back="true"
           :show-audit="tab === 'unassigned' && canMatchRead"
           :moved-message="outsideFilterMessage"
           :moved-tab="outsideFilterTargetTab"
@@ -638,17 +651,32 @@ watch(tab, () => {
 }
 .sr-source-tab {
   border-radius: 999px;
-  border: 1px solid #d7e2e0;
+  border: 0;
   padding: 0.4rem 0.9rem;
   min-height: 44px;
-  background: #fff;
+  background: #edf5f3;
   color: #00201e;
   font-family: inherit;
+  font-weight: 700;
+  box-shadow:
+    4px 4px 10px rgba(0, 32, 30, 0.12),
+    -4px -4px 10px rgba(255, 255, 255, 0.9);
 }
 .sr-source-tab.active {
   background: #006a64;
-  border-color: #006a64;
   color: #fff;
+  box-shadow:
+    inset 3px 3px 7px rgba(0, 0, 0, 0.18),
+    inset -2px -2px 6px rgba(255, 255, 255, 0.15);
+}
+:deep(.sr-detail-dialog.p-dialog) {
+  border: 0;
+  border-radius: 20px;
+  overflow: hidden;
+  background: #e8f0ef;
+  box-shadow:
+    12px 12px 28px rgba(0, 32, 30, 0.18),
+    -8px -8px 20px rgba(255, 255, 255, 0.5);
 }
 .sr-workspace { direction:rtl; color:#00201e; }
 .sr-header { padding-bottom:16px; border-bottom:1px solid #dce7e5; margin-bottom:20px; }
