@@ -84,6 +84,9 @@ export const MOCK_HITS: MatchHit[] = [
     paymentDays: 45,
     saleDate: '2025-06-01',
     canOpenProfile: true,
+    significantPaymentDate: '2026-11-10',
+    significantPaymentAmount: 600000,
+    paymentShareBand: 'green',
   },
 ]
 

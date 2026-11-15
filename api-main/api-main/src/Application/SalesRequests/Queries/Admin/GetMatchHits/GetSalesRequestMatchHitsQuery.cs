@@ -27,4 +27,10 @@ public record GetSalesRequestMatchHitItem
     public int? PaymentDays { get; init; }
     public DateOnly? SaleDate { get; init; }
     public bool CanOpenProfile { get; init; }
+    /// <summary>تاريخ أكبر دفعة يوم واحد مؤهّلة خلال آخر 30 يوماً.</summary>
+    public DateOnly? SignificantPaymentDate { get; init; }
+    /// <summary>مبلغ تلك الدفعة اليومية.</summary>
+    public double? SignificantPaymentAmount { get; init; }
+    /// <summary>green | orange — نسبة الدفعة من سعر البيع.</summary>
+    public string? PaymentShareBand { get; init; }
 }

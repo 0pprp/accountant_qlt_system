@@ -17,8 +17,16 @@
       v-for="hit in items"
       :key="hit.customerId"
       class="sr-hit-card"
+      :data-band="hit.paymentShareBand || undefined"
       data-testid="match-hit-card"
     >
+      <div
+        v-if="paymentBanner(hit)"
+        class="sr-hit-banner"
+        :data-band="hit.paymentShareBand || undefined"
+      >
+        {{ paymentBanner(hit) }}
+      </div>
       <header class="sr-hit-card__head">
         <div class="sr-hit-card__title">
           <h4>{{ hit.customerName }}</h4>
@@ -164,6 +172,24 @@ function formatDate(value?: string | null) {
   return new Intl.DateTimeFormat('en-US', { dateStyle: 'medium' }).format(d)
 }
 
+function formatShortDay(value?: string | null) {
+  if (!value) return ''
+  // DateOnly "yyyy-MM-dd" أو ISO
+  const m = String(value).match(/^(\d{4})-(\d{2})-(\d{2})/)
+  if (m) return `${Number(m[3])}/${Number(m[2])}`
+  const d = new Date(value)
+  if (Number.isNaN(d.getTime())) return String(value)
+  return `${d.getDate()}/${d.getMonth() + 1}`
+}
+
+function paymentBanner(hit: MatchHit) {
+  if (!hit.significantPaymentDate || hit.significantPaymentAmount == null)
+    return null
+  const day = formatShortDay(hit.significantPaymentDate)
+  const amount = formatMoney(hit.significantPaymentAmount)
+  return `في يوم ${day} دفع ${amount} دينار`
+}
+
 function ratingTone(label: string) {
   if (label.includes('ممتاز') || label.includes('جيد')) return 'ok'
   if (label.includes('ضعيف') || label.includes('سي')) return 'bad'
@@ -219,6 +245,40 @@ async function onCopy(value: string, key: string) {
   box-shadow:
     7px 7px 16px var(--neo-shadow-dark),
     -7px -7px 16px var(--neo-shadow-light);
+  overflow: hidden;
+}
+
+.sr-hit-card[data-band='green'] {
+  box-shadow:
+    7px 7px 16px rgba(15, 118, 110, 0.18),
+    -7px -7px 16px var(--neo-shadow-light),
+    inset 0 0 0 2px rgba(15, 118, 110, 0.35);
+}
+
+.sr-hit-card[data-band='orange'] {
+  box-shadow:
+    7px 7px 16px rgba(194, 100, 12, 0.16),
+    -7px -7px 16px var(--neo-shadow-light),
+    inset 0 0 0 2px rgba(194, 100, 12, 0.4);
+}
+
+.sr-hit-banner {
+  margin: -1rem -1.05rem 0.85rem;
+  padding: 0.65rem 1.05rem;
+  font-size: 0.92rem;
+  font-weight: 800;
+  line-height: 1.45;
+  text-align: center;
+}
+
+.sr-hit-banner[data-band='green'] {
+  background: linear-gradient(180deg, #d8f3e8, #c5ebd9);
+  color: #0f5c4c;
+}
+
+.sr-hit-banner[data-band='orange'] {
+  background: linear-gradient(180deg, #ffe4c4, #ffd4a1);
+  color: #8a4b00;
 }
 
 .sr-hit-card__head {

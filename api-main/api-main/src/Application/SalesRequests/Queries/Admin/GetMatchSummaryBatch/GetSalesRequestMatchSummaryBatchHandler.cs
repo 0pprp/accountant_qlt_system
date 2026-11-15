@@ -10,11 +10,16 @@ public class GetSalesRequestMatchSummaryBatchHandler
 {
     private readonly IApplicationDbContext _db;
     private readonly ICurrentUserService _currentUser;
+    private readonly IDateTimeProvider _clock;
 
-    public GetSalesRequestMatchSummaryBatchHandler(IApplicationDbContext db, ICurrentUserService currentUser)
+    public GetSalesRequestMatchSummaryBatchHandler(
+        IApplicationDbContext db,
+        ICurrentUserService currentUser,
+        IDateTimeProvider clock)
     {
         _db = db;
         _currentUser = currentUser;
+        _clock = clock;
     }
 
     public async Task<Result<GetSalesRequestMatchSummaryBatchResponse>> Handle(
@@ -35,17 +40,42 @@ public class GetSalesRequestMatchSummaryBatchHandler
             .Select(x => new { x.Id, x.CustomerName, x.CustomerPhone })
             .ToListAsync(cancellationToken);
 
+        var asOf = _clock.Today;
         var items = new List<SalesMatchSummaryItemDto>(requests.Count);
         foreach (var req in requests)
         {
             var cards = new List<SalesMatchCardDto>(SalesMatchCriteria.All.Length);
             foreach (var key in SalesMatchCriteria.All)
             {
-                // مرشحون مضيّقون لكل معيار — لا تحميل قاعدة الزبائن كاملة لكل دفعة
                 var customers = await SalesMatchCandidateSelector.LoadCustomerCandidatesAsync(
                     _db, branches, key, req.CustomerName, req.CustomerPhone, cancellationToken);
-                cards.Add(SalesRequestMatchEvaluator.EvaluateCard(
-                    key, req.CustomerName, req.CustomerPhone, customers));
+
+                var probe = SalesRequestMatchEvaluator.EvaluateCard(
+                    key, req.CustomerName, req.CustomerPhone, customers);
+                if (probe.State is "insufficientData" or "failed")
+                {
+                    cards.Add(probe);
+                    continue;
+                }
+
+                var matchedIds = SalesRequestMatchEvaluator
+                    .FilterHits(key, req.CustomerName, req.CustomerPhone, customers)
+                    .Select(c => c.Id)
+                    .Distinct()
+                    .ToList();
+
+                var qualified = await SalesMatchSignificantPayment.LoadQualifiedAsync(
+                    _db, matchedIds, asOf, cancellationToken);
+                var count = matchedIds.Count(id => qualified.ContainsKey(id));
+                var label = SalesMatchCardLabels.For(key);
+                cards.Add(new SalesMatchCardDto
+                {
+                    Key = key,
+                    Label = label,
+                    State = SalesMatchCardLabels.StateName(
+                        count > 0 ? SalesMatchCardState.Results : SalesMatchCardState.NoResults),
+                    Count = count
+                });
             }
 
             items.Add(new SalesMatchSummaryItemDto
@@ -55,7 +85,6 @@ public class GetSalesRequestMatchSummaryBatchHandler
             });
         }
 
-        // طلبات غير موجودة/محجوبة لا تُعاد — لا تكشف الوجود عبر العدد
         return new GetSalesRequestMatchSummaryBatchResponse { Items = items };
     }
 }

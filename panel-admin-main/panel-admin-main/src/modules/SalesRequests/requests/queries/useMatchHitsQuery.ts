@@ -41,7 +41,28 @@ export function normalizeMatchHit(raw: unknown): MatchHit {
       (pick(row, 'paymentDays', 'PaymentDays') as number | null | undefined) ?? null,
     saleDate: (pick(row, 'saleDate', 'SaleDate') as string | null | undefined) ?? null,
     canOpenProfile: Boolean(pick(row, 'canOpenProfile', 'CanOpenProfile')),
+    significantPaymentDate:
+      (pick(row, 'significantPaymentDate', 'SignificantPaymentDate') as
+        | string
+        | null
+        | undefined) ?? null,
+    significantPaymentAmount:
+      (pick(row, 'significantPaymentAmount', 'SignificantPaymentAmount') as
+        | number
+        | null
+        | undefined) ?? null,
+    paymentShareBand: normalizeBand(
+      pick(row, 'paymentShareBand', 'PaymentShareBand')
+    ),
   }
+}
+
+function normalizeBand(
+  raw: unknown
+): MatchHit['paymentShareBand'] {
+  const v = String(raw ?? '').toLowerCase()
+  if (v === 'green' || v === 'orange') return v
+  return null
 }
 
 export function fetchMatchHits(

@@ -110,6 +110,8 @@ export interface MatchSummaryItem {
   cards: MatchCard[]
 }
 
+export type PaymentShareBand = 'green' | 'orange' | 'none'
+
 export interface MatchHit {
   customerId: number
   customerName: string
@@ -127,6 +129,11 @@ export interface MatchHit {
   paymentDays?: number | null
   saleDate?: string | null
   canOpenProfile: boolean
+  /** تاريخ أكبر دفعة يوم واحد مؤهّلة خلال آخر 30 يوماً */
+  significantPaymentDate?: string | null
+  significantPaymentAmount?: number | null
+  /** green ≥25% | orange 20–24% */
+  paymentShareBand?: PaymentShareBand | null
 }
 
 export interface DuplicateRequestHit {

@@ -1,3 +1,4 @@
+using Application.SalesRequests.Common;
 using Domain.Services.SalesMatching;
 
 namespace Application.Tests.SalesRequests;
@@ -59,5 +60,39 @@ public class SalesMatchingRulesTests
         const string original = "أَحْمَد محمّد";
         _ = SalesRequestNameSimilarity.Normalize(original);
         Assert.Equal("أَحْمَد محمّد", original);
+    }
+
+    [Fact]
+    public void SignificantPayment_green_at_25_percent_same_day_sum()
+    {
+        var day = new DateOnly(2026, 11, 10);
+        var info = SalesMatchSignificantPayment.Evaluate(
+            2_000_000,
+            [(day, 300_000), (day, 200_000)]);
+        Assert.NotNull(info);
+        Assert.Equal(SalesMatchPaymentShareBand.Green, info!.Band);
+        Assert.Equal(500_000, info.Amount);
+        Assert.Equal(day, info.Date);
+    }
+
+    [Fact]
+    public void SignificantPayment_orange_between_20_and_25()
+    {
+        var day = new DateOnly(2026, 11, 5);
+        var info = SalesMatchSignificantPayment.Evaluate(
+            2_700_000,
+            [(day, 570_000)]);
+        Assert.NotNull(info);
+        Assert.Equal(SalesMatchPaymentShareBand.Orange, info!.Band);
+    }
+
+    [Fact]
+    public void SignificantPayment_rejects_below_20_percent()
+    {
+        var day = new DateOnly(2026, 11, 5);
+        var info = SalesMatchSignificantPayment.Evaluate(
+            2_700_000,
+            [(day, 400_000)]);
+        Assert.Null(info);
     }
 }

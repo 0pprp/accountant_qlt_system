@@ -70,8 +70,13 @@ public class GetSalesRequestMatchHitsHandler
             .Distinct()
             .ToList();
 
-        var total = hitIds.Count;
-        var pageIds = hitIds
+        var asOf = _clock.Today;
+        var qualified = await SalesMatchSignificantPayment.LoadQualifiedAsync(
+            _db, hitIds, asOf, cancellationToken);
+
+        var qualifiedIds = hitIds.Where(id => qualified.ContainsKey(id)).ToList();
+        var total = qualifiedIds.Count;
+        var pageIds = qualifiedIds
             .Skip((request.Pagination.PageIndex - 1) * request.Pagination.PageSize)
             .Take(request.Pagination.PageSize)
             .ToList();
@@ -84,7 +89,6 @@ public class GetSalesRequestMatchHitsHandler
 
         var canReadFinancial = _currentUser.HasPermission(SeedPermissions.SalesRequest.ReadFinancial);
 
-        var asOf = _clock.Today;
         var rows = await _db.Customers.AsNoTracking()
             .Where(x => pageIds.Contains(x.Id))
             .Select(x => new
@@ -116,8 +120,13 @@ public class GetSalesRequestMatchHitsHandler
             })
             .ToListAsync(cancellationToken);
 
-        var items = rows.Select(row =>
+        var byId = rows.ToDictionary(r => r.Id);
+        var items = new List<GetSalesRequestMatchHitItem>(pageIds.Count);
+        foreach (var id in pageIds)
         {
+            if (!byId.TryGetValue(id, out var row))
+                continue;
+
             var remaining = row.SellAmount - row.PaidAmount;
             var rating = CustomerRatingCalculator.EvaluateLabel(
                 row.SellAmount, row.PaidAmount, remaining, row.SaleDate, row.LastPayment, asOf);
@@ -126,14 +135,15 @@ public class GetSalesRequestMatchHitsHandler
                     CustomerRatingCalculator.AdjustSaleDate(sd), lp)
                 : (int?)null;
 
-            // IsLegal غير موجود في نموذج الزبون الحالي — يُرجع null (متوقف على المخطط)
+            qualified.TryGetValue(id, out var sig);
             double? sell = canReadFinancial ? row.SellAmount : null;
             double? paid = canReadFinancial ? row.PaidAmount : null;
             double? rem = canReadFinancial ? remaining : null;
             int? payCount = canReadFinancial ? row.PaymentCount : null;
             int? payDays = canReadFinancial ? paymentDays : null;
+            double? sigAmt = canReadFinancial && sig is not null ? sig.Amount : null;
 
-            return new GetSalesRequestMatchHitItem
+            items.Add(new GetSalesRequestMatchHitItem
             {
                 CustomerId = row.Id,
                 CustomerName = row.FullName,
@@ -151,9 +161,14 @@ public class GetSalesRequestMatchHitsHandler
                 PaymentCount = payCount,
                 PaymentDays = payDays,
                 SaleDate = row.SaleDate,
-                CanOpenProfile = _currentUser.HasPermission(SeedPermissions.SalesRequest.ReadAuditProfile)
-            };
-        }).ToList();
+                CanOpenProfile = _currentUser.HasPermission(SeedPermissions.SalesRequest.ReadAuditProfile),
+                SignificantPaymentDate = sig?.Date,
+                SignificantPaymentAmount = sigAmt,
+                PaymentShareBand = sig is not null
+                    ? SalesMatchSignificantPayment.BandName(sig.Band)
+                    : null
+            });
+        }
 
         return new PaginatedList<GetSalesRequestMatchHitItem>(
             items, total, request.Pagination.PageIndex, request.Pagination.PageSize);
@@ -171,5 +186,4 @@ public class GetSalesRequestMatchHitsHandler
             _ => []
         };
     }
-
 }
