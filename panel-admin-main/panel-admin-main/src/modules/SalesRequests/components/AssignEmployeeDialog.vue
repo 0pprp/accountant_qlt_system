@@ -1,5 +1,16 @@
 <template>
   <Dialog :visible="open" modal :closable="!busy" :close-on-escape="!busy" :header="mode === 'reassign' ? 'إعادة إسناد الطلب' : 'إسناد الطلب'" :style="{width:'min(520px, 92vw)'}" class="bg-white rounded-3xl p-6" dir="rtl" :pt="{mask:{class:'bg-[#C6C6C680] backdrop-blur-[2px]'}}" @update:visible="!$event && !busy && $emit('close')">
+      <template #closebutton="{ closeCallback }">
+        <button
+          type="button"
+          class="sr-dlg-close"
+          :disabled="busy"
+          aria-label="إغلاق"
+          @click="closeCallback"
+        >
+          ×
+        </button>
+      </template>
       <AppSearchField
         v-model="search"
         :label="$t('salesRequests.actions.searchEmployee')"
@@ -246,5 +257,27 @@ function confirm() {
 .sr-btn.ghost {
   background: #f0f4f3;
   color: #00201e;
+}
+.sr-dlg-close {
+  width: 2.35rem;
+  height: 2.35rem;
+  min-width: 2.35rem;
+  min-height: 2.35rem;
+  padding: 0;
+  border: 1px solid #e8a39a;
+  border-radius: 10px;
+  background: #fff5f4;
+  color: #c62828;
+  font-size: 1.55rem;
+  font-weight: 700;
+  line-height: 1;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.sr-dlg-close:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
 }
 </style>

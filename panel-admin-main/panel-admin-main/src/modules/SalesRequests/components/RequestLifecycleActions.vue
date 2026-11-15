@@ -64,6 +64,17 @@
       dir="rtl"
       @update:visible="!$event && !busy && closeDialog()"
     >
+      <template #closebutton="{ closeCallback }">
+        <button
+          type="button"
+          class="sr-dlg-close"
+          :disabled="busy"
+          aria-label="إغلاق"
+          @click="closeCallback"
+        >
+          ×
+        </button>
+      </template>
       <form
         class="sr-dialog-form"
         @submit.prevent="submitDialog"
@@ -466,5 +477,27 @@ async function submitDialog() {
   color: #9b1c1c;
   font-size: 0.85rem;
   margin: 0;
+}
+.sr-dlg-close {
+  width: 2.35rem;
+  height: 2.35rem;
+  min-width: 2.35rem;
+  min-height: 2.35rem;
+  padding: 0;
+  border: 1px solid #e8a39a;
+  border-radius: 10px;
+  background: #fff5f4;
+  color: #c62828;
+  font-size: 1.55rem;
+  font-weight: 700;
+  line-height: 1;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.sr-dlg-close:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
 }
 </style>
