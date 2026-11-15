@@ -11,23 +11,21 @@
     }"
   >
     <p v-if="message" class="q-confirm-reason__msg">{{ message }}</p>
-    <label class="q-confirm-reason__label">
-      {{ reasonLabel }}
-      <textarea
-        v-model="reason"
-        rows="4"
-        :placeholder="reasonPlaceholder"
-        :disabled="busy"
-      />
-    </label>
-    <p v-if="error" class="q-confirm-reason__err" role="alert">{{ error }}</p>
+    <AppTextarea
+      v-model="reason"
+      :label="reasonLabel"
+      :placeholder="reasonPlaceholder"
+      :disabled="busy"
+      :error="error || undefined"
+      required
+    />
     <div class="q-confirm-reason__actions">
-      <button type="button" class="primary" :disabled="busy" @click="submit">
+      <AppButton variant="primary" :loading="busy" :disabled="busy" @click="submit">
         {{ confirmLabel }}
-      </button>
-      <button type="button" class="ghost" :disabled="busy" @click="close">
+      </AppButton>
+      <AppButton variant="ghost" :disabled="busy" @click="close">
         {{ cancelLabel }}
-      </button>
+      </AppButton>
     </div>
   </Dialog>
 </template>
@@ -35,6 +33,8 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 import Dialog from 'primevue/dialog'
+import AppButton from './AppButton.vue'
+import AppTextarea from './AppTextarea.vue'
 
 const props = withDefaults(
   defineProps<{
@@ -74,7 +74,7 @@ const open = computed({
 
 watch(
   () => props.modelValue,
-  v => {
+  (v) => {
     if (v) {
       reason.value = ''
       error.value = ''
@@ -105,50 +105,15 @@ function submit() {
   color: #00201e;
   white-space: pre-wrap;
 }
-.q-confirm-reason__label {
-  display: grid;
-  gap: 8px;
-  font-size: 14px;
-  color: #526b67;
-}
-.q-confirm-reason__label textarea {
-  min-height: 96px;
-  background: #f8f8f8;
-  border: 1px solid #cfd8d7;
-  border-radius: 10px;
-  padding: 12px;
-  font: inherit;
-  color: #00201e;
-  resize: vertical;
-}
-.q-confirm-reason__err {
-  margin: 8px 0 0;
-  color: #963d35;
-  font-size: 14px;
-}
 .q-confirm-reason__actions {
   display: flex;
   gap: 8px;
   margin-top: 16px;
 }
-.q-confirm-reason__actions button {
-  min-height: 44px;
-  padding: 10px 16px;
-  border-radius: 10px;
-  font: inherit;
-  font-weight: 600;
-  cursor: pointer;
-}
-.q-confirm-reason__actions .primary {
+.q-confirm-reason__actions :deep(.q-btn--primary) {
   flex: 2;
-  background: #006a64;
-  color: #fff;
-  border: 1px solid #006a64;
 }
-.q-confirm-reason__actions .ghost {
+.q-confirm-reason__actions :deep(.q-btn--ghost) {
   flex: 1;
-  background: #fff;
-  color: #006a64;
-  border: 1px solid #cfdfda;
 }
 </style>

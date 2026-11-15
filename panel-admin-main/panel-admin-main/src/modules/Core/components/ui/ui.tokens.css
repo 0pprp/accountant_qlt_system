@@ -1,12 +1,42 @@
-/* Qalaat Al-Dhaman shared UI tokens — consume theme.css; do not invent palette. */
-.q-ui {
-  --q-primary: #006a64;
-  --q-ink: #00201e;
-  --q-card: #ffffff;
-  --q-search: #f8f8f8;
-  --q-muted: #6f797a;
-  --q-border: #d7e2e0;
-  --q-danger: #963d35;
+/**
+ * Qalaat Al-Dhaman — design tokens (aligned with brand / Figma system)
+ * Primitive → Semantic → Component
+ */
+:root {
+  /* Primitive */
+  --q-teal-700: #006a64;
+  --q-teal-800: #004d48;
+  --q-teal-50: #e7f3f1;
+  --q-ink-900: #00201e;
+  --q-ink-600: #5a6b6a;
+  --q-ink-400: #8a9b99;
+  --q-gray-50: #f8f8f8;
+  --q-gray-100: #f4f7f7;
+  --q-line-200: #d5e2e0;
+  --q-line-300: #cddbd7;
+  --q-white: #ffffff;
+  --q-danger-600: #c62828;
+  --q-success-700: #2e7d32;
+  --q-warning-700: #f9a825;
+
+  /* Semantic */
+  --q-primary: var(--q-teal-700);
+  --q-primary-hover: var(--q-teal-800);
+  --q-primary-soft: var(--q-teal-50);
+  --q-fg: var(--q-ink-900);
+  --q-muted: var(--q-ink-600);
+  --q-placeholder: var(--q-ink-400);
+  --q-bg: var(--q-gray-100);
+  --q-search: var(--q-gray-50);
+  --q-card: var(--q-white);
+  --q-border: var(--q-line-300);
+  --q-line: var(--q-line-200);
+  --q-danger: var(--q-danger-600);
+  --q-success: var(--q-success-700);
+  --q-warning: var(--q-warning-700);
+  --q-focus: 0 0 0 3px rgba(0, 106, 100, 0.18);
+
+  /* Spacing / type / radius / control */
   --q-space-1: 8px;
   --q-space-2: 12px;
   --q-space-3: 16px;
@@ -15,9 +45,18 @@
   --q-card-name: 20px;
   --q-value: 16px;
   --q-label: 14px;
+  --q-radius-sm: 10px;
+  --q-radius-md: 12px;
+  --q-radius-lg: 16px;
+  --q-control-h: 48px;
   --q-target: 44px;
-  color: var(--q-ink);
-  font-family: ElMessiri, Rubik, Tahoma, sans-serif;
+  --q-font: 'ElMessiri', Rubik, sans-serif;
+}
+
+.q-ui {
+  color: var(--q-fg);
+  font-family: var(--q-font);
+  font-variant-numeric: lining-nums tabular-nums;
 }
 
 .q-ui :focus-visible {

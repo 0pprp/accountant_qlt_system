@@ -1,21 +1,41 @@
 @layer components {
   button {
-    @apply cursor-pointer;
+    cursor: pointer;
+    font-family: inherit;
   }
+
   .btn {
-    @apply rounded-xl text-sm transition-colors duration-200 cursor-pointer px-4 py-2 border-0 flex justify-center items-center gap-2;
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+    gap: 0.5rem;
+    min-height: 44px;
+    padding: 0.65rem 1.1rem;
+    border: 0;
+    border-radius: 12px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: opacity 0.2s, background-color 0.2s;
   }
 
-  .btn:hover {
-    @apply opacity-90;
+  .btn:hover:not(:disabled) {
+    opacity: 0.92;
   }
 
-  .btn:active {
-    @apply opacity-80;
+  .btn:active:not(:disabled) {
+    opacity: 0.84;
   }
 
   .btn:disabled {
-    @apply bg-background text-gray-300 cursor-not-allowed;
+    background: #f8f8f8;
+    color: #9aabab;
+    cursor: not-allowed;
+  }
+
+  .btn:focus-visible {
+    outline: 3px solid #006a64;
+    outline-offset: 2px;
   }
 
   .btn-primary,
@@ -25,116 +45,87 @@
   .btn-error,
   .btn-warning,
   .btn-info,
-  .btn-accent,
-  .btn-purple,
   .btn-black {
-    @apply text-white;
-  }
-
-  .btn-white,
-  .btn-line,
-  .btn-background,
-  .btn-surface-1,
-  .btn-surface-2,
-  .btn-surface-3 {
-    @apply text-black;
+    color: #ffffff;
   }
 
   .btn-primary {
-    @apply bg-primary;
+    background: #006a64;
   }
   .btn-text-primary {
-    @apply text-primary shadow-2xl;
+    color: #006a64;
   }
   .btn-secondary {
-    @apply bg-secondary;
+    background: #1d6b50;
   }
-
   .btn-tertiary {
-    @apply bg-tertiary;
+    background: #006879;
   }
-
   .btn-success {
-    @apply bg-success;
+    background: #2e7d32;
   }
-
   .btn-error {
-    @apply bg-error;
+    background: #c62828;
   }
-
   .btn-warning {
-    @apply bg-warning;
+    background: #f9a825;
+    color: #00201e;
   }
-
   .btn-info {
-    @apply bg-info;
+    background: #1565c0;
   }
-
   .btn-accent {
-    @apply bg-accent;
+    background: #006a64;
+    color: #ffffff;
   }
-
   .btn-purple {
-    @apply bg-purple;
+    background: #006a64;
+    color: #ffffff;
   }
-
   .btn-white {
-    @apply bg-white;
+    background: #ffffff;
+    color: #00201e;
+    border: 1px solid #d5e2e0;
   }
-
   .btn-black {
-    @apply bg-black;
+    background: #00201e;
   }
-
   .btn-line {
-    @apply bg-line;
+    background: #f4f7f7;
+    color: #00201e;
+    border: 1px solid #d5e2e0;
   }
-
-  .btn-background {
-    @apply bg-background;
-  }
-
+  .btn-background,
   .btn-surface-1 {
-    @apply bg-surface-1;
+    background: #f8f8f8;
+    color: #00201e;
   }
-
   .btn-surface-2 {
-    @apply bg-surface-2;
+    background: #cce1e0;
+    color: #00201e;
   }
-
   .btn-surface-3 {
-    @apply bg-surface-3;
+    background: #f4fbf9;
+    color: #00201e;
   }
 
   .btn-sm {
-    @apply px-8 py-4;
+    min-height: 40px;
+    padding: 0.5rem 0.9rem;
   }
-
   .btn-md {
-    @apply px-12 py-6;
+    padding: 0.7rem 1.25rem;
   }
-
   .btn-lg {
-    @apply px-16 py-8;
+    min-height: 52px;
+    padding: 0.85rem 1.5rem;
   }
-
-  .btn-xl {
-    @apply px-20 py-10;
-  }
-
-  .btn-2xl {
-    @apply px-24 py-12;
-  }
-
-  .btn-3xl {
-    @apply px-28 py-14;
-  }
-
   .btn-block {
-    @apply w-full;
+    width: 100%;
   }
-
   .btn-icon {
-    @apply flex items-center justify-center;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
   }
 }
