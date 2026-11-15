@@ -3,54 +3,111 @@
     v-if="visible"
     class="sr-life"
   >
-    <!-- استثناءات: قرار مستقل عن RequestException -->
-    <div
-      v-if="showExceptionDecide"
-      class="sr-life-block"
-    >
-      <h4 class="sr-life-title">{{ $t('salesRequests.lifecycle.exceptionTitle') }}</h4>
-      <p class="sr-life-meta">
-        {{ $t('salesRequests.lifecycle.exceptionState') }}:
-        <strong>{{ exceptionLabel }}</strong>
-      </p>
-      <p
-        v-if="request.exceptionConsumedAtUtc"
-        class="sr-life-meta"
-      >
-        {{ $t('salesRequests.lifecycle.consumedAt') }}:
-        {{ formatDate(request.exceptionConsumedAtUtc) }}
-      </p>
-      <template v-if="canDecide && request.exceptionState === 'pending'">
-        <AppInput
-          v-model="decisionReason"
-          :label="$t('salesRequests.actions.reason')"
+    <div class="sr-life-btns">
+      <template v-if="showExceptionDecide && canDecide && request.exceptionState === 'pending'">
+        <button
+          type="button"
+          class="sr-btn primary"
           :disabled="busy"
+          @click="openDialog('approve')"
+        >
+          {{ $t('salesRequests.lifecycle.approveException') }}
+        </button>
+        <button
+          type="button"
+          class="sr-btn danger"
+          :disabled="busy"
+          @click="openDialog('rejectEx')"
+        >
+          {{ $t('salesRequests.lifecycle.rejectException') }}
+        </button>
+      </template>
+
+      <button
+        v-if="showSoftDelete"
+        type="button"
+        class="sr-btn danger"
+        :disabled="busy"
+        @click="openDialog('delete')"
+      >
+        {{ $t('salesRequests.lifecycle.softDelete') }}
+      </button>
+
+      <button
+        v-if="showRestore"
+        type="button"
+        class="sr-btn primary"
+        :disabled="busy"
+        @click="openDialog('restore')"
+      >
+        {{ $t('salesRequests.lifecycle.restore') }}
+      </button>
+
+      <button
+        v-if="showSendLegal"
+        type="button"
+        class="sr-btn warn"
+        :disabled="busy"
+        @click="openDialog('legal')"
+      >
+        إرسال للقانونية
+      </button>
+    </div>
+
+    <p
+      v-if="showExceptionDecide && request.exceptionState"
+      class="sr-life-meta"
+    >
+      {{ $t('salesRequests.lifecycle.exceptionState') }}:
+      <strong>{{ exceptionLabel }}</strong>
+    </p>
+
+    <Dialog
+      :visible="dialogMode != null"
+      modal
+      :closable="!busy"
+      :close-on-escape="!busy"
+      :header="dialogTitle"
+      :style="{ width: 'min(480px, 92vw)' }"
+      class="bg-white rounded-3xl p-6"
+      :pt="{ mask: { class: 'bg-[#C6C6C680] backdrop-blur-[2px]' } }"
+      dir="rtl"
+      @update:visible="!$event && !busy && closeDialog()"
+    >
+      <form
+        class="sr-dialog-form"
+        @submit.prevent="submitDialog"
+      >
+        <p class="sr-dialog-lead">
+          {{ request.customerName }} · طلب #{{ request.id }}
+        </p>
+        <p
+          v-if="dialogHint"
+          class="sr-life-meta"
+        >
+          {{ dialogHint }}
+        </p>
+
+        <AppSelect
+          v-if="dialogMode === 'legal'"
+          v-model="followerId"
+          label="المتابع"
+          placeholder="اختر متابعًا"
+          :options="followerOptions"
+          :disabled="busy || followersLoading"
+          required
         />
-        <div class="sr-row">
-          <AppButton
-            :disabled="busy || !decisionReason.trim()"
-            :loading="busy && pending === 'approve'"
-            @click="onApprove"
-          >
-            {{
-              busy && pending === 'approve'
-                ? $t('salesRequests.actions.submitting')
-                : $t('salesRequests.lifecycle.approveException')
-            }}
-          </AppButton>
-          <AppButton
-            variant="danger"
-            :disabled="busy || !decisionReason.trim()"
-            :loading="busy && pending === 'rejectEx'"
-            @click="onRejectException"
-          >
-            {{
-              busy && pending === 'rejectEx'
-                ? $t('salesRequests.actions.submitting')
-                : $t('salesRequests.lifecycle.rejectException')
-            }}
-          </AppButton>
-        </div>
+
+        <AppTextarea
+          v-model="reasonText"
+          :label="dialogReasonLabel"
+          :placeholder="dialogMode === 'legal' ? 'ملاحظة اختيارية' : 'اكتب السبب بوضوح'"
+          :maxlength="1000"
+          :rows="4"
+          :disabled="busy"
+          :required="dialogMode !== 'legal' && dialogMode !== 'restore'"
+        />
+
         <p
           v-if="errorMsg"
           class="sr-err"
@@ -58,138 +115,35 @@
         >
           {{ errorMsg }}
         </p>
-      </template>
-      <p
-        v-else-if="request.exceptionState === 'approved_consumed'"
-        class="sr-life-meta"
-      >
-        {{ $t('salesRequests.lifecycle.consumedHint') }}
-      </p>
-    </div>
 
-    <!-- حذف ناعم من سير العمل (ليس من تبويب المحذوفة) -->
-    <div
-      v-if="showSoftDelete"
-      class="sr-life-block"
-    >
-      <h4 class="sr-life-title">{{ $t('salesRequests.lifecycle.deleteTitle') }}</h4>
-      <p class="sr-life-meta">{{ $t('salesRequests.lifecycle.deleteImpact') }}</p>
-      <AppInput
-        v-model="deleteReason"
-        :label="$t('salesRequests.actions.reason')"
-        :disabled="busy"
-      />
-      <AppButton
-        variant="danger"
-        :disabled="busy || !deleteReason.trim()"
-        :loading="busy && pending === 'delete'"
-        @click="onSoftDelete"
-      >
-        {{
-          busy && pending === 'delete'
-            ? $t('salesRequests.actions.submitting')
-            : $t('salesRequests.lifecycle.softDelete')
-        }}
-      </AppButton>
-      <p
-        v-if="errorMsg && pending === 'delete'"
-        class="sr-err"
-        role="alert"
-      >
-        {{ errorMsg }}
-      </p>
-    </div>
-
-    <!-- استعادة من المحذوفة -->
-    <div
-      v-if="showRestore"
-      class="sr-life-block"
-    >
-      <h4 class="sr-life-title">{{ $t('salesRequests.lifecycle.restoreTitle') }}</h4>
-      <p
-        v-if="request.deleteReason"
-        class="sr-life-meta"
-      >
-        {{ $t('salesRequests.lifecycle.deleteReason') }}: {{ request.deleteReason }}
-      </p>
-      <p
-        v-if="request.deletedAtUtc"
-        class="sr-life-meta"
-      >
-        {{ $t('salesRequests.lifecycle.deletedAt') }}:
-        {{ formatDate(request.deletedAtUtc) }}
-      </p>
-      <p class="sr-life-meta">{{ $t('salesRequests.lifecycle.restoreImpact') }}</p>
-      <AppInput
-        v-model="restoreReason"
-        :label="$t('salesRequests.actions.reason')"
-        :disabled="busy"
-      />
-      <AppButton
-        :disabled="busy"
-        :loading="busy && pending === 'restore'"
-        @click="onRestore"
-      >
-        {{
-          busy && pending === 'restore'
-            ? $t('salesRequests.actions.submitting')
-            : $t('salesRequests.lifecycle.restore')
-        }}
-      </AppButton>
-      <p
-        v-if="errorMsg && pending === 'restore'"
-        class="sr-err"
-        role="alert"
-      >
-        {{ errorMsg }}
-      </p>
-    </div>
-
-    <div
-      v-if="showSendLegal"
-      class="sr-life-block"
-    >
-      <h4 class="sr-life-title">إرسال للمتابعة القانونية</h4>
-      <p class="sr-life-meta">لغير المسند أو المرفوض فقط — ينشئ قضية ويصفّر تكليف الموظف.</p>
-      <AppSelect
-        v-model="followerId"
-        label="المتابع"
-        placeholder="اختر متابعًا"
-        :options="followerOptions"
-        :disabled="busy || followersLoading"
-      />
-      <AppInput
-        v-model="legalNote"
-        label="ملاحظة (اختياري)"
-        :disabled="busy"
-      />
-      <AppButton
-        :disabled="busy || !followerId"
-        :loading="busy && pending === 'legal'"
-        @click="onSendLegal"
-      >
-        {{
-          busy && pending === 'legal'
-            ? $t('salesRequests.actions.submitting')
-            : 'إرسال للقانونية'
-        }}
-      </AppButton>
-      <p
-        v-if="errorMsg && pending === 'legal'"
-        class="sr-err"
-        role="alert"
-      >
-        {{ errorMsg }}
-      </p>
-    </div>
+        <div class="sr-row">
+          <button
+            type="submit"
+            class="sr-btn"
+            :class="dialogSubmitClass"
+            :disabled="busy || !canSubmitDialog"
+          >
+            {{ busy ? $t('salesRequests.actions.submitting') : 'تأكيد' }}
+          </button>
+          <button
+            type="button"
+            class="sr-btn ghost"
+            :disabled="busy"
+            @click="closeDialog()"
+          >
+            إلغاء
+          </button>
+        </div>
+      </form>
+    </Dialog>
   </section>
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref, watch } from 'vue'
+import { Dialog } from 'primevue'
+import { computed, ref } from 'vue'
 import { usePermission } from '@/modules/Core/composable/usePermission'
-import { AppButton, AppInput, AppSelect } from '@/modules/Core/components/ui'
-import { formatDateTime } from '@/modules/Core/utils/formatDisplay'
+import { AppSelect, AppTextarea } from '@/modules/Core/components/ui'
 import type { SalesRequestListItem } from '../types'
 import { useApproveExceptionMutation } from '../requests/mutations/useApproveExceptionMutation'
 import { useRejectExceptionMutation } from '../requests/mutations/useRejectExceptionMutation'
@@ -200,9 +154,10 @@ import { axiosInstance } from '@/modules/Core/plugins/axios'
 import { SalesLegalEndpoints } from '@/modules/SalesLegal/domain/endpoints'
 import type { LegalFollowupFollowerOption } from '@/modules/SalesLegal/domain/types'
 
+type DialogMode = 'approve' | 'rejectEx' | 'delete' | 'restore' | 'legal'
+
 const props = defineProps<{
   request: SalesRequestListItem
-  /** التبويب الحالي للمساحة — يقيّد أزرار الاستعادة/الحذف حسب السياق */
   activeTab: string
 }>()
 
@@ -216,20 +171,11 @@ const canSoftDelete = can('SalesRequest', 'SoftDelete')
 const canRestore = can('SalesRequest', 'Restore')
 const canCreateLegal = can('LegalFollowup', 'Create')
 
-const decisionReason = ref('')
-const deleteReason = ref('')
-const restoreReason = ref('')
-const legalNote = ref('')
+const dialogMode = ref<DialogMode | null>(null)
+const reasonText = ref('')
 const followerId = ref<number | null>(null)
 const followers = ref<LegalFollowupFollowerOption[]>([])
 const followersLoading = ref(false)
-const followerOptions = computed(() =>
-  followers.value.map((f) => ({
-    label: f.followerName,
-    value: f.followerUserId,
-  })),
-)
-const pending = ref<'approve' | 'rejectEx' | 'delete' | 'restore' | 'legal' | null>(null)
 const errorMsg = ref<string | null>(null)
 
 const approveMut = useApproveExceptionMutation()
@@ -245,6 +191,13 @@ const busy = computed(
     softDeleteMut.isPending.value ||
     restoreMut.isPending.value ||
     createLegalMut.isPending.value
+)
+
+const followerOptions = computed(() =>
+  followers.value.map((f) => ({
+    label: f.followerName,
+    value: f.followerUserId,
+  }))
 )
 
 const showExceptionDecide = computed(
@@ -270,45 +223,91 @@ const showRestore = computed(
     props.request.isDeleted === true
 )
 
-/** New=0 أو Rejected=8 وبلا استثناء حي — مطابق CanSendToLegalFollowup */
 const showSendLegal = computed(() => {
   if (!canCreateLegal || props.request.isDeleted) return false
-  if (props.request.exceptionState === 'pending' || props.request.exceptionState === 'approved')
+  if (
+    props.request.exceptionState === 'pending' ||
+    props.request.exceptionState === 'approved'
+  )
     return false
   const st = Number(props.request.status)
   if (st === 8) return true
-  return st === 0 && !(props.request.targetEmployeeId != null && props.request.targetEmployeeId > 0)
+  return (
+    st === 0 &&
+    !(props.request.targetEmployeeId != null && props.request.targetEmployeeId > 0)
+  )
 })
 
 const visible = computed(
   () =>
-    showExceptionDecide.value ||
+    (showExceptionDecide.value &&
+      canDecide &&
+      props.request.exceptionState === 'pending') ||
     showSoftDelete.value ||
     showRestore.value ||
-    showSendLegal.value
+    showSendLegal.value ||
+    (showExceptionDecide.value && props.request.exceptionState != null)
 )
 
-async function loadFollowers() {
-  if (!showSendLegal.value) return
-  followersLoading.value = true
-  try {
-    const { data } = await axiosInstance.get<LegalFollowupFollowerOption[]>(
-      SalesLegalEndpoints.followers,
-      { params: { branchId: props.request.branchId } }
-    )
-    followers.value = data ?? []
-  } catch {
-    followers.value = []
-  } finally {
-    followersLoading.value = false
+const dialogTitle = computed(() => {
+  switch (dialogMode.value) {
+    case 'approve':
+      return 'الموافقة على الاستثناء'
+    case 'rejectEx':
+      return 'رفض الاستثناء'
+    case 'delete':
+      return 'نقل إلى المحذوفة'
+    case 'restore':
+      return 'استعادة الطلب'
+    case 'legal':
+      return 'إرسال للمتابعة القانونية'
+    default:
+      return ''
   }
-}
-
-watch(showSendLegal, (v) => {
-  if (v) void loadFollowers()
 })
-onMounted(() => {
-  if (showSendLegal.value) void loadFollowers()
+
+const dialogHint = computed(() => {
+  switch (dialogMode.value) {
+    case 'delete':
+      return 'لا يُحذف البيع أو السجلات المالية. يظهر الطلب في تبويب المحذوفة.'
+    case 'restore':
+      return 'الاستعادة لا تعيد حالة غير قانونية ولا تفتح طلبًا مكتملًا.'
+    case 'legal':
+      return 'لغير المسند أو المرفوض فقط — ينشئ قضية ويصفّر تكليف الموظف.'
+    case 'approve':
+      return 'لا يمكن لطالب الاستثناء الموافقة على طلبه.'
+    default:
+      return ''
+  }
+})
+
+const dialogReasonLabel = computed(() => {
+  switch (dialogMode.value) {
+    case 'approve':
+    case 'rejectEx':
+      return 'سبب القرار'
+    case 'delete':
+      return 'سبب الحذف'
+    case 'restore':
+      return 'ملاحظة الاستعادة (اختياري)'
+    case 'legal':
+      return 'ملاحظة (اختياري)'
+    default:
+      return 'السبب'
+  }
+})
+
+const dialogSubmitClass = computed(() => {
+  if (dialogMode.value === 'delete' || dialogMode.value === 'rejectEx')
+    return 'danger'
+  if (dialogMode.value === 'legal') return 'warn'
+  return 'primary'
+})
+
+const canSubmitDialog = computed(() => {
+  if (dialogMode.value === 'legal') return followerId.value != null
+  if (dialogMode.value === 'restore') return true
+  return reasonText.value.trim().length > 0
 })
 
 const exceptionLabel = computed(() => {
@@ -326,13 +325,47 @@ const exceptionLabel = computed(() => {
   }
 })
 
-function formatDate(value?: string | null) {
-  return formatDateTime(value)
+async function loadFollowers() {
+  followersLoading.value = true
+  try {
+    const { data } = await axiosInstance.get<LegalFollowupFollowerOption[]>(
+      SalesLegalEndpoints.followers,
+      { params: { branchId: props.request.branchId } }
+    )
+    followers.value = data ?? []
+  } catch {
+    followers.value = []
+  } finally {
+    followersLoading.value = false
+  }
+}
+
+function openDialog(mode: DialogMode) {
+  dialogMode.value = mode
+  reasonText.value = ''
+  followerId.value = null
+  errorMsg.value = null
+  if (mode === 'legal') void loadFollowers()
+}
+
+function closeDialog() {
+  if (busy.value) return
+  dialogMode.value = null
+  reasonText.value = ''
+  followerId.value = null
+  errorMsg.value = null
 }
 
 function mapError(e: unknown): string {
   const ax = e as {
-    response?: { status?: number; data?: { title?: string; detail?: string; errors?: { code?: string; message?: string }[] } }
+    response?: {
+      status?: number
+      data?: {
+        title?: string
+        detail?: string
+        errors?: { code?: string; message?: string }[]
+      }
+    }
   }
   const status = ax.response?.status
   const body = ax.response?.data
@@ -344,157 +377,81 @@ function mapError(e: unknown): string {
   ) {
     return 'لا يمكن لطالب الاستثناء الموافقة على طلبه أو رفضه.'
   }
-  if (status === 409) {
-    return msg || 'تعارض تزامن (409) — أعد التحميل'
-  }
+  if (status === 409) return msg || 'تعارض تزامن (409) — أعد التحميل'
   if (status === 403) return msg || 'غير مصرح'
   return msg || code || 'تعذر تنفيذ الإجراء'
 }
 
-async function confirm(message: string): Promise<boolean> {
-  return window.confirm(message)
-}
-
-async function onApprove() {
-  if (!decisionReason.value.trim() || busy.value) return
-  if (!(await confirm('تأكيد الموافقة على الاستثناء؟ لا يمكن للموافق أن يكون طالب الاستثناء.')))
-    return
-  pending.value = 'approve'
+async function submitDialog() {
+  if (!dialogMode.value || busy.value || !canSubmitDialog.value) return
+  const mode = dialogMode.value
+  const reason = reasonText.value.trim()
   errorMsg.value = null
   try {
-    await approveMut.mutateAsync({
-      requestId: props.request.id,
-      reason: decisionReason.value.trim(),
-    })
+    if (mode === 'approve') {
+      await approveMut.mutateAsync({
+        requestId: props.request.id,
+        reason,
+      })
+    } else if (mode === 'rejectEx') {
+      await rejectExMut.mutateAsync({
+        requestId: props.request.id,
+        reason,
+      })
+    } else if (mode === 'delete') {
+      await softDeleteMut.mutateAsync({
+        requestId: props.request.id,
+        reason,
+      })
+    } else if (mode === 'restore') {
+      await restoreMut.mutateAsync({
+        requestId: props.request.id,
+        reason: reason || undefined,
+      })
+    } else if (mode === 'legal') {
+      await createLegalMut.mutateAsync({
+        salesRequestId: props.request.id,
+        followerUserId: followerId.value!,
+        note: reason || undefined,
+        expectedConcurrencyStamp: props.request.concurrencyStamp,
+      })
+    }
+    dialogMode.value = null
+    reasonText.value = ''
+    followerId.value = null
+    errorMsg.value = null
     emit('done')
   } catch (e) {
     errorMsg.value = mapError(e)
-  } finally {
-    pending.value = null
-  }
-}
-
-async function onRejectException() {
-  if (!decisionReason.value.trim() || busy.value) return
-  if (!(await confirm('تأكيد رفض الاستثناء؟'))) return
-  pending.value = 'rejectEx'
-  errorMsg.value = null
-  try {
-    await rejectExMut.mutateAsync({
-      requestId: props.request.id,
-      reason: decisionReason.value.trim(),
-    })
-    emit('done')
-  } catch (e) {
-    errorMsg.value = mapError(e)
-  } finally {
-    pending.value = null
-  }
-}
-
-async function onSoftDelete() {
-  if (!deleteReason.value.trim() || busy.value) return
-  if (
-    !(await confirm(
-      'حذف ناعم: يختفي الطلب من سير العمل ويظهر في المحذوفة. لا يُحذف البيع/المالية. المتابعة؟'
-    ))
-  )
-    return
-  pending.value = 'delete'
-  errorMsg.value = null
-  try {
-    await softDeleteMut.mutateAsync({
-      requestId: props.request.id,
-      reason: deleteReason.value.trim(),
-    })
-    emit('done')
-  } catch (e) {
-    errorMsg.value = mapError(e)
-  } finally {
-    pending.value = null
-  }
-}
-
-async function onRestore() {
-  if (busy.value) return
-  if (
-    !(await confirm(
-      'الاستعادة لا تعيد حالة غير قانونية ولا تفتح طلبًا مكتملًا. المتابعة؟'
-    ))
-  )
-    return
-  pending.value = 'restore'
-  errorMsg.value = null
-  try {
-    await restoreMut.mutateAsync({
-      requestId: props.request.id,
-      reason: restoreReason.value.trim() || undefined,
-    })
-    emit('done')
-  } catch (e) {
-    errorMsg.value = mapError(e)
-  } finally {
-    pending.value = null
-  }
-}
-
-async function onSendLegal() {
-  if (!followerId.value || busy.value) return
-  if (!(await confirm('إرسال الطلب للمتابعة القانونية؟'))) return
-  pending.value = 'legal'
-  errorMsg.value = null
-  try {
-    await createLegalMut.mutateAsync({
-      salesRequestId: props.request.id,
-      followerUserId: followerId.value,
-      note: legalNote.value.trim() || undefined,
-      expectedConcurrencyStamp: props.request.concurrencyStamp,
-    })
-    emit('done')
-  } catch (e) {
-    errorMsg.value = mapError(e)
-  } finally {
-    pending.value = null
   }
 }
 </script>
 
 <style scoped>
 .sr-life {
-  margin-top: 1rem;
+  margin-top: 0.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+}
+.sr-life-btns {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+.sr-life-meta {
+  margin: 0;
+  font-size: 0.8rem;
+  opacity: 0.85;
+}
+.sr-dialog-form {
   display: flex;
   flex-direction: column;
   gap: 0.85rem;
 }
-.sr-life-block {
-  border: 1px solid #d7e2e0;
-  border-radius: 1rem;
-  padding: 0.85rem;
-  background: #fafcfc;
-}
-.sr-life-title {
-  margin: 0 0 0.45rem;
-  font-size: 0.95rem;
-}
-.sr-life-meta {
-  margin: 0.2rem 0;
-  font-size: 0.8rem;
-  opacity: 0.85;
-}
-.sr-field {
-  display: flex;
-  flex-direction: column;
-  gap: 0.3rem;
-  font-size: 0.85rem;
-  margin: 0.55rem 0;
-}
-.sr-input {
-  border: 1px solid #d7e2e0;
-  border-radius: 0.75rem;
-  padding: 0.5rem 0.75rem;
-  min-height: 44px;
-  background: #fff;
-  font-family: inherit;
+.sr-dialog-lead {
+  margin: 0;
+  font-weight: 700;
 }
 .sr-row {
   display: flex;
@@ -507,7 +464,8 @@ async function onSendLegal() {
   border-radius: 0.85rem;
   padding: 0.45rem 1rem;
   color: #fff;
-  font-family: inherit;
+  font: inherit;
+  font-weight: 700;
   cursor: pointer;
 }
 .sr-btn:disabled {
@@ -520,9 +478,16 @@ async function onSendLegal() {
 .sr-btn.danger {
   background: #9b1c1c;
 }
+.sr-btn.warn {
+  background: #004f4a;
+}
+.sr-btn.ghost {
+  background: #edf5f3;
+  color: #006a64;
+}
 .sr-err {
   color: #9b1c1c;
   font-size: 0.85rem;
-  margin: 0.45rem 0 0;
+  margin: 0;
 }
 </style>
