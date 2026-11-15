@@ -53,7 +53,7 @@ public class GetDuplicateSalesRequestsHandler
         }
 
         var peers = await _db.SalesRequests.AsNoTracking()
-            .Where(x => hitCandidateIds.Contains(x.Id) && !x.IsDeleted && branches.Contains(x.BranchId))
+            .Where(x => hitCandidateIds.Contains(x.Id) && !x.IsDeleted && matchBranches.Contains(x.BranchId))
             .Select(x => new
             {
                 x.Id,
