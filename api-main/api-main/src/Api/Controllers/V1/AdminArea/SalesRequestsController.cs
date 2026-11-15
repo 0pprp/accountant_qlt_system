@@ -6,6 +6,7 @@ using Application.SalesRequests.Commands.Admin.RejectException;
 using Application.SalesRequests.Commands.Admin.RequestException;
 using Application.SalesRequests.Commands.Admin.Restore;
 using Application.SalesRequests.Commands.Admin.SoftDelete;
+using Application.SalesRequests.Commands.Admin.Update;
 using Application.SalesRequests.Queries.Admin.AssignableEmployees;
 using Application.SalesRequests.Queries.Admin.Counts;
 using Application.SalesRequests.Queries.Admin.GetById;
@@ -203,6 +204,25 @@ public class SalesRequestsController : ApiController
         return result.ToHttpResponse();
     }
 
+    [HasPermission(Permissions.SalesRequest.UpdateRequest)]
+    [HttpPut("{id:int}")]
+    public async Task<ActionResult> Update([FromRoute] int id, [FromBody] UpdateBody body)
+    {
+        var result = await _mediator.Send(new UpdateSalesRequestCommand
+        {
+            RequestId = id,
+            CustomerName = body.CustomerName,
+            CustomerPhone = body.CustomerPhone,
+            Address = body.Address,
+            RequestedProduct = body.RequestedProduct,
+            BranchId = body.BranchId,
+            ProvinceId = body.ProvinceId,
+            EmployeeId = body.EmployeeId,
+            Reason = body.Reason
+        }, CancellationToken);
+        return result.ToHttpResponse();
+    }
+
     [HasPermission(Permissions.SalesRequest.Reject)]
     [HttpPost("{id:int}/reject")]
     public async Task<ActionResult> Reject([FromRoute] int id, [FromBody] RejectBody body)
@@ -277,6 +297,15 @@ public class SalesRequestsController : ApiController
 
     public record MatchSummaryBody(List<int>? RequestIds);
     public record AssignBody(int EmployeeId, string? Reason);
+    public record UpdateBody(
+        string CustomerName,
+        string? CustomerPhone,
+        string? Address,
+        string? RequestedProduct,
+        int BranchId,
+        int? ProvinceId,
+        int? EmployeeId,
+        string? Reason);
     public record RejectBody(string? Reason);
     public record ExceptionBody(string? Reason);
     public record DecisionBody(string? Reason);

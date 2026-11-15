@@ -1,6 +1,15 @@
 <template>
   <footer class="sr-actions">
     <button
+      v-if="canEdit"
+      type="button"
+      class="sr-neu-btn primary"
+      :disabled="busy || !canEditRequest"
+      @click="editOpen = true"
+    >
+      تعديل
+    </button>
+    <button
       v-if="canAssign"
       type="button"
       class="sr-neu-btn primary"
@@ -96,6 +105,15 @@
       @close="dialogOpen = false"
       @confirm="onAssignConfirm"
     />
+
+    <EditSalesRequestDialog
+      :open="editOpen"
+      :request="request"
+      :busy="busy && pending === 'edit'"
+      :error="editError"
+      @close="editOpen = false"
+      @confirm="onEditConfirm"
+    />
   </footer>
 </template>
 
@@ -108,7 +126,9 @@ import type { SalesRequestListItem } from '../types'
 import { useAssignSalesRequestMutation } from '../requests/mutations/useAssignSalesRequestMutation'
 import { useRejectSalesRequestMutation } from '../requests/mutations/useRejectSalesRequestMutation'
 import { useRequestExceptionMutation } from '../requests/mutations/useRequestExceptionMutation'
+import { useUpdateSalesRequestMutation } from '../requests/mutations/useUpdateSalesRequestMutation'
 import AssignEmployeeDialog from './AssignEmployeeDialog.vue'
+import EditSalesRequestDialog from './EditSalesRequestDialog.vue'
 
 const props = defineProps<{
   request: SalesRequestListItem
@@ -126,6 +146,14 @@ const { can } = usePermission()
 const canAssign = can('SalesRequest', 'Assign')
 const canReject = can('SalesRequest', 'Reject')
 const canException = can('SalesRequest', 'RequestException')
+const canEdit =
+  can('SalesRequest', 'UpdateRequest') || can('SalesRequest', 'Assign')
+const canEditRequest = computed(
+  () =>
+    !props.request.isDeleted &&
+    props.request.tabKey !== 'sold' &&
+    Number(props.request.status) !== 9
+)
 
 const localDraft = reactive({
   reject: props.draft?.reject || '',
@@ -179,17 +207,21 @@ async function submitReason() {
   }
 }
 const dialogOpen = ref(false)
-const pending = ref<'assign' | 'reject' | 'exception' | null>(null)
+const editOpen = ref(false)
+const editError = ref<string | null>(null)
+const pending = ref<'assign' | 'reject' | 'exception' | 'edit' | null>(null)
 
 const assignMut = useAssignSalesRequestMutation()
 const rejectMut = useRejectSalesRequestMutation()
 const exceptionMut = useRequestExceptionMutation()
+const updateMut = useUpdateSalesRequestMutation()
 
 const busy = computed(
   () =>
     assignMut.isPending.value ||
     rejectMut.isPending.value ||
-    exceptionMut.isPending.value
+    exceptionMut.isPending.value ||
+    updateMut.isPending.value
 )
 
 async function onAssignConfirm(payload: {
@@ -234,6 +266,51 @@ async function onException() {
       reason: localDraft.exception || undefined,
     })
     emit('done')
+  } finally {
+    pending.value = null
+  }
+}
+
+function mapEditError(e: unknown): string {
+  const ax = e as {
+    response?: {
+      data?: {
+        detail?: string
+        title?: string
+        errors?: { message?: string }[]
+      }
+    }
+  }
+  return (
+    ax.response?.data?.errors?.[0]?.message ||
+    ax.response?.data?.detail ||
+    ax.response?.data?.title ||
+    'تعذر حفظ التعديل'
+  )
+}
+
+async function onEditConfirm(payload: {
+  customerName: string
+  customerPhone: string
+  address?: string
+  requestedProduct?: string
+  branchId: number
+  provinceId?: number | null
+  employeeId?: number | null
+  reason?: string
+}) {
+  if (busy.value) return
+  pending.value = 'edit'
+  editError.value = null
+  try {
+    await updateMut.mutateAsync({
+      requestId: props.request.id,
+      ...payload,
+    })
+    editOpen.value = false
+    emit('done')
+  } catch (e) {
+    editError.value = mapEditError(e)
   } finally {
     pending.value = null
   }

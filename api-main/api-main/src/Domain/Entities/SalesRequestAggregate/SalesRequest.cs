@@ -59,6 +59,43 @@ public class SalesRequest : AuditableEntity
         ConcurrencyStamp = 1;
     }
 
+    /// <summary>تعديل إداري لحقول الطلب (اسم/هاتف/عنوان/منتج/فرع/محافظة) دون المساس بمفتاح الإرسال.</summary>
+    public void UpdateDetails(
+        string customerName,
+        string? customerPhone,
+        string? address,
+        string? requestedProduct,
+        int branchId,
+        int? provinceId)
+    {
+        if (IsDeleted)
+            throw new InvalidOperationException("Cannot update deleted request");
+        if (Status == SalesRequestStatus.Completed)
+            throw new InvalidOperationException("Cannot update completed request");
+        if (string.IsNullOrWhiteSpace(customerName))
+            throw new InvalidOperationException("Customer name required");
+        if (branchId <= 0)
+            throw new InvalidOperationException("Branch required");
+
+        CustomerName = customerName.Trim();
+        CustomerPhone = string.IsNullOrWhiteSpace(customerPhone) ? null : customerPhone.Trim();
+        Address = string.IsNullOrWhiteSpace(address) ? null : address.Trim();
+        RequestedProduct = string.IsNullOrWhiteSpace(requestedProduct) ? null : requestedProduct.Trim();
+        BranchId = branchId;
+        ProvinceId = provinceId;
+        ConcurrencyStamp++;
+    }
+
+    public void ClearAssignee(DateTimeOffset atUtc)
+    {
+        TargetEmployeeId = null;
+        if (Status is not (SalesRequestStatus.Rejected or SalesRequestStatus.LegalFollowup))
+            Status = SalesRequestStatus.New;
+        ViewedAtUtc = null;
+        StatusChangedAtUtc = atUtc;
+        ConcurrencyStamp++;
+    }
+
     public SalesRequestSourceType SourceType { get; set; }
     public string? OriginalExternalId { get; set; }
     public SalesRequestStatus Status { get; set; }

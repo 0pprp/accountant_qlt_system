@@ -23,4 +23,5 @@ public enum SalesRequestTimelineEventType : byte
     ExceptionConsumed = 15,
     SoftDeleted = 16,
     Restored = 17,
+    DetailsUpdated = 19,
 }

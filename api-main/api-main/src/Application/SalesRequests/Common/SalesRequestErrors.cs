@@ -92,4 +92,13 @@ public static class SalesRequestErrors
     public static Error TransferTerminalForbidden = new(
         "لا يُنقل طلب مكتمل أو مرفوض أو محوّل للقانونية",
         "SalesRequest_Transfer_Terminal_Forbidden");
+    public static Error UpdateCompletedForbidden = new(
+        "لا يُعدَّل طلب مكتمل (تم البيع)",
+        "SalesRequest_Update_Completed_Forbidden");
+    public static Error InvalidBranch = new(
+        "الفرع غير صالح أو خارج النطاق المصرح",
+        "SalesRequest_Invalid_Branch");
+    public static Error AssigneeRequiredForBranchMove = new(
+        "تغيير المحافظة/الفرع يتطلب اختيار موظف مؤهل في الفرع الجديد",
+        "SalesRequest_Assignee_Required_For_Branch_Move");
 }

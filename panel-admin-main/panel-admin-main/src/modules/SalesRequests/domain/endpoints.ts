@@ -7,6 +7,7 @@ export const SalesRequestEndpoints = {
   timeline: (id: number) => `/admin/SalesRequests/${id}/timeline`,
   assignableEmployees: '/admin/SalesRequests/assignable-employees',
   assign: (id: number) => `/admin/SalesRequests/${id}/assign`,
+  update: (id: number) => `/admin/SalesRequests/${id}`,
   reject: (id: number) => `/admin/SalesRequests/${id}/reject`,
   requestException: (id: number) =>
     `/admin/SalesRequests/${id}/request-exception`,

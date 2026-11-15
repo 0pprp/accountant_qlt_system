@@ -153,16 +153,6 @@ public class EnsureSalesRequestDraftHandler
         }
 
         var phone = (entity.CustomerPhone ?? string.Empty).Trim();
-        if (phone.Length > 0)
-        {
-            var byPhone = await _db.Customers.AsNoTracking()
-                .Where(c => c.BranchId == entity.BranchId && c.PhoneNumber == phone)
-                .Select(c => c.Id)
-                .FirstOrDefaultAsync(cancellationToken);
-            if (byPhone > 0)
-                return byPhone;
-        }
-
         var fullName = Clip(entity.CustomerName, 50);
         if (string.IsNullOrWhiteSpace(fullName))
             fullName = $"طلب #{entity.Id}";

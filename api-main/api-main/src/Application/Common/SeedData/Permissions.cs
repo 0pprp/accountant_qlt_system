@@ -442,6 +442,7 @@ public static class Permissions
             new(SoftDelete, "حذف ناعم للطلب", nameof(SalesRequest), SalesRequestDisplayName),
             new(Restore, "استعادة طلب محذوف", nameof(SalesRequest), SalesRequestDisplayName),
             new(TimelineRead, "قراءة سجل حركة الطلب", nameof(SalesRequest), SalesRequestDisplayName),
+            new(UpdateRequest, "تعديل بيانات الطلب", nameof(SalesRequest), SalesRequestDisplayName),
         ];
 
         public const string ReadUnassigned =
@@ -506,7 +507,6 @@ public static class Permissions
         public const string Restore =
             $"{nameof(Domain.Entities.SalesRequestAggregate.SalesRequest)}.{nameof(Restore)}";
 
-        /// <summary>موثّق كـ Not implemented — لا endpoint لتعديل الطلب في هذه المرحلة.</summary>
         public const string UpdateRequest =
             $"{nameof(Domain.Entities.SalesRequestAggregate.SalesRequest)}.{nameof(UpdateRequest)}";
     }

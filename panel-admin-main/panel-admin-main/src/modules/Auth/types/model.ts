@@ -47,6 +47,7 @@ export type PermissionAction =
   | 'ExceptionDecide'
   | 'SoftDelete'
   | 'Restore'
+  | 'UpdateRequest'
   | 'ManageAppBlock'
   | 'UpsertManagerRating'
   | 'Accept'
@@ -170,6 +171,7 @@ export interface ModulePermissions {
   ExceptionDecide?: boolean
   SoftDelete?: boolean
   Restore?: boolean
+  UpdateRequest?: boolean
   ManageAppBlock?: boolean
   UpsertManagerRating?: boolean
   Accept?: boolean

@@ -60,6 +60,7 @@
   },
   "actions": {
     "assign": "إسناد",
+    "edit": "تعديل",
     "reassign": "إعادة إسناد",
     "assignTitle": "اختيار موظف للإسناد",
     "reassignTitle": "إعادة إسناد الطلب",
