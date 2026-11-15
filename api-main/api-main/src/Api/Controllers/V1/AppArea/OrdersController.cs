@@ -1,4 +1,4 @@
-﻿using Application.Common.Utilities;
+using Application.Common.Utilities;
 using Application.InstallmentPayments.Commands.App.Create;
 using Application.Orders.Commands.App.Create;
 using Application.Orders.Commands.App.CompleteAttachments;
@@ -87,6 +87,7 @@ public class OrdersController : ApiController
 
     [HasPermission(Permissions.InstallmentPayment.Create)]
     [HttpPost("{id:int}/installment-payments")]
+    [HttpPost("{id:int}/installment-payments/verified")]
     public async Task<ActionResult<Application.InstallmentPayments.Common.InstallmentPaymentWriteResultDto>>
         CreateInstallmentPayment([FromRoute] int id, [FromBody] CreateInstallmentPaymentDto dto)
     {
@@ -96,6 +97,7 @@ public class OrdersController : ApiController
             Amount = dto.Amount,
             UserId = _currentUserService.UserId!.Value,
             ClientPaymentId = dto.ClientPaymentId,
+            CheckLegacyPayments = dto.CheckLegacyPayments,
             Date = dto.Date
         };
         var result = await _mediator.Send(command, CancellationToken);

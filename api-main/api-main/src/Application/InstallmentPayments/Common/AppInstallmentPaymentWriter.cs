@@ -43,12 +43,13 @@ public class AppInstallmentPaymentWriter
         DateOnly? collectionDate,
         Guid? clientPaymentId,
         ActivityType activityType,
-        CancellationToken ct)
+        CancellationToken ct,
+        bool checkLegacyPayments = false)
     {
         if (amount <= 0)
             return OrderErrors.PaidAmountCanNotBeGreaterThanSellAmount;
 
-        var date = collectionDate ?? DateOnly.FromDateTime(_clock.UtcNow.AddHours(3).Date);
+        var date = collectionDate ?? DateOnly.FromDateTime(_clock.UtcNow.Date);
         var key = clientPaymentId is Guid g && g != Guid.Empty ? g : (Guid?)null;
 
         // قفل ترتيب العملية: الطلب ثم حامل النقد داخل نفس المعاملة.
@@ -89,6 +90,28 @@ public class AppInstallmentPaymentWriter
             return OrderErrors.OrderNotFound;
         }
 
+        // The old Create endpoint logged the receipt ID but omitted the device key.
+        if (checkLegacyPayments && key.HasValue)
+        {
+            var sameDay = order.InstallmentPayments.Where(p =>
+                p.Date == date && AmountsEqual(p.Amount, amount) && p.CreatedBy == userId).ToList();
+            if (sameDay.Count == 1 && sameDay[0].ClientPaymentId is null)
+            {
+                var receipt = sameDay[0];
+                var confirmed = await _db.ActivityLogs.AnyAsync(log =>
+                    log.ActivityType == ActivityType.InstallmentPaymentCreated &&
+                    log.TargetEntityType == TargetEntityType.InstallmentPayment &&
+                    log.TargetEntityId == receipt.Id && log.UserId == userId, ct);
+                if (confirmed)
+                {
+                    receipt.ClientPaymentId = key;
+                    await _db.SaveChangesAsync(ct);
+                    await tx.CommitAsync(ct);
+                    return EvaluateExisting(receipt, userId, orderId, amount, date);
+                }
+            }
+        }
+
         // دفعة جديدة غير مسموحة على بيع مكتمل — إعادة الإقرار تُعالَج أعلاه فقط.
         if (order.ExecutionStatus != OrderExecutionStatus.InProgress)
         {
@@ -115,6 +138,10 @@ public class AppInstallmentPaymentWriter
 
         if (order.SellerId is int sellerId)
             await AcquireCashHolderLockAsync(sellerId, ct);
+
+        if (checkLegacyPayments && key.HasValue && order.InstallmentPayments.Any(
+                payment => payment.ClientPaymentId == null && payment.Amount == amount))
+            return OrderErrors.LegacyPaymentNeedsReview;
 
         var totalPaid = order.InstallmentPayments.Sum(x => x.Amount);
         if (totalPaid + amount > order.SellAmount)

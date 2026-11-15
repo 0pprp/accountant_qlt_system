@@ -1,4 +1,4 @@
-﻿using Application.InstallmentPayments.Common;
+using Application.InstallmentPayments.Common;
 using Domain.Entities.ActivityLogAggregate.Enums;
 
 namespace Application.InstallmentPayments.Commands.App.Create;
@@ -20,5 +20,5 @@ public class CreateInstallmentPaymentHandler
             request.Date,
             request.ClientPaymentId,
             ActivityType.InstallmentPaymentCreated,
-            cancellationToken);
+            cancellationToken, request.CheckLegacyPayments);
 }

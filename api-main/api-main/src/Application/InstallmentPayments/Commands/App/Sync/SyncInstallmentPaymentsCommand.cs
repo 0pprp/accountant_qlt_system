@@ -1,4 +1,4 @@
-﻿using Application.InstallmentPayments.Common;
+using Application.InstallmentPayments.Common;
 
 namespace Application.InstallmentPayments.Commands.App.Sync;
 
@@ -12,6 +12,7 @@ public record SyncInstallmentPaymentsDto(List<InstallmentPaymentDto> Installment
 
 public record InstallmentPaymentDto
 {
+    public bool CheckLegacyPayments { get; set; } = true;
     public int OrderId { get; set; }
     public double Amount { get; set; }
     public DateOnly Date { get; set; }

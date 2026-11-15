@@ -1,9 +1,10 @@
-﻿using Application.InstallmentPayments.Common;
+using Application.InstallmentPayments.Common;
 
 namespace Application.InstallmentPayments.Commands.App.Create;
 
 public record CreateInstallmentPaymentCommand : IRequest<Result<InstallmentPaymentWriteResultDto>>
 {
+    public bool CheckLegacyPayments { get; set; } = true;
     public int OrderId { get; set; }
     public double Amount { get; set; }
     public int UserId { get; set; }
@@ -13,4 +14,4 @@ public record CreateInstallmentPaymentCommand : IRequest<Result<InstallmentPayme
     public DateOnly? Date { get; set; }
 }
 
-public record CreateInstallmentPaymentDto(double Amount, Guid? ClientPaymentId = null, DateOnly? Date = null);
+public record CreateInstallmentPaymentDto(double Amount, Guid? ClientPaymentId = null, DateOnly? Date = null, bool CheckLegacyPayments = true);

@@ -1,4 +1,4 @@
-﻿using Application.Common.Models.KeysetPagination;
+using Application.Common.Models.KeysetPagination;
 using Application.Common.Utilities;
 using Application.InstallmentPayments.Commands.App.Sync;
 using Application.InstallmentPayments.Queries.App.GetDailyPdfReport;
@@ -71,6 +71,7 @@ public class InstallmentPaymentsController : ApiController
 
     [HasPermission(Permissions.InstallmentPayment.Create)]
     [HttpPost("sync")]
+    [HttpPost("sync/verified")]
     public async Task<ActionResult<SyncInstallmentPaymentsResultDto>> Sync([FromBody] SyncInstallmentPaymentsDto dto)
     {
         var command = new SyncInstallmentPaymentsCommand

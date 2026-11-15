@@ -1,4 +1,4 @@
-﻿using Application.InstallmentPayments.Common;
+using Application.InstallmentPayments.Common;
 using Domain.Entities.ActivityLogAggregate.Enums;
 
 namespace Application.InstallmentPayments.Commands.App.Sync;
@@ -24,7 +24,7 @@ public class SyncInstallmentPaymentsHandler
                 row.Date,
                 row.ClientPaymentId,
                 ActivityType.InstallmentPaymentsSynced,
-                cancellationToken);
+                cancellationToken, row.CheckLegacyPayments);
             if (!result.IsSucceeded || result.Data is null)
                 return result.Error!;
 
