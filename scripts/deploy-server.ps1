@@ -39,6 +39,7 @@ echo TAG=`$TAG
 cd /opt/qalaat/source/api-main/api-main
 docker build -f Dockerfile.deploy -t "qalaat-api:`$TAG" -t qalaat-api:new .
 cd /home/user
+sed -i "s|image: qalaat-api:.*|image: qalaat-api:`$TAG|" docker-compose.yml
 docker compose up -d --force-recreate qalaat-api
 
 cd /opt/qalaat/source/panel-admin-main/panel-admin-main
