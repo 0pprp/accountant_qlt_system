@@ -127,6 +127,11 @@
           :to="{
             name: 'CustomerAuditProfileRoute',
             params: { id: request.existingCustomerId },
+            query: {
+              returnTo: 'SalesRequestsWorkspaceRoute',
+              requestId: String(request.id),
+              tab: activeTab || 'unassigned',
+            },
           }"
           class="sr-chip-link"
         >

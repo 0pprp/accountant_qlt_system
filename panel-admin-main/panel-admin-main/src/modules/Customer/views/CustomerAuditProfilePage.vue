@@ -1,26 +1,31 @@
 <template>
   <div class="audit-page min-h-screen bg-[#F8F8F8] p-4 text-[#00201E] pb-20">
-    <button
-      type="button"
-      class="mb-4 text-sm text-[#006A64] underline"
-      @click="goBack"
-    >
-      العودة للتدقيق
-    </button>
-
     <header
       class="sticky top-0 z-10 mb-4 rounded-2xl border border-[#d7e2e0] bg-white/95 p-4 backdrop-blur"
     >
-      <h1 class="text-xl font-semibold">
-        {{ profile?.header.fullName || 'بروفايل التدقيق' }}
-      </h1>
-      <p class="text-sm opacity-80">
-        #{{ customerId }} — {{ profile?.header.phone || '—' }} —
-        {{ profile?.header.branchName || '—' }}
-        <span v-if="profile?.header.statusLabel">
-          — {{ profile.header.statusLabel }}
-        </span>
-      </p>
+      <div class="flex flex-wrap items-start justify-between gap-3">
+        <div class="min-w-0 flex-1">
+          <h1 class="text-xl font-semibold">
+            {{ profile?.header.fullName || 'بروفايل التدقيق' }}
+          </h1>
+          <p class="text-sm opacity-80">
+            #{{ customerId }} — {{ profile?.header.phone || '—' }} —
+            {{ profile?.header.branchName || '—' }}
+            <span v-if="profile?.header.statusLabel">
+              — {{ profile.header.statusLabel }}
+            </span>
+          </p>
+        </div>
+        <button
+          type="button"
+          class="audit-back"
+          :aria-label="backLabel"
+          @click="goBack"
+        >
+          <i class="pi pi-arrow-right" aria-hidden="true" />
+          <span>{{ backLabel }}</span>
+        </button>
+      </div>
     </header>
 
     <p v-if="profileError" class="text-red-700">
@@ -121,6 +126,11 @@ const profileError = computed(() => baseQuery.isError.value)
 const documents = computed(() => docsQuery.data.value?.documents ?? null)
 const docsLoading = computed(() => docsQuery.isLoading.value)
 
+const hasReturnTo = computed(() => isAllowedReturnRoute(route.query.returnTo))
+const backLabel = computed(() =>
+  hasReturnTo.value ? 'رجوع للمكان السابق' : 'رجوع'
+)
+
 const visibleTabs = computed(() => {
   const available = profile.value?.availableSections ?? [
     'overview',
@@ -146,26 +156,62 @@ function tabLabel(tab: string) {
 
 function goBack() {
   const returnTo = route.query.returnTo
-  if (!isAllowedReturnRoute(returnTo)) {
-    void router.push({ name: 'UnassignedSalesRequestsRoute' })
+  if (isAllowedReturnRoute(returnTo)) {
+    const target = String(returnTo)
+    if (target.startsWith('/')) {
+      void router.push(target)
+      return
+    }
+    const ctx = parseAuditReturnQuery(route.query as Record<string, unknown>)
+    void router.push({
+      name: target,
+      query: { ...ctx },
+    })
     return
   }
-  const target = String(returnTo)
-  // مسار نسبي (عمل المتابعين / زبائن الفرع) — يحفظ query الموجود في الرابط.
-  if (target.startsWith('/')) {
-    void router.push(target)
+
+  // بدون returnTo: رجوع لتاريخ المتصفح إن وُجد
+  if (typeof window !== 'undefined' && window.history.length > 1) {
+    router.back()
     return
   }
-  const ctx = parseAuditReturnQuery(route.query as Record<string, unknown>)
-  void router.push({
-    name: target,
-    query: { ...ctx },
-  })
+
+  void router.push({ name: 'SalesRequestsWorkspaceRoute' })
 }
 </script>
 
 <style scoped>
 .audit-page {
-  font-family: 'ElMessiri', 'El Messiri', sans-serif;
+  font-family: inherit;
+}
+
+.audit-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  min-height: 44px;
+  padding: 0.45rem 0.95rem;
+  border: 0;
+  border-radius: 12px;
+  background: #e8f0ef;
+  color: #006a64;
+  font: inherit;
+  font-weight: 700;
+  font-size: 0.95rem;
+  cursor: pointer;
+  box-shadow:
+    4px 4px 10px rgba(0, 32, 30, 0.12),
+    -4px -4px 10px rgba(255, 255, 255, 0.9);
+  flex-shrink: 0;
+}
+
+.audit-back:active {
+  box-shadow:
+    inset 3px 3px 7px rgba(0, 32, 30, 0.12),
+    inset -3px -3px 7px rgba(255, 255, 255, 0.85);
+}
+
+.audit-back .pi {
+  font-size: 0.9rem;
 }
 </style>
