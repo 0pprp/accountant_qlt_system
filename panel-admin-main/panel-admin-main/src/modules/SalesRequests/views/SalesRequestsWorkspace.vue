@@ -64,14 +64,59 @@
           @select="onSelect"
         >
           <template #matching="{ item }">
-            <MatchingSummary
+            <div
               v-if="showMatching && !item.isDeleted"
-              :cards="cardsFor(item.id)"
-              :selected-key="selectedId === item.id ? selectedCriterion : null"
-              :customer-name="item.customerName"
-              :customer-phone="item.customerPhone"
-              @select="selectedCriterion = $event as MatchCriterion; searchSource = 'priorAccounts'; onSelect(item)"
-            />
+              class="sr-match-block"
+              @click.stop
+            >
+              <MatchingSummary
+                :cards="cardsFor(item.id)"
+                :selected-key="
+                  expandedMatch?.requestId === item.id
+                    ? expandedMatch.criterion
+                    : null
+                "
+                :customer-name="item.customerName"
+                :customer-phone="item.customerPhone"
+                @select="onExpandMatch(item.id, $event as MatchCriterion)"
+              />
+              <div
+                v-if="expandedMatch?.requestId === item.id"
+                class="sr-match-dropdown"
+                role="region"
+                :aria-label="MATCH_LABELS[expandedMatch.criterion]"
+              >
+                <MatchingResults
+                  :items="listHitItems"
+                  :is-loading="listHitsLoading"
+                  :is-error="listHitsError"
+                  :insufficient="listHitsInsufficient"
+                  @open-profile="openProfile"
+                />
+                <div
+                  v-if="listHitTotal > matchHitsPageSize"
+                  class="sr-match-dropdown__pager"
+                >
+                  <button
+                    type="button"
+                    class="sr-page-btn"
+                    :disabled="listHitPage <= 1"
+                    @click="listHitPage--"
+                  >
+                    السابق
+                  </button>
+                  <span>{{ listHitPage }}</span>
+                  <button
+                    type="button"
+                    class="sr-page-btn"
+                    :disabled="listHitPage * matchHitsPageSize >= listHitTotal"
+                    @click="listHitPage++"
+                  >
+                    التالي
+                  </button>
+                </div>
+              </div>
+            </div>
           </template>
           <template #actions="{ item }">
             <RequestActions v-if="!item.isDeleted && tab !== 'deleted'" :request="item" :draft="getDraft(item.id)" @done="onActionDone" @draft-change="Object.assign(getDraft(item.id), $event)" />
@@ -410,6 +455,13 @@ const timelineError = computed(() => timelineQuery.isError.value)
 const searchSource = ref<SearchSource>('priorAccounts')
 const selectedCriterion = ref<MatchCriterion>('tripleName')
 const hitPage = ref(1)
+/** توسيع نتائج المطابقة من القائمة دون فتح حوار التفاصيل */
+const expandedMatch = ref<{
+  requestId: number
+  criterion: MatchCriterion
+} | null>(null)
+const listHitPage = ref(1)
+const matchHitsPageSize = ref(20)
 
 /** مثل SalesHaider: كروت المطابقة لكل الحالات عدا المحذوف */
 const showMatching = computed(
@@ -429,6 +481,39 @@ const summaryEnabled = computed(
 )
 const summaryQuery = useMatchSummaryQuery(pageIds, summaryEnabled)
 
+const listHitRequestId = computed(
+  () => expandedMatch.value?.requestId ?? null
+)
+const listHitCriterion = computed(
+  () => expandedMatch.value?.criterion ?? null
+)
+const listHitsEnabled = computed(
+  () =>
+    showMatching.value &&
+    expandedMatch.value != null &&
+    searchSource.value === 'priorAccounts'
+)
+const listHitsQuery = useMatchHitsQuery(
+  listHitRequestId,
+  listHitCriterion,
+  listHitPage,
+  matchHitsPageSize,
+  listHitsEnabled
+)
+const listHitItems = computed(() => listHitsQuery.data.value?.items ?? [])
+const listHitTotal = computed(
+  () => listHitsQuery.data.value?.totalCount ?? 0
+)
+const listHitsLoading = computed(() => listHitsQuery.isLoading.value)
+const listHitsError = computed(() => listHitsQuery.isError.value)
+const listHitsInsufficient = computed(() => {
+  if (!expandedMatch.value) return false
+  const card = cardsFor(expandedMatch.value.requestId).find(
+    (c) => c.key === expandedMatch.value!.criterion
+  )
+  return card?.state === 'insufficientData'
+})
+
 const hitsEnabled = computed(
   () =>
     showMatching.value &&
@@ -441,7 +526,7 @@ const hitsQuery = useMatchHitsQuery(
   selectedId,
   selectedCriterion,
   hitPage,
-  pageSize,
+  matchHitsPageSize,
   hitsEnabled
 )
 const dupEnabled = computed(
@@ -454,7 +539,7 @@ const dupEnabled = computed(
 const dupQuery = useDuplicateRequestsQuery(
   selectedId,
   hitPage,
-  pageSize,
+  matchHitsPageSize,
   dupEnabled
 )
 
@@ -469,6 +554,20 @@ const hitsInsufficient = computed(() => {
 const duplicateItems = computed(() => dupQuery.data.value?.items ?? [])
 const dupLoading = computed(() => dupQuery.isLoading.value)
 const dupError = computed(() => dupQuery.isError.value)
+
+function onExpandMatch(requestId: number, criterion: MatchCriterion) {
+  searchSource.value = 'priorAccounts'
+  selectedCriterion.value = criterion
+  if (
+    expandedMatch.value?.requestId === requestId &&
+    expandedMatch.value.criterion === criterion
+  ) {
+    expandedMatch.value = null
+    return
+  }
+  expandedMatch.value = { requestId, criterion }
+  listHitPage.value = 1
+}
 
 function cardsFor(requestId: number): MatchCard[] {
   const item = summaryQuery.data.value?.items?.find(
@@ -508,6 +607,7 @@ function onTabChange(next: SalesRequestTabKey) {
 }
 
 async function onSelect(item: SalesRequestListItem) {
+  expandedMatch.value = null
   select(item)
   await nextTick()
   if (isNarrow.value) document.querySelector('.sr-details')?.scrollIntoView({ block: 'start' })
@@ -536,6 +636,8 @@ function onDraftChange(d: {
 }
 
 function openProfile(customerId: number) {
+  const requestId =
+    selectedId.value ?? expandedMatch.value?.requestId ?? null
   const query = buildAuditReturnQuery({
     branchId: filters.value.branchId
       ? String(filters.value.branchId)
@@ -548,7 +650,7 @@ function openProfile(customerId: number) {
     toDate: filters.value.toDate,
     search: filters.value.search,
     page: String(pageIndex.value),
-    requestId: selectedId.value ? String(selectedId.value) : null,
+    requestId: requestId ? String(requestId) : null,
     criterion: selectedCriterion.value,
     searchSource: searchSource.value,
     scrollY: String(window.scrollY),
@@ -564,15 +666,19 @@ function openProfile(customerId: number) {
   })
 }
 
+watch(tab, () => {
+  expandedMatch.value = null
+})
+
+watch(pageIndex, () => {
+  expandedMatch.value = null
+})
+
 function formatSync(ts: number) {
   return new Intl.DateTimeFormat('en-US', {
     timeStyle: 'short',
   }).format(new Date(ts))
 }
-
-watch(tab, () => {
-  // عند تغيير التبويب لا تمسح المسودة إن بقي الطلب مفتوحًا
-})
 </script>
 
 <style scoped>
@@ -710,6 +816,32 @@ watch(tab, () => {
 .sr-results { font-size:15px; padding-block:12px; }
 .sr-layout { align-items:start; gap:24px; }
 @media(min-width:1024px) { .sr-layout { grid-template-columns:minmax(360px,1fr) minmax(0,1.2fr); } }
+
+.sr-match-block {
+  display: grid;
+  gap: 0.75rem;
+  width: 100%;
+}
+
+.sr-match-dropdown {
+  margin-top: 0.15rem;
+  padding: 0.85rem;
+  border-radius: 16px;
+  background: #edf5f3;
+  box-shadow:
+    inset 4px 4px 10px rgba(0, 32, 30, 0.08),
+    inset -4px -4px 10px rgba(255, 255, 255, 0.85);
+  max-height: min(70vh, 640px);
+  overflow: auto;
+}
+
+.sr-match-dropdown__pager {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  margin-top: 0.75rem;
+}
 </style>
 
 <style scoped>
