@@ -346,6 +346,12 @@ function exceptionStateLabel(state: string) {
     inset 3px 3px 8px rgba(0, 32, 30, 0.07),
     inset -3px -3px 8px rgba(255, 255, 255, 0.88);
 }
+.sr-card-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.45rem;
+}
 
 .sr-section__title {
   margin: 0 0 0.75rem;
