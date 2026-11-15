@@ -39,6 +39,7 @@ describe('navigation.registry — توحيد الإدارة والمبيعات',
     walk(ready)
     expect(flat).toContain('managementSummary')
     expect(flat).toContain('managementRatings')
+    expect(flat).toContain('managementSalesMap')
     expect(flat).toContain('managementFollowerWork')
     expect(flat).toContain('followerSales')
     expect(flat).toContain('followerDeclining')
@@ -63,6 +64,7 @@ describe('navigation.registry — توحيد الإدارة والمبيعات',
     const documented = getDocumentedNotImplementedSections()
     expect(documented.some((s) => s.id === 'managementSummary')).toBe(false)
     expect(documented.some((s) => s.id === 'managementRatings')).toBe(false)
+    expect(documented.some((s) => s.id === 'managementSalesMap')).toBe(false)
     expect(documented.some((s) => s.id === 'managementFollowerWork')).toBe(false)
     expect(documented.some((s) => s.id === 'followerSales')).toBe(false)
     expect(documented.some((s) => s.id === 'followerDeclining')).toBe(false)
@@ -242,9 +244,32 @@ describe('navigation.registry — توحيد الإدارة والمبيعات',
       getNavigationSectionByRouteName('ManagementDirectorDelegateFollowupRoute')
         ?.id
     ).toBe('managementDelegateFollowup')
+    expect(getNavigationSectionByRouteName('ManagementSalesMapRoute')?.id).toBe(
+      'managementSalesMap'
+    )
     expect(getNavigationSectionByRouteName('SalesFollowupRoute')?.id).toBe(
       'saleFollowup'
     )
+  })
+
+  it('خريطة المبيعات تتطلب ManagementSalesMap.Read', () => {
+    const tab = getNavigationSectionById('managementSalesMap')!
+    expect(
+      evaluateAccess({
+        permissionsReady: true,
+        isAuthenticated: true,
+        hasPermission: hasOnly([['DelegateFollowup', 'Read']]),
+        requirement: tab.requirement,
+      })
+    ).toBe('denied')
+    expect(
+      evaluateAccess({
+        permissionsReady: true,
+        isAuthenticated: true,
+        hasPermission: hasOnly([['ManagementSalesMap', 'Read']]),
+        requirement: tab.requirement,
+      })
+    ).toBe('allowed')
   })
 
   it('لا يكرر مصروفًا محذوفًا كمدخل مبيعات', () => {

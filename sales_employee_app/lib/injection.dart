@@ -10,6 +10,7 @@ import 'package:sales_employee_app/features/catalog/data/catalog_remote_datasour
 import 'package:sales_employee_app/features/customers/data/customers_remote_datasource.dart';
 import 'package:sales_employee_app/features/ratings/data/ratings_remote_datasource.dart';
 import 'package:sales_employee_app/features/sales/data/demo_orders_store.dart';
+import 'package:sales_employee_app/features/sales/data/sale_wizard_local_draft_store.dart';
 import 'package:sales_employee_app/features/sales/data/sales_remote_datasource.dart';
 import 'package:sales_employee_app/features/sales/realtime/sales_request_realtime_client.dart';
 import 'package:sales_employee_app/features/shift/data/duty_location_tracker.dart';
@@ -33,6 +34,7 @@ abstract final class Injection {
   static late final SalesRemoteDataSource salesRemote;
   static late final SalesRequestRealtimeClient salesRealtime;
   static late final DemoOrdersStore demoOrders;
+  static late final SaleWizardLocalDraftStore saleWizardDrafts;
   static late final ShiftRemoteDataSource shiftRemote;
   static late final DutySessionStore dutySession;
   static late final LocationQueueDataSource locationQueue;
@@ -62,6 +64,7 @@ abstract final class Injection {
     salesRemote = SalesRemoteDataSource(dioClient, cache: appCache);
     salesRealtime = SalesRequestRealtimeClient();
     demoOrders = DemoOrdersStore(database);
+    saleWizardDrafts = SaleWizardLocalDraftStore(database);
     shiftRemote = ShiftRemoteDataSource(dioClient);
     dutySession = DutySessionStore();
     locationQueue = LocationQueueDataSource(database, dioClient);

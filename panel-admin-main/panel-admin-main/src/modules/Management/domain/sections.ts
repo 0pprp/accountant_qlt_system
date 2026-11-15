@@ -33,6 +33,7 @@ export type ManagementTabId =
   | 'delegateFollowup'
   | 'summary'
   | 'ratings'
+  | 'salesMap'
   | 'followerWork'
   | 'followerSales'
   | 'followerDeclining'
@@ -91,6 +92,7 @@ export interface ManagementTabDefinition {
     | 'DelegateFollowupPage'
     | 'ManagementSummaryPage'
     | 'ManagementRatingsPage'
+    | 'ManagementSalesMapPage'
     | 'FollowerWorkPage'
     | 'FollowerSalesReviewPage'
     | 'FollowerDecliningPage'
@@ -168,6 +170,11 @@ const MANAGEMENT_RATINGS_READ: AccessRequirement = {
   permission: { module: 'ManagementRatings', action: 'Read' },
 }
 
+const MANAGEMENT_SALES_MAP_READ: AccessRequirement = {
+  type: 'single',
+  permission: { module: 'ManagementSalesMap', action: 'Read' },
+}
+
 /** دليل المتابعين أو أي صلاحية قسم منفّذ يحتاج الدليل (أقسام 06–13 لاحقًا). */
 const FOLLOWER_WORK_DIRECTORY: AccessRequirement = {
   type: 'anyOf',
@@ -190,6 +197,7 @@ const OVERSIGHT_SECTION_ACCESS: AccessRequirement = {
     { module: 'DelegateFollowup', action: 'Read' },
     { module: 'ManagementSummary', action: 'Read' },
     { module: 'ManagementRatings', action: 'Read' },
+    { module: 'ManagementSalesMap', action: 'Read' },
     { module: 'FollowerWork', action: 'Read' },
     { module: 'FollowerSalesReview', action: 'Read' },
   ],
@@ -560,6 +568,19 @@ export const MANAGEMENT_TABS: readonly ManagementTabDefinition[] = [
     reuse: 'ManagementRatingsPage',
     notes:
       'التقييمات العامة — Read للتبويب؛ DetailsRead لزبائن الفئات؛ ليست SalesFollowup',
+  },
+
+  {
+    id: 'salesMap',
+    sectionId: 'oversight',
+    labelKey: 'tabs.salesMap',
+    tabPath: 'sales-map',
+    routeName: 'ManagementSalesMapRoute',
+    requirement: MANAGEMENT_SALES_MAP_READ,
+    implementationStatus: 'ready',
+    reuse: 'ManagementSalesMapPage',
+    notes:
+      'خريطة المبيعات — محافظات ثم Order.Location؛ قوائم كـ DelegateFollowup؛ ManagementSalesMap.Read',
   },
 
   {

@@ -651,6 +651,26 @@ public static class Permissions
     }
 
     /// <summary>
+    /// خريطة المبيعات الإدارية — مواقع المبيعات المعتمدة حسب المحافظة/القائمة.
+    /// خارج Permissions.All؛ تشمل الاطلاع على القيم المالية للمبيع ضمن نطاق الحساب.
+    /// </summary>
+    public static class ManagementSalesMap
+    {
+        private const string Display = "خريطة المبيعات";
+
+        public static readonly PermissionEntity[] OutsideAll =
+        [
+            new(
+                Read,
+                "قراءة خريطة المبيعات وتفاصيل المبيع المالية ضمن النطاق",
+                nameof(ManagementSalesMap),
+                Display),
+        ];
+
+        public const string Read = "ManagementSalesMap.Read";
+    }
+
+    /// <summary>
     /// عمل المتابعين (دليل البطاقات + صلاحيات الأقسام) — خارج Permissions.All.
     /// FollowerWork.Read = دليل الهوية/البطاقات؛ صلاحيات الأقسام مستقلة ولا تفتح بيانات بعضها.
     /// أقسام 06–13 مسجّلة للمستقبل؛ لا تُزرع كـ ready في القوالب حتى تنفيذ دفعتها.

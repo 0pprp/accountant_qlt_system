@@ -43,6 +43,7 @@ public static class ConfigureServices
         services.AddScoped<Application.SalesRecords.Common.SalesRecordsDataService>();
         services.AddScoped<Application.LegalFollowups.Common.LegalFollowupDataService>();
         services.AddScoped<Application.DelegateFollowup.Common.DelegateFollowupDataService>();
+        services.AddScoped<Application.ManagementSalesMap.Common.ManagementSalesMapDataService>();
         services.AddScoped<Application.ManagementSummary.Common.ManagementSummaryDataService>();
         services.AddScoped<Application.ManagementRatings.Common.ManagementRatingsDataService>();
         services.AddScoped<Application.FollowerWork.Common.FollowerWorkDataService>();

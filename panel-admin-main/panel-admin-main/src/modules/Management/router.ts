@@ -29,6 +29,9 @@ function reuseLoader(reuse: string | null) {
     case 'ManagementRatingsPage':
       return () =>
         import('@/modules/ManagementRatings/views/ManagementRatingsPage.vue')
+    case 'ManagementSalesMapPage':
+      return () =>
+        import('@/modules/ManagementSalesMap/views/ManagementSalesMapPage.vue')
     case 'FollowerWorkPage':
       return () =>
         import('@/modules/FollowerWork/views/FollowerWorkPage.vue')
@@ -203,6 +206,18 @@ const aliases: RouteRecordRaw[] = [
       accessRequirement: {
         type: 'single',
         permission: { module: 'ManagementRatings', action: 'Read' },
+      },
+    },
+  },
+  {
+    path: 'sales-map',
+    name: 'ManagementSalesMapCanonicalAliasRoute',
+    redirect: { name: 'ManagementSalesMapRoute' },
+    meta: {
+      requiresAuth: true,
+      accessRequirement: {
+        type: 'single',
+        permission: { module: 'ManagementSalesMap', action: 'Read' },
       },
     },
   },

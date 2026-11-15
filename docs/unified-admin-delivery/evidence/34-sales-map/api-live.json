@@ -1,0 +1,21 @@
+﻿{
+    "api":  "http://127.0.0.1:4200",
+    "db":  "qalaat_22_23_iso",
+    "login":  "admin",
+    "jwtHasSalesMap":  true,
+    "provinces":  1,
+    "lists":  1,
+    "pointsAll":  2,
+    "pointsByStatus":  {
+                           "2":  0,
+                           "3":  0,
+                           "1":  2,
+                           "0":  2
+                       },
+    "detailOrderId":  4,
+    "anonWithoutToken":  401,
+    "listIdsOmittedEqualsAll":  true,
+    "unitTests":  "SalesMapRulesTests 6 passed; navigation.registry 11 passed",
+    "result":  "PASS",
+    "verifiedAt":  "2026-11-15T19:45:06.7169340+03:00"
+}

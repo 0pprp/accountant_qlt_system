@@ -121,6 +121,7 @@ export type PermissionModule =
   | 'DelegateFollowup'
   | 'ManagementSummary'
   | 'ManagementRatings'
+  | 'ManagementSalesMap'
   | 'CommitteeTask'
   | 'AppNote'
   | 'Waiver'
@@ -233,6 +234,7 @@ export interface PermissionTypes {
   DelegateFollowup?: Permissions[]
   ManagementSummary?: Permissions[]
   ManagementRatings?: Permissions[]
+  ManagementSalesMap?: Permissions[]
   CommitteeTask?: Permissions[]
   AppNote?: Permissions[]
   Waiver?: Permissions[]
@@ -294,6 +296,7 @@ export interface ConvertedPermissionTypes {
   DelegateFollowup?: ModulePermissions
   ManagementSummary?: ModulePermissions
   ManagementRatings?: ModulePermissions
+  ManagementSalesMap?: ModulePermissions
   CommitteeTask?: ModulePermissions
   AppNote?: ModulePermissions
   Waiver?: ModulePermissions

@@ -5,8 +5,10 @@ import 'package:sales_employee_app/core/network/dio_client.dart';
 import 'package:sales_employee_app/core/theme/app_colors.dart';
 import 'package:sales_employee_app/core/time/baghdad_time.dart';
 import 'package:sales_employee_app/core/widgets/centered_dialog.dart';
+import 'package:sales_employee_app/core/widgets/sale_photo_slot.dart';
 import 'package:sales_employee_app/features/catalog/domain/entities/product_item.dart';
 import 'package:sales_employee_app/features/sales/data/demo_orders_store.dart';
+import 'package:sales_employee_app/features/sales/data/sale_wizard_local_draft_store.dart';
 import 'package:sales_employee_app/features/sales/domain/entities/order_list_lite.dart';
 import 'package:sales_employee_app/features/sales/domain/sales_workflow_rules.dart';
 import 'package:sales_employee_app/features/sales/presentation/sale_success_dialog.dart';
@@ -47,6 +49,7 @@ class _CompleteSaleWizardPageState extends State<CompleteSaleWizardPage> {
   List<OrderListLite> _orderLists = const [];
   int? _orderListId;
   bool _listsLoading = false;
+  String? _listsError;
   final _fullName = TextEditingController();
   final _phone = TextEditingController();
   final _province = TextEditingController();
@@ -57,7 +60,23 @@ class _CompleteSaleWizardPageState extends State<CompleteSaleWizardPage> {
   final _rationCenter = TextEditingController();
   final Map<int, XFile> _uploadedSaleDocuments = {};
   final Map<int, XFile> _saleDocuments = {};
-  final List<XFile> _customerDocs = [];
+  /// مستمسكات اختيارية — نفس خانات التطبيق القديم (كاميرا + معرض).
+  final Map<String, XFile> _kycDocs = {};
+  static const _kycDefs = <(String key, String label, String? attachmentType)>[
+    ('nationalIdFront', 'البطاقة الوطنية - أمامية', '0'),
+    ('nationalIdBack', 'البطاقة الوطنية - خلفية', null),
+    ('residenceCardFront', 'بطاقة السكن - أمامية', '1'),
+    ('residenceCardBack', 'بطاقة السكن - خلفية', null),
+    ('residenceCertificate', 'تأييد السكن', '2'),
+  ];
+  static const _saleDocLabels = ['وصل الشراء', 'وصل الأمانة', 'عقد البيع'];
+  bool _restoringDraft = false;
+  bool _dirty = false;
+
+  String get _draftKey => SaleWizardLocalDraftStore.keyFor(
+        orderId: _orderId,
+        requestId: widget.request?.requestId,
+      );
 
   String get _selectedListLabel {
     for (final e in _orderLists) {
@@ -208,6 +227,7 @@ class _CompleteSaleWizardPageState extends State<CompleteSaleWizardPage> {
       _qty[_catalog.first.id] = 1;
       _applyDefaultPrices();
     }
+    await _restoreLocalDraft();
     if (mounted) setState(() {});
   }
 
@@ -227,20 +247,94 @@ class _CompleteSaleWizardPageState extends State<CompleteSaleWizardPage> {
     _address.text = '${d['address'] ?? ''}';
     _nearest.text = '${d['nearest'] ?? ''}';
     _mukhtar.text = '${d['mukhtar'] ?? ''}';
+    _rationCenter.text = '${d['rationCenter'] ?? _rationCenter.text}';
     _total.text = '${d['total'] ?? ''}';
     _dailyInstallment.text = '${d['dailyInstallment'] ?? ''}';
     _prepayment.text = '${d['prepayment'] ?? ''}';
     _lat = (d['lat'] as num?)?.toDouble();
     _lng = (d['lng'] as num?)?.toDouble();
+    final products = d['products'];
+    if (products is List) {
+      _qty.clear();
+      for (final row in products) {
+        if (row is! Map) continue;
+        final id = int.tryParse('${row['id'] ?? ''}');
+        final q = int.tryParse('${row['qty'] ?? ''}');
+        if (id != null && q != null && q > 0) _qty[id] = q;
+      }
+    }
+  }
+
+  Future<void> _restoreLocalDraft() async {
+    _restoringDraft = true;
+    try {
+      final raw = await Injection.saleWizardDrafts.load(_draftKey);
+      if (raw == null) return;
+      final fields = raw['fields'];
+      if (fields is Map) _hydrateDraft(Map<String, dynamic>.from(fields));
+      final step = raw['step'];
+      if (step is num) _step = step.toInt().clamp(0, 4);
+      final photos = raw['photos'];
+      if (photos is Map) {
+        final map = Map<String, dynamic>.from(photos);
+        final shop = map['shopPhoto']?.toString();
+        if (shop != null && shop.isNotEmpty) _shopPhoto = XFile(shop);
+        for (var i = 0; i < _saleDocLabels.length; i++) {
+          final path = map['saleDoc_$i']?.toString();
+          if (path != null && path.isNotEmpty) _saleDocuments[i] = XFile(path);
+        }
+        for (final def in _kycDefs) {
+          final path = map[def.$1]?.toString();
+          if (path != null && path.isNotEmpty) _kycDocs[def.$1] = XFile(path);
+        }
+      }
+      _dirty = false;
+    } finally {
+      _restoringDraft = false;
+    }
+  }
+
+  Map<String, String?> _photoPathsForDraft() => {
+        'shopPhoto': _shopPhoto?.path,
+        for (var i = 0; i < _saleDocLabels.length; i++)
+          'saleDoc_$i': _saleDocuments[i]?.path,
+        for (final def in _kycDefs) def.$1: _kycDocs[def.$1]?.path,
+      };
+
+  Future<void> _persistLocalDraft() async {
+    if (_restoringDraft) return;
+    try {
+      await Injection.saleWizardDrafts.save(
+        draftKey: _draftKey,
+        step: _step,
+        fields: _payload(),
+        photoPaths: _photoPathsForDraft(),
+      );
+      _dirty = false;
+    } catch (_) {}
+  }
+
+  void _markDirty() {
+    if (_restoringDraft) return;
+    _dirty = true;
   }
 
   Future<void> _loadOrderLists({String? preferName}) async {
-    setState(() => _listsLoading = true);
+    setState(() {
+      _listsLoading = true;
+      _listsError = null;
+    });
     List<OrderListLite> rows = const [];
     try {
       rows = widget.fromRequest ? await Injection.salesRemote.checkoutLists(_orderId, requestId: widget.request?.requestId) : await Injection.salesRemote.getOrderLists(forceRefresh: true);
-    } catch (_) {
-      if (widget.fromRequest) rethrow;
+    } catch (e) {
+      if (widget.fromRequest) {
+        if (mounted) setState(() {
+          _listsLoading = false;
+          _listsError = DioClient.mapError(e);
+        });
+        return;
+      }
       rows = const [];
     }
     // قوائم سالبة للتجريبي فقط — الطلب الحي يعتمد قائمة المندوب من السيرفر (Mandob).
@@ -324,7 +418,7 @@ class _CompleteSaleWizardPageState extends State<CompleteSaleWizardPage> {
       'nearest': _nearest.text.trim(),
       'mukhtar': _mukhtar.text.trim(),
       'rationCenter': _rationCenter.text.trim(),
-      'customerDocs': _customerDocs.map((e) => e.name).toList(),
+      'kycKeys': _kycDocs.keys.toList(),
       'products': _selected
           .map((p) => {
                 'id': p.id,
@@ -401,16 +495,6 @@ class _CompleteSaleWizardPageState extends State<CompleteSaleWizardPage> {
     }
   }
 
-  Future<void> _pickShopPhoto() async {
-    final f = await ImagePicker().pickImage(source: ImageSource.gallery, imageQuality: 85);
-    if (f != null) setState(() => _shopPhoto = f);
-  }
-
-  Future<void> _pickDoc() async {
-    final f = await ImagePicker().pickImage(source: ImageSource.gallery, imageQuality: 85);
-    if (f != null) setState(() => _customerDocs.add(f));
-  }
-
   Future<void> _captureGps() async {
     final p = await Injection.locationService.current();
     if (!mounted) return;
@@ -441,14 +525,13 @@ class _CompleteSaleWizardPageState extends State<CompleteSaleWizardPage> {
         }
         // PurchaseReceipt=4, TrustReceipt=5, SaleContract=6
         const requiredTypes = ['4', '5', '6'];
-        if (widget.fromRequest && _saleDocuments.length != 3) {
+        if (_saleDocuments.length != 3) {
           await showAppMessage(context, title: 'مستندات البيع', message: 'أرفق وصل الشراء ووصل الأمانة وعقد البيع');
           return;
         }
-        final extras = _customerDocs;
         for (var i = 0; i < requiredTypes.length; i++) {
-          final src = widget.fromRequest ? _saleDocuments[i]! : (i < extras.length ? extras[i] : evidence);
-          if (widget.fromRequest && identical(_uploadedSaleDocuments[i], src)) continue;
+          final src = _saleDocuments[i]!;
+          if (identical(_uploadedSaleDocuments[i], src)) continue;
           final bytes = await src.readAsBytes();
           await Injection.salesRemote.uploadAttachment(
             orderId: _orderId,
@@ -456,7 +539,7 @@ class _CompleteSaleWizardPageState extends State<CompleteSaleWizardPage> {
             bytes: bytes,
             attachmentType: requiredTypes[i],
           );
-          if (widget.fromRequest) _uploadedSaleDocuments[i] = src;
+          _uploadedSaleDocuments[i] = src;
         }
         if (widget.fromRequest) {
           await Injection.salesRemote.checkout(_orderId, payload);
@@ -476,7 +559,9 @@ class _CompleteSaleWizardPageState extends State<CompleteSaleWizardPage> {
         );
         await Injection.salesRemote.complete(_orderId);
         }
+        await _uploadOptionalKycBestEffort();
       }
+      await Injection.saleWizardDrafts.clear(_draftKey);
       if (!mounted) return;
       await showSaleSuccessDialog(context, orderId: _orderId.abs());
       if (!mounted) return;
@@ -491,6 +576,25 @@ class _CompleteSaleWizardPageState extends State<CompleteSaleWizardPage> {
     }
   }
 
+  Future<void> _uploadOptionalKycBestEffort() async {
+    for (final def in _kycDefs) {
+      final type = def.$3;
+      final file = _kycDocs[def.$1];
+      if (type == null || file == null) continue;
+      try {
+        final bytes = await file.readAsBytes();
+        await Injection.salesRemote.uploadAttachment(
+          orderId: _orderId,
+          fileName: file.name.isEmpty ? '${def.$1}.jpg' : file.name,
+          bytes: bytes,
+          attachmentType: type,
+        );
+      } catch (_) {
+        // المستمسكات اختيارية — لا تُفشل البيع إن رُفض الرفع بعد الإتمام.
+      }
+    }
+  }
+
   Future<void> _finishDisclosure() async {
     // Partial save allowed if at least shop basics OR any progress — require shop name + gps minimum
     if (_shopName.text.trim().isEmpty || _lat == null) {
@@ -499,6 +603,7 @@ class _CompleteSaleWizardPageState extends State<CompleteSaleWizardPage> {
     }
     setState(() => _busy = true);
     try {
+      await _persistLocalDraft();
       final payload = _payload();
       if (_isDemo) {
         await Injection.demoOrders.saveDraft(
@@ -517,7 +622,7 @@ class _CompleteSaleWizardPageState extends State<CompleteSaleWizardPage> {
       await showAppMessage(
         context,
         title: 'تم الكشف',
-        message: 'حُفظ التقدّم ونُقل الطلب إلى «تم الكشف» دون إتمام البيع.',
+        message: 'حُفظ التقدّم محلياً ونُقل الطلب إلى «تم الكشف» دون إتمام البيع.',
         icon: Icons.fact_check_rounded,
         color: AppColors.info,
       );
@@ -573,10 +678,21 @@ class _CompleteSaleWizardPageState extends State<CompleteSaleWizardPage> {
     if (rating != null) await prefs.setBool(key, true);
   }
 
+  Future<void> _onWillPop() async {
+    await _persistLocalDraft();
+  }
+
   @override
   Widget build(BuildContext context) {
     final bottom = MediaQuery.paddingOf(context).bottom;
-    return Scaffold(
+    return PopScope(
+      canPop: true,
+      onPopInvokedWithResult: (didPop, _) async {
+        if (didPop || _dirty || _shopName.text.trim().isNotEmpty || _shopPhoto != null || _kycDocs.isNotEmpty) {
+          await _onWillPop();
+        }
+      },
+      child: Scaffold(
       appBar: AppBar(title: Text('إتمام البيع — ${_titles[_step]}')),
       body: Column(
         children: [
@@ -611,7 +727,7 @@ class _CompleteSaleWizardPageState extends State<CompleteSaleWizardPage> {
                         onPressed: _busy
                             ? null
                             : () async {
-                                if (_step < 4) {
+                                  if (_step < 4) {
                                   if (!await _validateStep()) return;
                                   if (_step == 2) _applyDefaultPrices();
                                   if (_step == 3 && widget.request != null && _orderId <= 0) {
@@ -627,7 +743,10 @@ class _CompleteSaleWizardPageState extends State<CompleteSaleWizardPage> {
                                       if (mounted) setState(() => _busy = false);
                                     }
                                   }
-                                  if (mounted) setState(() => _step++);
+                                  if (mounted) {
+                                    setState(() => _step++);
+                                    await _persistLocalDraft();
+                                  }
                                 } else {
                                   await _finishSold();
                                 }
@@ -648,6 +767,7 @@ class _CompleteSaleWizardPageState extends State<CompleteSaleWizardPage> {
           ),
         ],
       ),
+    ),
     );
   }
 
@@ -665,14 +785,24 @@ class _CompleteSaleWizardPageState extends State<CompleteSaleWizardPage> {
             _field(_shopWidth, 'عرض المحل *', number: true),
             _field(_shopNote, 'ملاحظة الموظف (اختياري)'),
             const SizedBox(height: 8),
-            OutlinedButton.icon(
-              onPressed: _pickShopPhoto,
-              icon: const Icon(Icons.storefront),
-              label: Text(_shopPhoto == null ? 'صورة المحل *' : 'تم اختيار صورة المحل'),
+            SalePhotoSlot(
+              label: 'صورة المحل',
+              required: true,
+              preferCamera: true,
+              file: _shopPhoto,
+              onChanged: (f) {
+                setState(() => _shopPhoto = f);
+                _markDirty();
+                _persistLocalDraft();
+              },
             ),
             const SizedBox(height: 8),
             OutlinedButton.icon(
-              onPressed: _captureGps,
+              onPressed: () async {
+                await _captureGps();
+                _markDirty();
+                await _persistLocalDraft();
+              },
               icon: const Icon(Icons.my_location),
               label: Text(_lat == null ? 'تحديد موقع المحل *' : 'تم تحديد الموقع'),
             ),
@@ -703,11 +833,17 @@ class _CompleteSaleWizardPageState extends State<CompleteSaleWizardPage> {
                           for (final list in _orderLists)
                             DropdownMenuItem(value: list.id, child: Text(list.mandobFullName?.isNotEmpty == true ? '${list.label} · ${list.mandobFullName}' : list.label)),
                         ],
-                        onChanged: (value) => setState(() => _orderListId = value),
+                        onChanged: (value) {
+                          setState(() => _orderListId = value);
+                          _markDirty();
+                          _persistLocalDraft();
+                        },
                       ),
                     ),
             ),
-            if (!_listsLoading && _orderLists.isEmpty)
+            if (!_listsLoading && _listsError != null)
+              TextButton.icon(onPressed: () => _loadOrderLists(), icon: const Icon(Icons.refresh), label: Text('تعذّر تحميل قوائم المحافظة: $_listsError · إعادة المحاولة')),
+            if (!_listsLoading && _listsError == null && _orderLists.isEmpty)
               const Padding(
                 padding: EdgeInsets.only(top: 6, bottom: 4),
                 child: Text('لا توجد قوائم معرفة في المحافظة', style: TextStyle(color: AppColors.muted, fontSize: 12)),
@@ -734,21 +870,53 @@ class _CompleteSaleWizardPageState extends State<CompleteSaleWizardPage> {
             _field(_nearest, 'أقرب نقطة دالة *'),
             _field(_mukhtar, 'اسم المختار *'),
             _field(_rationCenter, 'رقم مركز التموين (اختياري)'),
-            if (widget.fromRequest)
-              for (final entry in ['وصل الشراء', 'وصل الأمانة', 'عقد البيع'].asMap().entries)
-                ListTile(leading: const Icon(Icons.attach_file), title: Text(entry.value),
-                  subtitle: Text(_saleDocuments[entry.key]?.name ?? 'اختر صورة المستند'),
-                  onTap: () async {
-                    final file = await ImagePicker().pickImage(source: ImageSource.gallery, imageQuality: 85);
-                    if (mounted && file != null) setState(() => _saleDocuments[entry.key] = file);
-                  }),
-            if (!widget.fromRequest)
-            OutlinedButton.icon(
-              onPressed: _pickDoc,
-              icon: const Icon(Icons.attach_file),
-              label: const Text('مستندات الزبون (اختياري)'),
+            const SizedBox(height: 8),
+            const Text('مستندات البيع *', style: TextStyle(fontWeight: FontWeight.w700)),
+            const SizedBox(height: 8),
+            for (final entry in _saleDocLabels.asMap().entries)
+              SalePhotoSlot(
+                label: entry.value,
+                required: true,
+                preferCamera: true,
+                file: _saleDocuments[entry.key],
+                onChanged: (f) {
+                  setState(() {
+                    if (f == null) {
+                      _saleDocuments.remove(entry.key);
+                    } else {
+                      _saleDocuments[entry.key] = f;
+                    }
+                  });
+                  _markDirty();
+                  _persistLocalDraft();
+                },
+              ),
+            const SizedBox(height: 8),
+            const Text('مستمسكات الزبون (اختياري)', style: TextStyle(fontWeight: FontWeight.w700)),
+            const SizedBox(height: 4),
+            const Text(
+              'كاميرا أو معرض — لا تمنع إتمام البيع إن تُركت فارغة',
+              style: TextStyle(color: AppColors.textSecondary, fontSize: 12.5),
             ),
-            ..._customerDocs.map((d) => ListTile(dense: true, title: Text(d.name), leading: const Icon(Icons.image))),
+            const SizedBox(height: 8),
+            for (final def in _kycDefs)
+              SalePhotoSlot(
+                label: def.$2,
+                required: false,
+                preferCamera: true,
+                file: _kycDocs[def.$1],
+                onChanged: (f) {
+                  setState(() {
+                    if (f == null) {
+                      _kycDocs.remove(def.$1);
+                    } else {
+                      _kycDocs[def.$1] = f;
+                    }
+                  });
+                  _markDirty();
+                  _persistLocalDraft();
+                },
+              ),
           ],
         );
       case 2:
@@ -834,10 +1002,14 @@ class _CompleteSaleWizardPageState extends State<CompleteSaleWizardPage> {
             Text('القائمة/المندوب: ${p['orderListName']}'),
             Text('المنتجات: ${_selected.length}'),
             Text('الإجمالي: ${p['total']} | القسط: ${p['dailyInstallment']} | المقدمة: ${p['prepayment']}'),
-            Text('مستندات الزبون: ${_customerDocs.length} | صورة محل: ${_shopPhoto != null ? 'نعم' : 'لا'}'),
+            Text(
+              'صورة محل: ${_shopPhoto != null ? 'نعم' : 'لا'} | '
+              'مستندات بيع: ${_saleDocuments.length}/3 | '
+              'مستمسكات: ${_kycDocs.length}',
+            ),
             const SizedBox(height: 12),
             const Text(
-              '«تم البيع» يغلق الطلب في صندوق تم البيع. «تم الكشف» يحفظ التقدّم دون إغلاق.',
+              '«تم البيع» يغلق الطلب في صندوق تم البيع. الخروج من أي خطوة يحفظ التقدّم محلياً. «تم الكشف» يحفظ دون إغلاق.',
               style: TextStyle(color: AppColors.textSecondary, fontSize: 12.5),
             ),
           ],
@@ -852,6 +1024,9 @@ class _CompleteSaleWizardPageState extends State<CompleteSaleWizardPage> {
         controller: c,
         keyboardType: number ? TextInputType.number : TextInputType.text,
         decoration: InputDecoration(labelText: label),
+        onChanged: (_) {
+          _markDirty();
+        },
       ),
     );
   }

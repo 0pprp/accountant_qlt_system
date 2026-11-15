@@ -22,6 +22,7 @@ public static class RolePermissions
                 .Concat(Permissions.DelegateFollowup.OutsideAll.Select(x => x.Name))
                 .Concat(Permissions.ManagementSummary.OutsideAll.Select(x => x.Name))
                 .Concat(Permissions.ManagementRatings.OutsideAll.Select(x => x.Name))
+                .Concat(Permissions.ManagementSalesMap.OutsideAll.Select(x => x.Name))
                 .Concat(Permissions.FollowerWork.OutsideAll.Select(x => x.Name))
                 .Concat(Permissions.LegalFollowup.OutsideAll.Select(x => x.Name))
                 .Concat(Permissions.CommitteeTask.OutsideAll.Select(x => x.Name))
@@ -200,6 +201,12 @@ public static class RolePermissions
         mandob.Permissions.Add(Permissions.Announcement.AppRead);
         mandob.Permissions.Add(Permissions.Tutorial.AppRead);
         mandob.Permissions.Add(Permissions.PriceBoard.Read);
+        // مهامي — تطبيقات ميدانية (قبول/رفض/إنجاز بدون نقل)
+        mandob.Permissions.Add(Permissions.ManagementTask.Read);
+        mandob.Permissions.Add(Permissions.ManagementTask.Accept);
+        mandob.Permissions.Add(Permissions.ManagementTask.Reject);
+        mandob.Permissions.Add(Permissions.ManagementTask.Complete);
+        mandob.Permissions.Add(Permissions.ManagementTask.ReadAttachment);
         All.Add(mandob);
         
         var motaba = new RolePermissionDto
@@ -228,6 +235,12 @@ public static class RolePermissions
         motaba.Permissions.Add(Permissions.Announcement.AppRead);
         motaba.Permissions.Add(Permissions.Tutorial.AppRead);
         motaba.Permissions.Add(Permissions.Complaint.Submit);
+        // مهامي — تطبيقات ميدانية (قبول/رفض/إنجاز بدون نقل)
+        motaba.Permissions.Add(Permissions.ManagementTask.Read);
+        motaba.Permissions.Add(Permissions.ManagementTask.Accept);
+        motaba.Permissions.Add(Permissions.ManagementTask.Reject);
+        motaba.Permissions.Add(Permissions.ManagementTask.Complete);
+        motaba.Permissions.Add(Permissions.ManagementTask.ReadAttachment);
         All.Add(motaba);
 
         // قوالب لوحة الإدارة — seed يضيف فقط المفقود؛ لا يمحو Deny ولا يغيّر حسابات موجودة

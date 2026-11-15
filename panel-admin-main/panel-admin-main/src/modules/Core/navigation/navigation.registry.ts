@@ -363,6 +363,23 @@ export const NAVIGATION_REGISTRY: readonly NavigationSectionDefinition[] = [
           'Source: director-ratings — ManagementRatings.Read؛ ليست SalesFollowup',
       },
       {
+        id: 'managementSalesMap',
+        parentId: 'management',
+        translationKey: 'sidebar.managementSalesMap',
+        icon: 'user',
+        group: 'management',
+        routeName: 'ManagementSalesMapRoute',
+        routePath: '/management/sales-map',
+        requirement: {
+          type: 'single',
+          permission: { module: 'ManagementSalesMap', action: 'Read' },
+        },
+        displayOrder: 109,
+        implementationStatus: 'ready',
+        notes:
+          'خريطة المبيعات — Order.Location + قوائم DelegateFollowup؛ ManagementSalesMap.Read',
+      },
+      {
         id: 'managementDelegateFollowup',
         parentId: 'management',
         translationKey: 'sidebar.managementDelegateFollowup',

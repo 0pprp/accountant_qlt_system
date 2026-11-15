@@ -78,6 +78,7 @@ public class DatabaseInitializer
             .Concat(Permissions.DelegateFollowup.OutsideAll)
             .Concat(Permissions.ManagementSummary.OutsideAll)
             .Concat(Permissions.ManagementRatings.OutsideAll)
+            .Concat(Permissions.ManagementSalesMap.OutsideAll)
             .Concat(Permissions.FollowerWork.OutsideAll)
             .Concat(Permissions.LegalFollowup.OutsideAll)
             .Concat(Permissions.CommitteeTask.OutsideAll)

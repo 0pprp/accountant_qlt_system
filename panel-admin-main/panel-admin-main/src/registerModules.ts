@@ -23,6 +23,7 @@ import ManagementTasksModule from '@/modules/ManagementTasks'
 import DelegateFollowupModule from '@/modules/DelegateFollowup'
 import ManagementSummaryModule from '@/modules/ManagementSummary'
 import ManagementRatingsModule from '@/modules/ManagementRatings'
+import ManagementSalesMapModule from '@/modules/ManagementSalesMap'
 import FollowerWorkModule from '@/modules/FollowerWork'
 import PaymentModule from '@/modules/Payment'
 import CustomerModule from '@/modules/Customer'
@@ -95,6 +96,7 @@ registerModules({
   delegateFollowup: DelegateFollowupModule,
   managementSummary: ManagementSummaryModule,
   managementRatings: ManagementRatingsModule,
+  managementSalesMap: ManagementSalesMapModule,
   followerWork: FollowerWorkModule,
   payment: PaymentModule,
   customer: CustomerModule,

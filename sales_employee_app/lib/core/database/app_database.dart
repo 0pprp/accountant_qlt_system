@@ -21,13 +21,15 @@ class AppDatabase {
     final path = p.join(dir.path, 'sales_employee_app.db');
     _db = await openDatabase(
       path,
-      version: 2,
+      version: 3,
       onCreate: (db, version) async {
         await _createV1(db);
         await _createV2(db);
+        await _createV3(db);
       },
       onUpgrade: (db, oldVersion, newVersion) async {
         if (oldVersion < 2) await _createV2(db);
+        if (oldVersion < 3) await _createV3(db);
       },
     );
     return _db!;
@@ -74,6 +76,15 @@ CREATE TABLE IF NOT EXISTS demo_orders (
   total REAL,
   created_at TEXT NOT NULL,
   payload_json TEXT
+)''');
+  }
+
+  Future<void> _createV3(Database db) async {
+    await db.execute('''
+CREATE TABLE IF NOT EXISTS sale_wizard_drafts (
+  draft_key TEXT PRIMARY KEY,
+  payload_json TEXT NOT NULL,
+  updated_at TEXT NOT NULL
 )''');
   }
 }
