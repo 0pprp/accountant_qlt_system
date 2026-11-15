@@ -65,7 +65,7 @@
         >
           <template #matching="{ item }">
             <MatchingSummary
-              v-if="tab === 'unassigned' && canMatchRead"
+              v-if="showMatching && !item.isDeleted"
               :cards="cardsFor(item.id)"
               :selected-key="selectedId === item.id ? selectedCriterion : null"
               :customer-name="item.customerName"
@@ -122,7 +122,7 @@
           :can-profile="canProfile"
           :can-order="canOrder"
           :show-back="true"
-          :show-audit="tab === 'unassigned' && canMatchRead"
+          :show-audit="showMatching && !!detailRequest && !detailRequest.isDeleted"
           :moved-message="outsideFilterMessage"
           :moved-tab="outsideFilterTargetTab"
           :active-tab="tab"
@@ -133,7 +133,7 @@
           @draft-change="onDraftChange"
         >
           <template
-            v-if="tab === 'unassigned' && canMatchRead && detailRequest"
+            v-if="showMatching && detailRequest && !detailRequest.isDeleted"
             #audit
           >
             <div class="space-y-3">
@@ -411,11 +411,19 @@ const searchSource = ref<SearchSource>('priorAccounts')
 const selectedCriterion = ref<MatchCriterion>('tripleName')
 const hitPage = ref(1)
 
-const pageIds = computed(() => rows.value.map((r) => r.id))
+/** مثل SalesHaider: كروت المطابقة لكل الحالات عدا المحذوف */
+const showMatching = computed(
+  () => canMatchRead.value && tab.value !== 'deleted'
+)
+
+const matchCriteria = Object.keys(MATCH_LABELS) as MatchCriterion[]
+
+const pageIds = computed(() =>
+  rows.value.filter((r) => !r.isDeleted).map((r) => r.id)
+)
 const summaryEnabled = computed(
   () =>
-    canMatchRead.value &&
-    tab.value === 'unassigned' &&
+    showMatching.value &&
     pageIds.value.length > 0 &&
     !listError.value
 )
@@ -423,11 +431,11 @@ const summaryQuery = useMatchSummaryQuery(pageIds, summaryEnabled)
 
 const hitsEnabled = computed(
   () =>
-    canMatchRead.value &&
-    tab.value === 'unassigned' &&
+    showMatching.value &&
     searchSource.value === 'priorAccounts' &&
     selectedId.value != null &&
-    selectedCriterion.value != null
+    selectedCriterion.value != null &&
+    !detailRequest.value?.isDeleted
 )
 const hitsQuery = useMatchHitsQuery(
   selectedId,
@@ -438,10 +446,10 @@ const hitsQuery = useMatchHitsQuery(
 )
 const dupEnabled = computed(
   () =>
-    canMatchRead.value &&
-    tab.value === 'unassigned' &&
+    showMatching.value &&
     searchSource.value === 'duplicates' &&
-    selectedId.value != null
+    selectedId.value != null &&
+    !detailRequest.value?.isDeleted
 )
 const dupQuery = useDuplicateRequestsQuery(
   selectedId,
@@ -466,16 +474,32 @@ function cardsFor(requestId: number): MatchCard[] {
   const item = summaryQuery.data.value?.items?.find(
     (x) => x.requestId === requestId
   )
-  if (item?.cards?.length) return item.cards as MatchCard[]
-  const state = summaryQuery.isLoading.value
+  const byKey = new Map(
+    (item?.cards ?? []).map((c) => [c.key as MatchCriterion, c as MatchCard])
+  )
+  const fallbackState: MatchCard['state'] = summaryQuery.isLoading.value
     ? 'loading'
-    : 'failed'
-  return (Object.keys(MATCH_LABELS) as MatchCriterion[]).map((key) => ({
-    key,
-    label: MATCH_LABELS[key],
-    state: state as MatchCard['state'],
-    count: null,
-  }))
+    : summaryQuery.isError.value || (summaryEnabled.value && !item)
+      ? 'failed'
+      : 'loading'
+
+  return matchCriteria.map((key) => {
+    const existing = byKey.get(key)
+    if (existing) {
+      return {
+        key,
+        label: MATCH_LABELS[key],
+        state: existing.state,
+        count: existing.count ?? null,
+      }
+    }
+    return {
+      key,
+      label: MATCH_LABELS[key],
+      state: fallbackState,
+      count: null,
+    }
+  })
 }
 
 function onTabChange(next: SalesRequestTabKey) {

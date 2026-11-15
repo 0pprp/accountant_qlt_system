@@ -38,7 +38,7 @@
 
     <div class="sr-match-grid" role="list">
       <button
-        v-for="card in cards"
+        v-for="card in displayCards"
         :key="card.key"
         type="button"
         :aria-pressed="selectedKey === card.key"
@@ -73,7 +73,12 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
-import type { MatchCard, MatchCardState, MatchCriterion } from '../types'
+import {
+  MATCH_LABELS,
+  type MatchCard,
+  type MatchCardState,
+  type MatchCriterion,
+} from '../types'
 import {
   buildComparisonCodes,
   copyText,
@@ -95,6 +100,20 @@ defineEmits<{
 const { t } = useI18n()
 const copiedKey = ref<string | null>(null)
 let copiedTimer: ReturnType<typeof setTimeout> | null = null
+
+/** دائماً 4 كروت مطابقة بنفس ترتيب SalesHaider */
+const displayCards = computed<MatchCard[]>(() => {
+  const byKey = new Map(props.cards.map((c) => [c.key, c]))
+  return (Object.keys(MATCH_LABELS) as MatchCriterion[]).map((key) => {
+    const existing = byKey.get(key)
+    return {
+      key,
+      label: MATCH_LABELS[key],
+      state: existing?.state ?? 'loading',
+      count: existing?.count ?? null,
+    }
+  })
+})
 
 const codes = computed(() =>
   buildComparisonCodes(props.customerName, props.customerPhone)

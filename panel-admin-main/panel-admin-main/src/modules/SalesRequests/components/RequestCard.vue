@@ -82,9 +82,9 @@
         :primary="{
           label: selected
             ? 'تفاصيل الطلب مفتوحة'
-            : request.tabKey === 'unassigned'
-              ? 'تدقيق الطلب ونتائج المطابقة'
-              : 'تفاصيل الطلب وسجل الحركة',
+            : request.isDeleted || request.tabKey === 'deleted'
+              ? 'تفاصيل الطلب وسجل الحركة'
+              : 'تدقيق الطلب ونتائج المطابقة',
         }"
         @primary="$emit('select'); $emit('audit')"
       />
