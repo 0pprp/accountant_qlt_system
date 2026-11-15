@@ -37,7 +37,14 @@ public class GetSalesRequestMatchHitsHandler
         var branches = SalesRequestAccess.AuthorizedBranches(_currentUser);
         var salesRequest = await _db.SalesRequests.AsNoTracking()
             .Where(x => x.Id == request.RequestId && !x.IsDeleted)
-            .Select(x => new { x.Id, x.CustomerName, x.CustomerPhone, x.BranchId })
+            .Select(x => new
+            {
+                x.Id,
+                x.CustomerName,
+                x.CustomerPhone,
+                x.BranchId,
+                x.ProvinceId
+            })
             .FirstOrDefaultAsync(cancellationToken);
 
         if (salesRequest is null || !branches.Contains(salesRequest.BranchId))
@@ -56,9 +63,13 @@ public class GetSalesRequestMatchHitsHandler
                 [], 0, request.Pagination.PageIndex, request.Pagination.PageSize);
         }
 
+        // مطابقة داخل محافظة الطلب كلها (كل فروع المحافظة)
+        var matchBranches = await SalesMatchCandidateSelector.ResolveProvinceBranchIdsAsync(
+            _db, salesRequest.BranchId, salesRequest.ProvinceId, cancellationToken);
+
         var customers = await SalesMatchCandidateSelector.LoadCustomerCandidatesAsync(
             _db,
-            branches,
+            matchBranches,
             request.Criterion,
             salesRequest.CustomerName,
             salesRequest.CustomerPhone,

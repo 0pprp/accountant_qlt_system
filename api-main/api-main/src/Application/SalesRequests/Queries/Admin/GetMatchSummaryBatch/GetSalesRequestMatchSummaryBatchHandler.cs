@@ -37,18 +37,20 @@ public class GetSalesRequestMatchSummaryBatchHandler
 
         var requests = await _db.SalesRequests.AsNoTracking()
             .Where(x => ids.Contains(x.Id) && !x.IsDeleted && branches.Contains(x.BranchId))
-            .Select(x => new { x.Id, x.CustomerName, x.CustomerPhone })
+            .Select(x => new { x.Id, x.CustomerName, x.CustomerPhone, x.BranchId, x.ProvinceId })
             .ToListAsync(cancellationToken);
 
         var asOf = _clock.Today;
         var items = new List<SalesMatchSummaryItemDto>(requests.Count);
         foreach (var req in requests)
         {
+            var matchBranches = await SalesMatchCandidateSelector.ResolveProvinceBranchIdsAsync(
+                _db, req.BranchId, req.ProvinceId, cancellationToken);
             var cards = new List<SalesMatchCardDto>(SalesMatchCriteria.All.Length);
             foreach (var key in SalesMatchCriteria.All)
             {
                 var customers = await SalesMatchCandidateSelector.LoadCustomerCandidatesAsync(
-                    _db, branches, key, req.CustomerName, req.CustomerPhone, cancellationToken);
+                    _db, matchBranches, key, req.CustomerName, req.CustomerPhone, cancellationToken);
 
                 var probe = SalesRequestMatchEvaluator.EvaluateCard(
                     key, req.CustomerName, req.CustomerPhone, customers);

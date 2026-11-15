@@ -26,14 +26,16 @@ public class GetDuplicateSalesRequestsHandler
         var branches = SalesRequestAccess.AuthorizedBranches(_currentUser);
         var self = await _db.SalesRequests.AsNoTracking()
             .Where(x => x.Id == request.RequestId && !x.IsDeleted)
-            .Select(x => new { x.Id, x.CustomerName, x.CustomerPhone, x.BranchId })
+            .Select(x => new { x.Id, x.CustomerName, x.CustomerPhone, x.BranchId, x.ProvinceId })
             .FirstOrDefaultAsync(cancellationToken);
 
         if (self is null || !branches.Contains(self.BranchId))
             return SalesRequestErrors.NotFound;
 
+        var matchBranches = await SalesMatchCandidateSelector.ResolveProvinceBranchIdsAsync(
+            _db, self.BranchId, self.ProvinceId, cancellationToken);
         var candidates = await SalesMatchCandidateSelector.LoadPeerRequestCandidatesAsync(
-            _db, branches, self.Id, self.CustomerName, self.CustomerPhone, cancellationToken);
+            _db, matchBranches, self.Id, self.CustomerName, self.CustomerPhone, cancellationToken);
         var hitCandidateIds = candidates
             .Where(p =>
                 SalesPhoneNormalizer.Matches(self.CustomerPhone, p.Phone)

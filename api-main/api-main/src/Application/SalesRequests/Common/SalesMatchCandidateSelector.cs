@@ -6,11 +6,41 @@ namespace Application.SalesRequests.Common;
 
 /// <summary>
 /// اختيار مرشحي المطابقة بدل تحميل كل الزبائن/الطلبات إلى الذاكرة.
+/// نطاق البحث = كل فروع محافظة الطلب (مثل مدينة SalesHaider).
 /// الفهارس: Customers.PhoneNumber / Customers.FullName؛ SalesRequests.CustomerPhone / CustomerName.
 /// </summary>
 public static class SalesMatchCandidateSelector
 {
     public const int MaxCandidateFetch = 2000;
+
+    /// <summary>
+    /// فروع محافظة الطلب بالكامل — بعد التأكد أن للمستخدم صلاحية على فرع الطلب نفسه.
+    /// </summary>
+    public static async Task<List<int>> ResolveProvinceBranchIdsAsync(
+        IApplicationDbContext db,
+        int requestBranchId,
+        int? requestProvinceId,
+        CancellationToken cancellationToken)
+    {
+        var provinceId = requestProvinceId;
+        if (provinceId is null or <= 0)
+        {
+            provinceId = await db.Branches.AsNoTracking()
+                .Where(b => b.Id == requestBranchId)
+                .Select(b => (int?)b.ProvinceId)
+                .FirstOrDefaultAsync(cancellationToken);
+        }
+
+        if (provinceId is null or <= 0)
+            return [requestBranchId];
+
+        var ids = await db.Branches.AsNoTracking()
+            .Where(b => b.ProvinceId == provinceId.Value)
+            .Select(b => b.Id)
+            .ToListAsync(cancellationToken);
+
+        return ids.Count > 0 ? ids : [requestBranchId];
+    }
 
     public static async Task<List<SalesMatchCandidate>> LoadCustomerCandidatesAsync(
         IApplicationDbContext db,
@@ -54,7 +84,6 @@ public static class SalesMatchCandidateSelector
 
         var query = db.SalesRequests.AsNoTracking()
             .Where(x => !x.IsDeleted && x.Id != excludeRequestId && branchIds.Contains(x.BranchId));
-
         // تضييق أولي بالهاتف أو جزء من الاسم عند توفرهما
         var phoneNeedle = SalesPhoneNormalizer.ForMatch(queryPhone);
         if (!string.IsNullOrEmpty(phoneNeedle) && phoneNeedle.Length >= 7)
