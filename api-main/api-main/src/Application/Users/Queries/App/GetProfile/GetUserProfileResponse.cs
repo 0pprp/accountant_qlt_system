@@ -9,7 +9,7 @@ public record GetUserProfileResponse
     public required string FullName { get; set; }
     public required List<GetBranchDto> Branches { get; set; }
     public GetAttachmentDto? ProfilePicture { get; set; }
-    public required string PhoneNumber { get; set; }
+    public string? PhoneNumber { get; set; }
     public DateTimeOffset CreatedAt { get; set; }
     public string? Address { get; set; }
     public OrderListDto? OrderList { get; set; }
