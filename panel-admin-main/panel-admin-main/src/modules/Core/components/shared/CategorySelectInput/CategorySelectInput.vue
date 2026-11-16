@@ -69,29 +69,18 @@
           @submit.prevent="onProductCategorySubmit"
           class="mt-6 flex flex-col gap-6"
         >
-          <div class="flex flex-col gap-1">
-            <span class="input__label required">
-              {{ $t('warehouse.productCategoryForm.name.label') }}
-            </span>
-
-            <InputText
-              v-model="newCategoryName"
-              :placeholder="
-                $t('warehouse.productCategoryForm.name.placeholder')
-              "
-              name="name"
-              type="text"
-            />
-
-            <Message
-              v-if="!newCategoryName && categorySubmitAttempted"
-              severity="error"
-              class="text-error text-xs"
-              variant="simple"
-            >
-              {{ $t('warehouse.productCategoryForm.name.validation.required') }}
-            </Message>
-          </div>
+          <AppInput
+            v-model="newCategoryName"
+            :label="$t('warehouse.productCategoryForm.name.label')"
+            :placeholder="$t('warehouse.productCategoryForm.name.placeholder')"
+            name="name"
+            required
+            :error="
+              !newCategoryName && categorySubmitAttempted
+                ? $t('warehouse.productCategoryForm.name.validation.required')
+                : undefined
+            "
+          />
 
           <div class="w-full flex justify-center pt-4">
             <Button
@@ -113,7 +102,7 @@
 import { computed, ref, watch } from 'vue'
 import { AutoComplete, Divider, Message } from 'primevue'
 import Button from 'primevue/button'
-import InputText from 'primevue/inputtext'
+import { AppInput } from '@/modules/Core/components/ui'
 import type { Props } from './CategorySelectInput.types'
 import SvgIcon from '../../SvgIcon/SvgIcon.vue'
 import CustomDialog from '../CustomDialog/CustomDialog.vue'

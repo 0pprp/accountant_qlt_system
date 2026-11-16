@@ -1,40 +1,19 @@
 <template>
-  <div class="flex flex-col">
-    <span
-      class="input__label"
-      :class="{ required }"
-      :aria-required="required"
-      :aria-label="$t(label)"
-    >
-      {{ $t(label) }}
-    </span>
-
-    <Select
-      v-model="provinceId"
-      :options="provinces"
-      optionLabel="name"
-      optionValue="id"
-      :readonly="readonly"
-      :required="required"
-      :placeholder="$t(placeholder)"
-      :unstyled="false"
-      class="select"
-    />
-
-    <Message
-      v-if="error"
-      severity="error"
-      variant="simple"
-      class="text-error text-xs py-2"
-    >
-      {{ error }}
-    </Message>
-  </div>
+  <AppSelect
+    :model-value="provinceId ?? null"
+    :label="$t(label)"
+    :placeholder="$t(placeholder)"
+    :options="provinceOptions"
+    :error="error"
+    :required="required"
+    :disabled="readonly || disabled"
+    @update:model-value="onProvince"
+  />
 </template>
 
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import { Select, Message } from 'primevue'
+import { AppSelect } from '@/modules/Core/components/ui'
 import type { Props } from './ProvinceSelectInput.types'
 import { useProvinceDataQuery } from '@/modules/Core/requests/queries'
 
@@ -47,5 +26,20 @@ const pageSize = ref(100)
 
 const { data } = useProvinceDataQuery(pageIndex, pageSize)
 
-const provinces = computed(() => data.value?.items || [])
+const provinceOptions = computed(() =>
+  (data.value?.items || []).map((p) => ({ label: p.name, value: p.id })),
+)
+
+function onProvince(value: string | number | null | boolean) {
+  if (typeof value === 'number' && Number.isFinite(value)) {
+    provinceId.value = value
+    return
+  }
+  if (value == null || value === '') {
+    provinceId.value = null
+    return
+  }
+  const n = Number(value)
+  provinceId.value = Number.isFinite(n) ? n : null
+}
 </script>
