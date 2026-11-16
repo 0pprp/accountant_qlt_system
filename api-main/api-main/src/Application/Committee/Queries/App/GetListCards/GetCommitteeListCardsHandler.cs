@@ -27,6 +27,7 @@ public class GetCommitteeListCardsHandler
 
         var lists = await _db.OrderLists.AsNoTracking()
             .Where(x => x.MotabaId == request.UserId || x.MandobId == request.UserId)
+            .Where(x => request.ListId == null || x.Id == request.ListId)
             .Select(x => new
             {
                 x.Id,
@@ -40,7 +41,7 @@ public class GetCommitteeListCardsHandler
             return new List<CommitteeListCardDto>();
 
         var listIds = lists.Select(x => x.Id).ToList();
-        var facts = await MaterializeFactsForListsAsync(listIds, cancellationToken);
+        var facts = await MaterializeFactsForListsAsync(listIds, request.ListId.HasValue, cancellationToken);
         var factsByList = facts
             .Where(f => f.OrderListId is > 0)
             .GroupBy(f => f.OrderListId!.Value)
@@ -55,7 +56,8 @@ public class GetCommitteeListCardsHandler
             // نفس معادلة دفتر التحصيل عند المندوب: RealRating + متوسط بسيط
             var (todayAvg, todayCount, todayLabel) = AverageLikeCollectionBook(listFacts, asOf);
             var (weekAvg, _, _) = AverageLikeCollectionBook(listFacts, weekAgo);
-            var (located, total) = ContinuousLocationCounts(listFacts, asOf);
+            var continuous = listFacts.Where(f => DelegateContinuousCustomerRules.IsContinuous(
+                f.IsLegal, f.AmountRemaining, f.LastPaymentDate, asOf)).ToList();
 
             cards.Add(new CommitteeListCardDto
             {
@@ -67,8 +69,10 @@ public class GetCommitteeListCardsHandler
                 PreviousMonthScore = Math.Round(weekAvg, 2, MidpointRounding.AwayFromZero),
                 ActiveCustomers = todayCount,
                 CollectionEnabled = list.CollectionEnabled,
-                LocatedCustomers = located,
-                LocationCustomersTotal = total
+                LocatedCustomers = continuous.Count(f => f.CustomerHasGps || f.OrderHasGps),
+                LocationCustomers = request.ListId.HasValue ? continuous.OrderBy(f => f.FullName).ThenBy(f => f.CustomerId)
+                    .Select(f => new CommitteeLocationCustomer(f.CustomerId, f.FullName, f.Phone, f.CustomerHasGps || f.OrderHasGps)).ToList() : null,
+                LocationCustomersTotal = continuous.Count
             });
         }
 
@@ -101,23 +105,8 @@ public class GetCommitteeListCardsHandler
         return (avg, scores.Count, RatingAggregator.ClassifyAverageLabel(avg));
     }
 
-    private static (int Located, int Total) ContinuousLocationCounts(
-        IReadOnlyList<ListCardFact> facts,
-        DateOnly asOf)
-    {
-        var continuous = facts
-            .Where(f => DelegateContinuousCustomerRules.IsContinuous(
-                f.IsLegal, f.AmountRemaining, f.LastPaymentDate, asOf))
-            .GroupBy(f => f.CustomerId)
-            .ToList();
-
-        var total = continuous.Count;
-        var located = continuous.Count(g => g.Any(x => x.CustomerHasGps || x.OrderHasGps));
-        return (located, total);
-    }
-
     private async Task<List<ListCardFact>> MaterializeFactsForListsAsync(
-        IReadOnlyList<int> listIds,
+        IReadOnlyList<int> listIds, bool includeNames,
         CancellationToken ct)
     {
         var rows = await _db.Orders.AsNoTracking()
@@ -127,6 +116,8 @@ public class GetCommitteeListCardsHandler
             .Select(o => new
             {
                 o.CustomerId,
+                FullName = includeNames ? o.Customer!.FullName : "",
+                Phone = includeNames ? o.Customer!.PhoneNumber : "",
                 o.OrderListId,
                 o.SellAmount,
                 o.SaleDate,
@@ -162,6 +153,7 @@ public class GetCommitteeListCardsHandler
                 return new ListCardFact
                 {
                     CustomerId = g.Key.CustomerId,
+                    FullName = g.First().FullName, Phone = g.First().Phone,
                     OrderListId = g.Key.OrderListId,
                     AmountTotalSales = sell,
                     ReceiptsTotal = paid,
@@ -178,6 +170,8 @@ public class GetCommitteeListCardsHandler
 
     private sealed class ListCardFact
     {
+        public string FullName { get; init; } = "";
+        public string Phone { get; init; } = "";
         public int CustomerId { get; init; }
         public int? OrderListId { get; init; }
         public double AmountTotalSales { get; init; }

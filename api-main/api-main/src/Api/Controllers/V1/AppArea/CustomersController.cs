@@ -2,6 +2,7 @@
 using Application.Customers.Commands.App.Create;
 using Application.Customers.Commands.App.Update;
 using Application.Customers.Queries.App.GetById;
+using Application.Customers.Queries.App.GetCollectionBook;
 using Application.Customers.Queries.App.GetCustomerInstallmentPayments;
 using Application.Customers.Queries.App.GetCustomerOrders;
 using Application.Customers.Queries.App.GetFinancialOverview;
@@ -20,6 +21,19 @@ public class CustomersController : ApiController
     {
         _mediator = mediator;
         _currentUserService = currentUserService;
+    }
+
+    /// <summary>
+    /// دفتر تحصيل المندوب/المتابع: زبائن قوائمه مع الحقول المالية والتقييم دفعة واحدة.
+    /// </summary>
+    [HasPermission(Permissions.Customer.Read)]
+    [HttpGet("collection-book")]
+    public async Task<ActionResult<GetCollectionBookResponse>> GetCollectionBook()
+    {
+        var result = await _mediator.Send(
+            new GetCollectionBookQuery(_currentUserService.UserId!.Value),
+            CancellationToken);
+        return result.ToHttpResponse();
     }
 
     [HasPermission(Permissions.Customer.Read)]

@@ -35,23 +35,9 @@ public class CompleteSalesWorkflowHandler : IRequestHandler<CompleteSalesWorkflo
         if (order.ApprovalStatus == OrderApprovalStatus.Rejected || order.WorkflowStatus == SalesWorkflowStatus.Rejected)
             return SalesWorkflowErrors.CannotComplete;
 
+        if (await _dbContext.SalesRequests.AnyAsync(r => r.LinkedOrderId == order.Id, cancellationToken))
+            return SalesWorkflowErrors.CannotComplete;
         order.CompleteSalesWorkflow(_clock.UtcNowOffset);
-
-        // نفس المعاملة: إن وُجد طلب مربوط بهذا Order أكمله — لا sold عام يتجاوز قواعد الإكمال
-        var linkedRequest = await _dbContext.SalesRequests
-            .FirstOrDefaultAsync(x => x.LinkedOrderId == order.Id && !x.IsDeleted, cancellationToken);
-        if (linkedRequest is not null && linkedRequest.Status != SalesRequestStatus.Completed)
-        {
-            var at = _clock.UtcNowOffset;
-            var prev = linkedRequest.Status;
-            linkedRequest.CompleteFromSale(at);
-            SalesRequestTimelineWriter.Append(
-                _dbContext, linkedRequest.Id, SalesRequestTimelineEventType.Completed,
-                request.UserId, at, prev, linkedRequest.Status,
-                linkedRequest.TargetEmployeeId, linkedRequest.TargetEmployeeId, null, Guid.NewGuid());
-            SalesRequestChangeOutboxWriter.Append(
-                _dbContext, linkedRequest, SalesRequestChangeType.Completed, at);
-        }
 
         await _dbContext.SaveChangesAsync(cancellationToken);
 

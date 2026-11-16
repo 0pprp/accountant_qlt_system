@@ -74,6 +74,12 @@ public class ManagementRatingsRulesTests
         var built = ActiveRatingCohort.Build(facts, asOf);
         Assert.Single(built);
         Assert.Equal(1, built[0].Fact.CustomerId);
+
+        // تطبيقات: باقي > 0 فقط — يشمل الزبون بلا تسديد حديث
+        var openOnly = ActiveRatingCohort.Build(facts, asOf, requireRecentPayment: false);
+        Assert.Equal(2, openOnly.Count);
+        Assert.Contains(openOnly, x => x.Fact.CustomerId == 1);
+        Assert.Contains(openOnly, x => x.Fact.CustomerId == 3);
     }
 
     [Fact]

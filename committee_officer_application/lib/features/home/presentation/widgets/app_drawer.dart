@@ -10,6 +10,7 @@ import 'package:committee_officer_application/features/legal/presentation/legal_
 import 'package:committee_officer_application/features/sales/presentation/pending_sales_page.dart';
 import 'package:committee_officer_application/features/sales/presentation/sales_requests_page.dart';
 import 'package:committee_officer_application/features/stats/presentation/list_stats_page.dart';
+import 'package:committee_officer_application/features/management_tasks/presentation/my_tasks_page.dart';
 import 'package:committee_officer_application/features/tasks/presentation/tasks_page.dart';
 import 'package:committee_officer_application/injection.dart';
 import 'package:flutter/material.dart';
@@ -106,6 +107,9 @@ class AppDrawer extends StatelessWidget {
                       }),
                       _item(context, Icons.hiking_rounded, 'ميدانية', () {
                         _open(context, const FieldFollowupsPage());
+                      }),
+                      _item(context, Icons.assignment_ind_outlined, 'مهامي', () {
+                        _open(context, const MyTasksPage());
                       }),
                       _item(context, Icons.task_alt_rounded, 'المهام', () {
                         _open(context, const TasksPage());

@@ -3,6 +3,7 @@
 public record GetPaginatedInstallmentPaymentsResponse
 {
     public int Id { get; set; }
+    public int CustomerId { get; set; }
     public required string CustomerFullName { get; set; }
     public double Amount { get; set; }
     public DateOnly Date { get; set; }

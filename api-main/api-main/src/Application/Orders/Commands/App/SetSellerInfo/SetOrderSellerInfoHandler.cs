@@ -1,4 +1,4 @@
-﻿using Application.Common.Interfaces;
+using Application.Common.Interfaces;
 using Application.Orders.Common;
 using Domain.Entities.ActivityLogAggregate.Enums;
 using Domain.Entities.OrderAggregate.Enums;
@@ -46,6 +46,9 @@ public class SetOrderSellerInfoHandler : IRequestHandler<SetOrderSellerInfoComma
 
         if (order.Step != OrderStep.SellerInfo)
             return OrderErrors.CanNotSetSellerInfoInCurrentStep;
+
+        if (await _dbContext.SalesRequests.AnyAsync(r => r.LinkedOrderId == order.Id, cancellationToken))
+            return new Error("أكمل خطوات المبيع المرتبط قبل التأكيد", "Order_UseRequestCheckout");
 
         var orderListIdResult = await SellerOrderListResolver.ResolveOrderListIdForSellerAsync(
             _dbContext,

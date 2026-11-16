@@ -30,6 +30,7 @@ class _ListDetailPageState extends State<ListDetailPage>
   late final TabController _tabs;
   List<Map<String, dynamic>> _paid = const [];
   List<Map<String, dynamic>> _unpaid = const [];
+  List<DailyCustomer> _locations = [];
   DateTime _date = baghdadNow();
   String _search = '';
   PaymentFilter _paymentFilter = PaymentFilter.all;
@@ -41,9 +42,11 @@ class _ListDetailPageState extends State<ListDetailPage>
   @override
   void initState() {
     super.initState();
-    _tabs = TabController(length: 4, vsync: this);
+    _tabs = TabController(length: 5, vsync: this)..addListener(_tabChanged);
     _load();
   }
+
+  void _tabChanged() { if (mounted) setState(() {}); }
 
   @override
   void dispose() {
@@ -59,6 +62,7 @@ class _ListDetailPageState extends State<ListDetailPage>
     });
     try {
       final results = await Future.wait([
+        Injection.committee.locationCustomers(widget.listId).then((rows) => <String,dynamic>{'customers': rows}),
         Injection.committee.daily(
           listId: widget.listId,
           showType: 'المسددين',
@@ -71,8 +75,9 @@ class _ListDetailPageState extends State<ListDetailPage>
         ),
       ]);
       if (!mounted || request != _request) return;
-      final rows = results.expand(_customersOf).toList();
+      final rows = results.skip(1).expand(_customersOf).toList();
       setState(() {
+        _locations = _customersOf(results.first).map(DailyCustomer.fromJson).toList();
         _paid = rows
             .where((r) => DailyCustomer.fromJson(r).hasPayment)
             .toList();
@@ -125,6 +130,7 @@ class _ListDetailPageState extends State<ListDetailPage>
           labelStyle: const TextStyle(fontWeight: FontWeight.w800),
           unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.w600),
           tabs: [
+            const Tab(text: 'مواقع الزبائن'),
             Tab(text: 'مسددين (${_paid.length})'),
             Tab(text: 'غير مسددين (${_unpaid.length})'),
             const Tab(text: 'الزبائن'),
@@ -149,7 +155,7 @@ class _ListDetailPageState extends State<ListDetailPage>
                     ),
                   ),
                   const SizedBox(width: 8),
-                  OutlinedButton.icon(
+                  if (_tabs.index != 0) OutlinedButton.icon(
                     icon: const Icon(Icons.calendar_month_outlined),
                     label: Text(baghdadDateKey(_date)),
                     onPressed: () async {
@@ -179,6 +185,16 @@ class _ListDetailPageState extends State<ListDetailPage>
                   : TabBarView(
                       controller: _tabs,
                       children: [
+                        Column(children: [
+                          Padding(padding: const EdgeInsets.all(12), child: Text('تم تحديد ${_locations.where((c) => c.hasLocation).length} من أصل ${_locations.length}')),
+                          Expanded(child: ListView(children: [
+                            for (final c in _locations.where((c) => c.name.contains(_search.trim()) || c.phone.contains(_search.trim())))
+                              ListTile(title: Text(c.name), subtitle: Text(c.phone),
+                                trailing: TextButton.icon(icon: Icon(c.hasLocation ? Icons.check_circle : Icons.my_location),
+                                  label: Text(c.hasLocation ? 'تم التحديد' : _locatingCustomerId == c.id ? 'جارٍ التحديد' : 'تحديد الموقع'),
+                                  onPressed: c.hasLocation || _locatingCustomerId != null ? null : () => _setCustomerGps(c))),
+                          ])),
+                        ]),
                         Column(
                           children: [
                             SingleChildScrollView(
@@ -427,6 +443,7 @@ class _ListDetailPageState extends State<ListDetailPage>
     }
 
     setState(() {
+      _locations = [for (final c in _locations) c.id == customerId ? c.copyWith(hasLocation: true) : c];
       _paid = _paid.map(patch).toList();
       _unpaid = _unpaid.map(patch).toList();
     });
@@ -438,10 +455,6 @@ class _ListDetailPageState extends State<ListDetailPage>
     try {
       final fix = await captureDeviceGps();
       if (!mounted) return;
-      // تحديث الزر فورًا بلا نافذة منبثقة
-      _markLocated(c.id);
-      setState(() => _locatingCustomerId = null);
-      // الحفظ على السيرفر بالخلفية
       await Injection.committee.setCustomerLocation(
         customerId: c.id,
         listId: widget.listId,
@@ -449,6 +462,9 @@ class _ListDetailPageState extends State<ListDetailPage>
         longitude: fix.longitude,
         orderId: c.activeOrderId,
       );
+      if (!mounted) return;
+      _markLocated(c.id);
+      setState(() => _locatingCustomerId = null);
     } catch (e) {
       if (!mounted) return;
       setState(() => _locatingCustomerId = null);
@@ -602,28 +618,6 @@ class _ListDetailPageState extends State<ListDetailPage>
                 style: ElevatedButton.styleFrom(backgroundColor: highlight),
                 onPressed: () => _recordComplete(c),
                 child: const Text('تمت المتابعة'),
-              ),
-              ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor:
-                      c.hasLocation ? AppColors.success : AppColors.primary,
-                  foregroundColor: Colors.white,
-                ),
-                onPressed: (_locatingCustomerId != null || c.hasLocation)
-                    ? null
-                    : () => _setCustomerGps(c),
-                child: _locatingCustomerId == c.id
-                    ? const SizedBox(
-                        width: 18,
-                        height: 18,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          color: Colors.white,
-                        ),
-                      )
-                    : Text(
-                        c.hasLocation ? 'تم التحديد' : 'تحديد موقع GPS',
-                      ),
               ),
               OutlinedButton(
                 onPressed: () => _addCustomerNote(c),

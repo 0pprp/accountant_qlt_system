@@ -15,9 +15,9 @@ public class SalesInventoryController : ApiController
 
     [HasPermission(Permissions.Product.Read)]
     [HttpGet("inventory")]
-    public async Task<ActionResult<List<GetSalesInventoryResponse>>> Inventory()
+    public async Task<ActionResult<List<GetSalesInventoryResponse>>> Inventory([FromQuery] int? orderId = null, [FromQuery] int? requestId = null)
     {
-        var result = await _mediator.Send(new GetSalesInventoryQuery(), CancellationToken);
+        var result = await _mediator.Send(new GetSalesInventoryQuery(orderId, requestId), CancellationToken);
         return result.ToHttpResponse();
     }
 }

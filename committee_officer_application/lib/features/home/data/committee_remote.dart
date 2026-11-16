@@ -90,6 +90,15 @@ class CommitteeRemote {
     return _list(res.data).map(CommitteeListCard.fromJson).toList();
   }
 
+  Future<List<Map<String, dynamic>>> locationCustomers(int listId) async {
+    final res = await _dio.dio.get('api/v1/app/committee/list-cards', queryParameters: {'listId': listId});
+    final cards = _list(res.data);
+    final card = cards.singleWhere((r) => (r['listId'] ?? r['ListId']) == listId);
+    final rows = card['locationCustomers'] ?? card['LocationCustomers'];
+    if (rows is! List) throw StateError('تعذر تحميل مواقع زبائن القائمة');
+    return rows.map((r) => Map<String, dynamic>.from(r as Map)).toList();
+  }
+
   Future<List<Map<String, dynamic>>> lists() async {
     final res = await _dio.dio.get('api/v1/app/committee/lists');
     return _list(res.data);

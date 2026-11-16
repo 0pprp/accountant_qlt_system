@@ -306,12 +306,13 @@ class _HomeTabState extends State<HomeTab> {
           name: c.listName,
           eyebrow: 'قائمة #${c.listId}',
           statusLabel: c.phantomLabel,
-          onTap: () {
-            Navigator.of(context).push(
+          onTap: () async {
+            await Navigator.of(context).push(
               appFadeRoute(
                 ListDetailPage(listId: c.listId, listName: c.listName),
               ),
             );
+            if (mounted) await _load();
           },
           fields: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,

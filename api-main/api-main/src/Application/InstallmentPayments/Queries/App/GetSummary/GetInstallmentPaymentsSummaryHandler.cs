@@ -19,8 +19,9 @@ public class GetInstallmentPaymentsSummaryHandler : IRequestHandler<GetInstallme
     public async Task<Result<GetInstallmentPaymentsSummaryResponse>> Handle(GetInstallmentPaymentsSummaryQuery request,
         CancellationToken cancellationToken)
     {
-        var from = request.Filter.StartDate ?? _dateTimeProvider.Today;
-        var to = request.Filter.EndDate ?? _dateTimeProvider.Today;
+        var businessDate = DateOnly.FromDateTime(_dateTimeProvider.UtcNow); // 00:00 UTC = 03:00 Baghdad
+        var from = request.Filter.StartDate ?? businessDate;
+        var to = request.Filter.EndDate ?? businessDate;
 
         var installmentPaymentsSummary = await _dbContext.InstallmentPayments.AsNoTracking()
             .Where(x => x.Order!.OrderList!.MandobId == request.UserId || x.Order.OrderList.MotabaId == request.UserId)

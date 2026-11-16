@@ -19,8 +19,9 @@ public class GetPaginatedInstallmentPaymentsHandler : IRequestHandler<GetPaginat
     public async Task<Result<List<GetPaginatedInstallmentPaymentsResponse>>> Handle(GetPaginatedInstallmentPaymentsQuery request,
         CancellationToken cancellationToken)
     {
-        var from = request.Filter.StartDate ?? _dateTimeProvider.Today;
-        var to = request.Filter.EndDate ?? _dateTimeProvider.Today;
+        var businessDate = DateOnly.FromDateTime(_dateTimeProvider.UtcNow); // 00:00 UTC = 03:00 Baghdad
+        var from = request.Filter.StartDate ?? businessDate;
+        var to = request.Filter.EndDate ?? businessDate;
 
         var installmentPayments = await _dbContext.InstallmentPayments.AsNoTracking()
             .Where(x => x.Order!.OrderList!.MandobId == request.UserId || x.Order.OrderList.MotabaId == request.UserId)
@@ -31,6 +32,7 @@ public class GetPaginatedInstallmentPaymentsHandler : IRequestHandler<GetPaginat
             .Select(x => new GetPaginatedInstallmentPaymentsResponse
             {
                 Id = x.Id,
+                CustomerId = x.Order!.CustomerId,
                 CustomerFullName = x.Order!.Customer!.FullName,
                 Amount = x.Amount,
                 Date = x.Date,

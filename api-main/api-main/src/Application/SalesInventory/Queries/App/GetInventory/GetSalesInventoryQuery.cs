@@ -1,6 +1,6 @@
 namespace Application.SalesInventory.Queries.App.GetInventory;
 
-public record GetSalesInventoryQuery : IRequest<Result<List<GetSalesInventoryResponse>>>;
+public record GetSalesInventoryQuery(int? OrderId = null, int? RequestId = null) : IRequest<Result<List<GetSalesInventoryResponse>>>;
 
 public record GetSalesInventoryResponse
 {

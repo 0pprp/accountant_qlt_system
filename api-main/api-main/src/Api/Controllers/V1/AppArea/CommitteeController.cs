@@ -62,9 +62,9 @@ public class CommitteeController : ApiController
 
     [HasPermission(Permissions.OrderList.Read)]
     [HttpGet("list-cards")]
-    public async Task<ActionResult<List<CommitteeListCardDto>>> ListCards()
+    public async Task<ActionResult<List<CommitteeListCardDto>>> ListCards([FromQuery] int? listId = null)
     {
-        var result = await _mediator.Send(new GetCommitteeListCardsQuery(_current.UserId!.Value), CancellationToken);
+        var result = await _mediator.Send(new GetCommitteeListCardsQuery(_current.UserId!.Value, listId), CancellationToken);
         return result.ToHttpResponse();
     }
 

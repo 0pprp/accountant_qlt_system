@@ -16,8 +16,18 @@ public class GetSalesInventoryHandler : IRequestHandler<GetSalesInventoryQuery, 
 
     public async Task<Result<List<GetSalesInventoryResponse>>> Handle(GetSalesInventoryQuery request, CancellationToken cancellationToken)
     {
+        var branches = _currentUserService.BranchIds ?? [];
+        if (request.OrderId.HasValue || request.RequestId.HasValue)
+        {
+            var branch = await _dbContext.SalesRequests.AsNoTracking()
+                .Where(r => !r.IsDeleted && (request.RequestId.HasValue ? r.Id == request.RequestId : r.LinkedOrderId == request.OrderId) &&
+                    r.TargetEmployeeId == _currentUserService.UserId && branches.Contains(r.BranchId))
+                .Select(r => (int?)r.BranchId).SingleOrDefaultAsync(cancellationToken);
+            if (branch is null) return Application.SalesRequests.Common.SalesRequestErrors.NotOwner;
+            branches = [branch.Value];
+        }
         var products = await _dbContext.Products.AsNoTracking()
-            .Where(x => _currentUserService.BranchIds!.Contains(x.Warehouse!.BranchId))
+            .Where(x => branches.Contains(x.Warehouse!.BranchId))
             .OrderBy(x => x.Name)
             .Select(x => new GetSalesInventoryResponse
             {

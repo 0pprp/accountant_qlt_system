@@ -46,6 +46,7 @@ public static class ResultExtensions
         || error?.Code == SalesRequestErrors.ConcurrencyConflict.Code
         || error?.Code == ManagementTaskErrors.ConcurrencyConflict.Code
         || error?.Code == FollowerWorkErrors.CollectionConcurrencyConflict.Code
+        || error?.Code == OrderErrors.LegacyPaymentNeedsReview.Code
         || error?.Code == OrderErrors.ClientPaymentPayloadConflict.Code;
 
     private static bool IsForbidden(Error? error) =>

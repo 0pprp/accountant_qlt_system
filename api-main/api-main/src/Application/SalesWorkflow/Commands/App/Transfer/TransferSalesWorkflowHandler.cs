@@ -31,6 +31,9 @@ public class TransferSalesWorkflowHandler : IRequestHandler<TransferSalesWorkflo
         if (order.SellerId != request.UserId)
             return OrderErrors.OrderDoesNotBelongToYou;
 
+        if (await _dbContext.SalesRequests.AnyAsync(r => r.LinkedOrderId == order.Id, cancellationToken))
+            return SalesWorkflowErrors.CannotComplete;
+
         var requiresReason = normalized is SalesWorkflowStatusMapper.Rejected
             or SalesWorkflowStatusMapper.OnHold
             or SalesWorkflowStatusMapper.Ready;
