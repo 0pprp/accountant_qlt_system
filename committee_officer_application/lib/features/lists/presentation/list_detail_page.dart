@@ -36,6 +36,7 @@ class _ListDetailPageState extends State<ListDetailPage>
   int _request = 0;
   bool _loading = true;
   String? _error;
+  int? _locatingCustomerId;
 
   @override
   void initState() {
@@ -432,8 +433,15 @@ class _ListDetailPageState extends State<ListDetailPage>
   }
 
   Future<void> _setCustomerGps(DailyCustomer c) async {
+    if (_locatingCustomerId != null) return;
+    setState(() => _locatingCustomerId = c.id);
     try {
       final fix = await captureDeviceGps();
+      if (!mounted) return;
+      // تحديث الزر فورًا بلا نافذة منبثقة
+      _markLocated(c.id);
+      setState(() => _locatingCustomerId = null);
+      // الحفظ على السيرفر بالخلفية
       await Injection.committee.setCustomerLocation(
         customerId: c.id,
         listId: widget.listId,
@@ -441,23 +449,15 @@ class _ListDetailPageState extends State<ListDetailPage>
         longitude: fix.longitude,
         orderId: c.activeOrderId,
       );
-      if (!mounted) return;
-      _markLocated(c.id);
-      await showAppMessage(
-        context,
-        title: 'تم',
-        message: 'تم حفظ موقع الزبون',
-        icon: Icons.check_circle_outline,
-        color: AppColors.success,
-      );
     } catch (e) {
       if (!mounted) return;
-      await showAppMessage(
-        context,
-        title: 'تعذر تحديد الموقع',
-        message: DioClient.mapError(e),
-        icon: Icons.error_outline,
-        color: AppColors.danger,
+      setState(() => _locatingCustomerId = null);
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(DioClient.mapError(e)),
+          backgroundColor: AppColors.danger,
+          behavior: SnackBarBehavior.floating,
+        ),
       );
     }
   }
@@ -609,10 +609,21 @@ class _ListDetailPageState extends State<ListDetailPage>
                       c.hasLocation ? AppColors.success : AppColors.primary,
                   foregroundColor: Colors.white,
                 ),
-                onPressed: () => _setCustomerGps(c),
-                child: Text(
-                  c.hasLocation ? 'تم تحديد الموقع' : 'تحديد موقع GPS',
-                ),
+                onPressed: (_locatingCustomerId != null || c.hasLocation)
+                    ? null
+                    : () => _setCustomerGps(c),
+                child: _locatingCustomerId == c.id
+                    ? const SizedBox(
+                        width: 18,
+                        height: 18,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Colors.white,
+                        ),
+                      )
+                    : Text(
+                        c.hasLocation ? 'تم التحديد' : 'تحديد موقع GPS',
+                      ),
               ),
               OutlinedButton(
                 onPressed: () => _addCustomerNote(c),

@@ -46,115 +46,77 @@ public class GetCommitteeListCardsHandler
             .GroupBy(f => f.OrderListId!.Value)
             .ToDictionary(g => g.Key, g => g.ToList());
 
-        var locationCounts = await MaterializeContinuousLocationCountsAsync(
-            listIds, facts, asOf, cancellationToken);
-
         var cards = new List<CommitteeListCardDto>(lists.Count);
         foreach (var list in lists)
         {
             factsByList.TryGetValue(list.Id, out var listFacts);
             listFacts ??= [];
 
-            // نفس تقييم تطبيق المندوب (collection-book): RealRating بدون phantom
-            var today = ActiveRatingCohort.Aggregate(
-                listFacts, asOf, usePhantomSaleDate: false, requireRecentPayment: false);
-            var previous = ActiveRatingCohort.Aggregate(
-                listFacts, weekAgo, usePhantomSaleDate: false, requireRecentPayment: false);
+            // نفس معادلة دفتر التحصيل عند المندوب: RealRating + متوسط بسيط
+            var (todayAvg, todayCount, todayLabel) = AverageLikeCollectionBook(listFacts, asOf);
+            var (weekAvg, _, _) = AverageLikeCollectionBook(listFacts, weekAgo);
+            var (located, total) = ContinuousLocationCounts(listFacts, asOf);
 
-            locationCounts.TryGetValue(list.Id, out var loc);
             cards.Add(new CommitteeListCardDto
             {
                 ListId = list.Id,
                 ListName = list.Name,
                 MandobName = list.MandobName ?? "",
-                PhantomLabel = today.FinalRatingLabel,
-                CurrentMonthScore = Math.Round(today.AverageScore, 2, MidpointRounding.AwayFromZero),
-                PreviousMonthScore = Math.Round(previous.AverageScore, 2, MidpointRounding.AwayFromZero),
-                ActiveCustomers = today.CustomerCount,
+                PhantomLabel = todayLabel,
+                CurrentMonthScore = Math.Round(todayAvg, 2, MidpointRounding.AwayFromZero),
+                PreviousMonthScore = Math.Round(weekAvg, 2, MidpointRounding.AwayFromZero),
+                ActiveCustomers = todayCount,
                 CollectionEnabled = list.CollectionEnabled,
-                LocatedCustomers = loc.Located,
-                LocationCustomersTotal = loc.Total
+                LocatedCustomers = located,
+                LocationCustomersTotal = total
             });
         }
 
         return cards;
     }
 
-    /// <summary>
-    /// عداد المواقع فقط على مستمرين المندوب (باقي &gt; 0، غير قانوني، آخر تسديد &lt; 365 يوم).
-    /// </summary>
-    private async Task<Dictionary<int, (int Located, int Total)>> MaterializeContinuousLocationCountsAsync(
-        IReadOnlyList<int> listIds,
-        IReadOnlyList<RatingCustomerFact> facts,
-        DateOnly asOf,
-        CancellationToken ct)
+    /// <summary>مطابق GetCollectionBookHandler: باقي &gt; 0 و ScoreFor(..., usePhantomSaleDate: false).</summary>
+    private static (double Average, int Count, string Label) AverageLikeCollectionBook(
+        IReadOnlyList<ListCardFact> facts,
+        DateOnly asOf)
     {
-        var continuousByList = facts
-            .Where(f => f.OrderListId is > 0 && listIds.Contains(f.OrderListId.Value))
-            .Where(f => DelegateContinuousCustomerRules.IsContinuous(f, asOf))
-            .GroupBy(f => f.OrderListId!.Value)
-            .ToDictionary(
-                g => g.Key,
-                g => g.Select(x => x.CustomerId).Distinct().ToHashSet());
-
-        var allCustomerIds = continuousByList.Values.SelectMany(x => x).Distinct().ToList();
-        if (allCustomerIds.Count == 0)
+        var scores = new List<int>();
+        foreach (var f in facts)
         {
-            return listIds.ToDictionary(id => id, _ => (0, 0));
-        }
-
-        var customerGps = await _db.Customers.AsNoTracking()
-            .Where(c => allCustomerIds.Contains(c.Id))
-            .Select(c => new
-            {
-                c.Id,
-                HasGps = c.Business.GpsLatitude != null
-                         && c.Business.GpsLongitude != null
-                         && !(c.Business.GpsLatitude == 0 && c.Business.GpsLongitude == 0)
-            })
-            .ToDictionaryAsync(x => x.Id, x => x.HasGps, ct);
-
-        var orderGpsRows = await _db.Orders.AsNoTracking()
-            .Where(o => o.OrderListId != null
-                        && listIds.Contains(o.OrderListId.Value)
-                        && allCustomerIds.Contains(o.CustomerId)
-                        && o.ApprovalStatus == OrderApprovalStatus.Approved)
-            .Select(o => new
-            {
-                ListId = o.OrderListId!.Value,
-                o.CustomerId,
-                HasGps = o.Location != null
-                         && !(o.Location.Latitude == 0 && o.Location.Longitude == 0)
-            })
-            .ToListAsync(ct);
-
-        var orderGpsByListCustomer = orderGpsRows
-            .GroupBy(x => (x.ListId, x.CustomerId))
-            .ToDictionary(g => g.Key, g => g.Any(x => x.HasGps));
-
-        var result = new Dictionary<int, (int Located, int Total)>();
-        foreach (var listId in listIds)
-        {
-            if (!continuousByList.TryGetValue(listId, out var customers) || customers.Count == 0)
-            {
-                result[listId] = (0, 0);
+            if (f.AmountRemaining <= 0)
                 continue;
-            }
-
-            var located = customers.Count(customerId =>
-            {
-                var fromCustomer = customerGps.TryGetValue(customerId, out var cg) && cg;
-                var fromOrder = orderGpsByListCustomer.TryGetValue((listId, customerId), out var og) && og;
-                return fromCustomer || fromOrder;
-            });
-
-            result[listId] = (located, customers.Count);
+            var score = CustomerRatingCalculator.ScoreFor(
+                f.AmountTotalSales,
+                f.ReceiptsTotal,
+                f.AmountRemaining,
+                f.SaleDate,
+                f.LastPaymentDate,
+                asOf,
+                usePhantomSaleDate: false);
+            if (score is int s)
+                scores.Add(s);
         }
 
-        return result;
+        var avg = scores.Count == 0 ? 0 : scores.Average();
+        return (avg, scores.Count, RatingAggregator.ClassifyAverageLabel(avg));
     }
 
-    private async Task<List<RatingCustomerFact>> MaterializeFactsForListsAsync(
+    private static (int Located, int Total) ContinuousLocationCounts(
+        IReadOnlyList<ListCardFact> facts,
+        DateOnly asOf)
+    {
+        var continuous = facts
+            .Where(f => DelegateContinuousCustomerRules.IsContinuous(
+                f.IsLegal, f.AmountRemaining, f.LastPaymentDate, asOf))
+            .GroupBy(f => f.CustomerId)
+            .ToList();
+
+        var total = continuous.Count;
+        var located = continuous.Count(g => g.Any(x => x.CustomerHasGps || x.OrderHasGps));
+        return (located, total);
+    }
+
+    private async Task<List<ListCardFact>> MaterializeFactsForListsAsync(
         IReadOnlyList<int> listIds,
         CancellationToken ct)
     {
@@ -166,14 +128,19 @@ public class GetCommitteeListCardsHandler
             {
                 o.CustomerId,
                 o.OrderListId,
-                o.SellerId,
                 o.SellAmount,
-                o.DailyInstallmentAmount,
                 o.SaleDate,
                 o.CreatedAt,
                 Receipts = o.InstallmentPayments.Sum(ip => ip.Amount),
                 LastPaymentDate = o.InstallmentPayments.Max(ip => (DateOnly?)ip.Date),
-                IsLegal = o.Customer != null && o.Customer.IsLegal
+                IsLegal = o.Customer != null && o.Customer.IsLegal,
+                CustomerHasGps = o.Customer != null
+                                 && o.Customer.Business.GpsLatitude != null
+                                 && o.Customer.Business.GpsLongitude != null
+                                 && !(o.Customer.Business.GpsLatitude == 0
+                                      && o.Customer.Business.GpsLongitude == 0),
+                OrderHasGps = o.Location != null
+                              && !(o.Location.Latitude == 0 && o.Location.Longitude == 0)
             })
             .ToListAsync(ct);
 
@@ -190,19 +157,36 @@ public class GetCommitteeListCardsHandler
                         .Cast<DateOnly?>()
                         .FirstOrDefault();
 
-                return new RatingCustomerFact
+                var sell = g.Sum(x => x.SellAmount);
+                var paid = g.Sum(x => x.Receipts);
+                return new ListCardFact
                 {
                     CustomerId = g.Key.CustomerId,
                     OrderListId = g.Key.OrderListId,
-                    SellerId = g.Select(x => x.SellerId).FirstOrDefault(x => x != null),
-                    AmountTotalSales = g.Sum(x => x.SellAmount),
-                    ReceiptsTotal = g.Sum(x => x.Receipts),
-                    AmountDaySales = g.Sum(x => x.DailyInstallmentAmount),
+                    AmountTotalSales = sell,
+                    ReceiptsTotal = paid,
+                    AmountRemaining = Math.Round(sell - paid, MidpointRounding.AwayFromZero),
                     SaleDate = saleDate,
                     LastPaymentDate = g.Max(x => x.LastPaymentDate),
-                    IsLegal = g.Any(x => x.IsLegal)
+                    IsLegal = g.Any(x => x.IsLegal),
+                    CustomerHasGps = g.Any(x => x.CustomerHasGps),
+                    OrderHasGps = g.Any(x => x.OrderHasGps)
                 };
             })
             .ToList();
+    }
+
+    private sealed class ListCardFact
+    {
+        public int CustomerId { get; init; }
+        public int? OrderListId { get; init; }
+        public double AmountTotalSales { get; init; }
+        public double ReceiptsTotal { get; init; }
+        public double AmountRemaining { get; init; }
+        public DateOnly? SaleDate { get; init; }
+        public DateOnly? LastPaymentDate { get; init; }
+        public bool IsLegal { get; init; }
+        public bool CustomerHasGps { get; init; }
+        public bool OrderHasGps { get; init; }
     }
 }
