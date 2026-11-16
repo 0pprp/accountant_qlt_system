@@ -1,7 +1,7 @@
 <template>
-  <UserCreateStepper />
+  <UserCreateForm />
 </template>
 
 <script setup lang="ts">
-import UserCreateStepper from '../components/UserCreateStepper/UserCreateStepper.vue'
+import UserCreateForm from '../components/UserCreateForm/UserCreateForm.vue'
 </script>

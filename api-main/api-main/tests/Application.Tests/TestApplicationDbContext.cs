@@ -36,6 +36,7 @@ public class TestApplicationDbContext : DbContext, IApplicationDbContext
 
     public DbSet<User> Users { get; set; }
     public DbSet<Customer> Customers { get; set; }
+    public DbSet<CustomerStaffRating> CustomerStaffRatings { get; set; }
     public DbSet<UserLogin> UserLogins { get; set; }
     public DbSet<UserRole> UserRoles { get; set; }
     public DbSet<Role> Roles { get; set; }

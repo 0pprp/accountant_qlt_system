@@ -69,6 +69,28 @@ export interface CustomerAuditProfile {
       type?: string | null
     }>
   } | null
+  ratingsAndLocation?: CustomerAuditRatingsAndLocation | null
+}
+
+export interface CustomerAuditStaffRating {
+  role: string
+  title: string
+  score?: number | null
+  note?: string | null
+  ratedByName?: string | null
+  ratedAtUtc?: string | null
+  orderId?: number | null
+}
+
+export interface CustomerAuditRatingsAndLocation {
+  delegateRating?: CustomerAuditStaffRating | null
+  committeeFieldRating?: CustomerAuditStaffRating | null
+  salesEmployeeRating?: CustomerAuditStaffRating | null
+  gpsLatitude?: number | null
+  gpsLongitude?: number | null
+  hasGps: boolean
+  latestOrderLatitude?: number | null
+  latestOrderLongitude?: number | null
 }
 
 export function fetchCustomerAuditProfile(

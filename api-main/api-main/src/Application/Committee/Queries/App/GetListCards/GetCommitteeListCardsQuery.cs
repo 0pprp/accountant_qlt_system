@@ -12,4 +12,8 @@ public record CommitteeListCardDto
     public double PreviousMonthScore { get; set; }
     public int ActiveCustomers { get; set; }
     public bool CollectionEnabled { get; set; }
+    /// <summary>زبائن لديهم GPS محفوظ (بروفايل أو طلب نشط).</summary>
+    public int LocatedCustomers { get; set; }
+    /// <summary>إجمالي زبائن القائمة قيد التنفيذ لحساب عداد المواقع.</summary>
+    public int LocationCustomersTotal { get; set; }
 }

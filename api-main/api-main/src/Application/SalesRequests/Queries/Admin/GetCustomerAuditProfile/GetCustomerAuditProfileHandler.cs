@@ -2,6 +2,7 @@ using Application.Common.Interfaces;
 using Application.Common.SeedData;
 using Application.Customers.Common;
 using Application.SalesRequests.Common;
+using Domain.Entities.CustomerAggregate;
 using Domain.Entities.OrderAggregate.Enums;
 using Microsoft.EntityFrameworkCore;
 using SeedPermissions = Application.Common.SeedData.Permissions;
@@ -54,6 +55,8 @@ public class GetCustomerAuditProfileHandler
                 Address = x.Business.Address,
                 BusinessName = x.Business.Name,
                 NearestKnownLocation = x.Business.NearestKnownLocation,
+                GpsLatitude = x.Business.GpsLatitude,
+                GpsLongitude = x.Business.GpsLongitude,
                 BranchName = x.Branch!.Name,
                 SellAmount = x.Orders.Where(o => o.ApprovalStatus == OrderApprovalStatus.Approved).Sum(o => o.SellAmount),
                 PaidAmount = x.Orders.Where(o => o.ApprovalStatus == OrderApprovalStatus.Approved)
@@ -73,7 +76,7 @@ public class GetCustomerAuditProfileHandler
             return SalesRequestErrors.DocumentsForbidden;
 
         // shop: جزئي (عنوان) — ليس schema-blocked بالكامل؛ notes/legal: Not implemented
-        var available = new List<string> { "overview", "accounts", "sales" };
+        var available = new List<string> { "overview", "accounts", "sales", "ratings" };
         if (canDocuments)
             available.Add("documents");
         var schemaRequired = new List<string>();
@@ -122,11 +125,73 @@ public class GetCustomerAuditProfileHandler
             Documents = sections.Contains("documents") && canDocuments
                 ? await LoadDocumentsAsync(request.CustomerId, branches, cancellationToken)
                 : null,
+            RatingsAndLocation = sections.Contains("ratings")
+                ? await LoadRatingsAndLocationAsync(
+                    request.CustomerId,
+                    customer.GpsLatitude,
+                    customer.GpsLongitude,
+                    cancellationToken)
+                : null,
             Shop = null,
             Notes = null
         };
 
         return response;
+    }
+
+    private async Task<CustomerAuditRatingsAndLocationDto> LoadRatingsAndLocationAsync(
+        int customerId,
+        double? gpsLatitude,
+        double? gpsLongitude,
+        CancellationToken ct)
+    {
+        var ratings = await _db.CustomerStaffRatings.AsNoTracking()
+            .Where(x => x.CustomerId == customerId)
+            .ToListAsync(ct);
+
+        CustomerAuditStaffRatingDto? Map(string role, string title)
+        {
+            var row = ratings.FirstOrDefault(r =>
+                string.Equals(r.Role, role, StringComparison.OrdinalIgnoreCase));
+            if (row is null)
+                return new CustomerAuditStaffRatingDto { Role = role, Title = title };
+            return new CustomerAuditStaffRatingDto
+            {
+                Role = role,
+                Title = title,
+                Score = row.Score,
+                Note = row.Note,
+                RatedByName = row.RatedByName,
+                RatedAtUtc = row.RatedAtUtc,
+                OrderId = row.OrderId
+            };
+        }
+
+        var latestOrderLoc = await _db.Orders.AsNoTracking()
+            .Where(o => o.CustomerId == customerId && o.Location != null)
+            .OrderByDescending(o => o.Id)
+            .Select(o => o.Location)
+            .FirstOrDefaultAsync(ct);
+
+        var hasGps = gpsLatitude is double lat
+                     && gpsLongitude is double lng
+                     && !(Math.Abs(lat) < 1e-9 && Math.Abs(lng) < 1e-9);
+
+        return new CustomerAuditRatingsAndLocationDto
+        {
+            DelegateRating = Map(CustomerStaffRating.RoleDelegate, "تقييم المندوب"),
+            CommitteeFieldRating = Map(
+                CustomerStaffRating.RoleCommitteeField,
+                "تقييم مسؤول اللجنة الميدانية"),
+            SalesEmployeeRating = Map(
+                CustomerStaffRating.RoleSalesEmployee,
+                "تقييم موظف المبيعات"),
+            GpsLatitude = hasGps ? gpsLatitude : null,
+            GpsLongitude = hasGps ? gpsLongitude : null,
+            HasGps = hasGps,
+            LatestOrderLatitude = latestOrderLoc?.Latitude,
+            LatestOrderLongitude = latestOrderLoc?.Longitude
+        };
     }
 
     private async Task<CustomerAuditAccountsDto> LoadAccountsAsync(

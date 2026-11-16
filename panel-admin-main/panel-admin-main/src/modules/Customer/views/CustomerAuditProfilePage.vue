@@ -66,6 +66,10 @@
       :documents="documents"
       :loading="docsLoading"
     />
+    <AuditRatingsSection
+      v-else-if="activeTab === 'ratings' && ratings"
+      :ratings="ratings"
+    />
   </div>
 </template>
 
@@ -82,6 +86,7 @@ import AuditOverviewSection from '../components/AuditProfile/AuditOverviewSectio
 import AuditAccountsSection from '../components/AuditProfile/AuditAccountsSection.vue'
 import AuditSalesSection from '../components/AuditProfile/AuditSalesSection.vue'
 import AuditDocumentsSection from '../components/AuditProfile/AuditDocumentsSection.vue'
+import AuditRatingsSection from '../components/AuditProfile/AuditRatingsSection.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -97,7 +102,7 @@ const canDocs =
 
 const activeTab = ref('overview')
 const baseSections = computed(() => {
-  const parts = ['overview', 'accounts', 'sales']
+  const parts = ['overview', 'accounts', 'sales', 'ratings']
   return parts.join(',')
 })
 
@@ -125,6 +130,7 @@ const profile = computed(() => baseQuery.data.value)
 const profileError = computed(() => baseQuery.isError.value)
 const documents = computed(() => docsQuery.data.value?.documents ?? null)
 const docsLoading = computed(() => docsQuery.isLoading.value)
+const ratings = computed(() => profile.value?.ratingsAndLocation ?? null)
 
 const hasReturnTo = computed(() => isAllowedReturnRoute(route.query.returnTo))
 const backLabel = computed(() =>
@@ -150,6 +156,7 @@ function tabLabel(tab: string) {
     accounts: 'الحسابات والتسديدات',
     sales: 'المبيعات',
     documents: 'المستندات',
+    ratings: 'التقييمات والموقع',
   }
   return map[tab] ?? tab
 }

@@ -1,4 +1,6 @@
 using Application.Common.Interfaces;
+using Application.ManagementSummary.Common;
+using Application.SalesRatings.Common;
 using Domain.Entities.OrderAggregate.Enums;
 using Microsoft.EntityFrameworkCore;
 
@@ -20,10 +22,8 @@ public class GetCommitteeListCardsHandler
         GetCommitteeListCardsQuery request,
         CancellationToken cancellationToken)
     {
-        var today = DateOnly.FromDateTime(_clock.UtcNow);
-        var monthStart = new DateOnly(today.Year, today.Month, 1);
-        var prevMonthEnd = monthStart.AddDays(-1);
-        var prevMonthStart = new DateOnly(prevMonthEnd.Year, prevMonthEnd.Month, 1);
+        var asOf = IraqCalendar.ToLocalDate(_clock.UtcNowOffset);
+        var weekAgo = asOf.AddDays(-7);
 
         var lists = await _db.OrderLists.AsNoTracking()
             .Where(x => x.MotabaId == request.UserId || x.MandobId == request.UserId)
@@ -31,50 +31,178 @@ public class GetCommitteeListCardsHandler
             {
                 x.Id,
                 x.Name,
-                MandobName = x.Mandob!.FullName,
-                ActiveCustomers = x.Orders.Count(o => o.ExecutionStatus == OrderExecutionStatus.InProgress),
-                CollectionEnabled = x.FollowerCollectionEnabled,
-                CurrentPaid = x.Orders
-                    .Where(o => o.ExecutionStatus == OrderExecutionStatus.InProgress)
-                    .SelectMany(o => o.InstallmentPayments)
-                    .Count(ip => ip.Date >= monthStart && ip.Date <= today),
-                PrevPaid = x.Orders
-                    .Where(o => o.ExecutionStatus == OrderExecutionStatus.InProgress)
-                    .SelectMany(o => o.InstallmentPayments)
-                    .Count(ip => ip.Date >= prevMonthStart && ip.Date <= prevMonthEnd),
-                ExpectedDays = Math.Max(1, today.Day)
+                MandobName = x.Mandob != null ? x.Mandob.FullName : "",
+                CollectionEnabled = x.FollowerCollectionEnabled
             })
             .ToListAsync(cancellationToken);
 
         if (lists.Count == 0)
             return new List<CommitteeListCardDto>();
 
-        var cards = lists.Select(x =>
+        var listIds = lists.Select(x => x.Id).ToList();
+        var facts = await MaterializeFactsForListsAsync(listIds, cancellationToken);
+        var factsByList = facts
+            .Where(f => f.OrderListId is > 0)
+            .GroupBy(f => f.OrderListId!.Value)
+            .ToDictionary(g => g.Key, g => g.ToList());
+
+        var locationCounts = await MaterializeContinuousLocationCountsAsync(
+            listIds, facts, asOf, cancellationToken);
+
+        var cards = new List<CommitteeListCardDto>(lists.Count);
+        foreach (var list in lists)
         {
-            var cur = Math.Clamp(x.CurrentPaid / (double)(x.ActiveCustomers * x.ExpectedDays + 0.0001) * 10.0, 0, 10);
-            var prev = Math.Clamp(x.PrevPaid / (double)(x.ActiveCustomers * 30 + 0.0001) * 10.0, 0, 10);
-            return new CommitteeListCardDto
+            factsByList.TryGetValue(list.Id, out var listFacts);
+            listFacts ??= [];
+
+            // نفس تقييم تطبيق المندوب (collection-book): RealRating بدون phantom
+            var today = ActiveRatingCohort.Aggregate(
+                listFacts, asOf, usePhantomSaleDate: false, requireRecentPayment: false);
+            var previous = ActiveRatingCohort.Aggregate(
+                listFacts, weekAgo, usePhantomSaleDate: false, requireRecentPayment: false);
+
+            locationCounts.TryGetValue(list.Id, out var loc);
+            cards.Add(new CommitteeListCardDto
             {
-                ListId = x.Id,
-                ListName = x.Name,
-                MandobName = x.MandobName,
-                PhantomLabel = PhantomOf(cur),
-                CurrentMonthScore = Math.Round(cur, 1),
-                PreviousMonthScore = Math.Round(prev, 1),
-                ActiveCustomers = x.ActiveCustomers,
-                CollectionEnabled = x.CollectionEnabled
-            };
-        }).ToList();
+                ListId = list.Id,
+                ListName = list.Name,
+                MandobName = list.MandobName ?? "",
+                PhantomLabel = today.FinalRatingLabel,
+                CurrentMonthScore = Math.Round(today.AverageScore, 2, MidpointRounding.AwayFromZero),
+                PreviousMonthScore = Math.Round(previous.AverageScore, 2, MidpointRounding.AwayFromZero),
+                ActiveCustomers = today.CustomerCount,
+                CollectionEnabled = list.CollectionEnabled,
+                LocatedCustomers = loc.Located,
+                LocationCustomersTotal = loc.Total
+            });
+        }
 
         return cards;
     }
 
-    static string PhantomOf(double score) => score switch
+    /// <summary>
+    /// عداد المواقع فقط على مستمرين المندوب (باقي &gt; 0، غير قانوني، آخر تسديد &lt; 365 يوم).
+    /// </summary>
+    private async Task<Dictionary<int, (int Located, int Total)>> MaterializeContinuousLocationCountsAsync(
+        IReadOnlyList<int> listIds,
+        IReadOnlyList<RatingCustomerFact> facts,
+        DateOnly asOf,
+        CancellationToken ct)
     {
-        >= 9 => "ممتاز",
-        >= 7 => "جيد",
-        >= 5 => "ضعيف",
-        >= 3 => "متلكئ",
-        _ => "سيء"
-    };
+        var continuousByList = facts
+            .Where(f => f.OrderListId is > 0 && listIds.Contains(f.OrderListId.Value))
+            .Where(f => DelegateContinuousCustomerRules.IsContinuous(f, asOf))
+            .GroupBy(f => f.OrderListId!.Value)
+            .ToDictionary(
+                g => g.Key,
+                g => g.Select(x => x.CustomerId).Distinct().ToHashSet());
+
+        var allCustomerIds = continuousByList.Values.SelectMany(x => x).Distinct().ToList();
+        if (allCustomerIds.Count == 0)
+        {
+            return listIds.ToDictionary(id => id, _ => (0, 0));
+        }
+
+        var customerGps = await _db.Customers.AsNoTracking()
+            .Where(c => allCustomerIds.Contains(c.Id))
+            .Select(c => new
+            {
+                c.Id,
+                HasGps = c.Business.GpsLatitude != null
+                         && c.Business.GpsLongitude != null
+                         && !(c.Business.GpsLatitude == 0 && c.Business.GpsLongitude == 0)
+            })
+            .ToDictionaryAsync(x => x.Id, x => x.HasGps, ct);
+
+        var orderGpsRows = await _db.Orders.AsNoTracking()
+            .Where(o => o.OrderListId != null
+                        && listIds.Contains(o.OrderListId.Value)
+                        && allCustomerIds.Contains(o.CustomerId)
+                        && o.ApprovalStatus == OrderApprovalStatus.Approved)
+            .Select(o => new
+            {
+                ListId = o.OrderListId!.Value,
+                o.CustomerId,
+                HasGps = o.Location != null
+                         && !(o.Location.Latitude == 0 && o.Location.Longitude == 0)
+            })
+            .ToListAsync(ct);
+
+        var orderGpsByListCustomer = orderGpsRows
+            .GroupBy(x => (x.ListId, x.CustomerId))
+            .ToDictionary(g => g.Key, g => g.Any(x => x.HasGps));
+
+        var result = new Dictionary<int, (int Located, int Total)>();
+        foreach (var listId in listIds)
+        {
+            if (!continuousByList.TryGetValue(listId, out var customers) || customers.Count == 0)
+            {
+                result[listId] = (0, 0);
+                continue;
+            }
+
+            var located = customers.Count(customerId =>
+            {
+                var fromCustomer = customerGps.TryGetValue(customerId, out var cg) && cg;
+                var fromOrder = orderGpsByListCustomer.TryGetValue((listId, customerId), out var og) && og;
+                return fromCustomer || fromOrder;
+            });
+
+            result[listId] = (located, customers.Count);
+        }
+
+        return result;
+    }
+
+    private async Task<List<RatingCustomerFact>> MaterializeFactsForListsAsync(
+        IReadOnlyList<int> listIds,
+        CancellationToken ct)
+    {
+        var rows = await _db.Orders.AsNoTracking()
+            .Where(o => o.ApprovalStatus == OrderApprovalStatus.Approved
+                        && o.OrderListId != null
+                        && listIds.Contains(o.OrderListId.Value))
+            .Select(o => new
+            {
+                o.CustomerId,
+                o.OrderListId,
+                o.SellerId,
+                o.SellAmount,
+                o.DailyInstallmentAmount,
+                o.SaleDate,
+                o.CreatedAt,
+                Receipts = o.InstallmentPayments.Sum(ip => ip.Amount),
+                LastPaymentDate = o.InstallmentPayments.Max(ip => (DateOnly?)ip.Date),
+                IsLegal = o.Customer != null && o.Customer.IsLegal
+            })
+            .ToListAsync(ct);
+
+        return rows
+            .GroupBy(r => new { r.CustomerId, r.OrderListId })
+            .Select(g =>
+            {
+                var saleDates = g.Where(x => x.SaleDate != null).Select(x => x.SaleDate!.Value).ToList();
+                DateOnly? saleDate = saleDates.Count > 0
+                    ? saleDates.Min()
+                    : g.Where(x => x.CreatedAt != null)
+                        .Select(x => IraqCalendar.ToLocalDate(x.CreatedAt!.Value))
+                        .OrderBy(d => d)
+                        .Cast<DateOnly?>()
+                        .FirstOrDefault();
+
+                return new RatingCustomerFact
+                {
+                    CustomerId = g.Key.CustomerId,
+                    OrderListId = g.Key.OrderListId,
+                    SellerId = g.Select(x => x.SellerId).FirstOrDefault(x => x != null),
+                    AmountTotalSales = g.Sum(x => x.SellAmount),
+                    ReceiptsTotal = g.Sum(x => x.Receipts),
+                    AmountDaySales = g.Sum(x => x.DailyInstallmentAmount),
+                    SaleDate = saleDate,
+                    LastPaymentDate = g.Max(x => x.LastPaymentDate),
+                    IsLegal = g.Any(x => x.IsLegal)
+                };
+            })
+            .ToList();
+    }
 }

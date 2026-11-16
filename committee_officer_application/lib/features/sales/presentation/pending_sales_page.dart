@@ -1,3 +1,4 @@
+import 'package:committee_officer_application/core/location/device_gps.dart';
 import 'package:committee_officer_application/core/network/dio_client.dart';
 import 'package:committee_officer_application/core/theme/app_colors.dart';
 import 'package:committee_officer_application/core/widgets/animated_waves.dart';
@@ -49,6 +50,10 @@ class _PendingSalesPageState extends State<PendingSalesPage> {
     final stockCtrl = TextEditingController();
     final dailyCtrl = TextEditingController();
     String? localError;
+    double? capturedLat;
+    double? capturedLng;
+    var gpsBusy = false;
+    var gpsCaptured = false;
 
     final ok = await showDialog<bool>(
       context: context,
@@ -79,6 +84,47 @@ class _PendingSalesPageState extends State<PendingSalesPage> {
                   controller: dailyCtrl,
                   keyboardType: TextInputType.number,
                   decoration: const InputDecoration(labelText: 'قيمة الوارد اليومي'),
+                ),
+                const SizedBox(height: 12),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton.icon(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor:
+                          gpsCaptured ? AppColors.success : AppColors.primary,
+                      foregroundColor: Colors.white,
+                    ),
+                    onPressed: gpsBusy
+                        ? null
+                        : () async {
+                            setLocal(() {
+                              gpsBusy = true;
+                              localError = null;
+                            });
+                            try {
+                              final fix = await captureDeviceGps();
+                              setLocal(() {
+                                capturedLat = fix.latitude;
+                                capturedLng = fix.longitude;
+                                gpsCaptured = true;
+                                gpsBusy = false;
+                              });
+                            } catch (e) {
+                              setLocal(() {
+                                gpsBusy = false;
+                                localError = DioClient.mapError(e);
+                              });
+                            }
+                          },
+                    icon: Icon(gpsCaptured ? Icons.check : Icons.my_location),
+                    label: Text(
+                      gpsBusy
+                          ? 'جاري تحديد الموقع...'
+                          : gpsCaptured
+                              ? 'تم تحديد موقع GPS'
+                              : 'تحديد موقع GPS',
+                    ),
+                  ),
                 ),
                 if (localError != null)
                   Padding(
@@ -120,6 +166,8 @@ class _PendingSalesPageState extends State<PendingSalesPage> {
     final note = noteCtrl.text.trim();
     final stock = double.tryParse(stockCtrl.text.trim().replaceAll(',', '')) ?? 0;
     final daily = double.tryParse(dailyCtrl.text.trim().replaceAll(',', '')) ?? 0;
+    final lat = capturedLat;
+    final lng = capturedLng;
     ratingCtrl.dispose();
     noteCtrl.dispose();
     stockCtrl.dispose();
@@ -133,6 +181,8 @@ class _PendingSalesPageState extends State<PendingSalesPage> {
         note: note.isEmpty ? null : note,
         shopStockEstimatedValue: stock,
         estimatedDailyRevenue: daily,
+        latitude: lat,
+        longitude: lng,
       );
       if (!mounted) return;
       await showAppMessage(context, title: 'تم', message: 'تمت المصادقة بنجاح', color: AppColors.success);

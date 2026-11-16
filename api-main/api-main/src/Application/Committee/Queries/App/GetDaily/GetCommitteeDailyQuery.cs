@@ -26,4 +26,6 @@ public record CommitteeDailyCustomerDto
     /// <summary>وجود CustomerNote للزبون (ليس DelegateNote ولا DirectorNote).</summary>
     public bool HasNote { get; set; }
     public string? LatestFieldFollowupNote { get; set; }
+    public bool HasLocation { get; set; }
+    public int? ActiveOrderId { get; set; }
 }

@@ -3,6 +3,7 @@ using Application.Committee.Commands.App.AddCustomerNote;
 using Application.Committee.Commands.App.AddDelegateNote;
 using Application.Committee.Commands.App.AuthenticatePendingSale;
 using Application.Committee.Commands.App.FieldFollowups;
+using Application.Committee.Commands.App.SetCustomerLocation;
 using Application.Committee.Commands.App.PostComplaint;
 using Application.FollowerWork.Common;
 using Application.Committee.Commands.App.PostDayRating;
@@ -125,7 +126,31 @@ public class CommitteeController : ApiController
                 body.Rating,
                 body.Note,
                 body.ShopStockEstimatedValue,
-                body.EstimatedDailyRevenue),
+                body.EstimatedDailyRevenue,
+                body.Latitude ?? body.Lat,
+                body.Longitude ?? body.Lng),
+            CancellationToken);
+        return result.ToHttpResponse();
+    }
+
+    /// <summary>حفظ GPS للزبون (+ Order.Location عند وجود طلب نشط) لخريطة المبيعات والبروفايل.</summary>
+    [HasPermission(Permissions.OrderList.Read)]
+    [HttpPost("customers/{customerId:int}/location")]
+    public async Task<ActionResult<CommitteeCustomerLocationDto>> SetCustomerLocation(
+        [FromRoute] int customerId,
+        [FromBody] SetCommitteeCustomerLocationBody? body)
+    {
+        body ??= new SetCommitteeCustomerLocationBody();
+        var lat = body.Latitude ?? body.Lat ?? 0;
+        var lng = body.Longitude ?? body.Lng ?? 0;
+        var result = await _mediator.Send(
+            new SetCommitteeCustomerLocationCommand(
+                _current.UserId!.Value,
+                customerId,
+                body.ListId,
+                lat,
+                lng,
+                body.OrderId),
             CancellationToken);
         return result.ToHttpResponse();
     }
@@ -392,6 +417,20 @@ public sealed class AuthenticateCommitteePendingSaleBody
     public string? Note { get; set; }
     public decimal ShopStockEstimatedValue { get; set; }
     public decimal EstimatedDailyRevenue { get; set; }
+    public double? Latitude { get; set; }
+    public double? Longitude { get; set; }
+    public double? Lat { get; set; }
+    public double? Lng { get; set; }
+}
+
+public sealed class SetCommitteeCustomerLocationBody
+{
+    public int ListId { get; set; }
+    public int? OrderId { get; set; }
+    public double? Latitude { get; set; }
+    public double? Longitude { get; set; }
+    public double? Lat { get; set; }
+    public double? Lng { get; set; }
 }
 
 public sealed class AddCommitteeFieldFollowupBody

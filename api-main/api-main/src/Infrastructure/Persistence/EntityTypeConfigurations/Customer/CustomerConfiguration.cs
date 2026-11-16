@@ -20,6 +20,8 @@ public class CustomerConfiguration : IEntityTypeConfiguration<Domain.Entities.Cu
             propertyBuilder.Property(b => b.Name).HasMaxLength(100).IsRequired();
             propertyBuilder.Property(b => b.Address).HasMaxLength(300).IsRequired();
             propertyBuilder.Property(b => b.NearestKnownLocation).HasMaxLength(200).IsRequired();
+            propertyBuilder.Property(b => b.GpsLatitude);
+            propertyBuilder.Property(b => b.GpsLongitude);
         });
 
         builder.HasMany(x => x.Attachments)

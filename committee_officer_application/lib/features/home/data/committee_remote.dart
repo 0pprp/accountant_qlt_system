@@ -10,6 +10,8 @@ class CommitteeListCard {
     required this.previousMonthScore,
     required this.activeCustomers,
     required this.collectionEnabled,
+    required this.locatedCustomers,
+    required this.locationCustomersTotal,
   });
 
   final int listId;
@@ -20,6 +22,8 @@ class CommitteeListCard {
   final double previousMonthScore;
   final int activeCustomers;
   final bool collectionEnabled;
+  final int locatedCustomers;
+  final int locationCustomersTotal;
 
   factory CommitteeListCard.fromJson(
     Map<String, dynamic> j,
@@ -33,6 +37,13 @@ class CommitteeListCard {
     activeCustomers: int.tryParse('${j['activeCustomers'] ?? 0}') ?? 0,
     collectionEnabled:
         j['collectionEnabled'] == true || j['CollectionEnabled'] == true,
+    locatedCustomers:
+        int.tryParse('${j['locatedCustomers'] ?? j['LocatedCustomers'] ?? 0}') ??
+            0,
+    locationCustomersTotal: int.tryParse(
+          '${j['locationCustomersTotal'] ?? j['LocationCustomersTotal'] ?? 0}',
+        ) ??
+        0,
   );
 }
 
@@ -158,6 +169,8 @@ class CommitteeRemote {
     String? note,
     required double shopStockEstimatedValue,
     required double estimatedDailyRevenue,
+    double? latitude,
+    double? longitude,
   }) async {
     await _dio.dio.post(
       'api/v1/app/committee/pending-sales/$orderId/authenticate',
@@ -166,8 +179,30 @@ class CommitteeRemote {
         'note': note,
         'shopStockEstimatedValue': shopStockEstimatedValue,
         'estimatedDailyRevenue': estimatedDailyRevenue,
+        if (latitude != null) 'latitude': latitude,
+        if (longitude != null) 'longitude': longitude,
       },
     );
+  }
+
+  Future<Map<String, dynamic>> setCustomerLocation({
+    required int customerId,
+    required int listId,
+    required double latitude,
+    required double longitude,
+    int? orderId,
+  }) async {
+    final res = await _dio.dio.post(
+      'api/v1/app/committee/customers/$customerId/location',
+      data: {
+        'listId': listId,
+        'latitude': latitude,
+        'longitude': longitude,
+        if (orderId != null) 'orderId': orderId,
+      },
+    );
+    if (res.data is Map) return Map<String, dynamic>.from(res.data as Map);
+    return {};
   }
 
   Future<List<Map<String, dynamic>>> fieldFollowups() async {

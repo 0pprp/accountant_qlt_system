@@ -185,6 +185,10 @@ class _HomeTabState extends State<HomeTab> {
                   onRetry: _loadAnnouncements,
                 ),
                 const SizedBox(height: 8),
+                if (!_loading && _error == null && _cards.isNotEmpty)
+                  _overallRatingCard(),
+                if (!_loading && _error == null && _cards.isNotEmpty)
+                  const SizedBox(height: 12),
                 Text(
                   _cards.length <= 1
                       ? 'القوائم المخصصة'
@@ -236,6 +240,54 @@ class _HomeTabState extends State<HomeTab> {
     );
   }
 
+  /// متوسط تقييمات القوائم = مجموع متوسط كل قائمة ÷ عدد القوائم.
+  double get _overallAverage {
+    if (_cards.isEmpty) return 0;
+    final sum = _cards.fold<double>(0, (a, c) => a + c.currentMonthScore);
+    return sum / _cards.length;
+  }
+
+  String _formatAvg(double v) {
+    final r = double.parse(v.toStringAsFixed(2));
+    if (r == r.roundToDouble()) return '${r.round()}';
+    return r.toStringAsFixed(2);
+  }
+
+  Widget _overallRatingCard() {
+    final avg = _overallAverage;
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.92),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: AppColors.primary.withValues(alpha: 0.25)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'تقييمي الإجمالي',
+            style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            _formatAvg(avg),
+            style: const TextStyle(
+              fontSize: 28,
+              fontWeight: FontWeight.w800,
+              color: AppColors.primary,
+            ),
+          ),
+          Text(
+            'متوسط تقييمات ${_cards.length} قائمة (زبائن عليهم باقي)',
+            style: const TextStyle(color: AppColors.textSecondary, fontSize: 12),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _card(CommitteeListCard c, int index) {
     return TweenAnimationBuilder<double>(
       tween: Tween(begin: 0, end: 1),
@@ -266,17 +318,23 @@ class _HomeTabState extends State<HomeTab> {
             children: [
               DataField(label: 'المندوب', value: c.mandobName, requiredField: true),
               DataField(
-                label: 'زبائن نشطون',
+                label: 'زبائن عليهم باقي',
                 value: '${c.activeCustomers}',
                 requiredField: true,
               ),
               DataField(
-                label: 'درجة الشهر الحالي',
+                label: 'محدد مواقع المستمرين',
+                value:
+                    '${c.locatedCustomers} من أصل ${c.locationCustomersTotal}',
+                requiredField: true,
+              ),
+              DataField(
+                label: 'تقييم القائمة',
                 value: '${c.currentMonthScore}',
                 requiredField: true,
               ),
               DataField(
-                label: 'درجة الشهر السابق',
+                label: 'تقييم قبل أسبوع',
                 value: '${c.previousMonthScore}',
                 requiredField: true,
               ),

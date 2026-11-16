@@ -12,10 +12,34 @@ public record GetCustomerAuditProfileResponse
     public CustomerAuditDocumentsDto? Documents { get; init; }
     public CustomerAuditShopDto? Shop { get; init; }
     public CustomerAuditNotesDto? Notes { get; init; }
+    public CustomerAuditRatingsAndLocationDto? RatingsAndLocation { get; init; }
     public required List<string> AvailableSections { get; init; }
     public required List<string> SchemaRequiredSections { get; init; }
     public List<string> NotImplementedSections { get; init; } = [];
     public List<string> PartialSections { get; init; } = [];
+}
+
+public record CustomerAuditRatingsAndLocationDto
+{
+    public CustomerAuditStaffRatingDto? DelegateRating { get; init; }
+    public CustomerAuditStaffRatingDto? CommitteeFieldRating { get; init; }
+    public CustomerAuditStaffRatingDto? SalesEmployeeRating { get; init; }
+    public double? GpsLatitude { get; init; }
+    public double? GpsLongitude { get; init; }
+    public bool HasGps { get; init; }
+    public double? LatestOrderLatitude { get; init; }
+    public double? LatestOrderLongitude { get; init; }
+}
+
+public record CustomerAuditStaffRatingDto
+{
+    public required string Role { get; init; }
+    public required string Title { get; init; }
+    public int? Score { get; init; }
+    public string? Note { get; init; }
+    public string? RatedByName { get; init; }
+    public DateTimeOffset? RatedAtUtc { get; init; }
+    public int? OrderId { get; init; }
 }
 
 public record CustomerAuditHeaderDto

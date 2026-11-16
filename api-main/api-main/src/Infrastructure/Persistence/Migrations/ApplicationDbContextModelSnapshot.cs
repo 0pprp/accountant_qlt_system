@@ -716,6 +716,12 @@ namespace Infrastructure.Persistence.Migrations
                                 .HasMaxLength(300)
                                 .HasColumnType("character varying(300)");
 
+                            b1.Property<double?>("GpsLatitude")
+                                .HasColumnType("double precision");
+
+                            b1.Property<double?>("GpsLongitude")
+                                .HasColumnType("double precision");
+
                             b1.Property<string>("Name")
                                 .IsRequired()
                                 .HasMaxLength(100)
@@ -732,6 +738,52 @@ namespace Infrastructure.Persistence.Migrations
                     b.HasIndex("BranchId");
 
                     b.ToTable("Customers");
+                });
+
+            modelBuilder.Entity("Domain.Entities.CustomerAggregate.CustomerStaffRating", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("CustomerId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Note")
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)");
+
+                    b.Property<int?>("OrderId")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTimeOffset>("RatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("RatedByName")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<int>("RatedByUserId")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Role")
+                        .IsRequired()
+                        .HasMaxLength(40)
+                        .HasColumnType("character varying(40)");
+
+                    b.Property<int>("Score")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("RatedAtUtc");
+
+                    b.HasIndex("CustomerId", "Role")
+                        .IsUnique();
+
+                    b.ToTable("CustomerStaffRatings", (string)null);
                 });
 
             modelBuilder.Entity("Domain.Entities.CustomerDecisionAggregate.CustomerDecision", b =>
@@ -3249,7 +3301,7 @@ namespace Infrastructure.Persistence.Migrations
                         .HasMaxLength(400)
                         .HasColumnType("character varying(400)");
 
-                    b.Property<DateOnly>("BirthDate")
+                    b.Property<DateOnly?>("BirthDate")
                         .HasColumnType("date");
 
                     b.Property<DateTimeOffset?>("CreatedAt")
@@ -3273,12 +3325,10 @@ namespace Infrastructure.Persistence.Migrations
                         .HasColumnType("integer");
 
                     b.Property<string>("MotherName")
-                        .IsRequired()
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)");
 
                     b.Property<string>("NationalCode")
-                        .IsRequired()
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)");
 
@@ -3293,7 +3343,6 @@ namespace Infrastructure.Persistence.Migrations
                         .HasDefaultValue(0);
 
                     b.Property<string>("PhoneNumber")
-                        .IsRequired()
                         .HasMaxLength(30)
                         .HasColumnType("character varying(30)");
 
@@ -3326,6 +3375,9 @@ namespace Infrastructure.Persistence.Migrations
                         });
 
                     b.HasKey("Id");
+
+                    b.HasIndex("Username")
+                        .IsUnique();
 
                     b.ToTable("Users");
                 });

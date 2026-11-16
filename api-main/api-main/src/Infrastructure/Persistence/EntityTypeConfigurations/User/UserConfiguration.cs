@@ -10,11 +10,11 @@ public class UserConfiguration : IEntityTypeConfiguration<Domain.Entities.UserAg
         builder.HasKey(x => x.Id);
 
         builder.Property(x => x.FullName).HasMaxLength(50).IsRequired();
-        builder.Property(x => x.MotherName).HasMaxLength(50).IsRequired();
+        builder.Property(x => x.MotherName).HasMaxLength(50).IsRequired(false);
         builder.Property(x => x.Username).HasMaxLength(100).IsRequired(false);
         builder.Property(x => x.PasswordHash).HasMaxLength(300).IsRequired(false);
-        builder.Property(x => x.NationalCode).HasMaxLength(50).IsRequired();
-        builder.Property(x => x.BirthDate).IsRequired();
+        builder.Property(x => x.NationalCode).HasMaxLength(50).IsRequired(false);
+        builder.Property(x => x.BirthDate).IsRequired(false);
         builder.Property(x => x.SecurityStamp).HasMaxLength(100).IsRequired();
         builder.Property(x => x.CreationStep).IsRequired();
         builder.ComplexProperty(x => x.SalaryDetail, propertyBuilder =>
@@ -25,11 +25,13 @@ public class UserConfiguration : IEntityTypeConfiguration<Domain.Entities.UserAg
             propertyBuilder.Property(x => x.InstallmentSharePercent).IsRequired(false);
         });
         builder.Property(x => x.Address).HasMaxLength(400).IsRequired(false);
-        builder.Property(x => x.PhoneNumber).HasMaxLength(30).IsRequired();
+        builder.Property(x => x.PhoneNumber).HasMaxLength(30).IsRequired(false);
         builder.Property(x => x.PermissionsVersion)
             .IsConcurrencyToken()
             .HasDefaultValue(0)
             .IsRequired();
+
+        builder.HasIndex(x => x.Username).IsUnique();
 
         builder.HasOne(x => x.OrderListAsMandob)
             .WithOne(x => x.Mandob)

@@ -28,11 +28,18 @@ public class GetCommitteeDailyHandler : IRequestHandler<GetCommitteeDailyQuery, 
             .Where(o => o.OrderListId == request.ListId && o.ExecutionStatus == OrderExecutionStatus.InProgress)
             .Select(o => new
             {
+                o.Id,
                 o.CustomerId,
                 FullName = o.Customer!.FullName,
                 Phone = o.Customer.PhoneNumber,
                 o.DailyInstallmentAmount,
-                PaidToday = o.InstallmentPayments.Where(ip => ip.Date == request.Date).Sum(ip => ip.Amount)
+                PaidToday = o.InstallmentPayments.Where(ip => ip.Date == request.Date).Sum(ip => ip.Amount),
+                CustomerHasGps = o.Customer.Business.GpsLatitude != null
+                                 && o.Customer.Business.GpsLongitude != null
+                                 && !(o.Customer.Business.GpsLatitude == 0
+                                      && o.Customer.Business.GpsLongitude == 0),
+                OrderHasGps = o.Location != null
+                              && !(o.Location.Latitude == 0 && o.Location.Longitude == 0)
             })
             .ToListAsync(cancellationToken);
 
@@ -63,20 +70,44 @@ public class GetCommitteeDailyHandler : IRequestHandler<GetCommitteeDailyQuery, 
             .GroupBy(x => x.CustomerId)
             .ToDictionary(g => g.Key, g => g.First().CompletionNote);
 
+        var byCustomer = rows
+            .GroupBy(r => r.CustomerId)
+            .ToDictionary(
+                g => g.Key,
+                g =>
+                {
+                    var first = g.First();
+                    var paidToday = g.Sum(x => x.PaidToday);
+                    var installment = g.Sum(x => x.DailyInstallmentAmount);
+                    var activeOrderId = g.OrderByDescending(x => x.Id).First().Id;
+                    var hasLocation = g.Any(x => x.CustomerHasGps || x.OrderHasGps);
+                    return new
+                    {
+                        first.FullName,
+                        first.Phone,
+                        PaidToday = paidToday,
+                        DailyInstallment = installment,
+                        ActiveOrderId = activeOrderId,
+                        HasLocation = hasLocation
+                    };
+                });
+
         var showPaid = request.ShowType.Contains("مسددين", StringComparison.Ordinal)
                        && !request.ShowType.Contains("الغير", StringComparison.Ordinal);
 
-        var customers = rows
-            .Select(r => new CommitteeDailyCustomerDto
+        var customers = byCustomer
+            .Select(kv => new CommitteeDailyCustomerDto
             {
-                CustomerId = r.CustomerId,
-                FullName = r.FullName,
-                Phone = r.Phone,
-                DailyInstallment = r.DailyInstallmentAmount,
-                PaidToday = r.PaidToday,
-                IsPaid = r.PaidToday >= r.DailyInstallmentAmount && r.DailyInstallmentAmount > 0,
-                HasNote = notedIds.Contains(r.CustomerId),
-                LatestFieldFollowupNote = latestNotes.GetValueOrDefault(r.CustomerId)
+                CustomerId = kv.Key,
+                FullName = kv.Value.FullName,
+                Phone = kv.Value.Phone,
+                DailyInstallment = kv.Value.DailyInstallment,
+                PaidToday = kv.Value.PaidToday,
+                IsPaid = kv.Value.PaidToday >= kv.Value.DailyInstallment && kv.Value.DailyInstallment > 0,
+                HasNote = notedIds.Contains(kv.Key),
+                LatestFieldFollowupNote = latestNotes.GetValueOrDefault(kv.Key),
+                HasLocation = kv.Value.HasLocation,
+                ActiveOrderId = kv.Value.ActiveOrderId
             })
             .Where(c => showPaid ? c.IsPaid : !c.IsPaid)
             .OrderBy(c => c.FullName)

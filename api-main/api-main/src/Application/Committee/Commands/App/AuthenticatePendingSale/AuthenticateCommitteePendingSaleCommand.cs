@@ -1,7 +1,10 @@
 using Application.Common.Interfaces;
 using Application.Committee.Common;
 using Application.FollowerWork.Common;
+using Application.ManagementSalesMap.Common;
+using Domain.Entities.CustomerAggregate;
 using Domain.Entities.FollowerWorkAggregate;
+using Domain.Entities.OrderAggregate;
 using Domain.Entities.OrderAggregate.Enums;
 using Domain.Entities.WrongSaleAggregate;
 using Microsoft.EntityFrameworkCore;
@@ -14,7 +17,9 @@ public record AuthenticateCommitteePendingSaleCommand(
     int Rating,
     string? Note,
     decimal ShopStockEstimatedValue,
-    decimal EstimatedDailyRevenue) : IRequest<Result>;
+    decimal EstimatedDailyRevenue,
+    double? Latitude = null,
+    double? Longitude = null) : IRequest<Result>;
 
 public class AuthenticateCommitteePendingSaleHandler
     : IRequestHandler<AuthenticateCommitteePendingSaleCommand, Result>
@@ -63,6 +68,22 @@ public class AuthenticateCommitteePendingSaleHandler
         if (order.ExecutionStatus != OrderExecutionStatus.NotStarted)
             return Result.Failed(new Error("الطلب ليس بانتظار التصديق", "Committee_Sale_Not_Pending"));
 
+        Location? gps = null;
+        if (request.Latitude is double lat && request.Longitude is double lng)
+        {
+            try
+            {
+                var candidate = new Location(lat, lng);
+                if (SalesMapGeo.TryGetValid(candidate, out _, out _) == false)
+                    return Result.Failed(new Error("إحداثيات الموقع غير صالحة", "Committee_Location_Invalid"));
+                gps = candidate;
+            }
+            catch (ArgumentOutOfRangeException)
+            {
+                return Result.Failed(new Error("إحداثيات الموقع غير صالحة", "Committee_Location_Invalid"));
+            }
+        }
+
         var followerName = await _db.Users.AsNoTracking()
             .Where(u => u.Id == request.UserId)
             .Select(u => u.FullName)
@@ -83,6 +104,26 @@ public class AuthenticateCommitteePendingSaleHandler
 
         _db.FollowerSaleAuthentications.Add(auth);
 
+        await CustomerStaffRatingUpsert.UpsertAsync(
+            _db,
+            order.CustomerId,
+            CustomerStaffRating.RoleCommitteeField,
+            request.Rating,
+            request.Note,
+            request.UserId,
+            followerName,
+            _clock.UtcNowOffset,
+            order.Id,
+            cancellationToken);
+
+        if (gps is not null)
+        {
+            order.SetLocation(gps);
+            var customer = await _db.Customers
+                .FirstOrDefaultAsync(c => c.Id == order.CustomerId, cancellationToken);
+            customer?.Business.SetGps(gps.Latitude, gps.Longitude);
+        }
+
         // أثر تنفيذ الطلب كما مسار اللجنة الحالي — منفصل عن سجل المصادقة كمصدر حقيقة اللوحة
         order.Approve();
 
@@ -93,7 +134,7 @@ public class AuthenticateCommitteePendingSaleHandler
                 .AnyAsync(x => x.OrderId == order.Id, cancellationToken);
             if (existsNotice == false)
             {
-                var customer = await _db.Customers.AsNoTracking()
+                var customerInfo = await _db.Customers.AsNoTracking()
                     .Where(c => c.Id == order.CustomerId)
                     .Select(c => new { c.FullName, c.PhoneNumber })
                     .FirstOrDefaultAsync(cancellationToken);
@@ -102,16 +143,16 @@ public class AuthenticateCommitteePendingSaleHandler
                     request.Note,
                     request.ShopStockEstimatedValue,
                     request.EstimatedDailyRevenue,
-                    customer?.FullName,
-                    customer?.PhoneNumber);
+                    customerInfo?.FullName,
+                    customerInfo?.PhoneNumber);
                 _db.WrongSaleNotices.Add(new WrongSaleNotice(
                     order.Id,
                     order.CustomerId,
                     order.BranchId,
                     request.UserId,
                     string.IsNullOrWhiteSpace(followerName) ? null : followerName.Trim(),
-                    customer?.FullName,
-                    customer?.PhoneNumber,
+                    customerInfo?.FullName,
+                    customerInfo?.PhoneNumber,
                     request.Rating,
                     FollowerSaleAuthRules.NormalizeNote(request.Note),
                     decimal.Round(request.ShopStockEstimatedValue, 0, MidpointRounding.AwayFromZero),

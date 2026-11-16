@@ -243,6 +243,8 @@ public class Order : AuditableEntity
         OrderListId = orderListId;
     }
 
+    public void SetLocation(Location? location) => Location = location;
+
     public void Approve()
     {
         ApprovalStatus = OrderApprovalStatus.Approved;

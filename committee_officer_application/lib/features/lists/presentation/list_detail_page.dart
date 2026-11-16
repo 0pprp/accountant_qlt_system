@@ -1,3 +1,4 @@
+import 'package:committee_officer_application/core/location/device_gps.dart';
 import 'package:committee_officer_application/core/time/baghdad_time.dart';
 import 'package:committee_officer_application/core/widgets/centered_dialog.dart';
 import 'package:committee_officer_application/core/widgets/date_dialog.dart';
@@ -416,6 +417,51 @@ class _ListDetailPageState extends State<ListDetailPage>
     }
   }
 
+  void _markLocated(int customerId) {
+    Map<String, dynamic> patch(Map<String, dynamic> row) {
+      final id =
+          int.tryParse('${row['customerId'] ?? row['CustomerId'] ?? 0}') ?? 0;
+      if (id != customerId) return row;
+      return {...row, 'hasLocation': true, 'HasLocation': true};
+    }
+
+    setState(() {
+      _paid = _paid.map(patch).toList();
+      _unpaid = _unpaid.map(patch).toList();
+    });
+  }
+
+  Future<void> _setCustomerGps(DailyCustomer c) async {
+    try {
+      final fix = await captureDeviceGps();
+      await Injection.committee.setCustomerLocation(
+        customerId: c.id,
+        listId: widget.listId,
+        latitude: fix.latitude,
+        longitude: fix.longitude,
+        orderId: c.activeOrderId,
+      );
+      if (!mounted) return;
+      _markLocated(c.id);
+      await showAppMessage(
+        context,
+        title: 'تم',
+        message: 'تم حفظ موقع الزبون',
+        icon: Icons.check_circle_outline,
+        color: AppColors.success,
+      );
+    } catch (e) {
+      if (!mounted) return;
+      await showAppMessage(
+        context,
+        title: 'تعذر تحديد الموقع',
+        message: DioClient.mapError(e),
+        icon: Icons.error_outline,
+        color: AppColors.danger,
+      );
+    }
+  }
+
   Future<void> _addCustomerNote(DailyCustomer c) async {
     var draft = '';
     final ok = await showCenteredDialog<bool>(
@@ -556,6 +602,17 @@ class _ListDetailPageState extends State<ListDetailPage>
                 style: ElevatedButton.styleFrom(backgroundColor: highlight),
                 onPressed: () => _recordComplete(c),
                 child: const Text('تمت المتابعة'),
+              ),
+              ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor:
+                      c.hasLocation ? AppColors.success : AppColors.primary,
+                  foregroundColor: Colors.white,
+                ),
+                onPressed: () => _setCustomerGps(c),
+                child: Text(
+                  c.hasLocation ? 'تم تحديد الموقع' : 'تحديد موقع GPS',
+                ),
               ),
               OutlinedButton(
                 onPressed: () => _addCustomerNote(c),
