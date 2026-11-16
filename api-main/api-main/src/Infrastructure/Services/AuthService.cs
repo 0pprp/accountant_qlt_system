@@ -1,5 +1,6 @@
 using Application.Branches.Common;
 using Application.Common;
+using Application.Common.AdminPanel;
 using Application.Common.Interfaces;
 using Application.Common.Models.SignIn;
 using Application.Common.Models.TokenFactory;
@@ -8,6 +9,7 @@ using Application.Permissions.Common;
 using Application.Users.Common;
 using Domain.Entities.UserAggregate;
 using Microsoft.EntityFrameworkCore;
+using PermissionEntity = Domain.Entities.RoleAggregate.Permission;
 
 namespace Infrastructure.Services;
 
@@ -31,11 +33,13 @@ public class AuthService : IAuthService
 
     public async Task<SignInResponse> SignInAsync(SignInRequest request, CancellationToken cancellationToken = default)
     {
+        // JWT: إجراءات فقط (بدون Panel.Tab.*) لتفادي تجاوز حد ترويسة Authorization.
+        // جسم الاستجابة للعميل يحتفظ بـ PanelTab لواجهة السايدبار.
         var createJwtDto = new CreateJwtDto
         {
             Id = request.Id,
             Roles = request.Roles,
-            Permissions = request.Permissions.Select(x => x.Name).ToList(),
+            Permissions = JwtPermissionNames(request.Permissions),
             SecurityStamp = request.SecurityStamp,
             BranchIds = request.Branches.Select(x => x.Id).ToList()
         };
@@ -94,7 +98,7 @@ public class AuthService : IAuthService
         {
             Id = userLogin.UserId,
             Roles = userLogin.Roles,
-            Permissions = userLogin.Permissions.Select(x => x.Name).ToList(),
+            Permissions = JwtPermissionNames(userLogin.Permissions),
             SecurityStamp = userLogin.UserSecurityStamp,
             BranchIds = userLogin.Branches.Select(x => x.Id).ToList()
         };
@@ -135,11 +139,22 @@ public class AuthService : IAuthService
     private string HashRefreshToken(string input) => _securityService.GetSha256Hash(input);
 
     /// <summary>
+    /// أسماء الصلاحيات داخل JWT — بدون Panel.Tab.* (تُرسل للعميل في Permissions فقط).
+    /// </summary>
+    private static List<string> JwtPermissionNames(IEnumerable<PermissionEntity> permissions) =>
+        permissions
+            .Where(p => p is not null && string.IsNullOrWhiteSpace(p.Name) == false)
+            .Select(p => p.Name)
+            .Where(n => AdminPanelTabs.IsPanelTabPermission(n) == false)
+            .Distinct(StringComparer.Ordinal)
+            .ToList();
+
+    /// <summary>
     /// Panel.Tab.{tabKey} → module=PanelTab, action=tabKey.
     /// غير ذلك: الجزء قبل أول نقطة = module، والباقي = action.
     /// </summary>
     private static Dictionary<string, List<GetPermissionDto>> GroupPermissionsForClient(
-        IEnumerable<Domain.Entities.RoleAggregate.Permission> permissions)
+        IEnumerable<PermissionEntity> permissions)
     {
         const string panelPrefix = "Panel.Tab.";
         return permissions
