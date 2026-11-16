@@ -3,6 +3,7 @@ import { computed } from 'vue'
 import { useQuery } from '@tanstack/vue-query'
 import { axiosInstance } from '@/modules/Core/plugins/axios'
 import { useAuthStore } from '@/modules/Auth/store'
+import { AppButton } from '@/modules/Core/components/ui'
 
 interface Row {
   customerId: number
@@ -59,14 +60,9 @@ const listQuery = useQuery({
       ليس لديك صلاحية قراءة زبائن الفرع المتدنية.
     </div>
     <template v-else>
-      <button
-        v-if="listQuery.isError.value"
-        type="button"
-        class="bd-btn"
-        @click="listQuery.refetch()"
-      >
+      <AppButton v-if="listQuery.isError.value" variant="secondary" @click="listQuery.refetch()">
         إعادة المحاولة
-      </button>
+      </AppButton>
       <p
         v-if="listQuery.isError.value"
         class="bd-err"
@@ -118,7 +114,7 @@ const listQuery = useQuery({
   max-width: 960px;
   margin: 0 auto;
   padding: 1rem 1.25rem 2rem;
-  font-family: ElMessiri, 'Segoe UI', Tahoma, sans-serif;
+  font-family: inherit;
   color: #00201e;
 }
 .bd-title {

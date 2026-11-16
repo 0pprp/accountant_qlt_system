@@ -1,6 +1,6 @@
 <template>
   <div
-    class="p-2 md:p-2 flex justify-between h-screen overflow-hidden w-full bg-background relative"
+    class="p-2 md:p-2 flex justify-between h-screen overflow-hidden w-full relative q-shell"
   >
     <!-- سطح المكتب -->
     <div v-if="isDesktop" class="hidden md:flex h-full shrink-0">
@@ -59,7 +59,7 @@
     </div>
 
     <main
-      class="p-4 md:p-6 flex-grow main overflow-auto w-full"
+      class="p-4 md:p-6 flex-grow main overflow-auto w-full q-shell__main"
       :class="isDesktop ? desktopMainClass : 'max-w-full'"
       :aria-hidden="mobileOpen && !isDesktop ? 'true' : undefined"
       :inert="mobileOpen && !isDesktop ? true : undefined"

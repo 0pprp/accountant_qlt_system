@@ -13,7 +13,8 @@
       v-if="canAssign"
       type="button"
       class="sr-neu-btn primary"
-      :disabled="busy"
+      :disabled="busy || !canAssignByRecord"
+      :title="assignBlockedReason || undefined"
       @click="dialogOpen = true"
     >
       {{
@@ -22,6 +23,13 @@
           : $t('salesRequests.actions.assign')
       }}
     </button>
+    <p
+      v-if="canAssign && assignBlockedReason"
+      class="sr-actions__hint"
+      role="status"
+    >
+      {{ assignBlockedReason }}
+    </p>
     <button
       v-if="canReject"
       type="button"
@@ -154,6 +162,17 @@ const canEditRequest = computed(
     props.request.tabKey !== 'sold' &&
     Number(props.request.status) !== 9
 )
+
+/** قواعد السجل — ليست رسالة صلاحية */
+const assignBlockedReason = computed(() => {
+  if (props.request.isDeleted) return 'الطلب محذوف — لا يمكن إسناد جديد.'
+  if (props.request.tabKey === 'sold' || Number(props.request.status) === 9) {
+    return 'الطلب مكتمل/مباع — لا يقبل إسنادًا جديدًا.'
+  }
+  return null
+})
+
+const canAssignByRecord = computed(() => assignBlockedReason.value == null)
 
 const localDraft = reactive({
   reject: props.draft?.reject || '',
@@ -320,6 +339,13 @@ async function onEditConfirm(payload: {
 <style scoped>
 .sr-actions {
   display: contents;
+}
+.sr-actions__hint {
+  margin: 0;
+  grid-column: 1 / -1;
+  font-size: 0.75rem;
+  color: #8a4b00;
+  line-height: 1.4;
 }
 .sr-dialog-row {
   display: flex;

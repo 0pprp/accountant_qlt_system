@@ -6,6 +6,7 @@ import { useFollowersQuery } from '../requests/queries/useFollowersQuery'
 import { useRouter } from 'vue-router'
 import { getImplementedSections } from '../domain/sections'
 import type { FollowerWorkSort } from '../domain/types'
+import { AppButton, AppSearchField, AppSelect } from '@/modules/Core/components/ui'
 import FollowerBranchFilter from '../components/FollowerBranchFilter.vue'
 import FollowerCard from '../components/FollowerCard.vue'
 import FollowerSectionNavigation from '../components/FollowerSectionNavigation.vue'
@@ -94,6 +95,12 @@ watch(
 function applySearch() {
   patch({ search: searchInput.value.trim(), page: 1, followerId: null })
 }
+
+const sortOptions = [
+  { label: 'الاسم', value: 'name' },
+  { label: 'التقييم', value: 'rating' },
+  { label: 'عدد القوائم', value: 'lists' },
+]
 
 function onSort(v: string) {
   const next = (['name', 'rating', 'lists'].includes(v) ? v : 'name') as FollowerWorkSort
@@ -199,37 +206,27 @@ const totalPages = computed(() => followersQuery.data.value?.totalPages ?? 0)
     </div>
 
     <template v-else>
-      <div class="fw-toolbar">
-        <label class="fw-search">
-          <span class="visually-hidden">بحث عن متابع</span>
-          <input
-            v-model="searchInput"
-            class="fw-search__input"
-            type="search"
-            placeholder="بحث بالاسم أو المعرف"
-            @keydown.enter.prevent="applySearch"
-          />
-          <button type="button" class="fw-search__btn" aria-label="بحث" @click="applySearch">
-            بحث
-          </button>
-        </label>
+      <div class="q-filters">
+        <AppSearchField
+          v-model="searchInput"
+          label="بحث عن متابع"
+          placeholder="بحث بالاسم أو المعرف"
+          grow
+          @keydown.enter.prevent="applySearch"
+        />
+        <AppButton variant="secondary" @click="applySearch">بحث</AppButton>
         <FollowerBranchFilter
           :branches="branches"
           :model-value="branchId"
           @update:model-value="setBranch"
         />
-        <label class="fw-sort">
-          <span class="fw-sort__label">ترتيب</span>
-          <select
-            class="fw-sort__select"
-            :value="sort"
-            @change="onSort(($event.target as HTMLSelectElement).value)"
-          >
-            <option value="name">الاسم</option>
-            <option value="rating">التقييم</option>
-            <option value="lists">عدد القوائم</option>
-          </select>
-        </label>
+        <AppSelect
+          :model-value="sort"
+          label="ترتيب"
+          :options="sortOptions"
+          :filterable="false"
+          @update:model-value="(v) => onSort(String(v))"
+        />
       </div>
 
       <div v-if="branchId == null" class="fw-state">اختر محافظة لعرض بطاقات المتابعين.</div>

@@ -1,5 +1,6 @@
 import type { AccessRequirement, PermissionRef } from '@/modules/Core/access/access.types'
 import type { NavigationSectionDefinition } from '@/modules/Core/navigation/navigation.types'
+import { requirementForManagementTabId } from '@/modules/Core/navigation/panelTabAccess'
 import { getReadyTabsForSection, getTabByIds, type ManagementTabDefinition } from './sections'
 
 export type AppWorkspaceId = 'branch' | 'delegate'
@@ -42,9 +43,17 @@ export function appReadyTabs(section: AppWorkspaceId): ManagementTabDefinition[]
       : []
   })
 }
+function resolvedRequirement(tab: ManagementTabDefinition): AccessRequirement {
+  return requirementForManagementTabId(tab.id, tab.requirement)
+}
+
 function anyRead(tabs: ManagementTabDefinition[]): AccessRequirement {
-  const permissions = tabs.flatMap(t => t.requirement.type === 'single'
-    ? [t.requirement.permission] : t.requirement.type === 'publicAuthenticated' ? [] : [...t.requirement.permissions])
+  const permissions = tabs.flatMap((t) => {
+    const req = resolvedRequirement(t)
+    if (req.type === 'single') return [req.permission]
+    if (req.type === 'publicAuthenticated') return []
+    return [...req.permissions]
+  })
   if (!permissions.length) throw new Error('Workspace requires explicit permissions')
   return { type: 'anyOf', permissions: permissions as [PermissionRef, ...PermissionRef[]] }
 }
@@ -62,7 +71,7 @@ export const appNavigationParents: NavigationSectionDefinition[] = (['branch', '
     translationKey: `management.appTabs.${section}.${APP_TABS[section].find(item => item.tabId === tab.id)!.id}`,
     icon: 'user', group: 'management', routeName: tab.routeName,
     routePath: `/management/${section}/${tab.tabPath}`, routeQuery: tab.defaultQuery,
-    requirement: tab.requirement, displayOrder: order,
+    requirement: resolvedRequirement(tab), displayOrder: order,
     implementationStatus: tab.implementationStatus === 'partial' ? 'partial' : 'ready',
   })),
 }))

@@ -3,13 +3,28 @@
 @import 'tailwindcss-primeui';
 @import './typography.css';
 @import './theme.css';
+@import '../../modules/Core/components/ui/ui.tokens.css';
 @import './components/index.css';
 @import './components/choice.css';
 
 @layer base {
   html {
-    /* font-size: 16px; */
-    /* @apply text-[62.5%] max-[320px]:text-[55%]; */
+    font-variant-numeric: lining-nums tabular-nums;
+  }
+
+  body {
+    font-variant-numeric: lining-nums tabular-nums;
+  }
+
+  /* Western digits for numeric UI surfaces */
+  .q-num,
+  .q-summary__value,
+  .q-metric__value,
+  .q-table td,
+  input[type='number'],
+  input[type='date'],
+  input[type='time'] {
+    font-variant-numeric: lining-nums tabular-nums;
   }
 
   .set-center {

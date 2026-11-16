@@ -3,6 +3,7 @@ import { computed } from 'vue'
 import { METRIC_OPTIONS } from '../domain/endpoints'
 import type { ManagementSummaryMetricKey } from '../domain/types'
 import { useAuthStore } from '@/modules/Auth/store'
+import { AppSelect } from '@/modules/Core/components/ui'
 
 const props = defineProps<{
   year: number
@@ -31,110 +32,59 @@ const years = computed(() => {
 })
 
 const months = [
-  { value: 1, title: 'كانون الثاني' },
-  { value: 2, title: 'شباط' },
-  { value: 3, title: 'آذار' },
-  { value: 4, title: 'نيسان' },
-  { value: 5, title: 'أيار' },
-  { value: 6, title: 'حزيران' },
-  { value: 7, title: 'تموز' },
-  { value: 8, title: 'آب' },
-  { value: 9, title: 'أيلول' },
-  { value: 10, title: 'تشرين الأول' },
-  { value: 11, title: 'تشرين الثاني' },
-  { value: 12, title: 'كانون الأول' },
+  { value: 1, label: 'كانون الثاني' },
+  { value: 2, label: 'شباط' },
+  { value: 3, label: 'آذار' },
+  { value: 4, label: 'نيسان' },
+  { value: 5, label: 'أيار' },
+  { value: 6, label: 'حزيران' },
+  { value: 7, label: 'تموز' },
+  { value: 8, label: 'آب' },
+  { value: 9, label: 'أيلول' },
+  { value: 10, label: 'تشرين الأول' },
+  { value: 11, label: 'تشرين الثاني' },
+  { value: 12, label: 'كانون الأول' },
 ]
+
+const metricOptions = computed(() =>
+  METRIC_OPTIONS.map((m) => ({ label: m.title, value: m.value })),
+)
+const yearOptions = computed(() => years.value.map((y) => ({ label: String(y), value: y })))
+const branchOptions = computed(() => [
+  { label: 'جميع الفروع المسموحة', value: null as number | null },
+  ...branches.value.map((b) => ({ label: b.name, value: b.id })),
+])
+
+const metricModel = computed({
+  get: () => props.metric,
+  set: (v: string | number | null | boolean) =>
+    emit('patch', { metric: v as ManagementSummaryMetricKey }),
+})
+const monthModel = computed({
+  get: () => props.month,
+  set: (v: string | number | null | boolean) => emit('patch', { month: Number(v) }),
+})
+const yearModel = computed({
+  get: () => props.year,
+  set: (v: string | number | null | boolean) => emit('patch', { year: Number(v) }),
+})
+const branchModel = computed({
+  get: () => props.branchId,
+  set: (v: string | number | null | boolean) =>
+    emit('patch', { branchId: v == null || v === '' ? null : Number(v) }),
+})
 </script>
 
 <template>
-  <div class="ms-filters">
-    <div class="ms-field">
-      <label for="ms-metric">المقياس</label>
-      <select
-        id="ms-metric"
-        :value="props.metric"
-        @change="
-          emit('patch', {
-            metric: ($event.target as HTMLSelectElement)
-              .value as ManagementSummaryMetricKey,
-          })
-        "
-      >
-        <option
-          v-for="m in METRIC_OPTIONS"
-          :key="m.value"
-          :value="m.value"
-        >
-          {{ m.title }}
-        </option>
-      </select>
-    </div>
-
-    <div class="ms-field">
-      <label for="ms-month">الشهر</label>
-      <select
-        id="ms-month"
-        :value="props.month"
-        @change="
-          emit('patch', {
-            month: Number(($event.target as HTMLSelectElement).value),
-          })
-        "
-      >
-        <option
-          v-for="m in months"
-          :key="m.value"
-          :value="m.value"
-        >
-          {{ m.title }}
-        </option>
-      </select>
-    </div>
-
-    <div class="ms-field">
-      <label for="ms-year">السنة</label>
-      <select
-        id="ms-year"
-        :value="props.year"
-        @change="
-          emit('patch', {
-            year: Number(($event.target as HTMLSelectElement).value),
-          })
-        "
-      >
-        <option
-          v-for="y in years"
-          :key="y"
-          :value="y"
-        >
-          {{ y }}
-        </option>
-      </select>
-    </div>
-
-    <div class="ms-field">
-      <label for="ms-branch">المحافظة / الفرع</label>
-      <select
-        id="ms-branch"
-        :value="props.branchId ?? 'all'"
-        @change="
-          emit('patch', {
-            branchId:
-              ($event.target as HTMLSelectElement).value === 'all'
-                ? null
-                : Number(($event.target as HTMLSelectElement).value),
-          })
-        "
-      >
-        <option value="all">جميع الفروع المسموحة</option>
-        <option
-          v-for="b in branches"
-          :key="b.id"
-          :value="b.id"
-        >
-          {{ b.name }}
-        </option>
-      </select>
-    </div>
+  <div class="q-filters">
+    <AppSelect v-model="metricModel" label="المقياس" :options="metricOptions" />
+    <AppSelect v-model="monthModel" label="الشهر" :options="months" />
+    <AppSelect v-model="yearModel" label="السنة" :options="yearOptions" />
+    <AppSelect
+      v-model="branchModel"
+      label="المحافظة / الفرع"
+      placeholder="جميع الفروع المسموحة"
+      :options="branchOptions"
+    />
   </div>
 </template>

@@ -1,3 +1,4 @@
+using Application.Common.AdminPanel;
 using Application.Common.Interfaces;
 using Application.Users.Common;
 using Domain.Entities.ActivityLogAggregate.Enums;
@@ -51,10 +52,15 @@ public class PatchUserPermissionOverridesHandler
             return UserErrors.InvalidPermissionOverrideMode;
 
         var permissionIds = request.Changes.Select(c => c.PermissionId).ToList();
-        var existingCount = await _dbContext.Permissions
-            .CountAsync(x => permissionIds.Contains(x.Id), cancellationToken);
-        if (existingCount != permissionIds.Count)
+        var permissions = await _dbContext.Permissions
+            .Where(x => permissionIds.Contains(x.Id))
+            .Select(x => new { x.Id, x.Name })
+            .ToListAsync(cancellationToken);
+        if (permissions.Count != permissionIds.Distinct().Count())
             return UserErrors.SomePermissionsNotFound;
+
+        if (permissions.Any(p => AdminPanelTabs.IsManagedPermissionName(p.Name)))
+            return UserErrors.PanelTabManagedViaTabAccess;
 
         await using var transaction =
             await _dbContext.Database.BeginTransactionAsync(cancellationToken);

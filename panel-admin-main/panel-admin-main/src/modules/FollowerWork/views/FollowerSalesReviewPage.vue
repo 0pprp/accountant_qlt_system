@@ -72,7 +72,7 @@ function toggleBucket(key: string) {
 
 function fmt(n: number | null | undefined) {
   if (n == null || Number.isNaN(n) || n === 0) return '—'
-  return new Intl.NumberFormat('ar-IQ', { maximumFractionDigits: 0 }).format(n)
+  return new Intl.NumberFormat('en-US', { maximumFractionDigits: 0 }).format(n)
 }
 
 function fmtRating(n: number | null | undefined) {

@@ -36,10 +36,9 @@
               </span>
             </div>
           </div>
-          <button type="button" class="df-card-btn" @click="pickBranch(b.id)">
-            <span>{{ $t('delegateFollowup.branch.open') }}</span>
-            <span aria-hidden="true">←</span>
-          </button>
+          <AppButton block @click="pickBranch(b.id)">
+            {{ $t('delegateFollowup.branch.open') }}
+          </AppButton>
         </article>
       </div>
     </section>
@@ -51,9 +50,9 @@
           <h2 id="df-lists-title" class="df-section-title">
             {{ $t('delegateFollowup.lists.title') }}
           </h2>
-          <button type="button" class="df-btn ghost" @click="changeBranch">
+          <AppButton variant="ghost" @click="changeBranch">
             {{ $t('delegateFollowup.branch.change') }}
-          </button>
+          </AppButton>
         </div>
 
         <div v-if="listsQuery.isLoading.value" class="df-muted" role="status">
@@ -61,9 +60,9 @@
         </div>
         <div v-else-if="listsQuery.isError.value" class="df-error" role="alert">
           <span>{{ $t('delegateFollowup.lists.error') }}</span>
-          <button type="button" class="df-btn ghost" @click="listsQuery.refetch()">
+          <AppButton variant="ghost" @click="listsQuery.refetch()">
             {{ $t('delegateFollowup.lists.retry') }}
-          </button>
+          </AppButton>
         </div>
         <div v-else-if="!lists.length" class="df-empty">
           {{ $t('delegateFollowup.lists.empty') }}
@@ -103,10 +102,9 @@
                 <dd>{{ l.followerName }}</dd>
               </div>
             </dl>
-            <button type="button" class="df-card-btn" @click="openList(l.listId)">
-              <span>{{ $t('delegateFollowup.lists.open') }}</span>
-              <span aria-hidden="true">←</span>
-            </button>
+            <AppButton block @click="openList(l.listId)">
+              {{ $t('delegateFollowup.lists.open') }}
+            </AppButton>
           </article>
         </div>
       </section>
@@ -127,15 +125,13 @@
             </p>
           </div>
           <div class="df-actions">
-            <button type="button" class="df-btn ghost" @click="changeBranch">
+            <AppButton variant="ghost" @click="changeBranch">
               {{ $t('delegateFollowup.branch.change') }}
-            </button>
-            <button type="button" class="df-btn ghost" @click="backToLists">
+            </AppButton>
+            <AppButton variant="ghost" @click="backToLists">
               {{ $t('delegateFollowup.detail.back') }}
-            </button>
-            <button
-              type="button"
-              class="df-btn primary"
+            </AppButton>
+            <AppButton
               :aria-expanded="showTable"
               aria-controls="df-customers"
               @click="toggleTable"
@@ -145,14 +141,10 @@
                   ? $t('delegateFollowup.detail.hideDetails')
                   : $t('delegateFollowup.detail.showDetails')
               }}
-            </button>
-            <button
-              type="button"
-              class="df-btn ghost"
-              @click="openFullCustomersPage"
-            >
+            </AppButton>
+            <AppButton variant="ghost" @click="openFullCustomersPage">
               {{ $t('delegateFollowup.customersPage.title') }}
-            </button>
+            </AppButton>
           </div>
         </div>
       </header>
@@ -162,9 +154,9 @@
       </div>
       <div v-else-if="summaryQuery.isError.value" class="df-error" role="alert">
         <span>{{ $t('delegateFollowup.detail.error') }}</span>
-        <button type="button" class="df-btn ghost" @click="reloadDetail">
+        <AppButton variant="ghost" @click="reloadDetail">
           {{ $t('delegateFollowup.lists.retry') }}
-        </button>
+        </AppButton>
       </div>
 
       <div v-else-if="summary" class="df-detail">
@@ -198,13 +190,9 @@
                 · {{ $t('delegateFollowup.ratings.weekAgo') }}:
                 <span class="df-num">{{ fmtNum(summary.realRatingWeekAgo) }}</span>
               </span>
-              <button
-                type="button"
-                class="df-btn ghost small"
-                @click="openRealHistory"
-              >
+              <AppButton variant="ghost" size="sm" @click="openRealHistory">
                 {{ $t('delegateFollowup.ratings.history') }}
-              </button>
+              </AppButton>
             </div>
 
             <!-- board operator -->
@@ -231,25 +219,16 @@
                 {{ $t('delegateFollowup.ratings.boardNone') }}
               </span>
               <div class="df-actions">
-                <button
-                  v-if="canRate"
-                  type="button"
-                  class="df-btn primary small"
-                  @click="rateOpen = true"
-                >
+                <AppButton v-if="canRate" size="sm" @click="rateOpen = true">
                   {{
                     summary.boardOperatorRating.hasRating
                       ? $t('delegateFollowup.ratings.rateAgain')
                       : $t('delegateFollowup.ratings.rate')
                   }}
-                </button>
-                <button
-                  type="button"
-                  class="df-btn ghost small"
-                  @click="openBoardHistory"
-                >
+                </AppButton>
+                <AppButton variant="ghost" size="sm" @click="openBoardHistory">
                   {{ $t('delegateFollowup.ratings.history') }}
-                </button>
+                </AppButton>
               </div>
             </div>
 
@@ -273,13 +252,9 @@
                 <span v-else class="df-tile-note df-muted">
                   {{ $t('delegateFollowup.ratings.boardNone') }}
                 </span>
-                <button
-                  type="button"
-                  class="df-btn ghost small"
-                  @click="openCommitteeHistory(c.label, c.data)"
-                >
+                <AppButton variant="ghost" size="sm" @click="openCommitteeHistory(c.label, c.data)">
                   {{ $t('delegateFollowup.ratings.history') }}
-                </button>
+                </AppButton>
               </template>
               <template v-else>
                 <span class="df-tile-value">{{ $t('delegateFollowup.ratings.unresolved') }}</span>
@@ -310,9 +285,9 @@
             <div class="df-tile">
               <span class="df-tile-label">{{ $t('delegateFollowup.income.collectedYesterday') }}</span>
               <span class="df-tile-value">{{ fmtMoney(summary.collectedYesterday) }}</span>
-              <button type="button" class="df-btn ghost small" @click="openDaysHistory">
+              <AppButton variant="ghost" size="sm" @click="openDaysHistory">
                 {{ $t('delegateFollowup.income.historyDays') }}
-              </button>
+              </AppButton>
             </div>
             <div class="df-tile">
               <span class="df-tile-label">
@@ -320,9 +295,9 @@
                 (<span class="df-num">{{ summary.lastFridayDate }}</span>)
               </span>
               <span class="df-tile-value">{{ fmtMoney(summary.collectedLastFriday) }}</span>
-              <button type="button" class="df-btn ghost small" @click="openFridaysHistory">
+              <AppButton variant="ghost" size="sm" @click="openFridaysHistory">
                 {{ $t('delegateFollowup.income.historyFridays') }}
-              </button>
+              </AppButton>
             </div>
           </div>
 
@@ -351,13 +326,9 @@
                     </td>
                     <td class="nowrap">{{ fmtMoney(tm.collectedYesterday) }}</td>
                     <td>
-                      <button
-                        type="button"
-                        class="df-btn ghost small"
-                        @click="openTierHistory(tm)"
-                      >
+                      <AppButton variant="ghost" size="sm" @click="openTierHistory(tm)">
                         {{ $t('delegateFollowup.ratings.history') }}
-                      </button>
+                      </AppButton>
                     </td>
                   </tr>
                 </tbody>
@@ -496,9 +467,9 @@
                 </span>
               </div>
               <template v-if="tg.customers.length">
-                <button
-                  type="button"
-                  class="df-btn ghost small"
+                <AppButton
+                  variant="ghost"
+                  size="sm"
                   :aria-expanded="isConvOpen(tg.targetLabel)"
                   @click="toggleConv(tg.targetLabel)"
                 >
@@ -508,7 +479,7 @@
                       : $t('delegateFollowup.conversion.showCustomers')
                   }}
                   (<span class="df-num">{{ tg.customers.length }}</span>)
-                </button>
+                </AppButton>
                 <ul v-if="isConvOpen(tg.targetLabel)" class="df-conv-list">
                   <li v-for="c in tg.customers" :key="c.customerId">
                     <button
@@ -526,13 +497,9 @@
                   </li>
                 </ul>
               </template>
-              <button
-                type="button"
-                class="df-btn ghost small"
-                @click="openConversionHistory(tg)"
-              >
+              <AppButton variant="ghost" size="sm" @click="openConversionHistory(tg)">
                 {{ $t('delegateFollowup.conversion.history') }}
-              </button>
+              </AppButton>
             </article>
           </div>
         </section>
@@ -561,24 +528,18 @@
           </p>
 
           <template v-else>
-            <div class="df-filters" role="group" :aria-label="$t('delegateFollowup.customers.title')">
-              <button
-                v-for="f in filterButtons"
-                :key="f.id"
-                type="button"
-                class="df-filter"
-                :aria-pressed="tableFilter === f.id"
-                :disabled="f.disabled"
-                @click="setFilter(f.id)"
-              >
-                {{ f.label }}
-              </button>
-              <input
+            <div class="q-filters" role="search" :aria-label="$t('delegateFollowup.customers.title')">
+              <AppSelect
+                :model-value="tableFilter"
+                :label="$t('delegateFollowup.customers.title')"
+                :options="tableFilterOptions"
+                @update:model-value="onTableFilter"
+              />
+              <AppSearchField
                 v-model="search"
-                type="search"
-                class="df-input df-search"
+                :label="$t('delegateFollowup.customers.search')"
                 :placeholder="$t('delegateFollowup.customers.search')"
-                :aria-label="$t('delegateFollowup.customers.search')"
+                grow
               />
             </div>
             <p v-if="!legalAvailable" class="df-muted">
@@ -590,9 +551,9 @@
             </div>
             <div v-else-if="customersQuery.isError.value" class="df-error" role="alert">
               <span>{{ $t('delegateFollowup.customers.error') }}</span>
-              <button type="button" class="df-btn ghost" @click="customersQuery.refetch()">
+              <AppButton variant="ghost" @click="customersQuery.refetch()">
                 {{ $t('delegateFollowup.lists.retry') }}
-              </button>
+              </AppButton>
             </div>
             <template v-else-if="customersData">
               <div v-if="!filteredCustomers.length" class="df-empty">
@@ -676,9 +637,9 @@
                 </table>
               </div>
               <div v-if="visibleCustomers.length < filteredCustomers.length" class="df-actions">
-                <button type="button" class="df-btn outline" @click="visibleLimit += PAGE_SIZE">
+                <AppButton variant="secondary" @click="visibleLimit += PAGE_SIZE">
                   {{ $t('delegateFollowup.customers.showMore') }}
-                </button>
+                </AppButton>
               </div>
               <aside v-if="customerNotes.length" class="df-banner" role="note">
                 <ul>
@@ -718,6 +679,7 @@
 import { computed, nextTick, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
+import { AppButton, AppSearchField, AppSelect } from '@/modules/Core/components/ui'
 import BoardRatingDialog from '../components/BoardRatingDialog.vue'
 import DelegateHistoryDialog, {
   type HistoryColumn,
@@ -1042,6 +1004,11 @@ function toggleTable() {
   void revealTable()
 }
 
+function onTableFilter(v: string | number | null | boolean) {
+  if (v == null || v === '') return
+  setFilter(v as TableFilter)
+}
+
 function setFilter(f: TableFilter) {
   if (f === 'legal' && legalAvailable.value === false) return
   tableFilter.value = f
@@ -1079,6 +1046,12 @@ const filterButtons = computed(() => [
     disabled: legalAvailable.value === false,
   },
 ])
+
+const tableFilterOptions = computed(() =>
+  filterButtons.value
+    .filter((f) => !f.disabled)
+    .map((f) => ({ label: f.label, value: f.id })),
+)
 
 function matchesFilter(c: DelegateFollowupCustomer): boolean {
   switch (tableFilter.value) {

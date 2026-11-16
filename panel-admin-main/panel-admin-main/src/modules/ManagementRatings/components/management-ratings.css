@@ -1,6 +1,6 @@
 .mr-page {
   direction: rtl;
-  font-family: 'ElMessiri', 'El Messiri', sans-serif;
+  font-family: inherit;
   color: #00201e;
   padding: 1rem 1.25rem 2rem;
   font-size: 16px;

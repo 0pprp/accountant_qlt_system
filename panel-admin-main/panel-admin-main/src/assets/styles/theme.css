@@ -7,38 +7,41 @@
     'SFMono-Regular', Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New',
     ui-monospace, monospace;
 
+  /* Brand — قلعة الضمان */
   --color-primary: #006a64;
+  --color-primary-dark: #004d48;
+  --color-primary-soft: #e7f3f1;
   --color-secondary: #1d6b50;
   --color-tertiary: #006879;
-  --color-success: #34c759;
-  --color-error: #ff3a3a;
-  --color-warning: #ffcc00;
-  --color-info: #007aff;
-  --color-accent: #e3427a;
-  --color-purple: #7f21b3;
-  --color-pink: #e3427a;
+  --color-success: #2e7d32;
+  --color-error: #c62828;
+  --color-warning: #f9a825;
+  --color-info: #1565c0;
   --color-white: #ffffff;
   --color-black: #000000;
-  --color-line: #f0effe;
-  --color-background: #f8f8f8;
+
+  --color-foreground: #00201e;
+  --color-muted: #5a6b6a;
+  --color-line: #d5e2e0;
+  --color-border: #cddbd7;
+  --color-background: #f4f7f7;
   --color-surface-1: #f8f8f8;
   --color-surface-2: #cce1e0;
   --color-surface-3: #f4fbf9;
+  --color-card: #ffffff;
 
-  --color-gray-300: #cdcdcd;
-  --color-gray-500: #d9d9d9;
+  --color-gray-100: #f5f8f7;
+  --color-gray-300: #cfd8d7;
+  --color-gray-500: #9aabab;
   --color-gray-700: #6f797a;
   --color-gray-900: #00201e;
 
+  /* Legacy aliases — do not use for new UI accents */
+  --color-accent: #006a64;
+  --color-purple: #006a64;
+  --color-pink: #006a64;
+
   --text-md: 1.6rem;
-  /* --text-3xs: 0.8rem;
-  --text-2xs: 1rem;
-  --text-xs: 1.2rem;
-  --text-sm: 1.4rem;
-  --text-lg: 1.8rem;
-  --text-3xl: 2rem;
-  --text-4xl: 3rem;
-  --text-5xl: 4rem; */
 
   --font-weight-thin: 100;
   --font-weight-light: 300;
@@ -53,10 +56,17 @@
   --breakpoint-lg: 1024px;
   --breakpoint-xl: 1280px;
 
-  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.05);
-  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.1);
-  --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.1);
-  --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.1);
+  --shadow-xs: 0 1px 2px rgba(0, 32, 30, 0.04);
+  --shadow-sm: 0 1px 3px rgba(0, 32, 30, 0.06);
+  --shadow-md: 0 8px 24px rgba(0, 32, 30, 0.08);
+  --shadow-lg: 0 16px 40px rgba(0, 32, 30, 0.1);
+
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --radius-xl: 20px;
+  --control-h: 48px;
+  --focus-ring: 0 0 0 3px rgba(0, 106, 100, 0.18);
 
   --container-sm: 100%;
   --container-md: 100%;

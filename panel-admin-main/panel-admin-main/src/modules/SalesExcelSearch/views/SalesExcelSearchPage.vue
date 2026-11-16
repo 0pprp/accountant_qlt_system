@@ -1,92 +1,89 @@
 <template>
-  <div class="sx-page" dir="rtl">
-    <header class="sx-head">
-      <h1 class="sx-title">بحث Excel للزبائن</h1>
-      <p class="sx-sub">
-        ارفع ملفًا بعمود اسم الزبون أو الصق أسماء (سطر لكل اسم). المطابقة ضمن فروع جلستك —
-        قراءة فقط.
-      </p>
-    </header>
-
-    <div v-if="!canRead" class="sx-state sx-state--denied" role="status">
-      غير مخول بقراءة الزبائن.
-    </div>
+  <AppPage
+    title="بحث Excel للزبائن"
+    subtitle="ارفع ملفًا بعمود اسم الزبون أو الصق أسماء (سطر لكل اسم). المطابقة ضمن فروع جلستك — قراءة فقط."
+  >
+    <DataState
+      v-if="!canRead"
+      kind="forbidden"
+      title="غير مصرّح"
+      message="غير مخول بقراءة الزبائن."
+    />
     <template v-else>
-      <div class="sx-toolbar">
-        <label class="sx-file">
-          <span>ملف نصي / CSV</span>
+      <div class="q-filters sx-toolbar">
+        <AppField label="ملف نصي / CSV">
           <input
+            class="q-input"
             type="file"
             accept=".csv,.txt,text/csv,text/plain"
             @change="onFile"
-          >
-        </label>
-        <button
-          type="button"
-          class="sx-btn"
+          />
+        </AppField>
+        <AppButton
+          variant="primary"
           :disabled="busy || names.length === 0"
+          :loading="busy"
           @click="runSearch"
         >
           بحث ({{ names.length }})
-        </button>
+        </AppButton>
       </div>
 
-      <label class="sx-paste">
-        <span>أو الصق الأسماء</span>
-        <textarea
-          v-model="paste"
-          rows="6"
-          placeholder="اسم لكل سطر"
-          @change="syncPaste"
-        />
-      </label>
+      <AppTextarea
+        v-model="paste"
+        label="أو الصق الأسماء"
+        placeholder="اسم لكل سطر"
+        :rows="6"
+        @update:model-value="syncPaste"
+      />
 
-      <p v-if="formError" class="sx-state sx-state--error" role="alert">{{ formError }}</p>
-      <p v-else-if="busy" class="sx-state">جاري البحث…</p>
+      <p v-if="formError" class="q-state q-state--error" role="alert">{{ formError }}</p>
+      <DataState
+        v-else-if="busy"
+        kind="loading"
+        title="جاري البحث"
+        message="جاري مطابقة الأسماء ضمن نطاق الفروع."
+      />
 
-      <section v-if="result" class="sx-result" aria-live="polite">
-        <p class="sx-summary">
+      <AppPanel v-if="result" title="النتائج">
+        <p class="q-count">
           أسماء: {{ result.nameCount }} · وُجد: {{ result.foundCount }} · ناقص:
           {{ result.missingCount }}
         </p>
-        <article
-          v-for="q in result.queries"
-          :key="q.rowNumber"
-          class="sx-query"
-        >
+        <article v-for="q in result.queries" :key="q.rowNumber" class="sx-query">
           <h2 class="sx-query-title">
             #{{ q.rowNumber }} — {{ q.requestedName || '(فارغ)' }}
             <small>{{ q.found ? `مطابقات ${q.matchCount}` : 'غير موجود' }}</small>
           </h2>
           <p v-if="q.warning" class="sx-warn">{{ q.warning }}</p>
           <ul v-if="q.matches.length" class="sx-matches">
-            <li
-              v-for="m in q.matches"
-              :key="m.resultKey"
-              class="sx-match"
-            >
+            <li v-for="m in q.matches" :key="m.resultKey" class="sx-match">
               <strong>{{ m.fullName }}</strong>
               <span class="sx-meta">{{ m.branchName || `فرع ${m.branchId}` }}</span>
-              <span
-                v-if="m.phone"
-                class="sx-phone"
-                dir="ltr"
-              >{{ m.phone }}</span>
+              <span v-if="m.phone" class="sx-phone" dir="ltr">{{ m.phone }}</span>
               <span class="sx-money">
                 بيع {{ fmt(m.amountTotalSales) }} · متبقي {{ fmt(m.amountRemaining) }}
               </span>
             </li>
           </ul>
         </article>
-      </section>
+      </AppPanel>
     </template>
-  </div>
+  </AppPage>
 </template>
 
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { axiosInstance } from '@/modules/Core/plugins/axios'
 import { useAuthStore } from '@/modules/Auth/store'
+import {
+  AppButton,
+  AppField,
+  AppPage,
+  AppPanel,
+  AppTextarea,
+  DataState,
+} from '@/modules/Core/components/ui'
 
 interface Match {
   resultKey: string
@@ -141,7 +138,6 @@ async function onFile(e: Event) {
   if (!file) return
   const text = await file.text()
   const lines = parseLines(text)
-  // تخطّي صف رأس إن بدا كـ «اسم»
   const body =
     lines.length > 0 && /اسم|name|customer/i.test(lines[0]!)
       ? lines.slice(1)
@@ -162,7 +158,7 @@ async function runSearch() {
   try {
     const { data } = await axiosInstance.post<SearchResponse>(
       '/admin/SalesExcelSearch/customers',
-      { names: names.value }
+      { names: names.value },
     )
     result.value = data
   } catch {
@@ -174,94 +170,13 @@ async function runSearch() {
 
 function fmt(n: number | null | undefined) {
   if (n == null || Number.isNaN(n)) return '—'
-  return new Intl.NumberFormat('ar-IQ').format(n)
+  return new Intl.NumberFormat('en-US').format(n)
 }
 </script>
 
 <style scoped>
-.sx-page {
-  --brand: #006a64;
-  --ink: #00201e;
-  color: var(--ink);
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  min-width: 0;
-}
-.sx-title {
-  margin: 0;
-  font-size: 26px;
-  font-weight: 700;
-  line-height: 1.5;
-}
-.sx-sub {
-  margin: 4px 0 0;
-  font-size: 15px;
-  color: #526b67;
-  line-height: 1.7;
-}
 .sx-toolbar {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 12px;
   align-items: end;
-}
-.sx-file,
-.sx-paste {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  font-size: 14px;
-}
-.sx-paste textarea,
-.sx-file input {
-  min-height: 44px;
-  padding: 10px 12px;
-  border: 1px solid #dce7e4;
-  border-radius: 10px;
-  background: #f8f8f8;
-  font: inherit;
-}
-.sx-paste textarea {
-  min-height: 120px;
-  width: 100%;
-  max-width: 720px;
-}
-.sx-btn {
-  min-height: 44px;
-  padding: 10px 16px;
-  border: 0;
-  border-radius: 10px;
-  background: var(--brand);
-  color: #fff;
-  font: inherit;
-  cursor: pointer;
-}
-.sx-btn:disabled {
-  opacity: 0.55;
-  cursor: default;
-}
-.sx-btn:focus-visible,
-.sx-file input:focus-visible,
-.sx-paste textarea:focus-visible {
-  outline: 3px solid #71b4a9;
-  outline-offset: 2px;
-}
-.sx-state {
-  margin: 0;
-  padding: 12px 14px;
-  border-radius: 12px;
-  background: #e6f1ef;
-  font-size: 15px;
-}
-.sx-state--error,
-.sx-state--denied {
-  background: #f8e9e7;
-  color: #5c1a14;
-}
-.sx-summary {
-  font-size: 16px;
-  font-weight: 600;
 }
 .sx-query {
   padding: 12px 0;
@@ -275,6 +190,7 @@ function fmt(n: number | null | undefined) {
   flex-wrap: wrap;
   gap: 8px;
   align-items: baseline;
+  color: #00201e !important;
 }
 .sx-query-title small {
   font-size: 14px;
@@ -303,9 +219,6 @@ function fmt(n: number | null | undefined) {
   border-radius: 12px;
   font-size: 16px;
   line-height: 1.6;
-}
-.sx-match strong {
-  font-size: 18px;
 }
 .sx-meta,
 .sx-money {

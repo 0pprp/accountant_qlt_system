@@ -5,7 +5,7 @@
   gap: 1rem;
   padding: 0.25rem 0 1.5rem;
   color: #00201e;
-  font-family: 'ElMessiri', 'El Messiri', sans-serif;
+  font-family: inherit;
   font-size: 16px;
   line-height: 1.6;
 }
@@ -555,7 +555,7 @@
   display: flex;
   flex-direction: column;
   gap: 0.9rem;
-  font-family: 'ElMessiri', 'El Messiri', sans-serif;
+  font-family: inherit;
   font-size: 16px;
   color: #00201e;
 }

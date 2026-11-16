@@ -43,6 +43,6 @@ defineProps<{
 
 function fmt(v?: number | null) {
   if (v == null) return 'محجوب'
-  return new Intl.NumberFormat('ar-IQ').format(v)
+  return new Intl.NumberFormat('en-US').format(v)
 }
 </script>

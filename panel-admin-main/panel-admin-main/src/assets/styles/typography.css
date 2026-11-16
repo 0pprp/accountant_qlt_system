@@ -81,8 +81,10 @@
   unicode-range: U+0000-002F, U+003A-FFFF;
 }
 
-html body {
-  font-family: 'ElMessiri', 'Rubik', sans-serif;
+html,
+body,
+.q-shell {
+  font-family: var(--q-font, 'ElMessiri', 'Rubik', sans-serif);
 }
 
 body {

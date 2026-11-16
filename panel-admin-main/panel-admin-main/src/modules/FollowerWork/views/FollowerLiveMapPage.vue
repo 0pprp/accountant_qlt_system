@@ -2,6 +2,8 @@
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '@/modules/Auth/store'
+import { AppButton, AppSelect, DataState } from '@/modules/Core/components/ui'
+import { formatDateTime, formatNumber } from '@/modules/Core/utils/formatDisplay'
 import { useFollowerLiveLocationsQuery } from '../requests/queries/useFollowerLiveLocationsQuery'
 import FollowerMapCanvas, {
   type MapPin,
@@ -86,22 +88,18 @@ function statusColor(status: string) {
   return '#64748b'
 }
 
+const branchOptions = computed(() => [
+  { label: 'اختر', value: null as number | null },
+  ...(auth.branches ?? []).map((b) => ({ label: b.name, value: b.id })),
+])
+
 function fmtDt(v: string | null | undefined) {
-  if (!v) return '—'
-  try {
-    return new Intl.DateTimeFormat('ar-IQ', {
-      dateStyle: 'medium',
-      timeStyle: 'short',
-      timeZone: 'Asia/Baghdad',
-    }).format(new Date(v))
-  } catch {
-    return v
-  }
+  return formatDateTime(v)
 }
 
 function fmtAcc(v: number | null | undefined) {
   if (v == null || !Number.isFinite(v)) return '—'
-  return `${Math.round(v)} م`
+  return `${formatNumber(Math.round(v))} م`
 }
 
 const pins = computed<MapPin[]>(() =>
@@ -143,6 +141,11 @@ function setBranch(id: number | null) {
     followerId: null,
   })
 }
+
+function onBranchPick(v: string | number | null | boolean) {
+  const n = typeof v === 'number' ? v : Number(v)
+  setBranch(Number.isInteger(n) && n > 0 ? n : null)
+}
 </script>
 
 <template>
@@ -155,40 +158,47 @@ function setBranch(id: number | null) {
       </p>
     </header>
 
-    <div v-if="!canRead" class="fw-state fw-state--forbidden" role="alert">
-      ليس لديك صلاحية قراءة الموقع المباشر.
-    </div>
+    <DataState
+      v-if="!canRead"
+      kind="forbidden"
+      title="غير مصرّح"
+      message="ليس لديك صلاحية قراءة الموقع المباشر."
+    />
 
     <template v-else>
-      <div class="fw-toolbar">
-        <label class="fw-sort">
-          <span class="fw-sort__label">المحافظة</span>
-          <select
-            class="fw-sort__select"
-            :value="branchId ?? ''"
-            @change="
-              setBranch(
-                Number(($event.target as HTMLSelectElement).value) || null
-              )
-            "
-          >
-            <option value="">اختر</option>
-            <option v-for="b in auth.branches ?? []" :key="b.id" :value="b.id">
-              {{ b.name }}
-            </option>
-          </select>
-        </label>
+      <div class="q-filters">
+        <AppSelect
+          :model-value="branchId"
+          label="المحافظة"
+          placeholder="اختر"
+          :options="branchOptions"
+          @update:model-value="onBranchPick"
+        />
         <span v-if="branchName" class="fw-page__sub">{{ branchName }}</span>
       </div>
 
-      <div v-if="branchId == null" class="fw-state">اختر محافظة لعرض المواقع.</div>
-      <div v-else-if="liveQuery.isPending.value" class="fw-state fw-state--loading" aria-busy="true">
-        جاري تحميل المواقع…
-      </div>
-      <div v-else-if="liveQuery.isError.value" class="fw-state fw-state--error" role="alert">
-        تعذر تحميل المواقع.
-        <button type="button" class="fw-retry" @click="liveQuery.refetch()">إعادة المحاولة</button>
-      </div>
+      <DataState
+        v-if="branchId == null"
+        kind="empty"
+        title="اختر محافظة"
+        message="اختر محافظة لعرض المواقع."
+      />
+      <DataState
+        v-else-if="liveQuery.isPending.value"
+        kind="loading"
+        title="جاري التحميل"
+        message="جاري تحميل المواقع…"
+      />
+      <DataState
+        v-else-if="liveQuery.isError.value"
+        kind="error"
+        title="تعذر التحميل"
+        message="تعذر تحميل المواقع."
+      >
+        <template #actions>
+          <AppButton variant="secondary" @click="liveQuery.refetch()">إعادة المحاولة</AppButton>
+        </template>
+      </DataState>
 
       <template v-else-if="data">
         <FollowerMapCanvas
@@ -198,11 +208,16 @@ function setBranch(id: number | null) {
         />
 
         <div class="fdc-meta" style="margin-top: 0.75rem">
-          <span>بعلامات: <b>{{ withCoords.length }}</b></span>
-          <span>إجمالي الصفوف: <b>{{ rows.length }}</b></span>
+          <span>بعلامات: <b>{{ formatNumber(withCoords.length) }}</b></span>
+          <span>إجمالي الصفوف: <b>{{ formatNumber(rows.length) }}</b></span>
         </div>
 
-        <div v-if="!rows.length" class="fw-state" role="status">لا متابعون في هذا النطاق.</div>
+        <DataState
+          v-if="!rows.length"
+          kind="empty"
+          title="لا متابعون"
+          message="لا متابعون في هذا النطاق."
+        />
 
         <div v-else class="fdc-list" role="list" style="margin-top: 0.75rem">
           <button

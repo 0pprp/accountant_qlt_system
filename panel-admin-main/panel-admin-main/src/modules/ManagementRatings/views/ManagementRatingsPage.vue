@@ -11,7 +11,15 @@ import {
   useRatingsTrendQuery,
 } from '../requests/queries/useRatingsQueries'
 import { useAuthStore } from '@/modules/Auth/store'
+import { AppDateField, AppSearchField, AppSelect } from '@/modules/Core/components/ui'
+import { formatNumber } from '@/modules/Core/utils/formatDisplay'
 import '../components/management-ratings.css'
+
+const scopeOptions = [
+  { label: 'تقييم الفرع', value: 'branch' },
+  { label: 'المتابعين', value: 'follower' },
+  { label: 'موظفو المبيعات', value: 'employee' },
+]
 
 const router = useRouter()
 
@@ -64,12 +72,12 @@ watch([branchId, scope, resourceId, level], () => {
 
 function fmt(n: number | null | undefined) {
   if (n == null || Number.isNaN(n)) return '—'
-  return new Intl.NumberFormat('ar-IQ', { maximumFractionDigits: 0 }).format(n)
+  return formatNumber(n)
 }
 
 function fmtScore(n: number | null | undefined) {
   if (n == null || Number.isNaN(n)) return '—'
-  return n.toFixed(2)
+  return formatNumber(n, { maxFractionDigits: 2 })
 }
 
 function openBranch(id: number) {
@@ -122,6 +130,11 @@ const entityOptions = computed(() => {
   if (scope.value === 'employee') return c.employees
   return []
 })
+
+const entitySelectOptions = computed(() => [
+  { label: 'اختر…', value: null as number | null },
+  ...entityOptions.value.map((e) => ({ label: e.name, value: e.id })),
+])
 
 const chartPoints = computed(() => trendQuery.data.value?.points ?? [])
 const chartPath = computed(() => {
@@ -228,65 +241,32 @@ const dirText = computed(() => {
         الزبائن.
       </p>
 
-      <div class="mr-filters">
-        <div class="mr-field">
-          <label for="mr-scope">المستوى</label>
-          <select
-            id="mr-scope"
-            :value="ctx.scope"
-            @change="
-              setScope(
-                ($event.target as HTMLSelectElement).value as RatingsScope
-              )
-            "
-          >
-            <option value="branch">تقييم الفرع</option>
-            <option value="follower">المتابعين</option>
-            <option value="employee">موظفو المبيعات</option>
-          </select>
-        </div>
-        <div
+      <div class="q-filters">
+        <AppSelect
+          :model-value="ctx.scope"
+          label="المستوى"
+          :options="scopeOptions"
+          :filterable="false"
+          @update:model-value="(v) => setScope(String(v) as RatingsScope)"
+        />
+        <AppSelect
           v-if="ctx.scope !== 'branch'"
-          class="mr-field"
-        >
-          <label for="mr-entity">المورد</label>
-          <select
-            id="mr-entity"
-            :value="ctx.resourceId || ''"
-            @change="
-              setResource(Number(($event.target as HTMLSelectElement).value))
-            "
-          >
-            <option value="">اختر…</option>
-            <option
-              v-for="e in entityOptions"
-              :key="e.id"
-              :value="e.id"
-            >
-              {{ e.name }}
-            </option>
-          </select>
-        </div>
-        <div class="mr-field">
-          <label for="mr-from">من (بيع)</label>
-          <input
-            id="mr-from"
-            type="date"
-            :value="ctx.from"
-            @change="
-              patch({ from: ($event.target as HTMLInputElement).value })
-            "
-          />
-        </div>
-        <div class="mr-field">
-          <label for="mr-to">إلى (بيع)</label>
-          <input
-            id="mr-to"
-            type="date"
-            :value="ctx.to"
-            @change="patch({ to: ($event.target as HTMLInputElement).value })"
-          />
-        </div>
+          :model-value="ctx.resourceId || null"
+          label="المورد"
+          placeholder="اختر…"
+          :options="entitySelectOptions"
+          @update:model-value="(v) => setResource(typeof v === 'number' ? v : 0)"
+        />
+        <AppDateField
+          :model-value="ctx.from"
+          label="من (بيع)"
+          @update:model-value="(v) => patch({ from: v })"
+        />
+        <AppDateField
+          :model-value="ctx.to"
+          label="إلى (بيع)"
+          @update:model-value="(v) => patch({ to: v })"
+        />
       </div>
 
       <div
@@ -389,7 +369,7 @@ const dirText = computed(() => {
         v-if="ctx.level && canDetails"
         aria-labelledby="mr-bucket-title"
       >
-        <div class="mr-filters">
+        <div class="q-filters">
           <h2
             id="mr-bucket-title"
             class="mr-title"
@@ -404,14 +384,7 @@ const dirText = computed(() => {
           >
             إغلاق
           </button>
-          <div class="mr-field">
-            <label for="mr-q">بحث</label>
-            <input
-              id="mr-q"
-              v-model="searchQ"
-              type="search"
-            />
-          </div>
+          <AppSearchField v-model="searchQ" label="بحث" />
         </div>
 
         <div

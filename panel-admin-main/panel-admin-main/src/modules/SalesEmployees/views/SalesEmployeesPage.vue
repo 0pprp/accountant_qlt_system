@@ -1,49 +1,59 @@
 <template>
-  <div class="se-page" dir="rtl">
-    <header class="se-head">
-      <h1 class="se-title">موظفو المبيعات</h1>
-      <p class="se-sub">دور المندوب ضمن الفروع المسموحة — الدوام من SalesShift وليس من Login/GPS.</p>
-    </header>
+  <AppPage
+    title="موظفو المبيعات"
+    subtitle="دور المندوب ضمن الفروع المسموحة — الدوام من SalesShift وليس من Login/GPS."
+  >
+    <template #filters>
+      <div class="q-filters">
+        <AppSelect
+          v-model="branchModel"
+          label="الفرع"
+          placeholder="كل الفروع المسموحة"
+          :options="branchOptions"
+        />
+        <AppInput
+          v-model="searchModel"
+          label="بحث"
+          type="search"
+          placeholder="اسم الموظف"
+          grow
+        />
+        <AppSelect
+          v-model="shiftModel"
+          label="الدوام"
+          placeholder="الكل"
+          :options="shiftOptions"
+        />
+        <AppSelect v-model="sortModel" label="ترتيب" :options="sortOptions" />
+      </div>
+    </template>
 
-    <div class="se-filters">
-      <label class="se-field">
-        <span>الفرع</span>
-        <select v-model="branchModel" class="se-select">
-          <option :value="null">كل الفروع المسموحة</option>
-          <option v-for="b in branches" :key="b.id" :value="b.id">{{ b.name }}</option>
-        </select>
-      </label>
-      <label class="se-field se-field--grow">
-        <span>بحث</span>
-        <input v-model="searchModel" class="se-input" type="search" placeholder="اسم الموظف" />
-      </label>
-      <label class="se-field">
-        <span>الدوام</span>
-        <select v-model="shiftModel" class="se-select">
-          <option value="">الكل</option>
-          <option value="Active">في الدوام</option>
-          <option value="NoShift">بدون دوام</option>
-        </select>
-      </label>
-      <label class="se-field">
-        <span>ترتيب</span>
-        <select v-model="sortModel" class="se-select">
-          <option value="name">الاسم</option>
-          <option value="branch">الفرع</option>
-          <option value="shift">الدوام</option>
-          <option value="rating">التقييم</option>
-          <option value="lastLocation">آخر موقع</option>
-        </select>
-      </label>
-    </div>
-
-    <div v-if="!canRead" class="se-state se-state--denied">غير مخول بقراءة موظفي المبيعات.</div>
-    <div v-else-if="listQuery.isLoading.value" class="se-state">جاري التحميل…</div>
-    <div v-else-if="listQuery.isError.value" class="se-state se-state--error">تعذر تحميل القائمة.</div>
+    <DataState
+      v-if="!canRead"
+      kind="forbidden"
+      title="غير مصرّح"
+      message="غير مخول بقراءة موظفي المبيعات."
+    />
+    <DataState
+      v-else-if="listQuery.isLoading.value"
+      kind="loading"
+      title="جاري التحميل"
+      message="جاري جلب قائمة الموظفين."
+    />
+    <DataState
+      v-else-if="listQuery.isError.value"
+      kind="error"
+      title="تعذر التحميل"
+      message="تعذر تحميل القائمة."
+    >
+      <template #actions>
+        <AppButton variant="secondary" @click="listQuery.refetch()">إعادة المحاولة</AppButton>
+      </template>
+    </DataState>
     <template v-else>
-      <p class="se-count">{{ totalCount }} موظف</p>
-      <div class="se-table-wrap">
-        <table class="se-table">
+      <p class="q-count">{{ totalCount }} موظف</p>
+      <div class="q-table-wrap">
+        <table class="q-table">
           <thead>
             <tr>
               <th>الموظف</th>
@@ -66,40 +76,48 @@
               <td>{{ locationLabel(row.locationStatus) }}</td>
               <td>{{ fmtDt(row.lastLocationAtUtc) }}</td>
               <td>
-                <button type="button" class="se-linkish" @click="openRating(row)">
+                <AppButton variant="ghost" size="sm" @click="openRating(row)">
                   {{ ratingText(row.latestRating) }}
-                  <span class="se-muted">/ {{ ratingText(row.phantomLatestRating) }}</span>
-                </button>
+                  <span>/ {{ ratingText(row.phantomLatestRating) }}</span>
+                </AppButton>
               </td>
               <td>{{ row.salesTodayCount }} / {{ row.pendingSalesCount }}</td>
               <td>
-                <button
-                  v-for="link in allowedLinks(row)"
-                  :key="link.key"
-                  type="button"
-                  class="se-btn se-btn--sm"
-                  @click="goLink(link, row)"
-                >
-                  {{ link.labelAr }}
-                </button>
+                <div class="se-actions">
+                  <AppButton
+                    v-for="link in allowedLinks(row)"
+                    :key="link.key"
+                    variant="secondary"
+                    size="sm"
+                    @click="goLink(link, row)"
+                  >
+                    {{ link.labelAr }}
+                  </AppButton>
+                </div>
               </td>
             </tr>
           </tbody>
         </table>
-        <p v-if="!items.length" class="se-state">لا موظفون مطابقون للفلاتر (صفر فعلي).</p>
+        <DataState
+          v-if="!items.length"
+          kind="empty"
+          title="لا نتائج"
+          message="لا موظفون مطابقون للفلاتر (صفر فعلي)."
+        />
       </div>
 
-      <div class="se-pager">
-        <button type="button" class="se-btn" :disabled="page <= 1" @click="page = page - 1">السابق</button>
+      <div class="q-pager">
+        <AppButton variant="secondary" :disabled="page <= 1" @click="page = page - 1">
+          السابق
+        </AppButton>
         <span>صفحة {{ page }}</span>
-        <button
-          type="button"
-          class="se-btn"
+        <AppButton
+          variant="secondary"
           :disabled="page * pageSize >= totalCount"
           @click="page = page + 1"
         >
           التالي
-        </button>
+        </AppButton>
       </div>
     </template>
 
@@ -114,13 +132,14 @@
       @close="closeDialog"
       @open-bucket="loadBucket"
     />
-  </div>
+  </AppPage>
 </template>
 
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '@/modules/Auth/store'
+import { AppButton, AppInput, AppPage, AppSelect, DataState } from '@/modules/Core/components/ui'
 import SalesEmployeeRatingDialog from '../components/SalesEmployeeRatingDialog.vue'
 import {
   useSalesEmployeesQuery,
@@ -135,11 +154,25 @@ const router = useRouter()
 
 const canRead = computed(() => auth.hasPermission('SalesEmployee', 'Read') === true)
 const branches = computed(() => auth.branches ?? [])
+const branchOptions = computed(() =>
+  branches.value.map((b) => ({ label: b.name, value: b.id })),
+)
+const shiftOptions = [
+  { label: 'في الدوام', value: 'Active' },
+  { label: 'بدون دوام', value: 'NoShift' },
+]
+const sortOptions = [
+  { label: 'الاسم', value: 'name' },
+  { label: 'الفرع', value: 'branch' },
+  { label: 'الدوام', value: 'shift' },
+  { label: 'التقييم', value: 'rating' },
+  { label: 'آخر موقع', value: 'lastLocation' },
+]
 
 const branchModel = ref<number | null>(null)
 const searchModel = ref('')
-const shiftModel = ref('')
-const sortModel = ref('name')
+const shiftModel = ref<string | null>('')
+const sortModel = ref<string>('name')
 const page = ref(1)
 const pageSize = 20
 
@@ -158,15 +191,15 @@ syncFromRoute()
 watch(
   () => route.query,
   () => syncFromRoute(),
-  { deep: true }
+  { deep: true },
 )
 
 watch([branchModel, searchModel, shiftModel, sortModel, page], () => {
   const q: Record<string, string> = {}
   if (branchModel.value != null && branchModel.value > 0) q.branchId = String(branchModel.value)
   if (searchModel.value.trim()) q.search = searchModel.value.trim()
-  if (shiftModel.value) q.shiftState = shiftModel.value
-  if (sortModel.value && sortModel.value !== 'name') q.sort = sortModel.value
+  if (shiftModel.value) q.shiftState = String(shiftModel.value)
+  if (sortModel.value && sortModel.value !== 'name') q.sort = String(sortModel.value)
   if (page.value > 1) q.page = String(page.value)
   void router.replace({ query: q })
 })
@@ -178,10 +211,10 @@ watch([branchModel, searchModel, shiftModel, sortModel], () => {
 const filters = computed<SalesEmployeesFilters>(() => ({
   branchId: branchModel.value,
   search: searchModel.value,
-  shiftState: shiftModel.value,
+  shiftState: typeof shiftModel.value === 'string' ? shiftModel.value : '',
   page: page.value,
   pageSize,
-  sort: sortModel.value,
+  sort: typeof sortModel.value === 'string' ? sortModel.value : 'name',
 }))
 
 const listQuery = useSalesEmployeesQuery(filters, canRead)
@@ -201,15 +234,13 @@ const ratingQuery = useSalesEmployeeRatingSummaryQuery(
   selectedId,
   selectedBranch,
   bucketKey,
-  ratingEnabled
+  ratingEnabled,
 )
 
 const ratingBusy = computed(() => ratingQuery.isFetching.value)
-const ratingSummary = computed(() =>
-  bucketKey.value ? ratingQuery.data.value : ratingQuery.data.value
-)
+const ratingSummary = computed(() => ratingQuery.data.value ?? null)
 const bucketCustomers = computed(() =>
-  bucketKey.value ? ratingQuery.data.value?.customers ?? [] : null
+  bucketKey.value ? ratingQuery.data.value?.customers ?? [] : null,
 )
 const bucketLabel = computed(() => {
   const map: Record<string, string> = {
@@ -226,7 +257,7 @@ watch(
   () => ratingQuery.isError.value,
   (err) => {
     ratingError.value = err ? 'تعذر تحميل تقييم الموظف' : ''
-  }
+  },
 )
 
 function openRating(row: SalesEmployeeCard) {
@@ -282,7 +313,7 @@ function ratingText(v: number | null | undefined) {
 function fmtDt(v: string | null | undefined) {
   if (!v) return '—'
   try {
-    return new Intl.DateTimeFormat('ar-IQ', {
+    return new Intl.DateTimeFormat('en-US', {
       dateStyle: 'medium',
       timeStyle: 'short',
       timeZone: 'Asia/Baghdad',
@@ -294,137 +325,9 @@ function fmtDt(v: string | null | undefined) {
 </script>
 
 <style scoped>
-.se-page {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-  padding: 0.25rem 0 1.5rem;
-  background: #f8f8f8;
-  min-height: 100%;
-  font-family: ElMessiri, 'El Messiri', sans-serif;
-  font-size: 16px;
-  color: #00201e;
-}
-.se-title {
-  margin: 0;
-  font-size: 1.55rem;
-  font-weight: 700;
-}
-.se-sub {
-  margin: 0.35rem 0 0;
-  font-size: 14px;
-  color: #006a64;
-}
-.se-filters {
+.se-actions {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.75rem;
-}
-.se-field {
-  display: flex;
-  flex-direction: column;
-  gap: 0.35rem;
-  min-width: 10rem;
-  font-size: 14px;
-}
-.se-field--grow {
-  flex: 1;
-  min-width: 12rem;
-}
-.se-select,
-.se-input {
-  min-height: 44px;
-  border: 1px solid #c5d4d2;
-  border-radius: 8px;
-  padding: 0 0.75rem;
-  background: #fff;
-  font: inherit;
-  color: inherit;
-}
-.se-table-wrap {
-  overflow: auto;
-  background: #fff;
-  border: 1px solid #d7e3e1;
-  border-radius: 10px;
-}
-.se-table {
-  width: 100%;
-  border-collapse: collapse;
-  min-width: 720px;
-}
-.se-table th,
-.se-table td {
-  padding: 0.75rem;
-  border-bottom: 1px solid #e8efee;
-  text-align: start;
-  vertical-align: top;
-  font-size: 14px;
-}
-.se-table th {
-  background: #f0f7f6;
-  color: #006a64;
-  font-weight: 600;
-}
-.se-linkish {
-  border: 0;
-  background: transparent;
-  color: #006a64;
-  font: inherit;
-  cursor: pointer;
-  text-decoration: underline;
-  min-height: 44px;
-}
-.se-muted {
-  color: #5a6f6c;
-  text-decoration: none;
-}
-.se-btn {
-  min-height: 44px;
-  padding: 0 1rem;
-  border-radius: 8px;
-  border: 1px solid #006a64;
-  background: #fff;
-  color: #006a64;
-  font: inherit;
-  cursor: pointer;
-}
-.se-btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-.se-btn--sm {
-  min-height: 36px;
-  padding: 0 0.65rem;
-  font-size: 13px;
-  margin-inline-start: 0.25rem;
-}
-.se-pager {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-}
-.se-count {
-  margin: 0;
-  font-size: 14px;
-  color: #5a6f6c;
-}
-.se-state {
-  padding: 1rem;
-  border-radius: 8px;
-  background: #fff;
-  border: 1px solid #d7e3e1;
-}
-.se-state--error {
-  border-color: #b91c1c;
-  color: #991b1b;
-}
-.se-state--denied {
-  border-color: #a16207;
-  color: #854d0e;
-}
-@media (max-width: 768px) {
-  .se-table {
-    min-width: 560px;
-  }
+  gap: 8px;
 }
 </style>

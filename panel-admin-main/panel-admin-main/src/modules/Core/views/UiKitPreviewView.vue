@@ -1,29 +1,37 @@
 <template>
-  <div class="q-ui ui-kit-preview" dir="rtl">
-    <PageHeader
-      title="معاينة مكوّنات العرض"
-      subtitle="صفحة تطوير محمية — لا تستدعي endpoints ولا تمنح صلاحيات. الحاويات تمرّر البيانات والأكشنات."
-    />
+  <AppPage
+    title="معاينة مكوّنات العرض"
+    subtitle="كل زر وحقل يجب أن يمر عبر مكوّنات Qalaat الموحّدة. هذه الصفحة للتطوير فقط."
+  >
+    <AppPanel title="الحقول والأزرار">
+      <div class="q-filters">
+        <AppInput v-model="q" label="بحث" type="search" placeholder="اسم طويل للتحقق من الالتفاف" />
+        <AppSelect v-model="tab" label="حالة" :options="selectOptions" />
+        <AppTextarea v-model="note" label="ملاحظة" placeholder="نص متعدد الأسطر" />
+      </div>
+      <ActionRow
+        :primary="{ label: 'إجراء أساسي' }"
+        :secondary="[{ id: 'sec', label: 'ثانوي' }]"
+        @primary="toast = 'primary'"
+        @secondary="(id) => (toast = id)"
+      />
+      <div class="kit-row">
+        <AppButton variant="primary">Primary</AppButton>
+        <AppButton variant="secondary">Secondary</AppButton>
+        <AppButton variant="ghost">Ghost</AppButton>
+        <AppButton variant="danger">Danger</AppButton>
+      </div>
+    </AppPanel>
 
-    <section class="block">
-      <h2>FilterBar + StatusTabs</h2>
+    <AppPanel title="FilterBar + StatusTabs">
       <FilterBar>
-        <label
-          >بحث
-          <input v-model="q" type="search" placeholder="اسم طويل جداً للتحقق من الالتفاف" />
-        </label>
-        <label
-          >حالة
-          <select v-model="tab">
-            <option v-for="t in tabs" :key="t.id" :value="t.id">{{ t.label }}</option>
-          </select>
-        </label>
+        <AppInput v-model="q" label="بحث" />
+        <AppSelect v-model="tab" label="حالة" :options="selectOptions" />
       </FilterBar>
       <StatusTabs v-model="tab" :tabs="tabs" aria-label="حالات العرض" />
-    </section>
+    </AppPanel>
 
-    <section class="block">
-      <h2>EntityCard / DataField / StatusBadge / ActionRow</h2>
+    <AppPanel title="EntityCard">
       <EntityCard
         eyebrow="طلب #9001"
         name="زبون تجريبي باسم طويل جداً للتأكد من عدم القصّ بثلاث نقاط"
@@ -40,152 +48,100 @@
             label="العنوان"
             value="بغداد / الكرادة داخل / زقاق 12 / دار 4 — وصف طويل جداً يجب أن يلتف"
           />
-          <DataField label="موظف المبيعات" value="أحمد علي" />
-          <DataField label="أُرسل بواسطة" value="مندوب الفرع" />
-        </template>
-        <template #notes>
-          <div class="note">
-            <strong>ملاحظة المُرسل</strong>
-            <p>
-              ملاحظة متعددة الأسطر&#10;سطر ثانٍ&#10;سطر ثالث للتأكد من pre-wrap وعدم إخفاء المحتوى.
-            </p>
-          </div>
         </template>
         <template #actions>
           <ActionRow
             :primary="{ label: 'تدقيق الطلب' }"
             :secondary="[{ id: 'audit', label: 'سجل الحركة' }]"
             @primary="toast = 'primary'"
-            @secondary="id => (toast = id)"
+            @secondary="(id) => (toast = id)"
           />
         </template>
       </EntityCard>
-    </section>
+    </AppPanel>
 
-    <section class="block">
-      <h2>Matching cards (2×2 / 4)</h2>
-      <MatchingSummary :cards="matchCards" :selected-key="matchKey" @select="k => (matchKey = k)" />
-    </section>
+    <AppPanel title="الحالات">
+      <div class="grid-states">
+        <DataState kind="loading" title="جاري التحميل" message="لا تُعرض أصفار وهمية." />
+        <DataState kind="empty" title="لا توجد نتائج" message="القائمة فارغة فعلياً." />
+        <DataState kind="error" title="فشل التحميل" message="تعذّر الاتصال بالخادم.">
+          <template #actions>
+            <AppButton variant="secondary" @click="toast = 'retry'">إعادة المحاولة</AppButton>
+          </template>
+        </DataState>
+        <DataState kind="forbidden" title="غير مصرّح" message="صلاحية القراءة مطلوبة." />
+      </div>
+    </AppPanel>
 
-    <section class="block grid-states">
-      <DataState kind="loading" title="جاري التحميل" message="لا تُعرض أصفار وهمية." />
-      <DataState kind="empty" title="لا توجد نتائج" message="القائمة فارغة فعلياً." />
-      <DataState kind="error" title="فشل التحميل" message="تعذّر الاتصال بالخادم.">
-        <template #actions>
-          <button type="button" class="retry" @click="toast = 'retry'">إعادة المحاولة</button>
-        </template>
-      </DataState>
-      <DataState kind="forbidden" title="غير مصرّح" message="صلاحية القراءة مطلوبة لفتح التبويب." />
-    </section>
-
-    <section class="block">
-      <h2>Pagination + ConfirmReasonDialog</h2>
+    <AppPanel title="Pagination + ConfirmReasonDialog">
       <Pagination :page="page" :has-prev="page > 1" :has-next="true" @prev="page--" @next="page++" />
-      <ActionRow
-        class="mt"
-        :primary="{ label: 'فتح حوار سبب' }"
-        @primary="reasonOpen = true"
-      />
+      <ActionRow class="mt" :primary="{ label: 'فتح حوار سبب' }" @primary="reasonOpen = true" />
       <ConfirmReasonDialog
         v-model="reasonOpen"
         title="تأكيد الإجراء"
         message="أدخل السبب كاملاً. الإلغاء لا يرسل طلباً."
-        @confirm="r => ((toast = r), (reasonOpen = false))"
+        @confirm="(r) => ((toast = r), (reasonOpen = false))"
       />
-    </section>
+    </AppPanel>
 
     <p v-if="toast" class="toast" role="status">آخر حدث: {{ toast }}</p>
-  </div>
+  </AppPage>
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
-import PageHeader from '@/modules/Core/components/ui/PageHeader.vue'
-import FilterBar from '@/modules/Core/components/ui/FilterBar.vue'
-import StatusTabs from '@/modules/Core/components/ui/StatusTabs.vue'
-import EntityCard from '@/modules/Core/components/ui/EntityCard.vue'
-import DataField from '@/modules/Core/components/ui/DataField.vue'
-import ActionRow from '@/modules/Core/components/ui/ActionRow.vue'
-import DataState from '@/modules/Core/components/ui/DataState.vue'
-import Pagination from '@/modules/Core/components/ui/Pagination.vue'
-import ConfirmReasonDialog from '@/modules/Core/components/ui/ConfirmReasonDialog.vue'
-import MatchingSummary from '@/modules/SalesRequests/components/MatchingSummary.vue'
-import type { MatchCard } from '@/modules/SalesRequests/types'
-import '@/modules/Core/components/ui/ui.tokens.css'
+import { computed, ref } from 'vue'
+import {
+  ActionRow,
+  AppButton,
+  AppInput,
+  AppPage,
+  AppPanel,
+  AppSelect,
+  AppTextarea,
+  ConfirmReasonDialog,
+  DataField,
+  DataState,
+  EntityCard,
+  FilterBar,
+  Pagination,
+  StatusTabs,
+} from '@/modules/Core/components/ui'
 
 const q = ref('')
 const tab = ref('all')
-const tabs = [
-  { id: 'all', label: 'الكل', count: 12 },
-  { id: 'inProgress', label: 'قيد التنفيذ', count: 3 },
-  { id: 'rejected', label: 'مرفوض', count: 1 },
-  { id: 'completed', label: 'مكتمل', count: 8 },
-]
+const note = ref('')
 const page = ref(1)
 const reasonOpen = ref(false)
 const toast = ref('')
-const matchKey = ref<string | null>('phone')
-const matchCards: MatchCard[] = [
-  { key: 'phone', label: 'تطابق الهاتف', state: 'results', count: 2 },
-  { key: 'tripleName', label: 'تطابق الاسم الثلاثي', state: 'loading', count: null },
-  { key: 'fatherGrandfather', label: 'الأب والجد', state: 'failed', count: null },
-  { key: 'sonFather', label: 'الابن والأب', state: 'insufficientData', count: null },
+const tabs = [
+  { id: 'all', label: 'الكل', count: 12 },
+  { id: 'open', label: 'مفتوح', count: 4 },
+  { id: 'done', label: 'منجز', count: 8 },
 ]
+const selectOptions = computed(() => tabs.map((t) => ({ label: t.label, value: t.id })))
 </script>
 
 <style scoped>
-.ui-kit-preview {
-  max-width: 1100px;
-  margin: 0 auto;
-  padding: 16px 16px 48px;
-  min-height: 100vh;
-  background: #f4f7f7;
-  color: #00201e;
-}
-.block {
-  margin-bottom: 24px;
-}
-.block h2 {
-  margin: 0 0 12px;
-  font-size: 18px;
-  color: #006a64;
-}
-.note {
-  border-inline-start: 3px solid #b5cec8;
-  padding: 10px 14px;
-  background: #fafcfb;
-  font-size: 15px;
-  line-height: 1.8;
-}
-.note p {
-  margin: 4px 0 0;
-  white-space: pre-wrap;
+.kit-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
 }
 .grid-states {
   display: grid;
   gap: 12px;
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
 }
-.retry,
-.mt :deep(.q-action-row__primary) {
-  min-height: 44px;
-}
-.retry {
-  background: #006a64;
-  color: #fff;
-  border: 0;
-  border-radius: 10px;
-  padding: 10px 16px;
-  font: inherit;
-  font-weight: 600;
-  cursor: pointer;
+.mt {
+  margin-top: 12px;
 }
 .toast {
-  position: sticky;
-  bottom: 12px;
-  background: #00201e;
-  color: #fff;
-  padding: 12px 16px;
+  margin-top: 16px;
+  padding: 12px 14px;
   border-radius: 12px;
+  background: #e7f3f1;
+  color: #006a64;
+  font-weight: 600;
 }
 </style>

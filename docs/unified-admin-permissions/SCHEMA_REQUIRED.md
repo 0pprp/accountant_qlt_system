@@ -2,6 +2,13 @@
 
 **لم يُولَّد ملف migration** التزامًا بـ `api-main/AGENTS.md`.
 
+## Panel.Tab (دفعة 01)
+
+- صفوف صلاحيات باسم `Panel.Tab.{tabKey}` عبر بذرة `AdminPanelTabs.OutsideAll` (upsert بالاسم — بلا migration مخطط).
+- عقود: `GET/PATCH /api/v1/admin/Users/{id}/tab-access`.
+- هجرة معزولة: `POST /api/v1/admin/panel-tab-migration/dry-run|apply?confirmIsolated=true` (!Production).
+- تقرير: `PANEL_TAB_BATCH01_DELIVERY.md`.
+
 ## 1) عمود الإصدار على المستخدم
 
 ```sql

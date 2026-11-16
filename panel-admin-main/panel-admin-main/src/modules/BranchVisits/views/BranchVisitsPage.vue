@@ -3,6 +3,7 @@ import { computed, ref } from 'vue'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/vue-query'
 import { axiosInstance } from '@/modules/Core/plugins/axios'
 import { useAuthStore } from '@/modules/Auth/store'
+import { AppButton, AppInput, AppSelect, AppTextarea } from '@/modules/Core/components/ui'
 
 interface Rating {
   orderListId: number
@@ -64,9 +65,32 @@ const canOpen = computed(() => auth.hasPermission('BranchVisit', 'Open') === tru
 const canRate = computed(() => auth.hasPermission('BranchVisit', 'Rate') === true)
 const canDepart = computed(() => auth.hasPermission('BranchVisit', 'Depart') === true)
 const branchChoices = computed(() => auth.branches ?? [])
+const branchOpenOptions = computed(() => [
+  { label: 'اختر', value: null as number | null },
+  ...branchChoices.value.map((b) => ({ label: b.name, value: b.id })),
+])
 const openBranchId = ref<number | null>(null)
 const rateListId = ref<number | null>(null)
-const rateScore = ref(5)
+const rateScore = ref<number | null>(5)
+
+function toNullableNumber(raw: string): number | null {
+  if (raw.trim() === '') return null
+  const n = Number(raw)
+  return Number.isFinite(n) ? n : null
+}
+
+const rateListModel = computed({
+  get: () => (rateListId.value == null ? '' : String(rateListId.value)),
+  set: (value: string) => {
+    rateListId.value = toNullableNumber(value)
+  },
+})
+const rateScoreModel = computed({
+  get: () => (rateScore.value == null ? '' : String(rateScore.value)),
+  set: (value: string) => {
+    rateScore.value = toNullableNumber(value)
+  },
+})
 const departNote = ref('')
 const departFiles = ref<File[]>([])
 const formError = ref<string | null>(null)
@@ -222,27 +246,20 @@ function onPickFiles(e: Event) {
             v-if="canOpen"
             class="bv-form"
           >
-            <label>
-              الفرع
-              <select v-model.number="openBranchId">
-                <option :value="null">اختر</option>
-                <option
-                  v-for="b in branchChoices"
-                  :key="b.id"
-                  :value="b.id"
-                >
-                  {{ b.name }}
-                </option>
-              </select>
-            </label>
-            <button
-              type="button"
-              class="bv-btn"
+            <AppSelect
+              v-model="openBranchId"
+              label="الفرع"
+              placeholder="اختر"
+              :options="branchOpenOptions"
+            />
+            <AppButton
+              variant="primary"
               :disabled="openMut.isPending.value || !openBranchId"
+              :loading="openMut.isPending.value"
               @click="openMut.mutate()"
             >
               فتح زيارة
-            </button>
+            </AppButton>
           </div>
         </div>
         <div
@@ -286,23 +303,19 @@ function onPickFiles(e: Event) {
             v-if="canRate"
             class="bv-form"
           >
-            <label>
-              قائمة (معرّف)
-              <input
-                v-model.number="rateListId"
-                type="number"
-                min="1"
-              >
-            </label>
-            <label>
-              درجة 0–10
-              <input
-                v-model.number="rateScore"
-                type="number"
-                min="0"
-                max="10"
-              >
-            </label>
+            <AppInput
+              v-model="rateListModel"
+              type="number"
+              label="قائمة (معرّف)"
+              :min="1"
+            />
+            <AppInput
+              v-model="rateScoreModel"
+              type="number"
+              label="درجة 0–10"
+              :min="0"
+              :max="10"
+            />
             <button
               type="button"
               class="bv-btn"
@@ -316,13 +329,12 @@ function onPickFiles(e: Event) {
             v-if="canDepart"
             class="bv-form"
           >
-            <label>
-              ملاحظة المغادرة (≥50)
-              <textarea
-                v-model="departNote"
-                rows="4"
-              />
-            </label>
+            <AppTextarea
+              v-model="departNote"
+              :grow="false"
+              label="ملاحظة المغادرة (≥50)"
+              :rows="4"
+            />
             <label>
               مرفقات اختيارية (صور/PDF ≤20MB)
               <input
@@ -401,7 +413,7 @@ function onPickFiles(e: Event) {
   max-width: 960px;
   margin: 0 auto;
   padding: 1rem 1.25rem 2rem;
-  font-family: ElMessiri, 'Segoe UI', Tahoma, sans-serif;
+  font-family: inherit;
   color: #00201e;
 }
 .bv-title {
@@ -443,9 +455,7 @@ function onPickFiles(e: Event) {
   display: grid;
   gap: 0.25rem;
 }
-.bv-form input,
-.bv-form select,
-.bv-form textarea {
+.bv-form input[type='file'] {
   background: #fff;
   border: 1px solid #cfd8d7;
   border-radius: 6px;

@@ -73,7 +73,7 @@ function preview(text: string) {
 function fmtDt(v: string | null | undefined) {
   if (!v) return '—'
   try {
-    return new Intl.DateTimeFormat('ar-IQ', {
+    return new Intl.DateTimeFormat('en-US', {
       dateStyle: 'medium',
       timeStyle: 'short',
     }).format(new Date(v))

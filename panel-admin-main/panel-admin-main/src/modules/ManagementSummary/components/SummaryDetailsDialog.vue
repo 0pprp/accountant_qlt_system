@@ -44,14 +44,14 @@ const detailsQuery = useSummaryDetailsQuery({
 
 function fmt(n: number | null | undefined) {
   if (n == null || Number.isNaN(n)) return '—'
-  return new Intl.NumberFormat('ar-IQ', {
+  return new Intl.NumberFormat('en-US', {
     maximumFractionDigits: 0,
   }).format(n)
 }
 
 function fmtDate(iso: string) {
   try {
-    return new Intl.DateTimeFormat('ar-IQ', {
+    return new Intl.DateTimeFormat('en-US', {
       timeZone: 'Asia/Baghdad',
       dateStyle: 'medium',
       timeStyle: 'short',

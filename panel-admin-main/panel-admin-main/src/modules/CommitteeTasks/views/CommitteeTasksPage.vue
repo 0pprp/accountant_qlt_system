@@ -8,6 +8,7 @@ import {
   useUpdateCommitteeTaskMutation,
 } from '../requests/mutations/useCommitteeTaskMutations'
 import type { CommitteeTaskRow } from '../domain/types'
+import { AppButton, AppSearchField, AppTextarea } from '@/modules/Core/components/ui'
 import '../components/committee-tasks.css'
 
 const auth = useAuthStore()
@@ -26,7 +27,7 @@ const draftBody = ref('')
 const draftEnabled = ref(true)
 const formError = ref<string | null>(null)
 const dialogTitleRef = ref<HTMLElement | null>(null)
-const bodyRef = ref<HTMLTextAreaElement | null>(null)
+const bodyRef = ref<{ focus: () => void } | null>(null)
 
 const rows = computed(() => {
   const all = listQuery.data.value ?? []
@@ -104,7 +105,7 @@ async function removeRow(row: CommitteeTaskRow) {
 
 function fmt(v: string) {
   try {
-    return new Intl.DateTimeFormat('ar-IQ', {
+    return new Intl.DateTimeFormat('en-US', {
       dateStyle: 'medium',
       timeStyle: 'short',
     }).format(new Date(v))
@@ -139,29 +140,16 @@ function onDialogKey(e: KeyboardEvent) {
     </div>
 
     <template v-else>
-      <div class="ct-toolbar">
-        <div class="ct-search">
-          <input
-            v-model="search"
-            class="ct-search__input"
-            type="search"
-            placeholder="بحث في نص المهمة…"
-            aria-label="بحث في مهام اللجنة"
-            autocomplete="off"
-          >
-          <span
-            class="ct-search__icon"
-            aria-hidden="true"
-          >🔍</span>
-        </div>
-        <button
-          v-if="canWrite"
-          type="button"
-          class="ct-btn primary"
-          @click="openCreate"
-        >
+      <div class="q-filters">
+        <AppSearchField
+          v-model="search"
+          label="بحث في مهام اللجنة"
+          placeholder="بحث في نص المهمة…"
+          grow
+        />
+        <AppButton v-if="canWrite" @click="openCreate">
           إضافة مهمة
-        </button>
+        </AppButton>
       </div>
 
       <p
@@ -224,20 +212,12 @@ function onDialogKey(e: KeyboardEvent) {
               </td>
               <td v-if="canWrite">
                 <div class="ct-actions">
-                  <button
-                    type="button"
-                    class="ct-btn"
-                    @click="openEdit(row)"
-                  >
+                  <AppButton variant="secondary" size="sm" @click="openEdit(row)">
                     تعديل
-                  </button>
-                  <button
-                    type="button"
-                    class="ct-btn danger"
-                    @click="removeRow(row)"
-                  >
+                  </AppButton>
+                  <AppButton variant="danger" size="sm" @click="removeRow(row)">
                     حذف
-                  </button>
+                  </AppButton>
                 </div>
               </td>
             </tr>
@@ -266,14 +246,12 @@ function onDialogKey(e: KeyboardEvent) {
         >
           {{ editing ? 'تعديل مهمة' : 'إضافة مهمة' }}
         </h2>
-        <label class="ct-field">
-          <span>نص المهمة</span>
-          <textarea
-            ref="bodyRef"
-            v-model="draftBody"
-            maxlength="8000"
-          />
-        </label>
+        <AppTextarea
+          ref="bodyRef"
+          v-model="draftBody"
+          label="نص المهمة"
+          maxlength="8000"
+        />
         <label class="ct-field">
           <span>
             <input
@@ -291,21 +269,16 @@ function onDialogKey(e: KeyboardEvent) {
           {{ formError }}
         </p>
         <div class="ct-dialog__actions">
-          <button
-            type="button"
-            class="ct-btn"
-            @click="closeDialog"
-          >
+          <AppButton variant="secondary" @click="closeDialog">
             إلغاء
-          </button>
-          <button
-            type="button"
-            class="ct-btn primary"
+          </AppButton>
+          <AppButton
             :disabled="createMut.isPending.value || updateMut.isPending.value"
+            :loading="createMut.isPending.value || updateMut.isPending.value"
             @click="save"
           >
             حفظ
-          </button>
+          </AppButton>
         </div>
       </div>
     </div>

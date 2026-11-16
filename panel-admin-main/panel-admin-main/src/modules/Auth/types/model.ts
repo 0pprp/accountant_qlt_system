@@ -76,6 +76,8 @@ export type PermissionAction =
   | 'Open'
   | 'Rate'
   | 'Depart'
+  /** مفاتيح Panel.Tab.* تُمرَّر كـ action تحت وحدة PanelTab */
+  | (string & {})
 
 /** وحدات عمل المتابعين — صلاحيات أقسام مستقلة عن الدليل */
 export type FollowerWorkPermissionModule =
@@ -139,6 +141,7 @@ export type PermissionModule =
   | 'BranchVisit'
   | 'BranchManagerAccount'
   | 'DelegateHome'
+  | 'PanelTab'
   | FollowerWorkPermissionModule
 
 export interface ModulePermissions {
@@ -200,6 +203,8 @@ export interface ModulePermissions {
   Open?: boolean
   Rate?: boolean
   Depart?: boolean
+  /** مفاتيح تبويب Panel.Tab تحت وحدة PanelTab */
+  [action: string]: boolean | undefined
 }
 
 export interface PermissionTypes {
@@ -253,6 +258,7 @@ export interface PermissionTypes {
   BranchVisit?: Permissions[]
   BranchManagerAccount?: Permissions[]
   DelegateHome?: Permissions[]
+  PanelTab?: Permissions[]
   FollowerWork?: Permissions[]
   FollowerSalesReview?: Permissions[]
   FollowerDeclining?: Permissions[]
@@ -315,6 +321,7 @@ export interface ConvertedPermissionTypes {
   BranchVisit?: ModulePermissions
   BranchManagerAccount?: ModulePermissions
   DelegateHome?: ModulePermissions
+  PanelTab?: ModulePermissions
   FollowerWork?: ModulePermissions
   FollowerSalesReview?: ModulePermissions
   FollowerDeclining?: ModulePermissions

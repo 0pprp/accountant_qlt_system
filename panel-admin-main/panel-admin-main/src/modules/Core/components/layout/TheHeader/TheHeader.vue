@@ -9,17 +9,13 @@
       <div class="list-toolbar-group">
         <form
           v-if="canSearch"
+          class="list-search"
           @submit.prevent="handleSubmitForm"
-          class="list-search relative"
         >
-          <SvgIcon
-            name="search"
-            class="w-6 h-6 absolute top-1/2 -translate-y-1/2 right-2"
-          />
-          <InputText
+          <AppSearchField
             v-model="searchValue"
+            :grow="false"
             :placeholder="$t(searchPlaceholder)"
-            class="list-search-input h-11 w-full"
           />
         </form>
         <slot name="export"></slot>
@@ -54,9 +50,8 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import InputText from 'primevue/inputtext'
 import Chip from 'primevue/chip'
-// import HeaderDatePicker from '../../base/HeaderDatePicker/HeaderDatePicker.vue'
+import { AppSearchField } from '@/modules/Core/components/ui'
 import SvgIcon from '@/modules/Core/components/SvgIcon/SvgIcon.vue'
 
 const props = withDefaults(
@@ -122,7 +117,6 @@ function handleSubmitForm() {
 .list-toolbar { display:flex; align-items:center; flex-wrap:wrap; gap:16px; padding:16px; }
 .list-toolbar-group { display:flex; align-items:center; gap:8px; flex:1 1 300px; min-width:0; }
 .list-search { width:100%; min-width:0; max-width:560px; }
-.list-search-input { background:#f8f8f8; padding-inline-start:42px; text-align:start; font-size:16px; }
 .list-toolbar-actions { display:flex; align-items:center; justify-content:flex-end; gap:8px; flex-wrap:wrap; }
 @media(max-width:600px) {
   .list-toolbar { padding:12px; gap:12px; }

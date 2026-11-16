@@ -42,6 +42,7 @@ public static class RolePermissions
                 .Concat(Permissions.BranchVisit.OutsideAll.Select(x => x.Name))
                 .Concat(Permissions.BranchManagerAccount.OutsideAll.Select(x => x.Name))
                 .Concat(Permissions.DelegateHome.OutsideAll.Select(x => x.Name))
+                .Concat(Application.Common.AdminPanel.AdminPanelTabs.OutsideAll.Select(x => x.Name))
                 .ToList()
         };
         All.Add(admin);

@@ -4,6 +4,8 @@ import { useRoute, useRouter } from 'vue-router'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/vue-query'
 import { axiosInstance } from '@/modules/Core/plugins/axios'
 import { useAuthStore } from '@/modules/Auth/store'
+import { AppButton, AppInput, AppSearchField, AppSelect } from '@/modules/Core/components/ui'
+import { formatMoney } from '@/modules/Core/utils/formatDisplay'
 
 interface Entry {
   id: number
@@ -109,6 +111,15 @@ const provincesQuery = useQuery({
   },
 })
 
+const provinceOptions = computed(() => [
+  { label: 'كل المحافظات', value: null as number | null },
+  ...(provincesQuery.data.value ?? []).map((p) => ({ label: p.name, value: p.id })),
+])
+const provinceFormOptions = computed(() => [
+  { label: 'اختر…', value: '' },
+  ...(provincesQuery.data.value ?? []).map((p) => ({ label: p.name, value: String(p.id) })),
+])
+
 function patch(next: Record<string, string | null | undefined>) {
   const q = { ...(route.query as Record<string, string>) }
   for (const [k, v] of Object.entries(next)) {
@@ -190,7 +201,7 @@ async function submit() {
 }
 
 function fmt(n: number) {
-  return new Intl.NumberFormat('ar-IQ').format(n)
+  return formatMoney(n)
 }
 </script>
 
@@ -214,43 +225,29 @@ function fmt(n: number) {
       ليس لديك صلاحية قراءة لوحة الأسعار.
     </div>
     <template v-else>
-      <div class="pb-toolbar">
-        <div class="pb-search">
-          <input
-            v-model="searchInput"
-            type="search"
-            placeholder="بحث منتج أو محافظة…"
-            aria-label="بحث"
-          >
-          <span aria-hidden="true">🔍</span>
-        </div>
-        <select
-          :value="provinceId ?? ''"
-          aria-label="المحافظة"
-          @change="
-            patch({
-              provinceId: ($event.target as HTMLSelectElement).value || null,
-              page: '1',
-            })
+      <div class="q-filters">
+        <AppSearchField
+          v-model="searchInput"
+          label="بحث"
+          placeholder="بحث منتج أو محافظة…"
+          grow
+        />
+        <AppSelect
+          :model-value="provinceId"
+          label="المحافظة"
+          placeholder="كل المحافظات"
+          :options="provinceOptions"
+          @update:model-value="
+            (v) =>
+              patch({
+                provinceId: typeof v === 'number' ? String(v) : null,
+                page: '1',
+              })
           "
-        >
-          <option value="">كل المحافظات</option>
-          <option
-            v-for="p in provincesQuery.data.value ?? []"
-            :key="p.id"
-            :value="p.id"
-          >
-            {{ p.name }}
-          </option>
-        </select>
-        <button
-          v-if="canCreate"
-          type="button"
-          class="pb-btn primary"
-          @click="openCreate"
-        >
+        />
+        <AppButton v-if="canCreate" variant="primary" @click="openCreate">
           إضافة إعلان
-        </button>
+        </AppButton>
       </div>
       <p class="pb-meta">
         الإجمالي:
@@ -336,49 +333,16 @@ function fmt(n: number) {
         aria-modal="true"
       >
         <h2>{{ dialog === 'create' ? 'إضافة إعلان أسعار' : 'تعديل إعلان أسعار' }}</h2>
-        <label class="pb-field">اسم المنتج
-          <input
-            v-model="form.productName"
-            type="text"
-            maxlength="400"
-          >
-        </label>
-        <label class="pb-field">المحافظة
-          <select v-model="form.targetProvinceId">
-            <option value="">اختر…</option>
-            <option
-              v-for="p in provincesQuery.data.value ?? []"
-              :key="p.id"
-              :value="String(p.id)"
-            >
-              {{ p.name }}
-            </option>
-          </select>
-        </label>
-        <label class="pb-field">سعر البيع
-          <input
-            v-model="form.salePrice"
-            type="number"
-            min="0"
-            step="0.01"
-          >
-        </label>
-        <label class="pb-field">القسط اليومي
-          <input
-            v-model="form.dailyInstallment"
-            type="number"
-            min="0"
-            step="0.01"
-          >
-        </label>
-        <label class="pb-field">المقدمة
-          <input
-            v-model="form.downPayment"
-            type="number"
-            min="0"
-            step="0.01"
-          >
-        </label>
+        <AppInput v-model="form.productName" label="اسم المنتج" maxlength="400" />
+        <AppSelect
+          v-model="form.targetProvinceId"
+          label="المحافظة"
+          placeholder="اختر…"
+          :options="provinceFormOptions"
+        />
+        <AppInput v-model="form.salePrice" label="سعر البيع" type="number" />
+        <AppInput v-model="form.dailyInstallment" label="القسط اليومي" type="number" />
+        <AppInput v-model="form.downPayment" label="المقدمة" type="number" />
         <p
           v-if="formError"
           class="pb-err"
@@ -386,21 +350,12 @@ function fmt(n: number) {
           {{ formError }}
         </p>
         <div class="pb-actions">
-          <button
-            type="button"
-            class="pb-btn"
-            @click="dialog = null"
-          >
+          <AppButton variant="secondary" @click="dialog = null">
             إلغاء
-          </button>
-          <button
-            type="button"
-            class="pb-btn primary"
-            :disabled="submitting"
-            @click="submit"
-          >
+          </AppButton>
+          <AppButton :disabled="submitting" :loading="submitting" @click="submit">
             حفظ
-          </button>
+          </AppButton>
         </div>
       </div>
     </div>
@@ -409,7 +364,7 @@ function fmt(n: number) {
 
 <style scoped>
 .pb-page {
-  font-family: 'El Messiri', Tahoma, sans-serif;
+  font-family: inherit;
   color: #00201e;
   padding: 1rem 1.25rem 2rem;
   max-width: 72rem;

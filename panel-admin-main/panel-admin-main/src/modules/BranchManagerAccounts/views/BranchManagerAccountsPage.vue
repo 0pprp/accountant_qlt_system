@@ -3,6 +3,7 @@ import { computed, reactive, ref } from 'vue'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/vue-query'
 import { axiosInstance } from '@/modules/Core/plugins/axios'
 import { useAuthStore } from '@/modules/Auth/store'
+import { AppButton, AppInput } from '@/modules/Core/components/ui'
 
 interface Account {
   id: number
@@ -151,22 +152,16 @@ function toggleBranch(id: number) {
     </div>
     <template v-else>
       <div class="ba-toolbar">
-        <button
-          v-if="canWrite"
-          type="button"
-          class="ba-btn"
-          @click="openCreate"
-        >
+        <AppButton v-if="canWrite" @click="openCreate">
           إنشاء حساب
-        </button>
-        <button
+        </AppButton>
+        <AppButton
           v-if="listQuery.isError.value"
-          type="button"
-          class="ba-btn ghost"
+          variant="ghost"
           @click="listQuery.refetch()"
         >
           إعادة المحاولة
-        </button>
+        </AppButton>
       </div>
       <p
         v-if="listQuery.isError.value"
@@ -201,14 +196,9 @@ function toggleBranch(id: number) {
             <span> · {{ row.username }} · {{ row.isActive ? 'نشط' : 'معطّل' }}</span>
             <div class="ba-meta">{{ row.branchNames.join('، ') }}</div>
           </div>
-          <button
-            v-if="canWrite"
-            type="button"
-            class="ba-btn ghost"
-            @click="openEdit(row)"
-          >
+          <AppButton v-if="canWrite" variant="ghost" size="sm" @click="openEdit(row)">
             تعديل
-          </button>
+          </AppButton>
         </li>
       </ul>
     </template>
@@ -221,29 +211,18 @@ function toggleBranch(id: number) {
     >
       <div class="ba-dialog">
         <h2>{{ editing ? 'تعديل حساب' : 'إنشاء حساب' }}</h2>
-        <label>
-          الاسم الظاهر
-          <input
-            v-model="form.fullName"
-            type="text"
-          >
-        </label>
-        <label>
-          اسم المستخدم
-          <input
-            v-model="form.username"
-            type="text"
-            autocomplete="off"
-          >
-        </label>
-        <label>
-          كلمة المرور{{ editing ? ' (اختياري)' : '' }}
-          <input
-            v-model="form.password"
-            type="password"
-            autocomplete="new-password"
-          >
-        </label>
+        <AppInput v-model="form.fullName" label="الاسم الظاهر" />
+        <AppInput
+          v-model="form.username"
+          label="اسم المستخدم"
+          autocomplete="off"
+        />
+        <AppInput
+          v-model="form.password"
+          :label="editing ? 'كلمة المرور (اختياري)' : 'كلمة المرور'"
+          type="password"
+          autocomplete="new-password"
+        />
         <label
           v-if="editing"
           class="ba-check"
@@ -277,21 +256,16 @@ function toggleBranch(id: number) {
           {{ draftError }}
         </p>
         <div class="ba-actions">
-          <button
-            type="button"
-            class="ba-btn"
+          <AppButton
             :disabled="saveMut.isPending.value"
+            :loading="saveMut.isPending.value"
             @click="saveMut.mutate()"
           >
             حفظ
-          </button>
-          <button
-            type="button"
-            class="ba-btn ghost"
-            @click="closeForm"
-          >
+          </AppButton>
+          <AppButton variant="ghost" @click="closeForm">
             إلغاء
-          </button>
+          </AppButton>
         </div>
       </div>
     </div>
@@ -303,7 +277,7 @@ function toggleBranch(id: number) {
   max-width: 960px;
   margin: 0 auto;
   padding: 1rem 1.25rem 2rem;
-  font-family: ElMessiri, 'Segoe UI', Tahoma, sans-serif;
+  font-family: inherit;
   color: #00201e;
 }
 .ba-title {

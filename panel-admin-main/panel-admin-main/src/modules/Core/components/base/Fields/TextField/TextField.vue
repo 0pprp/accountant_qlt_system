@@ -1,40 +1,31 @@
 <template>
-  <div>
-    <span
-      class="input__label"
-      :class="{ required }"
-      :aria-required="required"
-      :aria-label="$t(label)"
-    >
-      {{ $t(label) }}
-    </span>
-
-    <InputText
-      v-model="localName"
-      :placeholder="$t(placeholder)"
-      name="name"
-      :required
-      :readonly
-      :disabled
-    />
-
-    <Message
-      v-if="error"
-      severity="error"
-      class="text-error text-xs pt-2"
-      variant="simple"
-    >
-      {{ error }}
-    </Message>
-  </div>
+  <AppInput
+    v-model="textValue"
+    :label="$t(label)"
+    :placeholder="$t(placeholder)"
+    :error="error"
+    :required="required"
+    :readonly="readonly"
+    :disabled="disabled"
+  />
 </template>
 
 <script setup lang="ts">
-import { InputText, Message } from 'primevue'
+import { computed } from 'vue'
 import type { Props, Emits } from './TextField.types'
+import { AppInput } from '@/modules/Core/components/ui'
 
 defineProps<Props>()
 defineEmits<Emits>()
 
-const localName = defineModel<string>('modelValue')
+const localName = defineModel<string | number>('modelValue')
+
+const textValue = computed({
+  get() {
+    return localName.value == null ? '' : String(localName.value)
+  },
+  set(value: string) {
+    localName.value = value
+  },
+})
 </script>

@@ -50,16 +50,7 @@ public class AuthService : IAuthService
         _dbContext.UserLogins.Add(userLogin);
         await _dbContext.SaveChangesAsync(cancellationToken);
         
-        var groupedPermissions = request.Permissions
-            .GroupBy(p => p.Name.Split('.')[0])
-            .ToDictionary(
-                group => group.Key,
-                group => group.Select(p => new GetPermissionDto
-                {
-                    Id = p.Id,
-                    Name = p.Name.Split('.')[1]
-                }).ToList()
-            );
+        var groupedPermissions = GroupPermissionsForClient(request.Permissions);
         
         var branches = request.Branches.Select(x => new GetBranchDto
         {
@@ -114,16 +105,7 @@ public class AuthService : IAuthService
             .Where(x => x.RefreshToken == hashedRefreshToken)
             .ExecuteUpdateAsync(x => x.SetProperty(ul => ul.RefreshToken, HashRefreshToken(newRefreshToken)), cancellationToken);
         
-        var groupedPermissions = userLogin.Permissions
-            .GroupBy(p => p.Name.Split('.')[0])
-            .ToDictionary(
-                group => group.Key,
-                group => group.Select(p => new GetPermissionDto
-                {
-                    Id = p.Id,
-                    Name = p.Name.Split('.')[1]
-                }).ToList()
-            );
+        var groupedPermissions = GroupPermissionsForClient(userLogin.Permissions);
         
         var branches = userLogin.Branches.Select(x => new GetBranchDto
         {
@@ -151,4 +133,38 @@ public class AuthService : IAuthService
     }
 
     private string HashRefreshToken(string input) => _securityService.GetSha256Hash(input);
+
+    /// <summary>
+    /// Panel.Tab.{tabKey} → module=PanelTab, action=tabKey.
+    /// غير ذلك: الجزء قبل أول نقطة = module، والباقي = action.
+    /// </summary>
+    private static Dictionary<string, List<GetPermissionDto>> GroupPermissionsForClient(
+        IEnumerable<Domain.Entities.RoleAggregate.Permission> permissions)
+    {
+        const string panelPrefix = "Panel.Tab.";
+        return permissions
+            .Where(p => string.IsNullOrWhiteSpace(p.Name) == false)
+            .GroupBy(p =>
+            {
+                if (p.Name.StartsWith(panelPrefix, StringComparison.Ordinal))
+                    return "PanelTab";
+                var dot = p.Name.IndexOf('.');
+                return dot > 0 ? p.Name[..dot] : p.Name;
+            })
+            .ToDictionary(
+                g => g.Key,
+                g => g.Select(p =>
+                {
+                    string action;
+                    if (p.Name.StartsWith(panelPrefix, StringComparison.Ordinal))
+                        action = p.Name[panelPrefix.Length..];
+                    else
+                    {
+                        var dot = p.Name.IndexOf('.');
+                        action = dot > 0 ? p.Name[(dot + 1)..] : p.Name;
+                    }
+
+                    return new GetPermissionDto { Id = p.Id, Name = action };
+                }).ToList());
+    }
 }

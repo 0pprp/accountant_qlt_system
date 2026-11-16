@@ -1,5 +1,6 @@
 import { computed } from 'vue'
 import { usePermission } from '@/modules/Core/composable/usePermission'
+import { requirementForManagementTabId } from '@/modules/Core/navigation/panelTabAccess'
 import {
   MANAGEMENT_TABS,
   getReadyTabsForSection,
@@ -11,15 +12,19 @@ import {
 export function useManagementAccess() {
   const { decide, can } = usePermission()
 
+  function tabRequirement(tab: ManagementTabDefinition) {
+    return requirementForManagementTabId(tab.id, tab.requirement)
+  }
+
   function canOpenTab(tab: ManagementTabDefinition): boolean {
     if (tab.implementationStatus !== 'ready') return false
-    return decide(tab.requirement) === 'allowed'
+    return decide(tabRequirement(tab)) === 'allowed'
   }
 
   /** جاهز بلا صلاحية = مقفول؛ غير منفَّذ لا يُعرض هنا أصلًا */
   function isTabLocked(tab: ManagementTabDefinition): boolean {
     if (tab.implementationStatus !== 'ready') return true
-    return decide(tab.requirement) !== 'allowed'
+    return decide(tabRequirement(tab)) !== 'allowed'
   }
 
   const visibleSections = computed(() =>

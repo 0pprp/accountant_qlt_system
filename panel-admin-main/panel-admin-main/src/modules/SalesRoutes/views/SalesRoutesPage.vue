@@ -2,6 +2,8 @@
 import { computed, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '@/modules/Auth/store'
+import { AppButton, AppDateField, AppInput, AppSelect, DataState } from '@/modules/Core/components/ui'
+import { formatDateTime, formatNumber } from '@/modules/Core/utils/formatDisplay'
 import {
   useSalesEmployeesQuery,
   type SalesEmployeesFilters,
@@ -89,22 +91,32 @@ function patchQuery(next: Record<string, string | null | undefined>) {
   })
 }
 
+const branchOptions = computed(() => [
+  { label: 'كل الفروع المسموحة', value: null as number | null },
+  ...(auth.branches ?? []).map((b) => ({ label: b.name, value: b.id })),
+])
+const employeeOptions = computed(() => [
+  { label: 'اختر', value: null as number | null },
+  ...(employeesQuery.data.value?.items ?? []).map((e) => ({
+    label: e.employeeName,
+    value: e.employeeId,
+  })),
+])
+
+function onFilterId(key: 'branchId' | 'employeeId', v: string | number | null | boolean) {
+  patchQuery({
+    [key]: v == null || v === '' || typeof v === 'boolean' ? null : String(v),
+    page: '1',
+  })
+}
+
 function fmtDt(v: string | null | undefined) {
-  if (!v) return '—'
-  try {
-    return new Intl.DateTimeFormat('ar-IQ', {
-      dateStyle: 'medium',
-      timeStyle: 'short',
-      timeZone: 'Asia/Baghdad',
-    }).format(new Date(v))
-  } catch {
-    return v
-  }
+  return formatDateTime(v)
 }
 
 function fmtAcc(v: number | null | undefined) {
   if (v == null || !Number.isFinite(v)) return '—'
-  return `${Math.round(v)} م`
+  return `${formatNumber(Math.round(v))} م`
 }
 
 const pins = computed<MapPin[]>(() =>
@@ -119,7 +131,7 @@ const pins = computed<MapPin[]>(() =>
 
 const gapsNote = computed(() => {
   const n = gapsFromApi.value.length
-  if (n > 0) return `توجد ${n} فجوة زمنية > 30 دقيقة — markers فقط بلا خط يوحي بمسار متصل.`
+  if (n > 0) return `توجد ${formatNumber(n)} فجوة زمنية > 30 دقيقة — markers فقط بلا خط يوحي بمسار متصل.`
   if (points.value.length < 2) return null
   let largeGaps = 0
   for (let i = 1; i < points.value.length; i++) {
@@ -128,7 +140,7 @@ const gapsNote = computed(() => {
     if (Number.isFinite(a) && Number.isFinite(b) && b - a > 30 * 60 * 1000) largeGaps++
   }
   return largeGaps > 0
-    ? `توجد ${largeGaps} فجوة زمنية > 30 دقيقة — لا يُرسم خط بينها كمسار متصل.`
+    ? `توجد ${formatNumber(largeGaps)} فجوة زمنية > 30 دقيقة — لا يُرسم خط بينها كمسار متصل.`
     : null
 })
 </script>
@@ -143,91 +155,72 @@ const gapsNote = computed(() => {
       </p>
     </header>
 
-    <div v-if="!canRead" class="fw-state fw-state--forbidden" role="alert">
-      ليس لديك صلاحية قراءة المسارات (SalesRoute.Read). صلاحية الموقع المباشر لا تكفي.
-    </div>
+    <DataState
+      v-if="!canRead"
+      kind="forbidden"
+      title="غير مصرّح"
+      message="ليس لديك صلاحية قراءة المسارات (SalesRoute.Read). صلاحية الموقع المباشر لا تكفي."
+    />
 
     <template v-else>
-      <div class="fw-toolbar">
-        <label class="fw-sort">
-          <span class="fw-sort__label">الفرع</span>
-          <select
-            class="fw-sort__select"
-            :value="branchId ?? ''"
-            @change="
-              patchQuery({
-                branchId: ($event.target as HTMLSelectElement).value || null,
-                page: '1',
-              })
-            "
-          >
-            <option value="">كل الفروع المسموحة</option>
-            <option v-for="b in auth.branches ?? []" :key="b.id" :value="b.id">
-              {{ b.name }}
-            </option>
-          </select>
-        </label>
-        <label class="fw-sort">
-          <span class="fw-sort__label">الموظف</span>
-          <select
-            v-if="canListEmployees"
-            class="fw-sort__select"
-            :value="employeeId ?? ''"
-            @change="
-              patchQuery({
-                employeeId: ($event.target as HTMLSelectElement).value || null,
-                page: '1',
-              })
-            "
-          >
-            <option value="">اختر</option>
-            <option
-              v-for="e in employeesQuery.data.value?.items ?? []"
-              :key="e.employeeId"
-              :value="e.employeeId"
-            >
-              {{ e.employeeName }}
-            </option>
-          </select>
-          <input
-            v-else
-            class="fw-sort__select"
-            type="number"
-            min="1"
-            :value="employeeId ?? ''"
-            placeholder="رقم الموظف"
-            @change="
-              patchQuery({
-                employeeId: ($event.target as HTMLInputElement).value || null,
-                page: '1',
-              })
-            "
-          />
-        </label>
-        <label class="fw-sort">
-          <span class="fw-sort__label">التاريخ</span>
-          <input
-            class="fw-sort__select"
-            type="date"
-            :value="dateIraq"
-            @change="
-              patchQuery({
-                date: ($event.target as HTMLInputElement).value || null,
-                page: '1',
-              })
-            "
-          />
-        </label>
+      <div class="q-filters">
+        <AppSelect
+          :model-value="branchId"
+          label="الفرع"
+          placeholder="كل الفروع المسموحة"
+          :options="branchOptions"
+          @update:model-value="onFilterId('branchId', $event)"
+        />
+        <AppSelect
+          v-if="canListEmployees"
+          :model-value="employeeId"
+          label="الموظف"
+          placeholder="اختر"
+          :options="employeeOptions"
+          @update:model-value="onFilterId('employeeId', $event)"
+        />
+        <AppInput
+          v-else
+          :model-value="employeeId ?? ''"
+          label="الموظف"
+          type="number"
+          placeholder="رقم الموظف"
+          @change="
+            patchQuery({
+              employeeId: ($event.target as HTMLInputElement).value || null,
+              page: '1',
+            })
+          "
+        />
+        <AppDateField
+          :model-value="dateIraq"
+          label="التاريخ"
+          @update:model-value="(v) => patchQuery({ date: v || null, page: '1' })"
+        />
       </div>
 
-      <div v-if="employeeId == null" class="fw-state">اختر موظفًا لعرض المسار.</div>
-      <div v-else-if="routeQuery.isPending.value" class="fw-state fw-state--loading" aria-busy="true">
-        جاري تحميل المسار…
-      </div>
-      <div v-else-if="routeQuery.isError.value" class="fw-state fw-state--error" role="alert">
-        تعذر تحميل المسار.
-        <button type="button" class="fw-retry" @click="routeQuery.refetch()">إعادة المحاولة</button>
-      </div>
+      <DataState
+        v-if="employeeId == null"
+        kind="empty"
+        title="اختر موظفًا"
+        message="اختر موظفًا لعرض المسار."
+      />
+      <DataState
+        v-else-if="routeQuery.isPending.value"
+        kind="loading"
+        title="جاري التحميل"
+        message="جاري تحميل المسار…"
+      />
+      <DataState
+        v-else-if="routeQuery.isError.value"
+        kind="error"
+        title="تعذر التحميل"
+        message="تعذر تحميل المسار."
+      >
+        <template #actions>
+          <AppButton variant="secondary" @click="routeQuery.refetch()">إعادة المحاولة</AppButton>
+        </template>
+      </DataState>
 
       <template v-else-if="routeData">
         <p class="fw-page__sub" role="status">
@@ -236,9 +229,8 @@ const gapsNote = computed(() => {
         </p>
         <p v-if="gapsNote" class="fw-page__sub" role="status">{{ gapsNote }}</p>
         <p v-if="routeData.truncated" class="fw-page__sub" role="status">
-          النتائج مبتورة — صفحة {{ routeData.page }} / {{ routeData.totalPages }} ({{
-            routeData.totalCount
-          }}
+          النتائج مبتورة — صفحة {{ formatNumber(routeData.page) }} /
+          {{ formatNumber(routeData.totalPages) }} ({{ formatNumber(routeData.totalCount) }}
           نقطة). استخدم التصفح للاستكمال.
         </p>
 
@@ -250,10 +242,15 @@ const gapsNote = computed(() => {
 
         <div class="fdc-meta" style="margin-top: 0.75rem">
           <span>{{ routeData.employeeName || `موظف ${routeData.employeeId}` }}</span>
-          <span>النقاط: <b>{{ points.length }}</b> / {{ routeData.totalCount }}</span>
+          <span>النقاط: <b>{{ formatNumber(points.length) }}</b> / {{ formatNumber(routeData.totalCount) }}</span>
         </div>
 
-        <div v-if="!points.length" class="fw-state" role="status">لا نقاط لهذا اليوم ضمن النطاق.</div>
+        <DataState
+          v-if="!points.length"
+          kind="empty"
+          title="لا نقاط"
+          message="لا نقاط لهذا اليوم ضمن النطاق."
+        />
         <div v-else class="fdc-list" role="list">
           <button
             v-for="(p, i) in points"
@@ -263,33 +260,31 @@ const gapsNote = computed(() => {
             :class="{ 'fdc-row--active': selectedIndex === i }"
             @click="selectedIndex = i"
           >
-            <span class="fdc-row__title">نقطة {{ i + 1 }}</span>
+            <span class="fdc-row__title">نقطة {{ formatNumber(i + 1) }}</span>
             <span class="fdc-row__sub">
               {{ fmtDt(p.capturedAtUtc) }} · دقة {{ fmtAcc(p.accuracyMeters) }} ·
               {{ p.latitude.toFixed(5) }}, {{ p.longitude.toFixed(5) }}
-              <template v-if="p.branchId"> · فرع #{{ p.branchId }}</template>
+              <template v-if="p.branchId"> · فرع #{{ formatNumber(p.branchId) }}</template>
             </span>
           </button>
         </div>
 
         <div v-if="routeData.totalPages > 1" class="fdc-pager">
-          <button
-            type="button"
-            class="fw-pager__btn"
+          <AppButton
+            variant="secondary"
             :disabled="page <= 1"
             @click="patchQuery({ page: String(page - 1) })"
           >
             السابق
-          </button>
-          <span>صفحة {{ routeData.page }} / {{ routeData.totalPages }}</span>
-          <button
-            type="button"
-            class="fw-pager__btn"
+          </AppButton>
+          <span>صفحة {{ formatNumber(routeData.page) }} / {{ formatNumber(routeData.totalPages) }}</span>
+          <AppButton
+            variant="secondary"
             :disabled="page >= routeData.totalPages"
             @click="patchQuery({ page: String(page + 1) })"
           >
             التالي
-          </button>
+          </AppButton>
         </div>
       </template>
     </template>

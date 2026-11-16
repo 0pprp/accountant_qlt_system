@@ -2,6 +2,8 @@
 import { computed, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '@/modules/Auth/store'
+import { AppButton, AppInput, AppSearchField, AppSelect, DataState } from '@/modules/Core/components/ui'
+import { formatDateTime, formatNumber } from '@/modules/Core/utils/formatDisplay'
 import { axiosInstance } from '@/modules/Core/plugins/axios'
 import { useLegalFollowupsQuery } from '../requests/queries/useLegalFollowupsQuery'
 import { useCancelLegalFollowupMutation } from '../requests/mutations/useCancelLegalFollowupMutation'
@@ -137,17 +139,20 @@ async function submitCancel() {
   }
 }
 
+const branchOptions = computed(() => [
+  { label: 'كل الفروع المسموحة', value: null as number | null },
+  ...(auth.branches ?? []).map((b) => ({ label: b.name, value: b.id })),
+])
+
+function onBranch(v: string | number | null | boolean) {
+  patchQuery({
+    branchId: v == null || v === '' || typeof v === 'boolean' ? null : String(v),
+    page: '1',
+  })
+}
+
 function fmtDt(v: string | null | undefined) {
-  if (!v) return '—'
-  try {
-    return new Intl.DateTimeFormat('ar-IQ', {
-      dateStyle: 'medium',
-      timeStyle: 'short',
-      timeZone: 'Asia/Baghdad',
-    }).format(new Date(v))
-  } catch {
-    return v
-  }
+  return formatDateTime(v)
 }
 </script>
 
@@ -160,41 +165,29 @@ function fmtDt(v: string | null | undefined) {
       </p>
     </header>
 
-    <div v-if="!canRead" class="sl-state sl-state--denied" role="alert">
-      غير مخول بقراءة المتابعة القانونية.
-    </div>
+    <DataState
+      v-if="!canRead"
+      kind="forbidden"
+      title="غير مصرّح"
+      message="غير مخول بقراءة المتابعة القانونية."
+    />
 
     <template v-else>
-      <div class="sl-filters">
-        <label class="sl-field sl-field--grow">
-          <span>بحث</span>
-          <div class="sl-search">
-            <span aria-hidden="true">⌕</span>
-            <input
-              v-model="searchModel"
-              type="search"
-              class="sl-input"
-              placeholder="زبون / هاتف / متابع"
-              @keyup.enter="patchQuery({ search: searchModel.trim() || null, page: '1' })"
-            />
-          </div>
-        </label>
-        <label class="sl-field">
-          <span>الفرع</span>
-          <select
-            class="sl-select"
-            :value="branchId ?? ''"
-            @change="
-              patchQuery({
-                branchId: ($event.target as HTMLSelectElement).value || null,
-                page: '1',
-              })
-            "
-          >
-            <option value="">كل الفروع المسموحة</option>
-            <option v-for="b in auth.branches ?? []" :key="b.id" :value="b.id">{{ b.name }}</option>
-          </select>
-        </label>
+      <div class="q-filters">
+        <AppSearchField
+          v-model="searchModel"
+          label="بحث"
+          placeholder="زبون / هاتف / متابع"
+          grow
+          @keyup.enter="patchQuery({ search: searchModel.trim() || null, page: '1' })"
+        />
+        <AppSelect
+          :model-value="branchId"
+          label="الفرع"
+          placeholder="كل الفروع المسموحة"
+          :options="branchOptions"
+          @update:model-value="onBranch"
+        />
         <div class="sl-tabs" role="tablist">
           <button
             type="button"
@@ -215,13 +208,24 @@ function fmtDt(v: string | null | undefined) {
         </div>
       </div>
 
-      <div v-if="listQuery.isPending.value" class="sl-state">جاري التحميل…</div>
-      <div v-else-if="listQuery.isError.value" class="sl-state sl-state--error" role="alert">
-        تعذر تحميل القائمة.
-        <button type="button" class="sl-btn" @click="listQuery.refetch()">إعادة المحاولة</button>
-      </div>
+      <DataState
+        v-if="listQuery.isPending.value"
+        kind="loading"
+        title="جاري التحميل"
+        message="جاري تحميل القائمة."
+      />
+      <DataState
+        v-else-if="listQuery.isError.value"
+        kind="error"
+        title="تعذر التحميل"
+        message="تعذر تحميل القائمة."
+      >
+        <template #actions>
+          <AppButton variant="secondary" @click="listQuery.refetch()">إعادة المحاولة</AppButton>
+        </template>
+      </DataState>
       <template v-else-if="listQuery.data.value">
-        <p class="sl-count">{{ listQuery.data.value.totalCount }} متابعة</p>
+        <p class="sl-count">{{ formatNumber(listQuery.data.value.totalCount) }} متابعة</p>
         <div class="sl-table-wrap">
           <table class="sl-table">
             <thead>
@@ -238,42 +242,40 @@ function fmtDt(v: string | null | undefined) {
               <tr v-for="row in listQuery.data.value.items" :key="row.id">
                 <td>
                   <strong>{{ row.customerName }}</strong>
-                  <div v-if="row.salesRequestId" class="sl-muted">طلب #{{ row.salesRequestId }}</div>
+                  <div v-if="row.salesRequestId" class="sl-muted">طلب #{{ formatNumber(row.salesRequestId) }}</div>
                 </td>
                 <td>{{ row.customerPhone || '—' }}</td>
-                <td>{{ row.followerName || `#${row.followerUserId}` }}</td>
+                <td>{{ row.followerName || `#${formatNumber(row.followerUserId)}` }}</td>
                 <td>
                   <span class="sl-badge">{{ row.statusLabel }}</span>
                 </td>
                 <td>{{ fmtDt(row.createdAtUtc) }}</td>
                 <td>
-                  <button type="button" class="sl-btn sl-btn--sm" @click="openDetail(row)">
+                  <AppButton variant="secondary" size="sm" @click="openDetail(row)">
                     تفاصيل
-                  </button>
+                  </AppButton>
                 </td>
               </tr>
             </tbody>
           </table>
-          <p v-if="!listQuery.data.value.items.length" class="sl-state">لا متابعات مطابقة.</p>
+          <DataState v-if="!listQuery.data.value.items.length" kind="empty" title="لا متابعات" message="لا متابعات مطابقة." />
         </div>
         <div class="sl-pager">
-          <button
-            type="button"
-            class="sl-btn"
+          <AppButton
+            variant="secondary"
             :disabled="page <= 1"
             @click="patchQuery({ page: String(page - 1) })"
           >
             السابق
-          </button>
-          <span>صفحة {{ listQuery.data.value.page }}</span>
-          <button
-            type="button"
-            class="sl-btn"
+          </AppButton>
+          <span>صفحة {{ formatNumber(listQuery.data.value.page) }}</span>
+          <AppButton
+            variant="secondary"
             :disabled="page * 20 >= listQuery.data.value.totalCount"
             @click="patchQuery({ page: String(page + 1) })"
           >
             التالي
-          </button>
+          </AppButton>
         </div>
       </template>
     </template>
@@ -281,8 +283,8 @@ function fmtDt(v: string | null | undefined) {
     <div v-if="detail" class="sl-modal-bg" @click.self="closeDetail">
       <div class="sl-modal" role="dialog" aria-modal="true">
         <header>
-          <h2>متابعة #{{ detail.id }}</h2>
-          <button type="button" class="sl-btn sl-btn--ghost" @click="closeDetail">إغلاق</button>
+          <h2>متابعة #{{ formatNumber(detail.id) }}</h2>
+          <AppButton variant="ghost" @click="closeDetail">إغلاق</AppButton>
         </header>
         <dl class="sl-dl">
           <div><dt>الزبون</dt><dd>{{ detail.customerName }}</dd></div>
@@ -348,18 +350,14 @@ function fmtDt(v: string | null | undefined) {
         </section>
 
         <div v-if="canCancel && detail.canCancel" class="sl-cancel">
-          <label>
-            سبب الإلغاء
-            <input v-model="cancelReason" class="sl-input" type="text" />
-          </label>
-          <button
-            type="button"
-            class="sl-btn sl-btn--danger"
+          <AppInput v-model="cancelReason" label="سبب الإلغاء" />
+          <AppButton
+            variant="danger"
             :disabled="!cancelReason.trim() || cancelMut.isPending.value"
             @click="submitCancel"
           >
             إلغاء المتابعة
-          </button>
+          </AppButton>
           <p v-if="cancelError" class="sl-state sl-state--error">{{ cancelError }}</p>
         </div>
       </div>
@@ -369,7 +367,7 @@ function fmtDt(v: string | null | undefined) {
 
 <style scoped>
 .sl-page {
-  font-family: 'El Messiri', 'Segoe UI', Tahoma, sans-serif;
+  font-family: inherit;
   color: #00201e;
   font-size: 16px;
   padding: 1rem 1.25rem 2rem;

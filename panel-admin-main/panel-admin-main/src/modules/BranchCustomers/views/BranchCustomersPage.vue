@@ -4,6 +4,7 @@ import { useRouter } from 'vue-router'
 import { useQuery } from '@tanstack/vue-query'
 import { axiosInstance } from '@/modules/Core/plugins/axios'
 import { useAuthStore } from '@/modules/Auth/store'
+import { AppButton, AppSearchField } from '@/modules/Core/components/ui'
 
 interface Row {
   customerId: number
@@ -53,7 +54,7 @@ const listQuery = useQuery({
 })
 
 function fmt(n: number) {
-  return new Intl.NumberFormat('ar-IQ').format(n)
+  return new Intl.NumberFormat('en-US').format(n)
 }
 
 function openCustomer(id: number) {
@@ -83,15 +84,14 @@ function openCustomer(id: number) {
       ليس لديك صلاحية قراءة الزبائن.
     </div>
     <template v-else>
-      <label class="bc-search">
-        <span class="sr-only">بحث</span>
-        <input
+      <div class="q-filters">
+        <AppSearchField
           v-model="text"
-          type="search"
+          label="بحث"
           placeholder="اسم أو هاتف أو معرّف…"
-          aria-label="بحث الزبائن"
-        >
-      </label>
+          grow
+        />
+      </div>
       <div
         v-if="submitted.length < 2 && !/^\d+$/.test(submitted)"
         class="bc-state"
@@ -110,13 +110,9 @@ function openCustomer(id: number) {
         role="alert"
       >
         تعذر البحث.
-        <button
-          type="button"
-          class="bc-btn"
-          @click="listQuery.refetch()"
-        >
+        <AppButton variant="secondary" size="sm" @click="listQuery.refetch()">
           إعادة
-        </button>
+        </AppButton>
       </p>
       <div
         v-else-if="(listQuery.data.value?.items.length ?? 0) === 0"
@@ -155,7 +151,7 @@ function openCustomer(id: number) {
   max-width: 960px;
   margin: 0 auto;
   padding: 1rem 1.25rem 2rem;
-  font-family: ElMessiri, 'Segoe UI', Tahoma, sans-serif;
+  font-family: inherit;
   color: #00201e;
 }
 .bc-title {

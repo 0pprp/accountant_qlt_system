@@ -1,24 +1,143 @@
 <template>
-  <div class="permission-control">
-    <button type="button" role="switch" :aria-checked="enabled" :aria-label="label" :disabled="disabled" class="permission-switch" :class="{enabled}" @click="$emit('toggle', !enabled)">
-      <span class="switch-track" aria-hidden="true"><span /></span>
-      <span>{{ enabled ? 'تشغيل' : 'إيقاف' }}</span>
+  <div class="tab-switch-wrap">
+    <button
+      type="button"
+      role="switch"
+      class="tab-switch"
+      :class="{
+        'tab-switch--open': enabled,
+        'tab-switch--closed': !enabled,
+        'tab-switch--disabled': disabled,
+      }"
+      :aria-checked="enabled"
+      :aria-label="label"
+      :disabled="disabled"
+      @click="onToggle"
+      @keydown.space.prevent="onToggle"
+    >
+      <span class="tab-switch__track" aria-hidden="true">
+        <span class="tab-switch__thumb">
+          <i
+            class="pi"
+            :class="enabled ? 'pi-check' : 'pi-lock'"
+            aria-hidden="true"
+          />
+        </span>
+      </span>
+      <span class="tab-switch__text">{{ enabled ? 'مفتوح' : 'مقفول' }}</span>
     </button>
-    <button type="button" class="inherit-button" :disabled="disabled || inherited" :aria-label="`حسب الدور: ${label}`" @click="$emit('inherit')">{{ inherited ? 'موروثة من الدور' : 'حسب الدور' }}</button>
   </div>
 </template>
+
 <script setup lang="ts">
-defineProps<{label:string;enabled:boolean;inherited:boolean;disabled:boolean}>()
-defineEmits<{toggle:[boolean];inherit:[]}>()
+const props = defineProps<{
+  label: string
+  enabled: boolean
+  disabled?: boolean
+}>()
+
+const emit = defineEmits<{
+  toggle: [next: boolean]
+}>()
+
+function onToggle() {
+  if (props.disabled) return
+  emit('toggle', !props.enabled)
+}
 </script>
+
 <style scoped>
-.permission-control{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
-.permission-switch{display:inline-flex;align-items:center;gap:10px;min-height:44px;padding:6px 10px;border:1px solid #d7e2e0;border-radius:10px;font:inherit;color:#52625f;background:#f5f7f6;cursor:pointer}
-.permission-switch.enabled{color:#006a64;background:#edf7f4;border-color:#a1ccc5}
-.switch-track{display:block;width:42px;height:24px;border-radius:20px;background:#7e8986;padding:3px;direction:ltr}
-.switch-track span{display:block;width:18px;height:18px;background:white;border-radius:50%;transition:transform .15s}
-.enabled .switch-track{background:#006a64}.enabled .switch-track span{transform:translateX(18px)}
-.inherit-button{min-height:44px;font:inherit;font-size:12px;text-decoration:underline;color:#526b67}
-button:disabled{opacity:.6;cursor:default}button:focus-visible{outline:2px solid #006a64;outline-offset:3px}
-@media(prefers-reduced-motion:reduce){.switch-track span{transition:none}}
+.tab-switch-wrap {
+  display: inline-flex;
+  align-items: center;
+}
+
+.tab-switch {
+  --track-w: 48px;
+  --track-h: 28px;
+  --thumb: 22px;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.65rem;
+  min-width: 48px;
+  min-height: 44px;
+  padding: 0.35rem 0.55rem;
+  border: none;
+  border-radius: 12px;
+  background: transparent;
+  color: #00201e;
+  font: inherit;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.tab-switch:focus-visible {
+  outline: 2px solid #006a64;
+  outline-offset: 3px;
+}
+
+.tab-switch--disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+
+.tab-switch__track {
+  position: relative;
+  width: var(--track-w);
+  height: var(--track-h);
+  border-radius: 999px;
+  flex-shrink: 0;
+  box-shadow: inset 2px 2px 4px rgba(0, 32, 30, 0.12),
+    inset -1px -1px 3px rgba(255, 255, 255, 0.7);
+  transition: background-color 0.16s ease;
+}
+
+.tab-switch--closed .tab-switch__track {
+  background: #e4e9e8;
+  border: 1px solid #9aa8a5;
+}
+
+.tab-switch--open .tab-switch__track {
+  background: #006a64;
+  border: 1px solid #006a64;
+}
+
+.tab-switch__thumb {
+  position: absolute;
+  top: 2px;
+  /* RTL: المفتوح يدفع المقبض لليسار (بداية السطر)، المقفول لليمين */
+  inset-inline-start: 2px;
+  width: var(--thumb);
+  height: var(--thumb);
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: #f8f8f8;
+  color: #526b67;
+  box-shadow: 2px 2px 5px rgba(0, 32, 30, 0.18),
+    -1px -1px 3px rgba(255, 255, 255, 0.85);
+  transition: inset-inline-start 0.16s ease, color 0.16s ease;
+  font-size: 0.65rem;
+}
+
+.tab-switch--open .tab-switch__thumb {
+  inset-inline-start: calc(var(--track-w) - var(--thumb) - 2px);
+  color: #006a64;
+}
+
+.tab-switch--open .tab-switch__text {
+  color: #006a64;
+}
+
+.tab-switch--closed .tab-switch__text {
+  color: #526b67;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tab-switch__track,
+  .tab-switch__thumb {
+    transition: none;
+  }
+}
 </style>

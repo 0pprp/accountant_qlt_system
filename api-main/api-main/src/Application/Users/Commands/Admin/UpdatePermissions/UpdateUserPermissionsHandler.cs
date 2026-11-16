@@ -1,3 +1,4 @@
+using Application.Common.AdminPanel;
 using Application.Common.Interfaces;
 using Application.Users.Common;
 using Domain.Entities.ActivityLogAggregate.Enums;
@@ -39,10 +40,15 @@ public class UpdateUserPermissionsHandler : IRequestHandler<UpdateUserPermission
 
         var requestedPermissionIds = request.PermissionIds.Distinct().ToList();
 
-        var existingPermissionsCount = await _dbContext.Permissions
-            .CountAsync(x => requestedPermissionIds.Contains(x.Id), cancellationToken);
-        if (existingPermissionsCount != requestedPermissionIds.Count)
+        var requestedPermissions = await _dbContext.Permissions
+            .Where(x => requestedPermissionIds.Contains(x.Id))
+            .Select(x => new { x.Id, x.Name })
+            .ToListAsync(cancellationToken);
+        if (requestedPermissions.Count != requestedPermissionIds.Count)
             return UserErrors.SomePermissionsNotFound;
+
+        if (requestedPermissions.Any(p => AdminPanelTabs.IsManagedPermissionName(p.Name)))
+            return UserErrors.PanelTabManagedViaTabAccess;
 
         await using var transaction =
             await _dbContext.Database.BeginTransactionAsync(cancellationToken);

@@ -35,29 +35,16 @@
           class="flex-col justify-between mt-10"
         >
           <div class="flex flex-col gap-6 pb-10">
-            <div class="flex flex-col gap-1">
-              <span class="input__label">{{
-                $t('warehouse.productCategoryForm.name.label')
-              }}</span>
-
-              <InputText
-                v-model="name"
-                :placeholder="
-                  $t('warehouse.productCategoryForm.name.placeholder')
-                "
-                name="name"
-                type="text"
-              />
-
-              <Message
-                v-if="errors['name']"
-                severity="error"
-                class="text-error text-xs"
-                variant="simple"
-              >
-                {{ errors['name'] }}
-              </Message>
-            </div>
+            <AppInput
+              v-model="name"
+              :label="$t('warehouse.productCategoryForm.name.label')"
+              :placeholder="
+                $t('warehouse.productCategoryForm.name.placeholder')
+              "
+              name="name"
+              :error="errors['name']"
+              required
+            />
           </div>
 
           <div class="w-full flex justify-center pt-10">
@@ -81,9 +68,8 @@ import { Step, StepList, StepPanel, StepPanels, Stepper } from 'primevue'
 import { ref } from 'vue'
 import { useForm } from 'vee-validate'
 import { object, string } from 'yup'
-import InputText from 'primevue/inputtext'
-import Message from 'primevue/message'
 import Button from 'primevue/button'
+import { AppInput } from '@/modules/Core/components/ui'
 import { useI18n } from 'vue-i18n'
 import type { Emits, Props } from './ProductCategoryForm.types'
 import type { ProductCategoryForm } from '../../types/model'

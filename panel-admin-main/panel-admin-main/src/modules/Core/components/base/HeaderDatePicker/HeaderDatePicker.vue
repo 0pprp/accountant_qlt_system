@@ -1,185 +1,83 @@
 <template>
-  <DatePicker
-    ref="datePickerRef"
-    v-model="tempDateRange"
-    :unstyled="false"
-    showIcon
-    fluid
-    selectionMode="range"
-    :showOnFocus="false"
-    :inputId="uniqueId"
-    class="HeaderDatePicker"
-    @show="onShow"
-    @hide="onHide"
+  <div
+    class="hdr-dates"
+    dir="rtl"
   >
-    <template #footer>
-      <div class="flex justify-between gap-2 p-3 border-t">
-        <Button
-          @click="onAccept"
-          :label="$t('words.save')"
-          class="btn-primary w-2/3"
-        />
-
-        <Button
-          @click="onCancel"
-          class="bg-white shadow-2xl !text-primary w-1/3"
-        >
-          {{ $t('words.cancel') }}
-        </Button>
-      </div>
-    </template>
-  </DatePicker>
+    <AppDateField
+      :model-value="startDate"
+      label="من"
+      @update:model-value="onStart"
+    />
+    <AppDateField
+      :model-value="endDate"
+      label="إلى"
+      @update:model-value="onEnd"
+    />
+    <AppButton
+      variant="ghost"
+      size="sm"
+      type="button"
+      @click="onClear"
+    >
+      مسح
+    </AppButton>
+  </div>
 </template>
 
 <script setup lang="ts">
-import { Button, DatePicker } from 'primevue'
-import { computed, ref, watch } from 'vue'
+import { computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import useUid from '@/modules/Core/composable/useCurrentInstance'
+import { AppButton, AppDateField } from '@/modules/Core/components/ui'
 
 const route = useRoute()
 const router = useRouter()
 
-const datePickerRef = ref()
-
-const dateRange = ref<Date[] | null>(null)
-const tempDateRange = ref<Date[] | null>(null)
-const isUpdatingFromQuery = ref(false)
-const isPickerOpen = ref(false)
-
-const uniqueId = computed(() => `date-range-${useUid()}`)
-
-function initializeDatesFromQuery() {
-  const startDate = route.query.startDate as string
-  const endDate = route.query.endDate as string
-
-  if (startDate && endDate) {
-    const start = new Date(startDate)
-    const end = new Date(endDate)
-
-    if (!isNaN(start.getTime()) && !isNaN(end.getTime())) {
-      isUpdatingFromQuery.value = true
-      dateRange.value = [start, end]
-      tempDateRange.value = [start, end]
-      isUpdatingFromQuery.value = false
-    }
-  } else {
-    isUpdatingFromQuery.value = true
-    dateRange.value = null
-    tempDateRange.value = null
-    isUpdatingFromQuery.value = false
-  }
+function asDate(value: unknown): string {
+  const raw = Array.isArray(value) ? value[0] : value
+  if (typeof raw !== 'string') return ''
+  const match = /^(\d{4}-\d{2}-\d{2})/.exec(raw)
+  return match ? match[1] : ''
 }
 
-watch(
-  () => [route.query.startDate, route.query.endDate],
-  () => {
-    initializeDatesFromQuery()
-  },
-  { immediate: true }
-)
+const startDate = computed(() => asDate(route.query.startDate))
+const endDate = computed(() => asDate(route.query.endDate))
 
-function formatDateToString(date: Date): string {
-  const year = date.getFullYear()
-  const month = String(date.getMonth() + 1).padStart(2, '0')
-  const day = String(date.getDate()).padStart(2, '0')
-  return `${year}-${month}-${day}`
+function patch(next: { startDate?: string | null; endDate?: string | null }) {
+  const query = { ...route.query }
+  if (next.startDate === null) delete query.startDate
+  else if (next.startDate !== undefined) query.startDate = next.startDate
+  if (next.endDate === null) delete query.endDate
+  else if (next.endDate !== undefined) query.endDate = next.endDate
+
+  const sameStart = (query.startDate ?? null) === (route.query.startDate ?? null)
+  const sameEnd = (query.endDate ?? null) === (route.query.endDate ?? null)
+  if (sameStart && sameEnd) return
+
+  void router.push({ query })
 }
 
-function onShow() {
-  isPickerOpen.value = true
-  tempDateRange.value = dateRange.value ? [...dateRange.value] : null
+function onStart(v: string) {
+  patch({ startDate: v || null })
 }
 
-function onHide() {
-  isPickerOpen.value = false
+function onEnd(v: string) {
+  patch({ endDate: v || null })
 }
 
-function onAccept() {
-  if (tempDateRange.value && tempDateRange.value.length > 0) {
-    let startDate: Date
-    let endDate: Date
-
-    if (
-      tempDateRange.value.length === 1 ||
-      (tempDateRange.value.length === 2 && tempDateRange.value[1] === null)
-    ) {
-      startDate = tempDateRange.value[0]
-      endDate = tempDateRange.value[0]
-    } else if (
-      tempDateRange.value.length === 2 &&
-      tempDateRange.value[0] &&
-      tempDateRange.value[1]
-    ) {
-      startDate = tempDateRange.value[0]
-      endDate = tempDateRange.value[1]
-    } else {
-      onCancel()
-      return
-    }
-
-    const startDateString = formatDateToString(startDate)
-    const endDateString = formatDateToString(endDate)
-
-    dateRange.value = [startDate, endDate]
-    tempDateRange.value = [startDate, endDate]
-
-    const newQuery = {
-      ...route.query,
-      startDate: startDateString,
-      endDate: endDateString,
-    }
-
-    router.push({ query: newQuery })
-  } else {
-    dateRange.value = null
-
-    const newQuery = { ...route.query }
-    delete newQuery.startDate
-    delete newQuery.endDate
-
-    router.push({ query: newQuery })
-  }
-
-  closePicker()
+function onClear() {
+  patch({ startDate: null, endDate: null })
 }
-
-function onCancel() {
-  tempDateRange.value = null
-
-  const newQuery = { ...route.query }
-  delete newQuery.startDate
-  delete newQuery.endDate
-
-  dateRange.value = null
-  tempDateRange.value = null
-
-  router.push({ query: newQuery })
-
-  closePicker()
-}
-
-function closePicker() {
-  if (datePickerRef.value && typeof datePickerRef.value.hide === 'function') {
-    datePickerRef.value.hide()
-    return
-  }
-
-  if (datePickerRef.value && datePickerRef.value.overlayVisible !== undefined) {
-    datePickerRef.value.overlayVisible = false
-    return
-  }
-
-  const inputElement = document.querySelector(
-    `#${uniqueId.value} input`
-  ) as HTMLInputElement
-  if (inputElement) {
-    inputElement.blur()
-    setTimeout(() => {
-      document.body.click()
-    }, 10)
-  }
-}
-
-initializeDatesFromQuery()
 </script>
+
+<style scoped>
+.hdr-dates {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  gap: 12px;
+  margin: 0;
+}
+.hdr-dates :deep(.q-field) {
+  min-width: 160px;
+}
+</style>

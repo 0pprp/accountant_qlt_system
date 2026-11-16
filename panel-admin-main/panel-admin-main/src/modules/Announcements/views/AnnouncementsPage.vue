@@ -4,6 +4,17 @@ import { useRoute, useRouter } from 'vue-router'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/vue-query'
 import { axiosInstance } from '@/modules/Core/plugins/axios'
 import { useAuthStore } from '@/modules/Auth/store'
+import { AppButton, AppInput, AppSelect, AppTextarea } from '@/modules/Core/components/ui'
+import { formatDateTime } from '@/modules/Core/utils/formatDisplay'
+
+const appKeyOptions = [
+  { label: 'المندوب', value: 'delegate' },
+  { label: 'المتابع', value: 'follower' },
+]
+const enabledOptions = [
+  { label: 'مفعّل', value: '1' },
+  { label: 'معطّل', value: '0' },
+]
 
 interface Row {
   id: number
@@ -202,14 +213,7 @@ async function submit() {
 }
 
 function fmtDate(iso: string) {
-  try {
-    return new Intl.DateTimeFormat('ar-IQ', {
-      dateStyle: 'medium',
-      timeStyle: 'short',
-    }).format(new Date(iso))
-  } catch {
-    return iso
-  }
+  return formatDateTime(iso)
 }
 </script>
 
@@ -233,33 +237,26 @@ function fmtDate(iso: string) {
       ليس لديك صلاحية قراءة الإعلانات.
     </div>
     <template v-else>
-      <div class="an-toolbar">
-        <select
-          :value="appKey"
-          aria-label="الجمهور"
-          @change="patch({ appKey: ($event.target as HTMLSelectElement).value || null })"
-        >
-          <option value="">كل التطبيقات</option>
-          <option value="delegate">المندوب</option>
-          <option value="follower">المتابع</option>
-        </select>
-        <select
-          :value="enabledFilter === null ? '' : enabledFilter ? '1' : '0'"
-          aria-label="الحالة"
-          @change="patch({ enabled: ($event.target as HTMLSelectElement).value || null })"
-        >
-          <option value="">كل الحالات</option>
-          <option value="1">مفعّل</option>
-          <option value="0">معطّل</option>
-        </select>
-        <button
-          v-if="canCreate"
-          type="button"
-          class="an-btn primary"
-          @click="openCreate"
-        >
+      <div class="q-filters">
+        <AppSelect
+          :model-value="appKey || null"
+          label="الجمهور"
+          placeholder="كل التطبيقات"
+          :options="appKeyOptions"
+          :filterable="false"
+          @update:model-value="(v) => patch({ appKey: v ? String(v) : null })"
+        />
+        <AppSelect
+          :model-value="enabledFilter === null ? null : enabledFilter ? '1' : '0'"
+          label="الحالة"
+          placeholder="كل الحالات"
+          :options="enabledOptions"
+          :filterable="false"
+          @update:model-value="(v) => patch({ enabled: v ? String(v) : null })"
+        />
+        <AppButton v-if="canCreate" variant="primary" @click="openCreate">
           إعلان جديد
-        </button>
+        </AppButton>
       </div>
       <p
         v-if="listQuery.isError.value"
@@ -382,15 +379,13 @@ function fmtDate(iso: string) {
         aria-modal="true"
       >
         <h2>{{ editing ? 'تعديل إعلان' : 'إعلان جديد' }}</h2>
-        <label
+        <AppSelect
           v-if="!editing"
-          class="an-field"
-        >الجمهور
-          <select v-model="form.appKey">
-            <option value="delegate">المندوب</option>
-            <option value="follower">المتابع</option>
-          </select>
-        </label>
+          v-model="form.appKey"
+          label="الجمهور"
+          :options="appKeyOptions"
+          :filterable="false"
+        />
         <fieldset class="an-field">
           <legend>نوع المحتوى</legend>
           <label><input
@@ -404,16 +399,13 @@ function fmtDate(iso: string) {
             value="image"
           > صورة</label>
         </fieldset>
-        <label
+        <AppTextarea
           v-if="form.contentType === 'text'"
-          class="an-field"
-        >النص
-          <textarea
-            v-model="form.textBody"
-            rows="4"
-            maxlength="2000"
-          />
-        </label>
+          v-model="form.textBody"
+          label="النص"
+          :rows="4"
+          :maxlength="2000"
+        />
         <template v-else>
           <label class="an-field">صورة البانر
             <input
@@ -446,16 +438,13 @@ function fmtDate(iso: string) {
           v-model="form.hasLink"
           type="checkbox"
         > رابط اختياري</label>
-        <label
+        <AppInput
           v-if="form.hasLink"
-          class="an-field"
-        >الرابط
-          <input
-            v-model="form.linkUrl"
-            type="url"
-            placeholder="https://"
-          >
-        </label>
+          v-model="form.linkUrl"
+          label="الرابط"
+          type="url"
+          placeholder="https://"
+        />
         <label class="an-check"><input
           v-model="form.isEnabled"
           type="checkbox"
@@ -490,7 +479,7 @@ function fmtDate(iso: string) {
 
 <style scoped>
 .an-page {
-  font-family: 'El Messiri', Tahoma, sans-serif;
+  font-family: inherit;
   color: #00201e;
   padding: 1rem 1.25rem 2rem;
   max-width: 64rem;
@@ -506,16 +495,7 @@ function fmtDate(iso: string) {
   color: #3d524f;
   font-size: 14px;
 }
-.an-toolbar {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.75rem;
-  margin: 1.25rem 0 0.75rem;
-}
-.an-toolbar select,
-.an-field input,
-.an-field select,
-.an-field textarea {
+.an-field input[type='file'] {
   font-family: inherit;
   font-size: 16px;
   color: #00201e;
@@ -636,6 +616,9 @@ function fmtDate(iso: string) {
   background: #fff;
   border-radius: 12px;
   padding: 1.25rem;
+}
+.an-dialog :deep(.q-field) {
+  margin: 0.75rem 0;
 }
 .an-field {
   display: flex;

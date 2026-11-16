@@ -1,51 +1,68 @@
 <template>
-  <div class="so-page" dir="rtl">
-    <header class="so-head">
-      <h1 class="so-title">نظرة عامة للمبيعات</h1>
-      <p v-if="periodLabel" class="so-period">{{ periodLabel }}</p>
-    </header>
+  <AppPage
+    title="نظرة عامة للمبيعات"
+    :subtitle="periodLabel || 'مؤشرات يوم العمل وفق قطع 03:00 بغداد'"
+  >
+    <template #filters>
+      <div class="q-filters">
+        <AppSelect
+          v-model="branchModel"
+          label="الفرع"
+          placeholder="كل الفروع المسموحة"
+          :options="branchOptions"
+        />
+      </div>
+    </template>
 
-    <div class="so-filters">
-      <label class="so-field">
-        <span>الفرع</span>
-        <select v-model="branchModel" class="so-select">
-          <option :value="null">كل الفروع المسموحة</option>
-          <option v-for="b in branches" :key="b.id" :value="b.id">{{ b.name }}</option>
-        </select>
-      </label>
-    </div>
-
-    <div v-if="!canRead" class="so-state so-state--denied">غير مخول بقراءة نظرة عامة المبيعات.</div>
-    <div v-else-if="query.isLoading.value" class="so-state">جاري التحميل…</div>
-    <div v-else-if="query.isError.value" class="so-state so-state--error">
-      تعذر تحميل المؤشرات. ليس «لا نشاط اليوم».
-    </div>
-    <div v-else class="so-grid">
+    <DataState
+      v-if="!canRead"
+      kind="forbidden"
+      title="غير مصرّح"
+      message="غير مخول بقراءة نظرة عامة المبيعات."
+    />
+    <DataState
+      v-else-if="query.isLoading.value"
+      kind="loading"
+      title="جاري التحميل"
+      message="لا تُعرض أصفار وهمية أثناء الانتظار."
+    />
+    <DataState
+      v-else-if="query.isError.value"
+      kind="error"
+      title="تعذر التحميل"
+      message="تعذر تحميل المؤشرات. ليس «لا نشاط اليوم»."
+    >
+      <template #actions>
+        <AppButton variant="secondary" @click="query.refetch()">إعادة المحاولة</AppButton>
+      </template>
+    </DataState>
+    <div v-else class="q-metrics">
       <button
         v-for="m in metrics"
         :key="m.key"
         type="button"
-        class="so-metric"
+        class="q-metric"
         :class="{
-          'so-metric--clickable': isClickable(m),
-          'so-metric--unavailable': m.availability !== 'Available',
+          'q-metric--clickable': isClickable(m),
+          'q-metric--unavailable': m.availability !== 'Available',
         }"
         :disabled="!isClickable(m)"
         @click="onMetricClick(m)"
       >
-        <span class="so-metric__label">{{ m.labelAr }}</span>
-        <strong class="so-metric__value">{{ displayValue(m) }}</strong>
-        <span v-if="m.periodNote" class="so-metric__note">{{ m.periodNote }}</span>
-        <span v-if="isClickable(m)" class="so-metric__hint">يفتح التفاصيل</span>
+        <span class="q-metric__label">{{ m.labelAr }}</span>
+        <strong class="q-metric__value">{{ displayValue(m) }}</strong>
+        <span v-if="m.periodNote" class="q-metric__note">{{ m.periodNote }}</span>
+        <span v-if="isClickable(m)" class="q-metric__hint">يفتح التفاصيل</span>
       </button>
     </div>
-  </div>
+  </AppPage>
 </template>
 
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '@/modules/Auth/store'
+import { AppButton, AppPage, AppSelect, DataState } from '@/modules/Core/components/ui'
 import { useSalesOverviewQuery } from '../requests/queries/useSalesOverviewQuery'
 import type { SalesOverviewMetric } from '../domain/types'
 
@@ -55,6 +72,9 @@ const router = useRouter()
 
 const canRead = computed(() => auth.hasPermission('SalesOverview', 'Read') === true)
 const branches = computed(() => auth.branches ?? [])
+const branchOptions = computed(() =>
+  branches.value.map((b) => ({ label: b.name, value: b.id })),
+)
 
 const branchModel = ref<number | null>(null)
 watch(
@@ -63,7 +83,7 @@ watch(
     const n = Number(raw)
     branchModel.value = Number.isInteger(n) && n > 0 ? n : null
   },
-  { immediate: true }
+  { immediate: true },
 )
 watch(branchModel, (v) => {
   const q = { ...route.query } as Record<string, string>
@@ -98,111 +118,3 @@ function onMetricClick(m: SalesOverviewMetric) {
   void router.push({ path: m.link.path, query: m.link.query ?? undefined })
 }
 </script>
-
-<style scoped>
-.so-page {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-  padding: 0.25rem 0 1.5rem;
-  background: #f8f8f8;
-  min-height: 100%;
-  font-family: ElMessiri, 'El Messiri', sans-serif;
-  font-size: 16px;
-  color: #00201e;
-}
-.so-title {
-  margin: 0;
-  font-size: 1.55rem;
-  font-weight: 700;
-  color: #00201e;
-}
-.so-period {
-  margin: 0.25rem 0 0;
-  font-size: 14px;
-  color: #006a64;
-}
-.so-filters {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.75rem;
-}
-.so-field {
-  display: flex;
-  flex-direction: column;
-  gap: 0.35rem;
-  min-width: 12rem;
-  font-size: 14px;
-}
-.so-select {
-  min-height: 44px;
-  border: 1px solid #c5d4d2;
-  border-radius: 8px;
-  padding: 0 0.75rem;
-  background: #fff;
-  font: inherit;
-  color: inherit;
-}
-.so-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(14rem, 1fr));
-  gap: 0.75rem;
-}
-.so-metric {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 0.35rem;
-  text-align: start;
-  min-height: 7rem;
-  padding: 1rem;
-  border: 1px solid #d7e3e1;
-  border-radius: 10px;
-  background: #fff;
-  color: inherit;
-  font: inherit;
-}
-.so-metric--clickable {
-  cursor: pointer;
-  border-color: #006a64;
-}
-.so-metric--clickable:hover {
-  background: #f0faf8;
-}
-.so-metric--unavailable {
-  opacity: 0.85;
-}
-.so-metric__label {
-  font-size: 14px;
-  color: #006a64;
-}
-.so-metric__value {
-  font-size: 1.75rem;
-  font-weight: 700;
-  line-height: 1.2;
-}
-.so-metric__note,
-.so-metric__hint {
-  font-size: 12px;
-  color: #5a6f6c;
-}
-.so-state {
-  padding: 1rem;
-  border-radius: 8px;
-  background: #fff;
-  border: 1px solid #d7e3e1;
-}
-.so-state--error {
-  border-color: #b91c1c;
-  color: #991b1b;
-}
-.so-state--denied {
-  border-color: #a16207;
-  color: #854d0e;
-}
-@media (max-width: 768px) {
-  .so-grid {
-    grid-template-columns: 1fr;
-  }
-}
-</style>

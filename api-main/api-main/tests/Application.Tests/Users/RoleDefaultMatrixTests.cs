@@ -1,3 +1,4 @@
+using Application.Common.AdminPanel;
 using Application.Common.SeedData;
 using SeedPermissions = Application.Common.SeedData.Permissions;
 using SeedRoles = Application.Common.SeedData.Roles;
@@ -7,31 +8,31 @@ namespace Application.Tests.Users;
 public class RoleDefaultMatrixTests
 {
     [Fact]
-    public void Admin_includes_new_sales_read_permissions()
+    public void Admin_includes_panel_tab_and_sales_read_permissions()
     {
         var permissions = RolePermissions.All.Single(x => x.RoleName == SeedRoles.Admin.Name).Permissions;
         Assert.Contains(SeedPermissions.SalesOverview.Read, permissions);
-        Assert.Contains(SeedPermissions.SalesEmployee.Read, permissions);
-        Assert.Contains(SeedPermissions.SalesLocation.Read, permissions);
-        Assert.Contains(SeedPermissions.SalesRoute.Read, permissions);
+        Assert.Contains(AdminPanelTabs.PermissionName("saleOverview"), permissions);
+        Assert.Contains(AdminPanelTabs.PermissionName("sr.incoming"), permissions);
     }
 
     [Fact]
-    public void Director_template_includes_delegate_followup_read_not_manage_permissions()
+    public void Director_template_uses_panel_tabs_not_manage_permissions()
     {
         var perms = RoleDefaultMatrix.SeedPermissionsFor(SeedRoles.Director.Name).ToList();
-        Assert.Contains(SeedPermissions.DelegateFollowup.Read, perms);
-        Assert.Contains(SeedPermissions.ManagementTask.Read, perms);
+        Assert.Contains(AdminPanelTabs.PermissionName("managementDelegateFollowup"), perms);
+        Assert.Contains(AdminPanelTabs.PermissionName("managementCommitteeTasks"), perms);
         Assert.DoesNotContain(SeedPermissions.User.ManagePermissions, perms);
+        Assert.DoesNotContain(SeedPermissions.DelegateFollowup.Read, perms);
     }
 
     [Fact]
-    public void Monitor_template_excludes_task_defaults_and_manage_permissions()
+    public void Monitor_template_excludes_committee_tasks_and_manage_permissions()
     {
         var perms = RoleDefaultMatrix.SeedPermissionsFor(SeedRoles.Monitor.Name).ToList();
-        Assert.Contains(SeedPermissions.DelegateFollowup.Read, perms);
-        Assert.Contains(SeedPermissions.SalesFollowup.Read, perms);
-        Assert.DoesNotContain(SeedPermissions.ManagementTask.Read, perms);
+        Assert.Contains(AdminPanelTabs.PermissionName("managementDelegateFollowup"), perms);
+        Assert.Contains(AdminPanelTabs.PermissionName("saleFollowup"), perms);
+        Assert.DoesNotContain(AdminPanelTabs.PermissionName("managementCommitteeTasks"), perms);
         Assert.DoesNotContain(SeedPermissions.User.ManagePermissions, perms);
     }
 
@@ -39,9 +40,9 @@ public class RoleDefaultMatrixTests
     public void SalesManager_excludes_delegate_followup_and_manage_permissions()
     {
         var perms = RoleDefaultMatrix.SeedPermissionsFor(SeedRoles.SalesManager.Name).ToList();
-        Assert.Contains(SeedPermissions.SalesFollowup.Read, perms);
-        Assert.Contains(SeedPermissions.Order.Read, perms);
-        Assert.DoesNotContain(SeedPermissions.DelegateFollowup.Read, perms);
+        Assert.Contains(AdminPanelTabs.PermissionName("saleFollowup"), perms);
+        Assert.Contains(AdminPanelTabs.PermissionName("saleOrders"), perms);
+        Assert.DoesNotContain(AdminPanelTabs.PermissionName("managementDelegateFollowup"), perms);
         Assert.DoesNotContain(SeedPermissions.User.ManagePermissions, perms);
     }
 
@@ -67,11 +68,6 @@ public class RoleDefaultMatrixTests
         Assert.Contains(SeedRoles.Director.Name, roleNames);
         Assert.Contains(SeedRoles.Monitor.Name, roleNames);
         Assert.Contains(SeedRoles.SalesManager.Name, roleNames);
-
-        var seeded = SeedRoles.All.Select(x => x.Name).ToHashSet();
-        Assert.Contains(SeedRoles.Director.Name, seeded);
-        Assert.Contains(SeedRoles.Monitor.Name, seeded);
-        Assert.Contains(SeedRoles.SalesManager.Name, seeded);
     }
 
     [Fact]
@@ -87,5 +83,20 @@ public class RoleDefaultMatrixTests
             var again = RoleDefaultMatrix.SeedPermissionsFor(role).ToList();
             Assert.Equal(perms, again);
         }
+    }
+
+    [Fact]
+    public void User_tab_bundle_excludes_ManagePermissions()
+    {
+        Assert.True(AdminPanelTabs.TryGet("user", out var tab));
+        Assert.DoesNotContain(SeedPermissions.User.ManagePermissions, tab.GrantedActions);
+    }
+
+    [Fact]
+    public void CommitteeRatings_is_not_ready()
+    {
+        Assert.True(AdminPanelTabs.TryGet("committeeRatings", out var tab));
+        Assert.False(tab.Ready);
+        Assert.DoesNotContain(AdminPanelTabs.PermissionName("committeeRatings"), AdminPanelTabs.ReadyPermissionNames);
     }
 }

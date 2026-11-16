@@ -13,12 +13,13 @@ export interface OrderListReport {
 
 export interface Payment {
   id: number
+  customerId?: number
   customerFullName: string
-  productName: string
+  productName?: string
   date: string
   dailyInstallmentAmount: number
-  sellerFullName: string
-  amount: string
+  sellerFullName: string | null
+  amount: string | number
   description: string | null
 }
 

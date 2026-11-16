@@ -1,7 +1,7 @@
 /* ManagementSummary — RTL, ElMessiri, #006A64 / #00201E / #F8F8F8 */
 .ms-page {
   direction: rtl;
-  font-family: 'ElMessiri', 'El Messiri', sans-serif;
+  font-family: inherit;
   color: #00201e;
   padding: 1rem 1.25rem 2rem;
   max-width: 100%;
@@ -225,7 +225,7 @@
   flex-direction: column;
   box-shadow: 0 18px 48px #00201e33;
   direction: rtl;
-  font-family: 'ElMessiri', 'El Messiri', sans-serif;
+  font-family: inherit;
   color: #00201e;
 }
 

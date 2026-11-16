@@ -1,25 +1,30 @@
 import type { FormMode } from '../../UserTabs/UserTabs.types'
 import type { RolePermission } from '@/modules/User/types/model'
-import type { PermissionOverrideChange } from '@/modules/User/types/permissionOverrides'
+import type { TabAccessChange } from '@/modules/User/types/tabAccess'
 
 export interface Props {
   roleId: number
   userId?: number | null
   selectedPermissions?: Array<RolePermission>
   userFormMode?: FormMode
+  /** عند الإنشاء بعد نجاح الحساب — إظهار تنبيه إعادة الحفظ */
+  createRetryNotice?: string | null
 }
 
 export type PowersFormExpose = {
-  /** توافق المسار السابق — معرفات الفعّالة الظاهرة */
+  /** توافق المسار السابق — فارغ دائمًا (لم يعد يُستخدم CRUD) */
   permissionIds: number[]
   permissionsVersion: number
-  getChanges: () => PermissionOverrideChange[]
+  getChanges: () => TabAccessChange[]
   dirtyCount: number
   exceptionCount: number
   reloadFromServer: () => Promise<void>
+  compareWithServer: () => Promise<void>
+  markConflict: (message?: string) => void
   hasConflictDraft: boolean
   hasPendingServerAdoption: boolean
   unresolvedConflictCount: number
-  /** false عند وجود serverLatest غير معتمد أو تعارضات غير محسومة */
   canSaveOverrides: boolean
+  baselineVersion: number
+  serverLatestVersion: number | null
 }

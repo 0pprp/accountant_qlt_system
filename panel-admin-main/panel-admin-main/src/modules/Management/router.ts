@@ -1,4 +1,5 @@
 import type { Router, RouteRecordRaw } from 'vue-router'
+import { requirementForManagementTabId } from '@/modules/Core/navigation/panelTabAccess'
 import { getReadyManagementTabs } from './domain/sections'
 import { appRequirement } from './domain/workspaceNavigation'
 
@@ -132,7 +133,7 @@ const readyChildren: RouteRecordRaw[] = getReadyManagementTabs().map((tab) => ({
       : undefined,
   meta: {
     requiresAuth: true,
-    accessRequirement: tab.requirement,
+    accessRequirement: requirementForManagementTabId(tab.id, tab.requirement),
     managementSectionId: tab.sectionId,
     managementTabId: tab.id,
   },

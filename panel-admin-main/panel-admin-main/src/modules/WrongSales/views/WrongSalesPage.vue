@@ -4,6 +4,8 @@ import { useRoute, useRouter } from 'vue-router'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/vue-query'
 import { axiosInstance } from '@/modules/Core/plugins/axios'
 import { useAuthStore } from '@/modules/Auth/store'
+import { AppButton, AppSelect, AppTextarea, DataState } from '@/modules/Core/components/ui'
+import { formatDateTime, formatNumber } from '@/modules/Core/utils/formatDisplay'
 
 const props = withDefaults(
   defineProps<{ audience?: 'delegate' | 'branch' }>(),
@@ -127,15 +129,20 @@ async function submitReview() {
   }
 }
 
+const mailboxOptions = [
+  { label: 'الكل', value: 'all' },
+  { label: 'غير مقروء (مفوض)', value: 'unread' },
+  { label: 'مقروء (مفوض)', value: 'read' },
+  { label: 'بانتظار مراجعة الفرع', value: 'unreviewed' },
+  { label: 'راجعتها إدارة الفرع', value: 'reviewed' },
+]
+
+function onMailbox(v: string | number | null | boolean) {
+  patch({ mailbox: v == null || v === '' || typeof v === 'boolean' ? null : String(v) })
+}
+
 function fmtDate(iso: string) {
-  try {
-    return new Intl.DateTimeFormat('ar-IQ', {
-      dateStyle: 'medium',
-      timeStyle: 'short',
-    }).format(new Date(iso))
-  } catch {
-    return iso
-  }
+  return formatDateTime(iso)
 }
 </script>
 
@@ -159,31 +166,26 @@ function fmtDate(iso: string) {
       ليس لديك صلاحية قراءة المبيعات الخاطئة.
     </div>
     <template v-else>
-      <div class="ws-toolbar">
-        <select
-          :value="mailbox"
-          aria-label="صندوق"
-          @change="patch({ mailbox: ($event.target as HTMLSelectElement).value || null })"
-        >
-          <option value="all">الكل</option>
-          <option value="unread">غير مقروء (مفوض)</option>
-          <option value="read">مقروء (مفوض)</option>
-          <option value="unreviewed">بانتظار مراجعة الفرع</option>
-          <option value="reviewed">راجعتها إدارة الفرع</option>
-        </select>
-        <button
+      <div class="q-filters">
+        <AppSelect
+          :model-value="mailbox || 'all'"
+          label="صندوق"
+          :options="mailboxOptions"
+          :filterable="false"
+          @update:model-value="(v) => patch({ mailbox: v ? String(v) : null })"
+        />
+        <AppButton
           v-if="listQuery.isError.value"
-          type="button"
-          class="ws-btn"
+          variant="secondary"
           @click="listQuery.refetch()"
         >
           إعادة المحاولة
-        </button>
+        </AppButton>
       </div>
       <p class="ws-meta">
-        الإجمالي: {{ listQuery.data.value?.totalCount ?? (listQuery.isError.value ? '—' : '…') }}
-        · غير مقروء: {{ listQuery.data.value?.unreadCount ?? '—' }}
-        · بانتظار مراجعة: {{ listQuery.data.value?.unreviewedCount ?? '—' }}
+        الإجمالي: {{ listQuery.data.value ? formatNumber(listQuery.data.value.totalCount) : (listQuery.isError.value ? '—' : '…') }}
+        · غير مقروء: {{ listQuery.data.value ? formatNumber(listQuery.data.value.unreadCount) : '—' }}
+        · بانتظار مراجعة: {{ listQuery.data.value ? formatNumber(listQuery.data.value.unreviewedCount) : '—' }}
       </p>
       <p
         v-if="listQuery.isError.value"
@@ -221,7 +223,7 @@ function fmtDate(iso: string) {
               {{ row.isBranchUnreviewed ? 'بانتظار الفرع' : 'راجعه الفرع' }}
             </span>
           </div>
-          <p class="ws-line">تقييم {{ row.rating }} · {{ row.followerName ?? 'متابع' }} · {{ fmtDate(row.createdAtUtc) }}</p>
+          <p class="ws-line">تقييم {{ formatNumber(row.rating) }} · {{ row.followerName ?? 'متابع' }} · {{ fmtDate(row.createdAtUtc) }}</p>
           <pre class="ws-reason">{{ row.reasonBlock }}</pre>
           <div class="ws-actions">
             <button
@@ -256,14 +258,13 @@ function fmtDate(iso: string) {
           aria-modal="true"
         >
           <h2>مراجعة المبيع الخاطئ</h2>
-          <p class="ws-line">{{ reviewTarget.customerName }} · تقييم {{ reviewTarget.rating }}</p>
-          <label class="ws-field">ملاحظة المراجعة (3–2000)
-            <textarea
-              v-model="reviewNote"
-              rows="4"
-              maxlength="2000"
-            />
-          </label>
+          <p class="ws-line">{{ reviewTarget.customerName }} · تقييم {{ formatNumber(reviewTarget.rating) }}</p>
+          <AppTextarea
+            v-model="reviewNote"
+            label="ملاحظة المراجعة (3–2000)"
+            :rows="4"
+            :maxlength="2000"
+          />
           <p
             v-if="reviewError"
             class="ws-err"
@@ -298,7 +299,7 @@ function fmtDate(iso: string) {
   --c-primary: #006a64;
   --c-ink: #00201e;
   --c-field: #f8f8f8;
-  font-family: ElMessiri, 'Segoe UI', Tahoma, sans-serif;
+  font-family: inherit;
   color: var(--c-ink);
   padding: 1rem 1.25rem 2rem;
   max-width: 900px;
@@ -410,18 +411,7 @@ function fmtDate(iso: string) {
   padding: 1.1rem 1.2rem;
   width: min(480px, 100%);
 }
-.ws-field {
-  display: grid;
-  gap: 0.3rem;
+.ws-dialog :deep(.q-field) {
   margin: 0.65rem 0;
-  font-size: 0.9rem;
-}
-.ws-field textarea {
-  font: inherit;
-  background: var(--c-field);
-  border: 1px solid #d0d5d4;
-  border-radius: 8px;
-  padding: 0.5rem 0.65rem;
-  resize: vertical;
 }
 </style>

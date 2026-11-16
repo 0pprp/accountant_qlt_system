@@ -1,5 +1,7 @@
+using Application.Common.AdminPanel;
 using Application.Users.Common;
 using Domain.Entities.RoleAggregate;
+using SeedPermissions = Application.Common.SeedData.Permissions;
 
 namespace Application.Tests.Users;
 
@@ -74,5 +76,46 @@ public class EffectivePermissionCalculatorTests
         var allow = new List<Permission> { P(2, "User.Create") };
         var effective = EffectivePermissionCalculator.Compute(role, allow, []);
         Assert.Equal(2, effective.Count);
+    }
+
+    [Fact]
+    public void Open_panel_tab_expands_granted_actions()
+    {
+        var tabName = AdminPanelTabs.PermissionName("saleOverview");
+        var role = new List<Permission> { P(100, tabName) };
+        var catalog = new Dictionary<string, Permission>(StringComparer.Ordinal)
+        {
+            [tabName] = role[0],
+            [SeedPermissions.SalesOverview.Read] = P(101, SeedPermissions.SalesOverview.Read)
+        };
+        var effective = EffectivePermissionCalculator.Compute(role, [], [], catalog);
+        Assert.Contains(effective, x => x.Name == tabName);
+        Assert.Contains(effective, x => x.Name == SeedPermissions.SalesOverview.Read);
+    }
+
+    [Fact]
+    public void Denied_panel_tab_does_not_expand_actions()
+    {
+        var tabName = AdminPanelTabs.PermissionName("saleOverview");
+        var role = new List<Permission> { P(100, tabName) };
+        var deny = new List<Permission> { P(100, tabName) };
+        var catalog = new Dictionary<string, Permission>(StringComparer.Ordinal)
+        {
+            [tabName] = role[0],
+            [SeedPermissions.SalesOverview.Read] = P(101, SeedPermissions.SalesOverview.Read)
+        };
+        var effective = EffectivePermissionCalculator.Compute(role, [], deny, catalog);
+        Assert.DoesNotContain(effective, x => x.Name == SeedPermissions.SalesOverview.Read);
+        Assert.DoesNotContain(effective, x => x.Name == tabName);
+    }
+
+    [Fact]
+    public void ComputeRaw_skips_panel_tab_expansion()
+    {
+        var tabName = AdminPanelTabs.PermissionName("saleOverview");
+        var role = new List<Permission> { P(100, tabName) };
+        var raw = EffectivePermissionCalculator.ComputeRaw(role, [], []);
+        Assert.Single(raw);
+        Assert.Equal(tabName, raw[0].Name);
     }
 }

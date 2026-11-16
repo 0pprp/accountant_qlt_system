@@ -1,309 +1,235 @@
 <template>
   <div
-    class="powers-form px-4 md:px-6 flex flex-col gap-4"
+    class="powers-form"
     :class="{ 'powers-form--editable': editable }"
     dir="rtl"
   >
-    <header class="flex flex-col gap-2">
-      <h2 class="text-xl font-bold text-[var(--powers-primary)] powers-title">
-        {{ headerTitle }}
-      </h2>
-      <p class="text-sm text-gray-600">
-        شغّل الصلاحية للسماح بها، أو أوقفها لمنعها حتى لو كانت موروثة من الدور. اضغط «حسب الدور» لإلغاء التخصيص. التغييرات تُطبّق عند الحفظ.
+    <header class="powers-form__header">
+      <h2 class="powers-form__title">صلاحيات التبويبات</h2>
+      <p class="powers-form__identity">
+        <span>{{ displayName || '—' }}</span>
+        <span class="powers-form__dot" aria-hidden="true">·</span>
+        <span>{{ roleDisplayName || '—' }}</span>
       </p>
-      <div class="flex flex-wrap gap-3 text-sm items-center">
-        <span class="text-gray-700">
-          {{ $t('user.permissionOverrides.exceptionsCount') }}:
-          <strong>{{ exceptionCount }}</strong>
-        </span>
-        <span class="text-gray-700">
-          {{ $t('user.permissionOverrides.dirtyCount') }}:
-          <strong>{{ dirtyCount }}</strong>
-        </span>
-        <span
-          v-if="serverLatest"
-          class="text-amber-800 text-xs font-medium"
-        >
-          {{ $t('user.permissionOverrides.syncStatusServerNewer') }}
-        </span>
-        <span
-          v-else-if="initialized"
-          class="text-gray-500 text-xs"
-        >
-          {{ $t('user.permissionOverrides.syncStatusCurrent') }}
-        </span>
+      <p class="powers-form__hint">
+        مفتاح واحد لكل تبويب: مفتوح أو مقفول. التغييرات تُجمع في مسودة حتى الحفظ.
+      </p>
+      <div class="powers-form__meta">
+        <span v-if="dirtyCount > 0">تعديلات بانتظار الحفظ: {{ dirtyCount }}</span>
+        <span v-if="exceptionCount > 0">مخصص لهذا الحساب: {{ exceptionCount }}</span>
         <span
           v-if="isProtected"
-          class="rounded-md bg-amber-100 text-amber-900 px-2 py-1 text-xs font-medium"
+          class="powers-form__badge powers-form__badge--warn"
         >
-          {{ $t('user.permissionOverrides.protectedBadge') }}
+          حساب محمي — عرض فقط
+        </span>
+        <span
+          v-else-if="!editable && userFormMode !== FormMode.IsView"
+          class="powers-form__badge powers-form__badge--warn"
+        >
+          لا يمكن تعديل صلاحيات هذا الحساب من جلستك
         </span>
       </div>
+      <p
+        v-if="createRetryNotice"
+        class="powers-form__retry-notice"
+        role="alert"
+      >
+        {{ createRetryNotice }}
+      </p>
     </header>
 
     <div
-      v-if="!editable && userFormMode !== FormMode.IsView"
-      class="rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900"
-    >
-      {{ $t('user.permissionOverrides.readOnlyNotice') }}
-    </div>
-
-    <div class="flex flex-col md:flex-row gap-3">
-      <InputText
-        v-model="search"
-        class="w-full md:flex-1"
-        :placeholder="$t('user.permissionOverrides.searchPlaceholder')"
-      />
-      <Select
-        v-model="filter"
-        :options="filterOptions"
-        optionLabel="label"
-        optionValue="value"
-        class="w-full md:w-56"
-      />
-    </div>
-
-    <div
       v-if="serverLatest || conflictMessage"
-      class="rounded-lg border border-amber-300 bg-amber-50 p-3 text-sm flex flex-col gap-3"
+      class="powers-form__conflict"
+      role="status"
     >
-      <p>{{ conflictMessage || $t('user.permissionOverrides.serverNewer') }}</p>
-      <p v-if="serverLatest" class="text-xs text-amber-900">
-        {{ $t('user.permissionOverrides.saveUsesBaselineOnly') }}
+      <p>
+        {{
+          conflictMessage ||
+          'نسخة أحدث على الخادم. احسم التعارضات أو تراجع ثم أعد التحميل.'
+        }}
       </p>
-      <div v-if="conflicts.length" class="overflow-x-auto">
-        <table class="w-full text-xs border-collapse">
-          <thead>
-            <tr class="text-right border-b">
-              <th class="py-2">{{ $t('user.permissionOverrides.colOperation') }}</th>
-              <th class="py-2">{{ $t('user.permissionOverrides.draftLabel') }}</th>
-              <th class="py-2">{{ $t('user.permissionOverrides.serverLabel') }}</th>
-              <th class="py-2">{{ $t('user.permissionOverrides.resolveLabel') }}</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-for="c in conflicts" :key="c.permissionId" class="border-b">
-              <td class="py-2">{{ c.displayName }}</td>
-              <td class="py-2">{{ modeLabel(c.draft) }}</td>
-              <td class="py-2">{{ modeLabel(c.server) }}</td>
-              <td class="py-2">
-                <SelectButton
-                  :modelValue="conflictResolutions[c.permissionId]"
-                  :options="resolutionOptions"
-                  optionLabel="label"
-                  optionValue="value"
-                  :allowEmpty="true"
-                  class="powers-mode-select"
-                  @update:modelValue="
-                    (v: ConflictResolution | null) => {
-                      if (v === 'draft' || v === 'server') {
-                        setConflictResolution(c.permissionId, v)
-                      } else {
-                        delete conflictResolutions[c.permissionId]
-                      }
-                    }
-                  "
-                />
-              </td>
-            </tr>
-          </tbody>
-        </table>
-        <p
-          v-if="unresolvedConflicts.length"
-          class="text-xs text-rose-700 mt-2"
+      <div v-if="conflicts.length" class="powers-form__conflict-list">
+        <div
+          v-for="c in conflicts"
+          :key="c.tabKey"
+          class="powers-form__conflict-row"
         >
-          {{ $t('user.permissionOverrides.unresolvedBlocksSave') }}
+          <div class="powers-form__conflict-name">{{ c.displayName }}</div>
+          <div class="powers-form__conflict-vals">
+            مسودتك: {{ c.draftEnabled ? 'مفتوح' : 'مقفول' }} — الخادم:
+            {{ c.serverEnabled ? 'مفتوح' : 'مقفول' }}
+          </div>
+          <div class="powers-form__conflict-actions">
+            <button
+              type="button"
+              class="powers-form__quiet-btn"
+              :class="{
+                active: conflictResolutions[c.tabKey] === 'draft',
+              }"
+              @click="setConflictResolution(c.tabKey, 'draft')"
+            >
+              إبقاء مسودتي
+            </button>
+            <button
+              type="button"
+              class="powers-form__quiet-btn"
+              :class="{
+                active: conflictResolutions[c.tabKey] === 'server',
+              }"
+              @click="setConflictResolution(c.tabKey, 'server')"
+            >
+              اعتماد الخادم
+            </button>
+          </div>
+        </div>
+        <p v-if="unresolvedConflicts.length" class="powers-form__warn-text">
+          يجب حسم كل التبويبات المتعارضة قبل الحفظ.
         </p>
       </div>
-      <div class="flex flex-wrap gap-2">
-        <Button
+      <div class="powers-form__conflict-bar">
+        <button type="button" class="powers-form__quiet-btn" @click="compareWithServer">
+          مقارنة مع الخادم
+        </button>
+        <button
           type="button"
-          class="btn-secondary"
-          :label="$t('user.permissionOverrides.compareOnly')"
-          @click="compareWithServer"
-        />
-        <Button
-          type="button"
-          class="btn-secondary"
-          :label="$t('user.permissionOverrides.keepDraftUseServerVersion')"
+          class="powers-form__quiet-btn"
           :disabled="!serverLatest || unresolvedConflicts.length > 0"
           @click="keepDraftAdoptServerVersion"
-        />
-        <Button
+        >
+          إبقاء المسودة واعتماد إصدار الخادم
+        </button>
+        <button
           type="button"
-          class="btn-primary"
-          :label="$t('user.permissionOverrides.discardDraftReload')"
+          class="powers-form__quiet-btn"
           @click="confirmDiscardAndReload"
-        />
+        >
+          تجاهل المسودة وإعادة التحميل
+        </button>
       </div>
     </div>
 
-    <div class="hidden md:block overflow-x-auto">
-      <table class="w-full text-sm border-collapse">
-        <thead>
-          <tr class="border-b border-line text-gray-600 text-right">
-            <th class="py-3 px-2 font-medium">
-              {{ $t('user.permissionOverrides.colOperation') }}
-            </th>
-            <th class="py-3 px-2 font-medium">
-              {{ $t('user.permissionOverrides.colRole') }}
-            </th>
-            <th class="py-3 px-2 font-medium">
-              {{ $t('user.permissionOverrides.colMode') }}
-            </th>
-            <th class="py-3 px-2 font-medium">
-              {{ $t('user.permissionOverrides.colEffective') }}
-            </th>
-          </tr>
-        </thead>
-        <tbody>
-          <template v-for="group in groupedRows" :key="group.scope">
-            <tr>
-              <td
-                colspan="4"
-                class="pt-4 pb-2 px-2 font-semibold text-[var(--powers-primary)]"
-              >
-                {{ group.scopeDisplayName }}
-              </td>
-            </tr>
-            <tr
-              v-for="row in group.rows"
-              :key="row.permissionId"
-              class="border-b border-line/60"
-            >
-              <td class="py-3 px-2 align-middle">
-                <div>{{ row.displayName }}</div>
-                <p
-                  v-if="dependencyNote(row)"
-                  class="text-xs text-[#526b67] mt-1 m-0 leading-5"
-                >
-                  {{ dependencyNote(row) }}
-                </p>
-              </td>
-              <td class="py-3 px-2 align-middle">
-                {{
-                  row.roleAllows
-                    ? $t('user.permissionOverrides.roleAllowed')
-                    : $t('user.permissionOverrides.roleDenied')
-                }}
-              </td>
-              <td class="py-3 px-2 align-middle">
-                <PermissionSwitch :label="row.displayName" :enabled="effectiveFor(row)" :inherited="(draftModes[row.permissionId] ?? row.mode) === 'inherit'" :disabled="!editable" @toggle="setMode(row.permissionId, $event ? 'allow' : 'deny')" @inherit="setMode(row.permissionId, 'inherit')" />
-              </td>
-              <td class="py-3 px-2 align-middle">
-                <span
-                  :class="
-                    effectiveFor(row) ? 'text-emerald-700' : 'text-rose-700'
-                  "
-                >
-                  {{
-                    effectiveFor(row)
-                      ? $t('user.permissionOverrides.effectiveAllowed')
-                      : $t('user.permissionOverrides.effectiveDenied')
-                  }}
-                </span>
-              </td>
-            </tr>
-          </template>
-        </tbody>
-      </table>
+    <div v-if="isLoading" class="powers-form__loading" aria-busy="true">
+      جارٍ تحميل صلاحيات التبويبات…
     </div>
 
-    <div class="md:hidden flex flex-col gap-4">
-      <section
-        v-for="group in groupedRows"
-        :key="group.scope"
-        class="border border-line rounded-xl p-3 flex flex-col gap-3"
-      >
-        <h3 class="font-semibold text-[var(--powers-primary)]">
-          {{ group.scopeDisplayName }}
-        </h3>
-        <article
-          v-for="row in group.rows"
-          :key="row.permissionId"
-          class="border-t border-line/50 pt-3 flex flex-col gap-2 min-h-11"
-        >
-          <div class="font-medium">{{ row.displayName }}</div>
-          <p
-            v-if="dependencyNote(row)"
-            class="text-xs text-[#526b67] m-0 leading-5"
-          >
-            {{ dependencyNote(row) }}
-          </p>
-          <PermissionSwitch :label="row.displayName" :enabled="effectiveFor(row)" :inherited="(draftModes[row.permissionId] ?? row.mode) === 'inherit'" :disabled="!editable" @toggle="setMode(row.permissionId, $event ? 'allow' : 'deny')" @inherit="setMode(row.permissionId, 'inherit')" />
-        </article>
-      </section>
-    </div>
-
-    <footer
-      v-if="editable"
-      class="powers-form__sticky-actions sticky bottom-0 z-10 bg-surface-0/95 border-t border-line py-3 flex flex-wrap gap-2 justify-center"
+    <section
+      v-for="group in groupedRows"
+      :key="group.parentKey"
+      class="powers-section"
     >
-      <Button
+      <h3 class="powers-section__title">{{ group.label }}</h3>
+      <ul class="powers-section__list">
+        <li
+          v-for="row in group.rows"
+          :key="row.tabKey"
+          class="powers-row"
+        >
+          <div class="powers-row__main">
+            <div class="powers-row__copy">
+              <div class="powers-row__name">{{ row.displayName }}</div>
+              <p v-if="effectNote(row.tabKey)" class="powers-row__desc">
+                {{ effectNote(row.tabKey) }}
+              </p>
+              <div class="powers-row__source">
+                <template v-if="isCustomized(row.tabKey)">
+                  <span class="powers-row__custom">مخصص لهذا الحساب</span>
+                  <button
+                    v-if="editable"
+                    type="button"
+                    class="powers-form__quiet-btn powers-form__quiet-btn--inline"
+                    @click="onResetRole(row.tabKey)"
+                  >
+                    اعتماد إعداد الدور
+                  </button>
+                </template>
+                <span v-else class="powers-row__role">حسب الدور</span>
+              </div>
+            </div>
+            <PermissionSwitch
+              :label="row.displayName"
+              :enabled="draftEnabled(row.tabKey)"
+              :disabled="!editable"
+              @toggle="onToggle(row.tabKey)"
+            />
+          </div>
+        </li>
+      </ul>
+    </section>
+
+    <footer v-if="editable" class="powers-form__sticky">
+      <button
         type="button"
-        class="btn-secondary"
-        :label="$t('user.permissionOverrides.discardLocal')"
-        :disabled="dirtyCount === 0"
+        class="powers-form__btn powers-form__btn--ghost"
+        :disabled="dirtyCount === 0 || isSaving"
         @click="discardLocal"
-      />
-      <Button
+      >
+        تراجع عن التغييرات
+      </button>
+      <button
         type="button"
-        class="btn-secondary"
-        :label="$t('user.permissionOverrides.restoreRoleDefaults')"
-        @click="confirmRestoreDefaults"
-      />
+        class="powers-form__btn powers-form__btn--primary"
+        :disabled="!canSaveNow || isSaving"
+        :aria-busy="isSaving"
+        @click="emitSave"
+      >
+        {{ isSaving ? 'جارٍ الحفظ…' : 'حفظ التغييرات' }}
+      </button>
     </footer>
   </div>
 </template>
 
 <script setup lang="ts">
 import { computed, reactive, ref, watch } from 'vue'
-import { useI18n } from 'vue-i18n'
-import InputText from 'primevue/inputtext'
-import Select from 'primevue/select'
-import SelectButton from 'primevue/selectbutton'
-import Button from 'primevue/button'
 import PermissionSwitch from './PermissionSwitch.vue'
 import type { Props } from './PowersForm.types'
 import { FormMode } from '../../UserTabs/UserTabs.types'
-import { useUserPermissionOverridesQuery } from '@/modules/User/requests/queries/useUserPermissionOverridesQuery'
-import type {
-  PermissionOverrideMode,
-  PermissionOverrideRow,
-} from '@/modules/User/types/permissionOverrides'
-import { usePermission } from '@/modules/Core/composable/usePermission'
+import { useUserTabAccessQuery } from '@/modules/User/requests/queries/useUserTabAccessQuery'
 import useAuthStore from '@/modules/Auth/store'
+import { usePermission } from '@/modules/Core/composable/usePermission'
 import {
-  adoptMergedBaseline,
-  collectConflicts,
-  type ConflictResolution,
-  expectedVersionForSave,
-  mergeDraftWithServer,
-  type PowersBaseline,
-  type PowersServerSnapshot,
-  snapshotFromResponse,
-  unresolvedConflictIds,
-} from './powersFormState'
-import { dependenciesFor } from '@/modules/Core/navigation/permissionDependencies'
+  TAB_EFFECT_NOTES_AR,
+  TAB_PARENT_LABELS_AR,
+  TAB_PARENT_ORDER,
+} from '@/modules/Core/navigation/panelTabAccess'
+import type { TabDraftState } from '@/modules/User/types/tabAccess'
+import {
+  adoptMergedTabBaseline,
+  buildTabAccessChanges,
+  collectTabConflicts,
+  dirtyTabCount,
+  expectedVersionForTabSave,
+  mergeTabDraftWithServer,
+  resetTabToRole,
+  snapshotFromTabAccess,
+  toggleTabDraft,
+  type TabAccessBaseline,
+  type TabAccessConflict,
+  type TabAccessServerSnapshot,
+  type TabConflictResolution,
+} from './tabAccessFormState'
 
 const props = defineProps<Props>()
-const { t } = useI18n()
+const emit = defineEmits<{
+  save: []
+}>()
+
 const auth = useAuthStore()
 const { can } = usePermission()
 
-const search = ref('')
-const filter = ref<'all' | 'exceptions' | 'dirty'>('all')
 const conflictMessage = ref<string | null>(null)
-const draftModes = reactive<Record<number, PermissionOverrideMode>>({})
-const baseline = reactive<PowersBaseline>({ version: 0, modes: {} })
-const serverLatest = ref<PowersServerSnapshot | null>(null)
-const conflictResolutions = reactive<Record<number, ConflictResolution>>({})
-const rows = ref<PermissionOverrideRow[]>([])
+const draft = reactive<Record<string, TabDraftState>>({})
+const baseline = reactive<TabAccessBaseline>({ version: 0, states: {} })
+const serverLatest = ref<TabAccessServerSnapshot | null>(null)
+const conflictResolutions = reactive<Record<string, TabConflictResolution>>({})
+const tabs = ref<TabAccessServerSnapshot['tabs']>([])
 const isProtected = ref(false)
 const serverCanEdit = ref(false)
 const displayName = ref('')
 const roleDisplayName = ref('')
 const initialized = ref(false)
+const isSaving = ref(false)
 
 const hasManagePermission = computed(
   () => auth.isSuperAdmin === true || can('User', 'ManagePermissions')
@@ -317,29 +243,35 @@ const editable = computed(
     isProtected.value === false
 )
 
-const { data, refetch } = useUserPermissionOverridesQuery(
+const { data, refetch, isFetching } = useUserTabAccessQuery(
   () => props.userId,
   () => Boolean(props.userId)
 )
 
+const isLoading = computed(() => isFetching.value && !initialized.value)
+
 function clearConflictResolutions() {
   for (const key of Object.keys(conflictResolutions)) {
-    delete conflictResolutions[Number(key)]
+    delete conflictResolutions[key]
   }
 }
 
-function applyAsBaseline(snapshot: PowersServerSnapshot) {
+function clearDraft() {
+  for (const key of Object.keys(draft)) {
+    delete draft[key]
+  }
+}
+
+function applyAsBaseline(snapshot: TabAccessServerSnapshot) {
   displayName.value = snapshot.fullName
   roleDisplayName.value = snapshot.roleDisplayName
   isProtected.value = snapshot.isProtectedAccount
-  serverCanEdit.value = snapshot.canEditOverrides
-  rows.value = snapshot.rows
+  serverCanEdit.value = snapshot.canEdit
+  tabs.value = snapshot.tabs
   baseline.version = snapshot.version
-  baseline.modes = { ...snapshot.modes }
-  for (const key of Object.keys(draftModes)) {
-    delete draftModes[Number(key)]
-  }
-  Object.assign(draftModes, snapshot.modes)
+  baseline.states = { ...snapshot.states }
+  clearDraft()
+  Object.assign(draft, snapshot.states)
   serverLatest.value = null
   clearConflictResolutions()
   conflictMessage.value = null
@@ -350,33 +282,21 @@ function ingestServerPayload(
   payload: NonNullable<typeof data.value>,
   forceBaseline: boolean
 ) {
-  const snapshot = snapshotFromResponse(payload)
-  const dirty = Object.keys(draftModes).some(
-    (id) => draftModes[Number(id)] !== baseline.modes[Number(id)]
-  )
+  const snapshot = snapshotFromTabAccess(payload)
+  const dirty = dirtyTabCount(draft, baseline) > 0
 
   if (forceBaseline || initialized.value === false || dirty === false) {
     applyAsBaseline(snapshot)
     return
   }
 
-  // تعديلات محلية: لا تستبدل baseline ولا إصدار الحفظ — احتفظ بنسخة الخادم منفصلة
   serverLatest.value = snapshot
   clearConflictResolutions()
-  rows.value = snapshot.rows
+  tabs.value = snapshot.tabs
   displayName.value = snapshot.fullName
   roleDisplayName.value = snapshot.roleDisplayName
   isProtected.value = snapshot.isProtectedAccount
-  serverCanEdit.value = snapshot.canEditOverrides
-  logVersionDiagnostics('server-newer-retained-draft')
-}
-
-function logVersionDiagnostics(reason: string) {
-  // تفاصيل الإصدار للتشخيص فقط — لا تُعرض في واجهة الموظف
-  console.debug('[PowersForm]', reason, {
-    baselineVersion: baseline.version,
-    serverLatestVersion: serverLatest.value?.version ?? null,
-  })
+  serverCanEdit.value = snapshot.canEdit
 }
 
 watch(
@@ -394,7 +314,7 @@ watch(
     if (prev == null || next === prev) return
     if (dirtyCount.value > 0) {
       const keep = window.confirm(
-        t('user.permissionOverrides.roleChangedKeepLocal')
+        'تغيّر الدور وهناك تعديلات محلية. هل تبقي المسودة وتقارن مع الخادم؟'
       )
       if (!keep) {
         await confirmDiscardAndReload()
@@ -408,204 +328,155 @@ watch(
   }
 )
 
-const headerTitle = computed(() => {
-  if (displayName.value) {
-    return `${displayName.value} — ${roleDisplayName.value}`
-  }
-  return t('user.userCreateSteps.powers.stepTitle')
-})
-
-const modeOptions = computed(() => [
-  { label: t('user.permissionOverrides.modeInherit'), value: 'inherit' },
-  { label: t('user.permissionOverrides.modeAllow'), value: 'allow' },
-  { label: t('user.permissionOverrides.modeDeny'), value: 'deny' },
-])
-
-const resolutionOptions = computed(() => [
-  { label: t('user.permissionOverrides.chooseDraft'), value: 'draft' as const },
-  { label: t('user.permissionOverrides.chooseServer'), value: 'server' as const },
-])
-
-const filterOptions = computed(() => [
-  { label: t('user.permissionOverrides.filterAll'), value: 'all' },
-  {
-    label: t('user.permissionOverrides.filterExceptions'),
-    value: 'exceptions',
-  },
-  { label: t('user.permissionOverrides.filterDirty'), value: 'dirty' },
-])
-
-function modeLabel(mode: PermissionOverrideMode) {
-  if (mode === 'allow') return t('user.permissionOverrides.modeAllow')
-  if (mode === 'deny') return t('user.permissionOverrides.modeDeny')
-  return t('user.permissionOverrides.modeInherit')
+function draftEnabled(tabKey: string): boolean {
+  return draft[tabKey]?.enabled ?? false
 }
 
-function setMode(permissionId: number, mode: PermissionOverrideMode) {
+function isCustomized(tabKey: string): boolean {
+  return draft[tabKey]?.override != null
+}
+
+function effectNote(tabKey: string): string | null {
+  return TAB_EFFECT_NOTES_AR[tabKey] ?? null
+}
+
+function onToggle(tabKey: string) {
   if (!editable.value) return
-  draftModes[permissionId] = mode
+  const row = tabs.value.find((t) => t.tabKey === tabKey)
+  if (!row) return
+  const current = draft[tabKey] ?? {
+    enabled: row.effectiveEnabled,
+    override: row.override,
+  }
+  draft[tabKey] = toggleTabDraft(current, row.roleDefaultEnabled)
 }
 
-function effectiveFor(row: PermissionOverrideRow): boolean {
-  const mode = draftModes[row.permissionId] ?? row.mode
-  if (mode === 'deny') return false
-  if (mode === 'allow') return true
-  return row.roleAllows
+function onResetRole(tabKey: string) {
+  if (!editable.value) return
+  const row = tabs.value.find((t) => t.tabKey === tabKey)
+  if (!row) return
+  draft[tabKey] = resetTabToRole(row.roleDefaultEnabled)
 }
 
-const dirtyCount = computed(
-  () =>
-    rows.value.filter(
-      (r) => draftModes[r.permissionId] !== baseline.modes[r.permissionId]
-    ).length
-)
+const dirtyCount = computed(() => dirtyTabCount(draft, baseline))
 
 const exceptionCount = computed(
-  () =>
-    rows.value.filter((r) => (draftModes[r.permissionId] ?? r.mode) !== 'inherit')
-      .length
+  () => Object.values(draft).filter((s) => s.override != null).length
 )
 
-const conflicts = computed(() => {
+const conflicts = computed((): TabAccessConflict[] => {
   if (!serverLatest.value) return []
-  return collectConflicts(draftModes, baseline, serverLatest.value)
+  return collectTabConflicts(draft, baseline, serverLatest.value)
 })
 
 const unresolvedConflicts = computed(() =>
-  unresolvedConflictIds(conflicts.value, conflictResolutions)
+  conflicts.value.filter(
+    (c) =>
+      conflictResolutions[c.tabKey] !== 'draft' &&
+      conflictResolutions[c.tabKey] !== 'server'
+  )
 )
 
 const hasPendingServerAdoption = computed(() => serverLatest.value != null)
 
+const canSaveNow = computed(
+  () =>
+    dirtyCount.value > 0 &&
+    serverLatest.value == null &&
+    unresolvedConflicts.value.length === 0
+)
+
 function setConflictResolution(
-  permissionId: number,
-  resolution: ConflictResolution
+  tabKey: string,
+  resolution: TabConflictResolution
 ) {
-  conflictResolutions[permissionId] = resolution
+  conflictResolutions[tabKey] = resolution
 }
 
-const filteredRows = computed(() => {
-  const q = search.value.trim()
-  return rows.value.filter((row) => {
-    const mode = draftModes[row.permissionId] ?? row.mode
-    if (filter.value === 'exceptions' && mode === 'inherit') return false
-    if (
-      filter.value === 'dirty' &&
-      draftModes[row.permissionId] === baseline.modes[row.permissionId]
-    ) {
-      return false
-    }
-    if (!q) return true
-    return (
-      row.displayName.includes(q) ||
-      row.scopeDisplayName.includes(q) ||
-      row.name.includes(q)
-    )
-  })
-})
-
 const groupedRows = computed(() => {
-  const map = new Map<
+  const byParent = new Map<
     string,
-    { scope: string; scopeDisplayName: string; rows: PermissionOverrideRow[] }
+    { parentKey: string; label: string; rows: typeof tabs.value }
   >()
-  for (const row of filteredRows.value) {
-    if (!map.has(row.scope)) {
-      map.set(row.scope, {
-        scope: row.scope,
-        scopeDisplayName: row.scopeDisplayName,
+
+  for (const row of tabs.value) {
+    const parentKey = row.parentKey ?? '_root'
+    if (!byParent.has(parentKey)) {
+      byParent.set(parentKey, {
+        parentKey,
+        label: TAB_PARENT_LABELS_AR[parentKey] ?? parentKey,
         rows: [],
       })
     }
-    map.get(row.scope)!.rows.push(row)
+    byParent.get(parentKey)!.rows.push(row)
   }
-  return Array.from(map.values())
+
+  const ordered: Array<{
+    parentKey: string
+    label: string
+    rows: typeof tabs.value
+  }> = []
+
+  for (const key of TAB_PARENT_ORDER) {
+    const g = byParent.get(key)
+    if (g) {
+      ordered.push(g)
+      byParent.delete(key)
+    }
+  }
+  for (const g of byParent.values()) ordered.push(g)
+  return ordered
 })
 
-/** توضيح تبعية فقط — لا يوسّع الصلاحيات خفيًا */
-function dependencyNote(row: PermissionOverrideRow): string | null {
-  const [module, action] = row.name.split('.')
-  if (!module || !action) return null
-  return dependenciesFor(module, action)?.noteAr ?? null
-}
-
 function getChanges() {
-  return rows.value
-    .filter(
-      (r) => draftModes[r.permissionId] !== baseline.modes[r.permissionId]
-    )
-    .map((r) => ({
-      permissionId: r.permissionId,
-      mode: draftModes[r.permissionId],
-    }))
+  return buildTabAccessChanges(draft, baseline, tabs.value)
 }
 
-const permissionsVersion = computed(() => expectedVersionForSave(baseline))
-
-const permissionIds = computed(() =>
-  rows.value.filter((r) => effectiveFor(r)).map((r) => r.permissionId)
-)
+const permissionsVersion = computed(() => expectedVersionForTabSave(baseline))
 
 function discardLocal() {
-  for (const row of rows.value) {
-    draftModes[row.permissionId] = baseline.modes[row.permissionId] ?? 'inherit'
-  }
-}
-
-function confirmRestoreDefaults() {
-  const count = exceptionCount.value
-  if (count === 0) return
-  if (!window.confirm(t('user.permissionOverrides.restoreConfirm', { count })))
-    return
-  for (const row of rows.value) {
-    draftModes[row.permissionId] = 'inherit'
-  }
+  clearDraft()
+  Object.assign(draft, baseline.states)
 }
 
 async function compareWithServer() {
   const result = await refetch()
   if (result.data) {
-    // لا يمسح المسودة ولا يعتمد الإصدار — يحدّث serverLatest فقط إن وُجدت تعديلات
     const dirty = dirtyCount.value > 0
     ingestServerPayload(result.data, dirty === false)
     if (dirty) {
-      conflictMessage.value = t('user.permissionOverrides.conflictMessage')
+      conflictMessage.value =
+        'هناك نسخة أحدث على الخادم. احسم التبويبات المتعارضة قبل الحفظ.'
     }
   }
 }
 
 function keepDraftAdoptServerVersion() {
   if (!serverLatest.value) return
-
-  const merged = mergeDraftWithServer(
-    draftModes,
+  const merged = mergeTabDraftWithServer(
+    draft,
     baseline,
     serverLatest.value,
     conflictResolutions
   )
   if (merged.ok === false) {
-    conflictMessage.value = t('user.permissionOverrides.unresolvedBlocksSave')
+    conflictMessage.value = 'يجب حسم كل التبويبات المتعارضة قبل المتابعة.'
     return
   }
-
-  const adopted = adoptMergedBaseline(serverLatest.value, merged.modes)
+  const adopted = adoptMergedTabBaseline(serverLatest.value, merged.states)
   baseline.version = adopted.baseline.version
-  baseline.modes = { ...adopted.baseline.modes }
-  for (const key of Object.keys(draftModes)) {
-    delete draftModes[Number(key)]
-  }
-  Object.assign(draftModes, adopted.draft)
-  rows.value = serverLatest.value.rows
+  baseline.states = { ...adopted.baseline.states }
+  clearDraft()
+  Object.assign(draft, adopted.draft)
+  tabs.value = serverLatest.value.tabs
   serverLatest.value = null
   clearConflictResolutions()
-  conflictMessage.value = t('user.permissionOverrides.draftKeptNewVersion')
+  conflictMessage.value = 'أُبقيَت مسودتك مع اعتماد إصدار الخادم للحفظ التالي.'
 }
 
 async function confirmDiscardAndReload() {
   if (dirtyCount.value > 0) {
-    const ok = window.confirm(
-      t('user.permissionOverrides.discardDraftConfirm')
-    )
+    const ok = window.confirm('تجاهل التعديلات المحلية وإعادة التحميل من الخادم؟')
     if (!ok) return
   }
   const result = await refetch()
@@ -614,12 +485,21 @@ async function confirmDiscardAndReload() {
 
 function markConflict(message?: string) {
   conflictMessage.value =
-    message || t('user.permissionOverrides.conflictMessage')
+    message || 'تعارض في الحفظ (409). قارن مع الخادم واحسم التبويبات.'
   void compareWithServer()
 }
 
+function emitSave() {
+  if (!canSaveNow.value) return
+  emit('save')
+}
+
+function setSaving(value: boolean) {
+  isSaving.value = value
+}
+
 defineExpose({
-  permissionIds,
+  permissionIds: computed(() => [] as number[]),
   permissionsVersion,
   getChanges,
   dirtyCount,
@@ -636,34 +516,319 @@ defineExpose({
   ),
   baselineVersion: computed(() => baseline.version),
   serverLatestVersion: computed(() => serverLatest.value?.version ?? null),
+  setSaving,
 })
 </script>
 
 <style scoped>
 .powers-form {
+  --powers-bg: #f8f8f8;
   --powers-primary: #006a64;
-}
-.powers-form--editable {
-  /* مساحة تمرير كافية حتى لا يحجب الشريط الثابت آخر خيارات الهاتف */
-  padding-bottom: 7.5rem;
-}
-.powers-title {
+  --powers-text: #00201e;
+  --powers-muted: #526b67;
+  --powers-line: rgba(0, 32, 30, 0.08);
+  background: var(--powers-bg);
+  color: var(--powers-text);
   font-family: 'El Messiri', 'Segoe UI', Tahoma, sans-serif;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding: 0.25rem 0 1rem;
 }
-.powers-mode-select :deep(.p-togglebutton) {
+
+.powers-form--editable {
+  padding-bottom: calc(5.5rem + env(safe-area-inset-bottom, 0px));
+}
+
+.powers-form__header {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  padding-inline: 0.25rem;
+}
+
+.powers-form__title {
+  margin: 0;
+  font-size: 1.375rem;
+  font-weight: 700;
+  color: var(--powers-primary);
+  line-height: 1.3;
+}
+
+.powers-form__identity {
+  margin: 0;
+  font-size: 0.9375rem;
+  color: var(--powers-text);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  align-items: center;
+}
+
+.powers-form__dot {
+  opacity: 0.45;
+}
+
+.powers-form__hint,
+.powers-form__meta {
+  margin: 0;
+  font-size: 0.875rem;
+  color: var(--powers-muted);
+}
+
+.powers-form__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: center;
+}
+
+.powers-form__badge {
+  border-radius: 8px;
+  padding: 0.2rem 0.55rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.powers-form__badge--warn {
+  background: #fff4e5;
+  color: #7a4a00;
+}
+
+.powers-form__retry-notice {
+  margin: 0.25rem 0 0;
+  padding: 0.65rem 0.85rem;
+  border-radius: 12px;
+  background: #fff4e5;
+  color: #7a4a00;
+  font-size: 0.875rem;
+}
+
+.powers-form__conflict {
+  border-radius: 16px;
+  padding: 0.85rem 1rem;
+  background: #fff8ef;
+  box-shadow: 6px 6px 14px rgba(0, 32, 30, 0.06),
+    -4px -4px 10px rgba(255, 255, 255, 0.8);
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  font-size: 0.875rem;
+}
+
+.powers-form__conflict-row {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  padding: 0.55rem 0;
+  border-top: 1px solid var(--powers-line);
+}
+
+.powers-form__conflict-name {
+  font-weight: 700;
+}
+
+.powers-form__conflict-vals {
+  color: var(--powers-muted);
+  font-size: 0.8125rem;
+}
+
+.powers-form__conflict-actions,
+.powers-form__conflict-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.powers-form__warn-text {
+  margin: 0;
+  color: #9f1239;
+  font-size: 0.8125rem;
+}
+
+.powers-form__quiet-btn {
+  min-height: 40px;
+  padding: 0.35rem 0.7rem;
+  border-radius: 10px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--powers-muted);
+  font: inherit;
+  font-size: 0.8125rem;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+
+.powers-form__quiet-btn:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.powers-form__quiet-btn.active {
+  color: var(--powers-primary);
+  font-weight: 700;
+  text-decoration: none;
+  border-color: rgba(0, 106, 100, 0.25);
+  background: rgba(0, 106, 100, 0.06);
+}
+
+.powers-form__quiet-btn--inline {
+  min-height: 32px;
+  padding-inline: 0.25rem;
+}
+
+.powers-form__quiet-btn:focus-visible {
+  outline: 2px solid var(--powers-primary);
+  outline-offset: 2px;
+}
+
+.powers-form__loading {
+  padding: 1.5rem;
+  text-align: center;
+  color: var(--powers-muted);
+}
+
+.powers-section {
+  border-radius: 18px;
+  background: #f3f5f4;
+  box-shadow: 8px 8px 18px rgba(0, 32, 30, 0.07),
+    -6px -6px 14px rgba(255, 255, 255, 0.9);
+  padding: 0.85rem 0.85rem 0.35rem;
+}
+
+.powers-section__title {
+  margin: 0 0 0.35rem;
+  padding-inline: 0.35rem;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--powers-primary);
+}
+
+.powers-section__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.powers-row {
+  border-top: 1px solid var(--powers-line);
+}
+
+.powers-row__main {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+  min-height: 52px;
+  padding: 0.7rem 0.35rem;
+}
+
+.powers-row__copy {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.powers-row__name {
+  font-size: 1.0625rem;
+  font-weight: 700;
+  line-height: 1.35;
+}
+
+.powers-row__desc {
+  margin: 0;
+  font-size: 0.875rem;
+  color: var(--powers-muted);
+  line-height: 1.45;
+}
+
+.powers-row__source {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.8125rem;
+  color: var(--powers-muted);
+}
+
+.powers-row__custom {
+  color: var(--powers-primary);
+  font-weight: 600;
+}
+
+.powers-form__sticky {
+  position: sticky;
+  bottom: 0;
+  z-index: 12;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+  justify-content: center;
+  padding: 0.75rem 0.5rem calc(0.75rem + env(safe-area-inset-bottom, 0px));
+  margin-inline: -0.25rem;
+  background: rgba(248, 248, 248, 0.96);
+  border-top: 1px solid var(--powers-line);
+  backdrop-filter: blur(6px);
+}
+
+.powers-form__btn {
   min-height: 44px;
+  min-width: 9rem;
+  padding: 0.55rem 1.1rem;
+  border-radius: 12px;
+  border: 1px solid transparent;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
 }
-.powers-form__sticky-actions {
-  margin-inline: -1rem;
-  padding-inline: 1rem;
+
+.powers-form__btn:disabled {
+  opacity: 0.45;
+  cursor: default;
 }
-@media (min-width: 768px) {
-  .powers-form--editable {
-    padding-bottom: 5.5rem;
+
+.powers-form__btn:focus-visible {
+  outline: 2px solid var(--powers-primary);
+  outline-offset: 2px;
+}
+
+.powers-form__btn--primary {
+  background: var(--powers-primary);
+  color: #fff;
+  box-shadow: 4px 4px 10px rgba(0, 106, 100, 0.28);
+}
+
+.powers-form__btn--ghost {
+  background: #f3f5f4;
+  color: var(--powers-text);
+  border-color: rgba(0, 32, 30, 0.12);
+}
+
+@media (max-width: 767px) {
+  .powers-row__main {
+    flex-direction: row;
+    align-items: flex-start;
   }
-  .powers-form__sticky-actions {
-    margin-inline: -1.5rem;
-    padding-inline: 1.5rem;
+
+  .powers-row__name {
+    font-size: 1rem;
+  }
+
+  .powers-section__title {
+    font-size: 1.125rem;
+  }
+}
+
+@media (min-width: 1440px) {
+  .powers-form__title {
+    font-size: 1.5rem;
+  }
+
+  .powers-row__name {
+    font-size: 1.125rem;
   }
 }
 </style>

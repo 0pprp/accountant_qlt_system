@@ -3,7 +3,6 @@ import type {
   SalaryDetailsFormTypes,
   PermissionsResponse,
   User,
-  UserForm,
   UserInfo,
   UserPermissionForm,
   UserDailyReport,
@@ -21,7 +20,19 @@ export type UserListServerSuccessResponse = {
   paginatedUsers: ServerSuccessPaginatedResponse<Array<User>>
 }
 
-export type UserCreatePayload = UserForm
+/** حمولة إنشاء الحساب المبسّط — لا تفرض حقول الملف الوظيفي للتعديل. */
+export type UserCreatePayload = {
+  username: string
+  password: string
+  fullName: string
+  roleId: number
+  branchIds: number[]
+  motherName?: string | null
+  nationalCode?: string | null
+  birthDate?: string | null
+  address?: string | null
+  phoneNumber?: string | null
+}
 
 export type SalaryDetailsPayload = SalaryDetailsFormTypes
 

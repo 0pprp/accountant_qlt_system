@@ -18,6 +18,16 @@ public static class UserErrors
     public static Error DuplicatePermissionOverride = new("تكرار معرف صلاحية في الطلب", "Duplicate_Permission_Override");
     public static Error PermissionsVersionConflict = new("تم تعديل الصلاحيات من مسؤول آخر. أعد التحميل للمقارنة.", "Permissions_Version_Conflict");
     public static Error ExpectedVersionRequired = new("إصدار الصلاحيات مطلوب", "Expected_Version_Required");
+    public static Error PanelTabManagedViaTabAccess = new(
+        "مفاتيح تبويبات اللوحة تُدار عبر tab-access فقط",
+        "Panel_Tab_Managed_Via_Tab_Access");
+    public static Error UnknownOrNotReadyTabKey = new(
+        "مفتاح تبويب مجهول أو غير جاهز",
+        "Unknown_Or_Not_Ready_Tab_Key");
+    public static Error DuplicateTabKeyChange = new(
+        "تكرار مفتاح تبويب في الطلب",
+        "Duplicate_Tab_Key_Change");
+
     public static Error NotAuthorizedToAssignRoleOrBranches = new(
         "غير مصرح بتعيين الدور أو الفروع. يتطلب سياسة إدارة معتمدة (سوبر أدمن).",
         "Not_Authorized_To_Assign_Role_Or_Branches");

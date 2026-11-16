@@ -55,10 +55,11 @@
           ref="powersFormRef"
           :userFormMode="getFormModeForPermission"
           :selectedPermissions="userInfo.allPermissions"
+          @save="saveTabAccess"
         />
 
         <div
-          v-if="userFormMode !== FormMode.IsView"
+          v-if="userFormMode !== FormMode.IsView && activeTab !== UserSteps.power"
           class="py-4 w-full flex flex-row gap-4 justify-center"
         >
           <Button
@@ -93,7 +94,7 @@ import {
   useUpdateUserDocumentsStepMutation,
   useUpdateUserMutation,
 } from '../../requests/mutations'
-import { usePatchPermissionOverridesMutation } from '../../requests/mutations/usePatchPermissionOverridesMutation'
+import { usePatchTabAccessMutation } from '../../requests/mutations/usePatchTabAccessMutation'
 import { FormMode, type Props } from './UserTabs.types'
 import AccountDetailsForm from '../UserForms/AccountDetailsForm/AccountDetailsForm.vue'
 import EmployeeDataForm from '../UserForms/EmployeeDataForm/EmployeeDataForm.vue'
@@ -385,8 +386,8 @@ const { mutateAsync: updateUserDocumentsStep, isPending: isUpdatePending } =
 
 const {
   isPending: isUserPermission,
-  mutateAsync: patchPermissionOverrides,
-} = usePatchPermissionOverridesMutation()
+  mutateAsync: patchTabAccess,
+} = usePatchTabAccessMutation()
 
 const toastStore = useToastStore()
 
@@ -448,69 +449,72 @@ async function onSubmit() {
 
     await salaryDetails({ id: userId.value!, payload: salaryForm.value })
   } else if (activeTab.value === UserSteps.power) {
-    if (can('User', 'ManagePermissions') === false) {
-      toastStore.setMassage({
-        title: t('errors.noPermission'),
-        description: t('user.permissionOverrides.readOnlyNotice'),
-        dialogState: DialogState.Error,
-        isOpen: true,
-      })
-      return
-    }
-
-    if (powersFormRef.value?.canSaveOverrides === false) {
-      toastStore.setMassage({
-        title: t('user.permissionOverrides.conflictTitle'),
-        description:
-          Number(powersFormRef.value?.unresolvedConflictCount ?? 0) > 0
-            ? t('user.permissionOverrides.unresolvedBlocksSave')
-            : t('user.permissionOverrides.pendingServerAdoption'),
-        dialogState: DialogState.Error,
-        isOpen: true,
-      })
-      return
-    }
-
-    const changes = powersFormRef.value?.getChanges?.() || []
-    if (changes.length === 0) {
-      // لا نجاح ولا إبطال جلسات عند عدم التغيير
-      await router.push({ name: 'UserListRoute' })
-      return
-    }
-
-    const summaryOk = window.confirm(
-      t('user.permissionOverrides.saveConfirm', { count: changes.length })
-    )
-    if (!summaryOk) return
-
-    try {
-      await patchPermissionOverrides({
-        id: userId.value!,
-        payload: {
-          expectedVersion: Number(
-            powersFormRef.value?.permissionsVersion ?? 0
-          ),
-          changes,
-        },
-      })
-      await router.push({ name: 'UserListRoute' })
-    } catch (err: unknown) {
-      const status = (err as { response?: { status?: number } })?.response
-        ?.status
-      if (status === 409) {
-        powersFormRef.value?.markConflict?.()
-        toastStore.setMassage({
-          title: t('user.permissionOverrides.conflictTitle'),
-          description: t('user.permissionOverrides.conflictMessage'),
-          dialogState: DialogState.Error,
-          isOpen: true,
-        })
-        return
-      }
-      throw err
-    }
+    await saveTabAccess()
     return
   }
   nextStep()
+}
+
+async function saveTabAccess() {
+  if (can('User', 'ManagePermissions') === false) {
+    toastStore.setMassage({
+      title: t('errors.noPermission'),
+      description: t('user.permissionOverrides.readOnlyNotice'),
+      dialogState: DialogState.Error,
+      isOpen: true,
+    })
+    return
+  }
+
+  if (powersFormRef.value?.canSaveOverrides === false) {
+    toastStore.setMassage({
+      title: t('user.permissionOverrides.conflictTitle'),
+      description:
+        Number(powersFormRef.value?.unresolvedConflictCount ?? 0) > 0
+          ? t('user.permissionOverrides.unresolvedBlocksSave')
+          : t('user.permissionOverrides.pendingServerAdoption'),
+      dialogState: DialogState.Error,
+      isOpen: true,
+    })
+    return
+  }
+
+  const changes = powersFormRef.value?.getChanges?.() || []
+  if (changes.length === 0) {
+    await router.push({ name: 'UserListRoute' })
+    return
+  }
+
+  const summaryOk = window.confirm(
+    `حفظ ${changes.length} تعديلًا على صلاحيات التبويبات؟ سيُبطل جلسات الحساب.`
+  )
+  if (!summaryOk) return
+
+  try {
+    powersFormRef.value?.setSaving?.(true)
+    await patchTabAccess({
+      id: userId.value!,
+      payload: {
+        expectedVersion: Number(powersFormRef.value?.permissionsVersion ?? 0),
+        changes,
+      },
+    })
+    await router.push({ name: 'UserListRoute' })
+  } catch (err: unknown) {
+    const status = (err as { response?: { status?: number } })?.response?.status
+    if (status === 409) {
+      powersFormRef.value?.markConflict?.()
+      toastStore.setMassage({
+        title: t('user.permissionOverrides.conflictTitle'),
+        description: t('user.permissionOverrides.conflictMessage'),
+        dialogState: DialogState.Error,
+        isOpen: true,
+      })
+      return
+    }
+    throw err
+  } finally {
+    powersFormRef.value?.setSaving?.(false)
+  }
 }
 </script>

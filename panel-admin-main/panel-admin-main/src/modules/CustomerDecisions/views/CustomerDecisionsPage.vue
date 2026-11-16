@@ -4,6 +4,8 @@ import { useRoute, useRouter } from 'vue-router'
 import { useQuery } from '@tanstack/vue-query'
 import { axiosInstance } from '@/modules/Core/plugins/axios'
 import { useAuthStore } from '@/modules/Auth/store'
+import { AppSearchField, AppSelect, DataState } from '@/modules/Core/components/ui'
+import { formatDateTime, formatNumber } from '@/modules/Core/utils/formatDisplay'
 
 interface DecisionRow {
   id: number
@@ -97,15 +99,25 @@ function patch(next: Record<string, string | null | undefined>) {
   void router.replace({ name: route.name ?? undefined, query: q })
 }
 
+const decisionOptions = [
+  { label: 'كل الأنواع', value: null as string | null },
+  { label: 'استمرار', value: 'Continue' },
+  { label: 'بيع وهمي', value: 'FakeSale' },
+  { label: 'طلب قانوني', value: 'LegalRequest' },
+  { label: 'طلب تنازل', value: 'WaiverRequest' },
+  { label: 'تحويل قانوني', value: 'Legal' },
+  { label: 'تنازل مطبّق', value: 'Waiver' },
+]
+
+function onDecisionType(v: string | number | null | boolean) {
+  patch({
+    type: v == null || v === '' || typeof v === 'boolean' ? null : String(v),
+    page: '1',
+  })
+}
+
 function fmtDate(iso: string) {
-  try {
-    return new Intl.DateTimeFormat('ar-IQ', {
-      dateStyle: 'medium',
-      timeStyle: 'short',
-    }).format(new Date(iso))
-  } catch {
-    return iso
-  }
+  return formatDateTime(iso)
 }
 </script>
 
@@ -121,46 +133,31 @@ function fmtDate(iso: string) {
       </p>
     </header>
 
-    <div
+    <DataState
       v-if="!canRead"
-      class="cd-state"
-      role="alert"
-    >
-      ليس لديك صلاحية قراءة سجل القرارات.
-    </div>
+      kind="forbidden"
+      title="غير مصرّح"
+      message="ليس لديك صلاحية قراءة سجل القرارات."
+    />
     <template v-else>
-      <div class="cd-toolbar">
-        <div class="cd-search">
-          <input
-            v-model="searchInput"
-            type="search"
-            placeholder="بحث زبون أو سبب…"
-            aria-label="بحث"
-          >
-          <span aria-hidden="true">🔍</span>
-        </div>
-        <select
-          :value="decisionType"
-          aria-label="نوع القرار"
-          @change="
-            patch({
-              type: ($event.target as HTMLSelectElement).value || null,
-              page: '1',
-            })
-          "
-        >
-          <option value="">كل الأنواع</option>
-          <option value="Continue">استمرار</option>
-          <option value="FakeSale">بيع وهمي</option>
-          <option value="LegalRequest">طلب قانوني</option>
-          <option value="WaiverRequest">طلب تنازل</option>
-          <option value="Legal">تحويل قانوني</option>
-          <option value="Waiver">تنازل مطبّق</option>
-        </select>
+      <div class="q-filters">
+        <AppSearchField
+          v-model="searchInput"
+          label="بحث"
+          placeholder="بحث زبون أو سبب…"
+          grow
+        />
+        <AppSelect
+          :model-value="decisionType || null"
+          label="نوع القرار"
+          placeholder="كل الأنواع"
+          :options="decisionOptions"
+          @update:model-value="onDecisionType"
+        />
       </div>
       <p class="cd-meta">
         الإجمالي:
-        {{ listQuery.data.value?.totalCount ?? (listQuery.isError.value ? '—' : '…') }}
+        {{ listQuery.data.value ? formatNumber(listQuery.data.value.totalCount) : (listQuery.isError.value ? '—' : '…') }}
       </p>
       <p
         v-if="listQuery.isError.value"
@@ -238,7 +235,7 @@ function fmtDate(iso: string) {
 
 <style scoped>
 .cd-page {
-  font-family: 'El Messiri', Tahoma, sans-serif;
+  font-family: inherit;
   color: #00201e;
   padding: 1rem 1.25rem 2rem;
   max-width: 64rem;

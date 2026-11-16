@@ -64,7 +64,8 @@ public class PermissionOverridesHandlerTests
         var mandobRole = new Role("Mandob", "المندوب");
         db.Roles.AddRange(adminRole, mandobRole);
 
-        var perm = new Permission("Order.Read", "رؤية", "Order", "الطلبات");
+        // صلاحية غير مُدارة بكتالوج Panel.Tab — المسار القديم ما زال يخدم التطبيقات/غير اللوحة
+        var perm = new Permission("Expense.Read", "رؤية", "Expense", "المصروفات");
         db.Permissions.Add(perm);
         await db.SaveChangesAsync();
 

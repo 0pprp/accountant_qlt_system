@@ -2,6 +2,8 @@
 import { computed, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '@/modules/Auth/store'
+import { AppButton, AppDateField, DataState } from '@/modules/Core/components/ui'
+import { formatDate, formatMoney, formatNumber } from '@/modules/Core/utils/formatDisplay'
 import { useFollowerCollectionQuery } from '../requests/queries/useFollowerCollectionQuery'
 import { useSetFollowerCollectionEnabledMutation } from '../requests/mutations/useSetFollowerCollectionEnabledMutation'
 import type { FollowerCollectionListRow } from '../domain/collectionTypes'
@@ -78,24 +80,11 @@ function patchQuery(next: Record<string, string | null | undefined>) {
 }
 
 function fmtMoney(n: number, currency = 'IQD') {
-  try {
-    return new Intl.NumberFormat('ar-IQ', {
-      style: 'currency',
-      currency,
-      maximumFractionDigits: 0,
-    }).format(n)
-  } catch {
-    return `${n} ${currency}`
-  }
+  return formatMoney(n, currency)
 }
 
 function fmtDate(v: string | null | undefined) {
-  if (!v) return '—'
-  try {
-    return new Intl.DateTimeFormat('ar-IQ', { dateStyle: 'medium' }).format(new Date(v))
-  } catch {
-    return v
-  }
+  return formatDate(v)
 }
 
 function sourceLabel(s: string) {
@@ -150,19 +139,34 @@ async function onToggle(list: FollowerCollectionListRow, next: boolean) {
       </p>
     </header>
 
-    <div v-if="!canRead" class="fw-state fw-state--forbidden" role="alert">
-      ليس لديك صلاحية قراءة الجباية.
-    </div>
-    <div v-else-if="followerId == null || branchId == null" class="fw-state" role="alert">
-      يلزم اختيار متابع ومحافظة من دليل عمل المتابعين.
-    </div>
-    <div v-else-if="collectionQuery.isPending.value" class="fw-state fw-state--loading" aria-busy="true">
-      جاري تحميل الجباية…
-    </div>
-    <div v-else-if="collectionQuery.isError.value" class="fw-state fw-state--error" role="alert">
-      تعذر تحميل الجباية.
-      <button type="button" class="fw-retry" @click="collectionQuery.refetch()">إعادة المحاولة</button>
-    </div>
+    <DataState
+      v-if="!canRead"
+      kind="forbidden"
+      title="غير مصرّح"
+      message="ليس لديك صلاحية قراءة الجباية."
+    />
+    <DataState
+      v-else-if="followerId == null || branchId == null"
+      kind="empty"
+      title="يلزم اختيار"
+      message="يلزم اختيار متابع ومحافظة من دليل عمل المتابعين."
+    />
+    <DataState
+      v-else-if="collectionQuery.isPending.value"
+      kind="loading"
+      title="جاري التحميل"
+      message="جاري تحميل الجباية…"
+    />
+    <DataState
+      v-else-if="collectionQuery.isError.value"
+      kind="error"
+      title="تعذر التحميل"
+      message="تعذر تحميل الجباية."
+    >
+      <template #actions>
+        <AppButton variant="secondary" @click="collectionQuery.refetch()">إعادة المحاولة</AppButton>
+      </template>
+    </DataState>
 
     <template v-else-if="data">
       <div v-if="toggleError" class="fw-state fw-state--error" role="alert">
@@ -172,7 +176,7 @@ async function onToggle(list: FollowerCollectionListRow, next: boolean) {
 
       <section class="fdc-details" aria-label="قوائم الجباية" style="margin-bottom: 1rem">
         <h2 class="fw-selected__title">القوائم</h2>
-        <div v-if="!data.lists.length" class="fw-state" role="status">لا قوائم مكلّفة</div>
+        <DataState v-if="!data.lists.length" kind="empty" title="لا قوائم" message="لا قوائم مكلّفة" />
         <div v-else class="fdc-list" role="list">
           <div v-for="l in data.lists" :key="l.listId" class="fdc-row" role="listitem">
             <span class="fdc-row__title">{{ l.listName }}</span>
@@ -210,7 +214,7 @@ async function onToggle(list: FollowerCollectionListRow, next: boolean) {
         <span>
           إجمالي الفترة (كل النتائج):
           <b>{{ fmtMoney(data.totals.paymentsFilteredAmount, data.totals.currency) }}</b>
-          · {{ data.totals.paymentsFilteredCount }} دفعة
+          · {{ formatNumber(data.totals.paymentsFilteredCount) }} دفعة
         </span>
         <span>
           إجمالي الصفحة:
@@ -218,39 +222,26 @@ async function onToggle(list: FollowerCollectionListRow, next: boolean) {
         </span>
       </div>
 
-      <div class="fw-toolbar" style="margin: 0.75rem 0">
-        <label class="fw-sort">
-          <span class="fw-sort__label">من</span>
-          <input
-            class="fw-sort__select"
-            type="date"
-            :value="fromDate ?? ''"
-            @change="
-              patchQuery({
-                fromDate: ($event.target as HTMLInputElement).value || null,
-                paymentsPage: '1',
-              })
-            "
-          />
-        </label>
-        <label class="fw-sort">
-          <span class="fw-sort__label">إلى</span>
-          <input
-            class="fw-sort__select"
-            type="date"
-            :value="toDate ?? ''"
-            @change="
-              patchQuery({
-                toDate: ($event.target as HTMLInputElement).value || null,
-                paymentsPage: '1',
-              })
-            "
-          />
-        </label>
+      <div class="q-filters">
+        <AppDateField
+          :model-value="fromDate ?? ''"
+          label="من"
+          @update:model-value="(v) => patchQuery({ fromDate: v || null, paymentsPage: '1' })"
+        />
+        <AppDateField
+          :model-value="toDate ?? ''"
+          label="إلى"
+          @update:model-value="(v) => patchQuery({ toDate: v || null, paymentsPage: '1' })"
+        />
       </div>
 
       <h2 class="fw-selected__title">المدفوعات</h2>
-      <div v-if="data.paymentsTotalCount === 0" class="fw-state" role="status">لا مدفوعات في النطاق</div>
+      <DataState
+        v-if="data.paymentsTotalCount === 0"
+        kind="empty"
+        title="لا مدفوعات"
+        message="لا مدفوعات في النطاق"
+      />
       <div v-else class="fdc-list" role="list">
         <div v-for="p in data.payments" :key="p.paymentId" class="fdc-row" role="listitem">
           <span class="fdc-row__title">{{ p.customerName }}</span>
@@ -265,23 +256,23 @@ async function onToggle(list: FollowerCollectionListRow, next: boolean) {
       </div>
 
       <div v-if="data.paymentsTotalPages > 1" class="fdc-pager">
-        <button
-          type="button"
-          class="fw-pager__btn"
+        <AppButton
+          variant="secondary"
           :disabled="paymentsPage <= 1"
           @click="patchQuery({ paymentsPage: String(paymentsPage - 1) })"
         >
           السابق
-        </button>
-        <span>صفحة {{ data.paymentsPage }} / {{ data.paymentsTotalPages }}</span>
-        <button
-          type="button"
-          class="fw-pager__btn"
+        </AppButton>
+        <span>
+          صفحة {{ formatNumber(data.paymentsPage) }} / {{ formatNumber(data.paymentsTotalPages) }}
+        </span>
+        <AppButton
+          variant="secondary"
           :disabled="paymentsPage >= data.paymentsTotalPages"
           @click="patchQuery({ paymentsPage: String(paymentsPage + 1) })"
         >
           التالي
-        </button>
+        </AppButton>
       </div>
     </template>
   </div>

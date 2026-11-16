@@ -3,6 +3,8 @@ import { computed, ref, watch } from 'vue'
 import { useQuery } from '@tanstack/vue-query'
 import { axiosInstance } from '@/modules/Core/plugins/axios'
 import { useAuthStore } from '@/modules/Auth/store'
+import { AppButton, AppDateField, AppSelect, DataState } from '@/modules/Core/components/ui'
+import { formatDate, formatMoney, formatNumber } from '@/modules/Core/utils/formatDisplay'
 
 interface ListOpt {
   id: number
@@ -97,8 +99,12 @@ const listQuery = useQuery({
   },
 })
 
+const listOptions = computed(() =>
+  (catalogQuery.data.value ?? []).map((l) => ({ label: l.name, value: l.id })),
+)
+
 function fmt(n: number) {
-  return new Intl.NumberFormat('ar-IQ').format(n)
+  return formatMoney(n)
 }
 </script>
 
@@ -113,76 +119,53 @@ function fmt(n: number) {
         تسديدات قائمة ضمن فترة — قراءة فقط وفق نطاق الفرع (ليست إنشاء تسديد).
       </p>
     </header>
-    <div
+    <DataState
       v-if="!canRead"
-      class="bp-state"
-      role="alert"
-    >
-      ليس لديك صلاحية قراءة التسديدات.
-    </div>
+      kind="forbidden"
+      title="غير مصرّح"
+      message="ليس لديك صلاحية قراءة التسديدات."
+    />
     <template v-else>
-      <div class="bp-filters">
-        <label>
-          القائمة
-          <select v-model.number="listId">
-            <option
-              v-for="l in catalogQuery.data.value ?? []"
-              :key="l.id"
-              :value="l.id"
-            >
-              {{ l.name }}
-            </option>
-          </select>
-        </label>
-        <label>
-          من
-          <input
-            v-model="fromDate"
-            type="date"
-          >
-        </label>
-        <label>
-          إلى
-          <input
-            v-model="toDate"
-            type="date"
-          >
-        </label>
+      <div class="q-filters">
+        <AppSelect
+          v-model="listId"
+          label="القائمة"
+          :options="listOptions"
+          :filterable="(catalogQuery.data.value?.length ?? 0) > 6"
+        />
+        <AppDateField v-model="fromDate" label="من" />
+        <AppDateField v-model="toDate" label="إلى" />
       </div>
-      <div
+      <DataState
         v-if="listQuery.isPending.value"
-        class="bp-state"
-      >
-        جاري التحميل…
-      </div>
-      <p
+        kind="loading"
+        title="جاري التحميل"
+        message="جاري جلب التسديدات."
+      />
+      <DataState
         v-else-if="listQuery.isError.value"
-        class="bp-err"
-        role="alert"
+        kind="error"
+        title="تعذر التحميل"
+        message="تعذر تحميل التسديدات."
       >
-        تعذر التحميل —
-        <button
-          type="button"
-          class="bp-btn"
-          @click="listQuery.refetch()"
-        >
-          إعادة
-        </button>
-      </p>
+        <template #actions>
+          <AppButton variant="secondary" @click="listQuery.refetch()">إعادة</AppButton>
+        </template>
+      </DataState>
       <template v-else-if="listQuery.data.value">
         <div class="bp-card">
-          <p>عدد التسديدات: {{ listQuery.data.value.paymentCount }}</p>
+          <p>عدد التسديدات: {{ formatNumber(listQuery.data.value.paymentCount) }}</p>
           <p>
             الإجمالي:
             <strong>{{ fmt(listQuery.data.value.totalAmount) }}</strong>
           </p>
         </div>
-        <div
+        <DataState
           v-if="listQuery.data.value.items.length === 0"
-          class="bp-state"
-        >
-          لا تسديدات في هذه الفترة.
-        </div>
+          kind="empty"
+          title="لا تسديدات"
+          message="لا تسديدات في هذه الفترة."
+        />
         <ul
           v-else
           class="bp-list"
@@ -193,7 +176,7 @@ function fmt(n: number) {
           >
             <strong>{{ row.customerName }}</strong>
             <span>{{ row.phoneNumber || '—' }}</span>
-            <span>{{ row.date }}</span>
+            <span>{{ formatDate(row.date) }}</span>
             <span>{{ fmt(row.amount) }}</span>
           </li>
         </ul>
@@ -207,7 +190,7 @@ function fmt(n: number) {
   max-width: 960px;
   margin: 0 auto;
   padding: 1rem 1.25rem 2rem;
-  font-family: ElMessiri, 'Segoe UI', Tahoma, sans-serif;
+  font-family: inherit;
   color: #00201e;
 }
 .bp-title {
@@ -218,25 +201,6 @@ function fmt(n: number) {
 .bp-sub {
   margin: 0.35rem 0 1rem;
   font-size: 0.9rem;
-}
-.bp-filters {
-  display: grid;
-  gap: 0.75rem;
-  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-  margin-bottom: 1rem;
-}
-.bp-filters label {
-  display: grid;
-  gap: 0.25rem;
-  font-size: 0.9rem;
-}
-.bp-filters input,
-.bp-filters select {
-  background: #f8f8f8;
-  border: 1px solid #cfd8d7;
-  border-radius: 6px;
-  padding: 0.4rem 0.55rem;
-  font: inherit;
 }
 .bp-state,
 .bp-err,

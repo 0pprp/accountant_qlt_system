@@ -1,6 +1,7 @@
 using Application.Users.Commands.Admin.CompletePersonalDocuments;
 using Application.Users.Commands.Admin.Create;
 using Application.Users.Commands.Admin.PatchPermissionOverrides;
+using Application.Users.Commands.Admin.PatchTabAccess;
 using Application.Users.Commands.Admin.Update;
 using Application.Users.Commands.Admin.UpdatePermissions;
 using Application.Users.Commands.Admin.UpdateSalaryDetail;
@@ -9,6 +10,7 @@ using Application.Users.Queries.Admin.GetAvailableColumns;
 using Application.Users.Queries.Admin.GetPaginated;
 using Application.Users.Queries.Admin.GetPermissionOverrides;
 using Application.Users.Queries.Admin.GetProfile;
+using Application.Users.Queries.Admin.GetTabAccess;
 using Application.Users.Queries.Admin.GetUserDailyInstallmentCollectionsReport;
 
 namespace Api.Controllers.V1.AdminArea;
@@ -101,6 +103,34 @@ public class UsersController : ApiController
         };
         var result = await _mediator.Send(command, CancellationToken);
 
+        return result.ToHttpResponse();
+    }
+
+    [HasPermission(Permissions.User.ManagePermissions)]
+    [HttpGet("{id:int}/tab-access")]
+    public async Task<ActionResult<GetUserTabAccessResponse>> GetTabAccess([FromRoute] int id)
+    {
+        var result = await _mediator.Send(new GetUserTabAccessQuery(id), CancellationToken);
+        return result.ToHttpResponse();
+    }
+
+    [HasPermission(Permissions.User.ManagePermissions)]
+    [HttpPatch("{id:int}/tab-access")]
+    public async Task<ActionResult> PatchTabAccess(
+        [FromRoute] int id,
+        [FromBody] PatchUserTabAccessDto dto)
+    {
+        var command = new PatchUserTabAccessCommand
+        {
+            UserId = id,
+            ExpectedVersion = dto.ExpectedVersion,
+            Changes = (dto.Changes ?? []).Select(c => new PatchUserTabAccessChange
+            {
+                TabKey = c.TabKey,
+                Enabled = c.Enabled
+            }).ToList()
+        };
+        var result = await _mediator.Send(command, CancellationToken);
         return result.ToHttpResponse();
     }
 

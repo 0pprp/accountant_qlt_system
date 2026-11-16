@@ -29,11 +29,11 @@ defineProps<{
 
 function fmt(v?: number | null) {
   if (v == null) return 'محجوب'
-  return new Intl.NumberFormat('ar-IQ').format(v)
+  return new Intl.NumberFormat('en-US').format(v)
 }
 
 function formatDate(value: string) {
-  return new Intl.DateTimeFormat('ar-IQ', {
+  return new Intl.DateTimeFormat('en-US', {
     dateStyle: 'medium',
     timeStyle: 'short',
   }).format(new Date(value))

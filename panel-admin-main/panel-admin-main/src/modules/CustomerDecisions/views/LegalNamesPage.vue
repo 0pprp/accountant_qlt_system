@@ -4,6 +4,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/vue-query'
 import { axiosInstance } from '@/modules/Core/plugins/axios'
 import { useAuthStore } from '@/modules/Auth/store'
+import { AppButton, AppSearchField, AppSelect, AppTextarea } from '@/modules/Core/components/ui'
 
 interface LegalNameRow {
   customerId: number
@@ -147,8 +148,24 @@ function openDecision(row: LegalNameRow) {
   dialogOpen.value = true
 }
 
+const decisionOptions = computed(() => {
+  const opts: { label: string; value: string }[] = [
+    { label: 'استمرار (إرجاء أسبوع)', value: 'Continue' },
+    { label: 'بيع وهمي', value: 'FakeSale' },
+    { label: 'طلب تحويل قانوني', value: 'LegalRequest' },
+  ]
+  if (canCreateWaiver.value) opts.push({ label: 'طلب تنازل', value: 'WaiverRequest' })
+  return opts
+})
+
+function onDecisionType(v: string | number | null | boolean) {
+  if (v === 'Continue' || v === 'FakeSale' || v === 'LegalRequest' || v === 'WaiverRequest') {
+    decisionType.value = v
+  }
+}
+
 function fmt(n: number) {
-  return new Intl.NumberFormat('ar-IQ').format(n)
+  return new Intl.NumberFormat('en-US').format(n)
 }
 </script>
 
@@ -172,16 +189,13 @@ function fmt(n: number) {
       ليس لديك صلاحية قراءة الأسماء القانونية.
     </div>
     <template v-else>
-      <div class="ln-toolbar">
-        <div class="ln-search">
-          <input
-            v-model="searchInput"
-            type="search"
-            placeholder="بحث بالاسم أو الهاتف…"
-            aria-label="بحث"
-          >
-          <span aria-hidden="true">🔍</span>
-        </div>
+      <div class="q-filters">
+        <AppSearchField
+          v-model="searchInput"
+          label="بحث"
+          placeholder="بحث بالاسم أو الهاتف…"
+          grow
+        />
       </div>
       <p class="ln-meta">
         الإجمالي:
@@ -237,14 +251,9 @@ function fmt(n: number) {
               <td>{{ Math.round(row.paidPercent) }}%</td>
               <td>{{ row.daysSinceLastPayment }}</td>
               <td>
-                <button
-                  v-if="canDecide"
-                  type="button"
-                  class="ln-btn primary"
-                  @click="openDecision(row)"
-                >
+                <AppButton v-if="canDecide" size="sm" @click="openDecision(row)">
                   قرار
-                </button>
+                </AppButton>
                 <span
                   v-else
                   class="ln-muted"
@@ -272,37 +281,13 @@ function fmt(n: number) {
           متبقي {{ fmt(selected.remaining) }} · تسديد
           {{ Math.round(selected.paidPercent) }}%
         </p>
-        <fieldset class="ln-field">
-          <legend>نوع القرار</legend>
-          <label><input
-            v-model="decisionType"
-            type="radio"
-            value="Continue"
-          > استمرار (إرجاء أسبوع)</label>
-          <label><input
-            v-model="decisionType"
-            type="radio"
-            value="FakeSale"
-          > بيع وهمي</label>
-          <label><input
-            v-model="decisionType"
-            type="radio"
-            value="LegalRequest"
-          > طلب تحويل قانوني</label>
-          <label v-if="canCreateWaiver"><input
-            v-model="decisionType"
-            type="radio"
-            value="WaiverRequest"
-          > طلب تنازل</label>
-        </fieldset>
-        <label class="ln-field">
-          السبب (إلزامي)
-          <textarea
-            v-model="note"
-            rows="4"
-            required
-          />
-        </label>
+        <AppSelect
+          :model-value="decisionType"
+          label="نوع القرار"
+          :options="decisionOptions"
+          @update:model-value="onDecisionType"
+        />
+        <AppTextarea v-model="note" label="السبب (إلزامي)" :rows="4" required />
         <p
           v-if="formError"
           class="ln-err"
@@ -310,21 +295,12 @@ function fmt(n: number) {
           {{ formError }}
         </p>
         <div class="ln-actions">
-          <button
-            type="button"
-            class="ln-btn"
-            @click="dialogOpen = false"
-          >
+          <AppButton variant="secondary" @click="dialogOpen = false">
             إلغاء
-          </button>
-          <button
-            type="button"
-            class="ln-btn primary"
-            :disabled="submitting"
-            @click="submitDecision"
-          >
+          </AppButton>
+          <AppButton :disabled="submitting" :loading="submitting" @click="submitDecision">
             تأكيد القرار
-          </button>
+          </AppButton>
         </div>
       </div>
     </div>
@@ -333,7 +309,7 @@ function fmt(n: number) {
 
 <style scoped>
 .ln-page {
-  font-family: 'El Messiri', Tahoma, sans-serif;
+  font-family: inherit;
   color: #00201e;
   padding: 1rem 1.25rem 2rem;
   max-width: 72rem;

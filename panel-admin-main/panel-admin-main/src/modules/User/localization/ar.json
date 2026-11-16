@@ -1,39 +1,39 @@
 {
   "userForm": {
     "userName": {
-      "label": "أسم المستخدم",
-      "placeholder": "أختر أسم المستخدم للموظف ",
+      "label": "اسم المستخدم",
+      "placeholder": "معرّف تسجيل الدخول",
       "validation": {
-        "required": "أسم المستخدم مطلوب"
+        "required": "اسم المستخدم مطلوب"
       }
     },
     "password": {
-      "label": "الرمز السري",
-      "placeholder": "أختر الرمز السري للموظف ",
+      "label": "كلمة السر",
+      "placeholder": "8–50 حرفًا",
       "validation": {
-        "required": "أسم السري مطلوب",
-        "minLength": "كلمة المرور يجب أن تحتوي على 8 أحرف على الأقل"
+        "required": "كلمة السر مطلوبة",
+        "minLength": "كلمة السر يجب أن تحتوي على 8 أحرف على الأقل"
       }
     },
     "branchIds": {
-      "label": " الفرع",
-      "placeholder": "أختر أسم المتابع",
+      "label": "الفرع",
+      "placeholder": "اختر الفرع",
       "validation": {
-        "required": "أسم الفرع مطلوب"
+        "required": "الفرع مطلوب"
       }
     },
     "roleId": {
-      "label": "المنصب الوضيفي",
-      "placeholder": "أختر المنصب الوضيفي للموظف ",
+      "label": "المنصب الوظيفي",
+      "placeholder": "اختر المنصب",
       "validation": {
-        "required": " المنصب الوضيفي مطلوبة"
+        "required": "المنصب الوظيفي مطلوب"
       }
     },
     "fullName": {
-      "label": "الأسم الثلاثي",
-      "placeholder": "أختر الأسم الثلاثي",
+      "label": "الاسم الثلاثي",
+      "placeholder": "اسم عرض الحساب",
       "validation": {
-        "required": " الأسم الثلاثي مطلوبة"
+        "required": "الاسم الثلاثي مطلوب"
       }
     },
     "address": {

@@ -1,5 +1,11 @@
-/** صلاحيات تبويبات طلبات البيع — مشتركة بين المبيعات ولوحة الإدارة */
+import { panelTabRef, SALES_REQUEST_PANEL_TAB_KEYS } from './panelTabAccess'
+
+/**
+ * صلاحيات تبويبات طلبات البيع — Panel.Tab.sr.* أولًا،
+ * مع الإبقاء على مفاتيح SalesRequest القديمة للتوافق مع التوسيع في JWT.
+ */
 export const SALES_REQUEST_TAB_PERMISSIONS = [
+  ...SALES_REQUEST_PANEL_TAB_KEYS.map((tabKey) => panelTabRef(tabKey)),
   { module: 'SalesRequest' as const, action: 'ReadUnassigned' as const },
   { module: 'SalesRequest' as const, action: 'TabIncoming' as const },
   { module: 'SalesRequest' as const, action: 'TabPrepared' as const },

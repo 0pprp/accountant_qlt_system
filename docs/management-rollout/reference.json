@@ -191,7 +191,7 @@
     [
       "Existing source",
       "POST /api/v1/admin/Users",
-      "Permissions.User.Create",
+      "Permissions.User.Create | Required: username, password(8-50), fullName, roleId, branchIds[]; Optional personal fields; Response CreateUserResponse(Id); UI UserCreateForm",
       "api-main/api-main/src/Api/Controllers/V1/AdminArea/UsersController.cs"
     ],
     [
@@ -221,8 +221,26 @@
     [
       "Existing source",
       "PATCH /api/v1/admin/Users/{id:int}/permission-overrides",
+      "Permissions.User.ManagePermissions (rejects Panel.Tab managed keys)",
+      "api-main/api-main/src/Api/Controllers/V1/AdminArea/UsersController.cs"
+    ],
+    [
+      "Panel.Tab batch",
+      "GET /api/v1/admin/Users/{id:int}/tab-access",
       "Permissions.User.ManagePermissions",
       "api-main/api-main/src/Api/Controllers/V1/AdminArea/UsersController.cs"
+    ],
+    [
+      "Panel.Tab batch",
+      "PATCH /api/v1/admin/Users/{id:int}/tab-access",
+      "Permissions.User.ManagePermissions + expectedVersion",
+      "api-main/api-main/src/Api/Controllers/V1/AdminArea/UsersController.cs"
+    ],
+    [
+      "Panel.Tab batch",
+      "POST /api/v1/admin/panel-tab-migration/dry-run",
+      "Permissions.User.ManagePermissions (!Production)",
+      "api-main/api-main/src/Api/Controllers/V1/AdminArea/PanelTabMigrationController.cs"
     ],
     [
       "Existing source",

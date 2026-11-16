@@ -3,6 +3,7 @@ import { computed } from 'vue'
 import { useAuthStore } from '@/modules/Auth/store'
 import { usePermission } from '@/modules/Core/composable/usePermission'
 import { getReadyNavigationSections } from '@/modules/Core/navigation/navigation.registry'
+import { requirementForNavSectionId } from '@/modules/Core/navigation/panelTabAccess'
 import type {
   NavigationSectionDefinition,
   NavigationSidebarItem,
@@ -31,7 +32,9 @@ export default function useSideBar() {
   function toSidebarItem(
     section: NavigationSectionDefinition
   ): NavigationSidebarItem | null {
-    const decision = decide(section.requirement)
+    const decision = decide(
+      requirementForNavSectionId(section.id, section.requirement)
+    )
     const state =
       decision === 'allowed'
         ? 'allowed'

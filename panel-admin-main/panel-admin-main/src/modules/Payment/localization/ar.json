@@ -35,7 +35,7 @@
   },
 
   "table": {
-    "customerFullName": "الأسم الثلاثي",
+    "customerFullName": "اسم الزبون",
     "productName": "المبيع",
     "date": "التاريخ",
     "sellerFullName": "المندوب",

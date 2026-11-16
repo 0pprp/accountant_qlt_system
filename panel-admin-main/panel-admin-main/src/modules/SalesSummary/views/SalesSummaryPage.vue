@@ -2,6 +2,8 @@
 import { computed, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '@/modules/Auth/store'
+import { AppButton, AppSelect, DataState } from '@/modules/Core/components/ui'
+import { formatNumber } from '@/modules/Core/utils/formatDisplay'
 import { useSalesSummaryMatrixQuery } from '../requests/queries/useSalesSummaryMatrixQuery'
 import { useSalesSummaryDetailsQuery } from '../requests/queries/useSalesSummaryDetailsQuery'
 import '@/modules/ManagementSummary/components/management-summary.css'
@@ -76,7 +78,7 @@ watch([year, month, branchId], () => {
 
 function fmt(n: number | null | undefined) {
   if (n == null || !Number.isFinite(n) || n === 0) return '—'
-  return new Intl.NumberFormat('ar-IQ', { maximumFractionDigits: 0 }).format(Math.round(n))
+  return formatNumber(Math.round(n))
 }
 
 const cellMap = computed(() => {
@@ -97,6 +99,21 @@ function openDrill(day: number, bId: number) {
 }
 
 const years = [bag.y - 1, bag.y, bag.y + 1]
+const monthOptions = Array.from({ length: 12 }, (_, i) => ({
+  label: formatNumber(i + 1),
+  value: i + 1,
+}))
+const yearOptions = years.map((y) => ({ label: formatNumber(y), value: y }))
+const branchOptions = computed(() => [
+  { label: 'كل الفروع المسموحة', value: null as number | null },
+  ...(auth.branches ?? []).map((b) => ({ label: b.name, value: b.id })),
+])
+
+function onBranch(v: string | number | null | boolean) {
+  patchQuery({
+    branchId: v == null || v === '' || typeof v === 'boolean' ? null : String(v),
+  })
+}
 </script>
 
 <template>
@@ -106,56 +123,53 @@ const years = [bag.y - 1, bag.y, bag.y + 1]
       سعر البيع حسب الفروع والأيام — مقياس ثابت. ليس الملخص الإداري متعدد المقاييس.
     </p>
 
-    <div v-if="!canRead" class="ms-error" role="alert">غير مخول بقراءة ملخص المبيعات.</div>
+    <DataState
+      v-if="!canRead"
+      kind="forbidden"
+      title="غير مصرّح"
+      message="غير مخول بقراءة ملخص المبيعات."
+    />
 
     <template v-else>
-      <div class="ms-filters">
-        <label>
-          الشهر
-          <select
-            class="ms-select"
-            :value="month"
-            @change="patchQuery({ month: ($event.target as HTMLSelectElement).value })"
-          >
-            <option v-for="m in 12" :key="m" :value="m">{{ m }}</option>
-          </select>
-        </label>
-        <label>
-          السنة
-          <select
-            class="ms-select"
-            :value="year"
-            @change="patchQuery({ year: ($event.target as HTMLSelectElement).value })"
-          >
-            <option v-for="y in years" :key="y" :value="y">{{ y }}</option>
-          </select>
-        </label>
-        <label>
-          الفرع
-          <select
-            class="ms-select"
-            :value="branchId ?? ''"
-            @change="
-              patchQuery({
-                branchId: ($event.target as HTMLSelectElement).value || null,
-              })
-            "
-          >
-            <option value="">كل الفروع المسموحة</option>
-            <option v-for="b in auth.branches ?? []" :key="b.id" :value="b.id">{{ b.name }}</option>
-          </select>
-        </label>
-        <button type="button" class="ms-refresh" @click="matrixQuery.refetch()">تحديث</button>
+      <div class="q-filters">
+        <AppSelect
+          :model-value="month"
+          label="الشهر"
+          :options="monthOptions"
+          @update:model-value="(v) => patchQuery({ month: String(v) })"
+        />
+        <AppSelect
+          :model-value="year"
+          label="السنة"
+          :options="yearOptions"
+          @update:model-value="(v) => patchQuery({ year: String(v) })"
+        />
+        <AppSelect
+          :model-value="branchId"
+          label="الفرع"
+          placeholder="كل الفروع المسموحة"
+          :options="branchOptions"
+          @update:model-value="onBranch"
+        />
+        <AppButton variant="primary" @click="matrixQuery.refetch()">تحديث</AppButton>
       </div>
 
       <p class="ms-subtitle">
         يُحتسب اليوم بتاريخ البيع في التقويم، وإن غاب فيُعتمد وقت الإنشاء بحدود منتصف ليل بغداد — وليس يوم العمل بقطع الثالثة فجرًا.
       </p>
 
-      <div v-if="matrixQuery.isPending.value" class="ms-loading" aria-busy="true">جاري التحميل…</div>
-      <div v-else-if="matrixQuery.isError.value" class="ms-error" role="alert">
-        تعذر تحميل الملخص. لا تُعرض أصفار بدل الخطأ.
-      </div>
+      <DataState
+        v-if="matrixQuery.isPending.value"
+        kind="loading"
+        title="جاري التحميل"
+        message="جاري تحميل الملخص."
+      />
+      <DataState
+        v-else-if="matrixQuery.isError.value"
+        kind="error"
+        title="تعذر التحميل"
+        message="تعذر تحميل الملخص. لا تُعرض أصفار بدل الخطأ."
+      />
       <template v-else-if="matrix">
         <p class="ms-subtitle">
           إجمالي الشهر: <strong>{{ fmt(matrix.monthTotal) }}</strong> {{ matrix.currency }}
@@ -171,7 +185,7 @@ const years = [bag.y - 1, bag.y, bag.y + 1]
             </thead>
             <tbody>
               <tr v-for="day in matrix.daysInMonth" :key="day">
-                <td class="ms-td-day">{{ day }}</td>
+                <td class="ms-td-day">{{ formatNumber(day) }}</td>
                 <td v-for="b in matrix.branches" :key="`${day}-${b.id}`">
                   <button
                     type="button"
@@ -198,12 +212,27 @@ const years = [bag.y - 1, bag.y, bag.y + 1]
     <div v-if="drillOpen" class="ms-dialog-backdrop" @click.self="drillOpen = false">
       <div class="ms-dialog" role="dialog" aria-modal="true">
         <header>
-          <h2>سعر البيع — يوم {{ drillDay }}</h2>
-          <button type="button" @click="drillOpen = false">إغلاق</button>
+          <h2>سعر البيع — يوم {{ formatNumber(drillDay) }}</h2>
+          <AppButton variant="ghost" @click="drillOpen = false">إغلاق</AppButton>
         </header>
-        <div v-if="!canDrill" class="ms-error">غير مخول بالتفاصيل.</div>
-        <div v-else-if="detailsQuery.isPending.value">جاري التحميل…</div>
-        <div v-else-if="detailsQuery.isError.value" class="ms-error">تعذر تحميل التفاصيل.</div>
+        <DataState
+          v-if="!canDrill"
+          kind="forbidden"
+          title="غير مصرّح"
+          message="غير مخول بالتفاصيل."
+        />
+        <DataState
+          v-else-if="detailsQuery.isPending.value"
+          kind="loading"
+          title="جاري التحميل"
+          message="جاري تحميل التفاصيل."
+        />
+        <DataState
+          v-else-if="detailsQuery.isError.value"
+          kind="error"
+          title="تعذر التحميل"
+          message="تعذر تحميل التفاصيل."
+        />
         <template v-else-if="detailsQuery.data.value">
           <p>
             {{ detailsQuery.data.value.branchName }} · المجموع
@@ -211,30 +240,30 @@ const years = [bag.y - 1, bag.y, bag.y + 1]
           </p>
           <ul class="ms-detail-list">
             <li v-for="row in detailsQuery.data.value.items" :key="row.orderId">
-              <strong>#{{ row.orderId }}</strong> {{ row.title }} —
+              <strong>#{{ formatNumber(row.orderId) }}</strong> {{ row.title }} —
               {{ fmt(row.amount) }}
             </li>
           </ul>
-          <p v-if="!detailsQuery.data.value.items.length">لا صفوف.</p>
+          <DataState
+            v-if="!detailsQuery.data.value.items.length"
+            kind="empty"
+            title="لا صفوف"
+            message="لا تفاصيل لهذا اليوم."
+          />
           <div class="ms-pager">
-            <button
-              type="button"
-              :disabled="drillPage <= 1"
-              @click="drillPage--"
-            >
+            <AppButton variant="secondary" :disabled="drillPage <= 1" @click="drillPage--">
               السابق
-            </button>
-            <span>صفحة {{ detailsQuery.data.value.page }}</span>
-            <button
-              type="button"
+            </AppButton>
+            <span>صفحة {{ formatNumber(detailsQuery.data.value.page) }}</span>
+            <AppButton
+              variant="secondary"
               :disabled="
-                drillPage * detailsQuery.data.value.pageSize >=
-                detailsQuery.data.value.totalCount
+                drillPage * detailsQuery.data.value.pageSize >= detailsQuery.data.value.totalCount
               "
               @click="drillPage++"
             >
               التالي
-            </button>
+            </AppButton>
           </div>
         </template>
       </div>
@@ -243,34 +272,6 @@ const years = [bag.y - 1, bag.y, bag.y + 1]
 </template>
 
 <style scoped>
-.ms-filters {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.75rem;
-  margin: 1rem 0;
-  align-items: flex-end;
-}
-.ms-filters label {
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
-  font-size: 14px;
-}
-.ms-select,
-.ms-refresh {
-  min-height: 44px;
-  font: inherit;
-  padding: 0 0.75rem;
-  border-radius: 8px;
-  border: 1px solid #c5c5c5;
-  background: #f8f8f8;
-}
-.ms-refresh {
-  background: #006a64;
-  color: #fff;
-  border-color: #006a64;
-  cursor: pointer;
-}
 .ms-dialog-backdrop {
   position: fixed;
   inset: 0;

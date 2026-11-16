@@ -4,6 +4,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/vue-query'
 import { axiosInstance } from '@/modules/Core/plugins/axios'
 import { useAuthStore } from '@/modules/Auth/store'
+import { AppButton, AppInput, AppSearchField, AppSelect, AppTextarea } from '@/modules/Core/components/ui'
 
 interface WaiverSummary {
   id: number
@@ -169,6 +170,24 @@ const createMut = useMutation({
 
 async function submitDialog() {
   formError.value = null
+  if (dialog.value === 'approve') {
+    const n = Number(amount.value)
+    if (!Number.isFinite(n) || n <= 0) {
+      formError.value = 'أدخل مبلغ موافقة أكبر من صفر.'
+      return
+    }
+  }
+  if (dialog.value === 'create') {
+    const cid = Number(createCustomerId.value)
+    if (!Number.isInteger(cid) || cid <= 0) {
+      formError.value = 'معرّف الزبون غير صالح.'
+      return
+    }
+    if (!note.value.trim()) {
+      formError.value = 'الملاحظة مطلوبة.'
+      return
+    }
+  }
   submitting.value = true
   try {
     if (dialog.value === 'approve') await approveMut.mutateAsync()
@@ -179,6 +198,41 @@ async function submitDialog() {
   } finally {
     submitting.value = false
   }
+}
+
+function applyWithConfirm() {
+  if (
+    !window.confirm(
+      'تطبيق الخصم يخصم المبلغ من سعر البيع ولا يمكن التراجع بسهولة. هل تريد المتابعة؟',
+    )
+  ) {
+    return
+  }
+  applyMut.mutate()
+}
+
+function prevPage() {
+  if (page.value <= 1) return
+  patch({ page: String(page.value - 1) })
+}
+
+function nextPage() {
+  const total = listQuery.data.value?.totalCount ?? 0
+  const pageSize = listQuery.data.value?.pageSize ?? 20
+  if (page.value * pageSize >= total) return
+  patch({ page: String(page.value + 1) })
+}
+
+const statusOptions = [
+  { label: 'كل الحالات', value: '' },
+  { label: 'قيد مراجعة المفوض', value: 'Pending' },
+  { label: 'بانتظار المحاسب', value: 'AwaitingAccountant' },
+  { label: 'مطبّق', value: 'Approved' },
+  { label: 'مرفوض', value: 'Rejected' },
+]
+
+function onStatus(v: string | number | null | boolean) {
+  patch({ status: v == null || v === '' ? null : String(v), page: '1' })
 }
 
 const title = computed(() => {
@@ -200,41 +254,32 @@ const title = computed(() => {
 
     <div
       v-if="!canRead"
-      class="wv-state"
+      class="q-state q-state--forbidden"
       role="alert"
     >
       ليس لديك صلاحية قراءة التنازلات.
     </div>
     <template v-else>
-      <div class="wv-toolbar">
-        <div class="wv-search">
-          <input
-            v-model="searchInput"
-            type="search"
-            placeholder="بحث زبون أو ملاحظة…"
-            aria-label="بحث"
-          >
-          <span aria-hidden="true">🔍</span>
-        </div>
-        <select
-          :value="status"
-          aria-label="الحالة"
-          @change="patch({ status: ($event.target as HTMLSelectElement).value || null, page: '1' })"
-        >
-          <option value="">كل الحالات</option>
-          <option value="Pending">قيد مراجعة المفوض</option>
-          <option value="AwaitingAccountant">بانتظار المحاسب</option>
-          <option value="Approved">مطبّق</option>
-          <option value="Rejected">مرفوض</option>
-        </select>
-        <button
+      <div class="q-filters">
+        <AppSearchField
+          v-model="searchInput"
+          label="بحث"
+          placeholder="بحث زبون أو ملاحظة…"
+          grow
+        />
+        <AppSelect
+          :model-value="status"
+          label="الحالة"
+          :options="statusOptions"
+          @update:model-value="onStatus"
+        />
+        <AppButton
           v-if="canCreate && scope === 'branch'"
-          type="button"
-          class="wv-btn primary"
+          variant="primary"
           @click="dialog = 'create'; note = ''; createCustomerId = ''; formError = null"
         >
           طلب تنازل جديد
-        </button>
+        </AppButton>
       </div>
       <p class="wv-meta">
         قيد المفوض: {{ listQuery.data.value?.pendingCount ?? (listQuery.isError.value ? '—' : '…') }}
@@ -243,20 +288,20 @@ const title = computed(() => {
       </p>
       <p
         v-if="listQuery.isError.value"
-        class="wv-err"
+        class="q-state q-state--error"
         role="alert"
       >
         تعذر التحميل.
       </p>
       <div
         v-else-if="listQuery.isPending.value"
-        class="wv-state"
+        class="q-state"
       >
         جاري التحميل…
       </div>
       <div
         v-else-if="!(listQuery.data.value?.items.length)"
-        class="wv-state"
+        class="q-state"
       >
         لا طلبات.
       </div>
@@ -277,11 +322,36 @@ const title = computed(() => {
             <span>{{ row.statusLabel }}</span>
             <div>{{ row.requestNote }}</div>
           </button>
+          <div
+            v-if="(listQuery.data.value?.totalCount ?? 0) > (listQuery.data.value?.pageSize ?? 20)"
+            class="wv-pager"
+          >
+            <AppButton
+              variant="secondary"
+              size="sm"
+              :disabled="page <= 1"
+              @click="prevPage"
+            >
+              السابق
+            </AppButton>
+            <span class="wv-pager__meta">
+              صفحة {{ page }}
+              · {{ listQuery.data.value?.totalCount ?? 0 }} طلب
+            </span>
+            <AppButton
+              variant="secondary"
+              size="sm"
+              :disabled="page * (listQuery.data.value?.pageSize ?? 20) >= (listQuery.data.value?.totalCount ?? 0)"
+              @click="nextPage"
+            >
+              التالي
+            </AppButton>
+          </div>
         </div>
         <aside class="wv-detail">
           <div
             v-if="selectedId == null"
-            class="wv-state"
+            class="q-state"
           >
             اختر طلبًا.
           </div>
@@ -293,31 +363,27 @@ const title = computed(() => {
               مبلغ الموافقة: {{ detailQuery.data.value.approvedAmount }}
             </p>
             <div class="wv-actions">
-              <button
+              <AppButton
                 v-if="canDecide && detailQuery.data.value.status === 'Pending'"
-                type="button"
-                class="wv-btn primary"
                 @click="dialog = 'approve'; amount = ''; note = ''; formError = null"
               >
                 قبول بمبلغ
-              </button>
-              <button
+              </AppButton>
+              <AppButton
                 v-if="canDecide && detailQuery.data.value.status === 'Pending'"
-                type="button"
-                class="wv-btn"
+                variant="secondary"
                 @click="dialog = 'reject'; note = ''; formError = null"
               >
                 رفض
-              </button>
-              <button
+              </AppButton>
+              <AppButton
                 v-if="canApply && detailQuery.data.value.status === 'AwaitingAccountant'"
-                type="button"
-                class="wv-btn primary"
                 :disabled="applyMut.isPending.value"
-                @click="applyMut.mutate()"
+                :loading="applyMut.isPending.value"
+                @click="applyWithConfirm"
               >
                 تطبيق الخصم
-              </button>
+              </AppButton>
             </div>
           </template>
         </aside>
@@ -343,36 +409,19 @@ const title = computed(() => {
                 : 'طلب تنازل'
           }}
         </h2>
-        <label
+        <AppInput
           v-if="dialog === 'create'"
-          class="wv-field"
-        >
-          معرّف الزبون
-          <input
-            v-model="createCustomerId"
-            type="number"
-            min="1"
-          >
-        </label>
-        <label
+          v-model="createCustomerId"
+          label="معرّف الزبون"
+          type="number"
+        />
+        <AppInput
           v-if="dialog === 'approve'"
-          class="wv-field"
-        >
-          المبلغ
-          <input
-            v-model="amount"
-            type="number"
-            min="0.01"
-            step="0.01"
-          >
-        </label>
-        <label class="wv-field">
-          ملاحظة
-          <textarea
-            v-model="note"
-            rows="4"
-          />
-        </label>
+          v-model="amount"
+          label="المبلغ"
+          type="number"
+        />
+        <AppTextarea v-model="note" label="ملاحظة" :rows="4" />
         <p
           v-if="formError"
           class="wv-err"
@@ -380,21 +429,12 @@ const title = computed(() => {
           {{ formError }}
         </p>
         <div class="wv-actions">
-          <button
-            type="button"
-            class="wv-btn"
-            @click="dialog = null"
-          >
+          <AppButton variant="secondary" @click="dialog = null">
             إلغاء
-          </button>
-          <button
-            type="button"
-            class="wv-btn primary"
-            :disabled="submitting"
-            @click="submitDialog"
-          >
+          </AppButton>
+          <AppButton :disabled="submitting" :loading="submitting" @click="submitDialog">
             تأكيد
-          </button>
+          </AppButton>
         </div>
       </div>
     </div>
@@ -403,7 +443,7 @@ const title = computed(() => {
 
 <style scoped>
 .wv-page {
-  font-family: 'El Messiri', Tahoma, sans-serif;
+  font-family: inherit;
   color: #00201e;
   padding: 1rem 1.25rem 2rem;
   max-width: 64rem;
@@ -419,73 +459,8 @@ const title = computed(() => {
   color: #3d524f;
   font-size: 14px;
 }
-.wv-toolbar {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.75rem;
-  margin: 1.25rem 0 0.75rem;
-}
-.wv-search {
-  display: flex;
-  flex: 1 1 14rem;
-  max-width: 28rem;
-  background: #f8f8f8;
-  border: 1px solid #c5c5c5;
-  border-radius: 8px;
-  overflow: hidden;
-}
-.wv-search input,
-.wv-toolbar select,
-.wv-field input,
-.wv-field textarea {
-  font-family: inherit;
-  font-size: 16px;
-  color: #00201e;
-}
-.wv-search input {
-  flex: 1;
-  border: 0;
-  background: transparent;
-  min-height: 44px;
-  padding: 0 0.75rem;
-}
-.wv-search span {
-  width: 44px;
-  display: grid;
-  place-items: center;
-  color: #006a64;
-}
-.wv-toolbar select {
-  min-height: 44px;
-  background: #f8f8f8;
-  border: 1px solid #c5c5c5;
-  border-radius: 8px;
-  padding: 0 0.75rem;
-}
-.wv-btn {
-  min-height: 44px;
-  padding: 0 1rem;
-  border-radius: 8px;
-  border: 1px solid #006a64;
-  background: #fff;
-  color: #006a64;
-  font-family: inherit;
-  cursor: pointer;
-}
-.wv-btn.primary {
-  background: #006a64;
-  color: #fff;
-}
-.wv-btn:disabled {
-  opacity: 0.55;
-}
 .wv-meta {
   font-size: 14px;
-  color: #3d524f;
-}
-.wv-state {
-  padding: 1.5rem;
-  text-align: center;
   color: #3d524f;
 }
 .wv-err {
@@ -505,6 +480,19 @@ const title = computed(() => {
   border: 1px solid #d7e0df;
   border-radius: 10px;
   overflow: hidden;
+}
+.wv-pager {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.65rem 0.85rem;
+  border-top: 1px solid #e5eceb;
+  background: #f8faf9;
+}
+.wv-pager__meta {
+  font-size: 13px;
+  color: #3d524f;
 }
 .wv-row {
   display: block;
@@ -547,18 +535,5 @@ const title = computed(() => {
   background: #fff;
   border-radius: 12px;
   padding: 1.25rem;
-}
-.wv-field {
-  display: flex;
-  flex-direction: column;
-  gap: 0.35rem;
-  margin-bottom: 0.75rem;
-}
-.wv-field input,
-.wv-field textarea {
-  border: 1px solid #c5c5c5;
-  border-radius: 8px;
-  background: #f8f8f8;
-  padding: 0.75rem;
 }
 </style>

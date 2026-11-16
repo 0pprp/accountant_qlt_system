@@ -98,6 +98,7 @@ public class DatabaseInitializer
             .Concat(Permissions.BranchVisit.OutsideAll)
             .Concat(Permissions.BranchManagerAccount.OutsideAll)
             .Concat(Permissions.DelegateHome.OutsideAll)
+            .Concat(Application.Common.AdminPanel.AdminPanelTabs.OutsideAll)
             .ToList();
 
         foreach (var permission in seedPermissions)

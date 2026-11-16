@@ -6,8 +6,13 @@ import { useAuthStore } from '@/modules/Auth/store'
 const auth = useAuthStore()
 const router = useRouter()
 const canTutorials = computed(() => auth.hasPermission('Tutorial', 'Read') === true)
+const branchSummary = computed(() => {
+  const names = (auth.branches ?? []).map((b) => b.name || String(b.id))
+  return names.length ? names.join('، ') : '—'
+})
 
 function logout() {
+  if (!window.confirm('هل تريد تسجيل الخروج من الجلسة الحالية؟')) return
   auth.logout?.()
   router.push({ name: 'LoginRoute' }).catch(() => {
     router.push('/login')
@@ -31,12 +36,14 @@ function logout() {
       <h2>الحساب</h2>
       <p>جلسة مفوض نشطة</p>
       <p class="ds-meta">
+        الصلاحيات جاهزة:
+        {{ auth.permissionsReady ? 'نعم' : 'لا' }}
+        · مشرف أعلى:
+        {{ auth.isSuperAdmin ? 'نعم' : 'لا' }}
+      </p>
+      <p class="ds-meta">
         الفروع:
-        {{
-          (auth.branches ?? [])
-            .map((b: { name?: string; id?: number }) => b.name || b.id)
-            .join('، ') || '—'
-        }}
+        {{ branchSummary }}
       </p>
     </section>
 
@@ -79,7 +86,7 @@ function logout() {
   max-width: 720px;
   margin: 0 auto;
   padding: 1rem 1.25rem 2rem;
-  font-family: ElMessiri, 'Segoe UI', Tahoma, sans-serif;
+  font-family: inherit;
   color: #00201e;
 }
 .ds-title {

@@ -4,6 +4,7 @@ import { useRouter } from 'vue-router'
 import { useQuery } from '@tanstack/vue-query'
 import { axiosInstance } from '@/modules/Core/plugins/axios'
 import { useAuthStore } from '@/modules/Auth/store'
+import { AppButton } from '@/modules/Core/components/ui'
 
 interface Summary {
   unreadComplaints: number | null
@@ -72,14 +73,13 @@ function go(path: string, query?: Record<string, string>) {
       ليس لديك صلاحية قراءة رئيسية المفوض.
     </div>
     <template v-else>
-      <button
+      <AppButton
         v-if="summaryQuery.isError.value"
-        type="button"
-        class="dh-btn"
+        variant="secondary"
         @click="summaryQuery.refetch()"
       >
         إعادة المحاولة
-      </button>
+      </AppButton>
       <p
         v-if="summaryQuery.isError.value"
         class="dh-err"
@@ -168,7 +168,7 @@ function go(path: string, query?: Record<string, string>) {
   max-width: 960px;
   margin: 0 auto;
   padding: 1rem 1.25rem 2rem;
-  font-family: ElMessiri, 'Segoe UI', Tahoma, sans-serif;
+  font-family: inherit;
   color: #00201e;
 }
 .dh-title {

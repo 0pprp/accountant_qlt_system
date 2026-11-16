@@ -2,6 +2,8 @@
 import { computed, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '@/modules/Auth/store'
+import { AppButton, AppSearchField, AppSelect, DataState } from '@/modules/Core/components/ui'
+import { formatDateTime, formatNumber } from '@/modules/Core/utils/formatDisplay'
 import {
   useAppNoteDetailQuery,
   useAppNotesQuery,
@@ -15,6 +17,14 @@ import '../components/app-notes.css'
 const auth = useAuthStore()
 const route = useRoute()
 const router = useRouter()
+
+const sourceAppOptions = [
+  { label: 'كل المصادر', value: null as string | null },
+  { label: 'متابع', value: 'Follower' },
+  { label: 'مندوب', value: 'Delegate' },
+  { label: 'موظف مبيعات', value: 'SalesEmployee' },
+  { label: 'مدير فرع', value: 'BranchManager' },
+]
 
 const canRead = computed(() => auth.hasPermission('AppNote', 'Read') === true)
 
@@ -107,15 +117,7 @@ function statusLabel(isUnread: boolean) {
 }
 
 function fmt(v: string | null | undefined) {
-  if (!v) return '—'
-  try {
-    return new Intl.DateTimeFormat('ar-IQ', {
-      dateStyle: 'medium',
-      timeStyle: 'short',
-    }).format(new Date(v))
-  } catch {
-    return v
-  }
+  return formatDateTime(v)
 }
 </script>
 
@@ -131,94 +133,76 @@ function fmt(v: string | null | undefined) {
       </p>
     </header>
 
-    <div
+    <DataState
       v-if="!canRead"
-      class="an-state an-state--forbidden"
-      role="alert"
-    >
-      ليس لديك صلاحية قراءة ملاحظات التطبيقات.
-    </div>
+      kind="forbidden"
+      title="غير مصرّح"
+      message="ليس لديك صلاحية قراءة ملاحظات التطبيقات."
+    />
 
     <template v-else>
-      <div class="an-toolbar">
-        <div class="an-search">
-          <input
-            v-model="searchInput"
-            class="an-search__input"
-            type="search"
-            placeholder="بحث في الموضوع أو النص أو المرسل…"
-            aria-label="بحث في الملاحظات"
-            autocomplete="off"
-          >
-          <span
-            class="an-search__icon"
-            aria-hidden="true"
-          >🔍</span>
-        </div>
-        <select
-          class="an-select"
-          :value="sourceApp"
-          aria-label="مصدر التطبيق"
-          @change="
-            patchQuery({
-              sourceApp: ($event.target as HTMLSelectElement).value || null,
-              page: '1',
-            })
+      <div class="q-filters">
+        <AppSearchField
+          v-model="searchInput"
+          label="بحث"
+          placeholder="بحث في الموضوع أو النص أو المرسل…"
+          grow
+        />
+        <AppSelect
+          :model-value="sourceApp || null"
+          label="مصدر التطبيق"
+          placeholder="كل المصادر"
+          :options="sourceAppOptions"
+          :filterable="false"
+          @update:model-value="
+            (v) =>
+              patchQuery({
+                sourceApp: v ? String(v) : null,
+                page: '1',
+              })
           "
-        >
-          <option value="">كل المصادر</option>
-          <option value="Follower">متابع</option>
-          <option value="Delegate">مندوب</option>
-          <option value="SalesEmployee">موظف مبيعات</option>
-          <option value="BranchManager">مدير فرع</option>
-        </select>
-        <button
-          type="button"
-          class="an-chip"
-          :class="{ active: unreadOnly }"
-          :aria-pressed="unreadOnly"
+        />
+        <AppButton
+          :variant="unreadOnly ? 'primary' : 'secondary'"
           @click="patchQuery({ unread: unreadOnly ? null : '1', page: '1' })"
         >
           غير المقروء فقط
-        </button>
-        <button
-          type="button"
-          class="an-btn"
+        </AppButton>
+        <AppButton
+          variant="secondary"
           :disabled="markAllMut.isPending.value || (unreadCount ?? 0) === 0"
           @click="markAllRead"
         >
           تعليم الكل مقروءًا
-        </button>
+        </AppButton>
       </div>
 
       <p class="an-meta">
         غير المقروء:
         <template v-if="unreadCount == null">—</template>
-        <template v-else>{{ unreadCount }}</template>
+        <template v-else>{{ formatNumber(unreadCount) }}</template>
         · الإجمالي:
-        {{ data?.totalCount ?? (listQuery.isPending.value ? '…' : '—') }}
+        {{ data ? formatNumber(data.totalCount) : (listQuery.isPending.value ? '…' : '—') }}
       </p>
 
-      <p
+      <DataState
         v-if="listQuery.isError.value"
-        class="an-error"
-        role="alert"
-      >
-        تعذر تحميل الملاحظات.
-      </p>
-      <div
+        kind="error"
+        title="تعذر التحميل"
+        message="تعذر تحميل الملاحظات."
+      />
+      <DataState
         v-else-if="listQuery.isPending.value"
-        class="an-state"
-        aria-busy="true"
-      >
-        جاري التحميل…
-      </div>
-      <div
+        kind="loading"
+        title="جاري التحميل"
+        message="جاري تحميل الملاحظات."
+      />
+      <DataState
         v-else-if="(data?.items.length ?? 0) === 0"
-        class="an-state"
-      >
-        لا ملاحظات ضمن الفلاتر الحالية.
-      </div>
+        kind="empty"
+        title="لا ملاحظات"
+        message="لا ملاحظات ضمن الفلاتر الحالية."
+      />
       <div
         v-else
         class="an-layout"

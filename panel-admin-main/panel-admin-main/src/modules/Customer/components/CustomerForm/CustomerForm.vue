@@ -1,242 +1,113 @@
 <template>
-  <form @submit.prevent="submit">
-    <div>
-      <h2 class="text-[14px] font-medium text-gray-700 mb-4">
-        {{ $t('customer.form.personalInfoTitle') }}
-      </h2>
+  <form
+    class="customer-form"
+    @submit.prevent="submit"
+  >
+    <h2 class="customer-form__section">
+      {{ $t('customer.form.personalInfoTitle') }}
+    </h2>
 
-      <div class="flex gap-6">
-        <div class="w-full">
-          <label class="text-gray-300 text-[14px] font-medium">
-            {{ $t('customer.form.fullName.label') }}
-          </label>
-
-          <InputText v-model="fullName" class="mt-2" type="text" />
-
-          <Message
-            v-if="errors['fullName']"
-            class="mt-2"
-            severity="error"
-            size="small"
-            variant="simple"
-            :unstyled="false"
-          >
-            {{ errors['fullName'] }}
-          </Message>
-        </div>
-
-        <div v-if="isEditMode" class="w-full">
-          <label class="text-gray-300 text-[14px] font-medium">
-            {{ $t('customer.form.rating.label') }}
-          </label>
-          <div
-            class="mt-2 min-h-[48px] flex items-center rounded-lg border border-gray-200 bg-gray-50 px-4 text-[14px] font-semibold text-gray-800"
-          >
-            {{ rating || '—' }}
-          </div>
-        </div>
-
-        <div class="w-full">
-          <label class="text-gray-300 text-[14px] font-medium">
-            {{ $t('customer.form.motherName.label') }}
-          </label>
-
-          <InputText v-model="motherName" class="mt-2" type="text" />
-
-          <Message
-            v-if="errors['motherName']"
-            class="mt-2"
-            severity="error"
-            size="small"
-            variant="simple"
-            :unstyled="false"
-          >
-            {{ errors['motherName'] }}
-          </Message>
+    <div class="customer-form__grid">
+      <AppInput
+        v-model="fullName"
+        :label="$t('customer.form.fullName.label')"
+        :error="errors['fullName']"
+        required
+      />
+      <div
+        v-if="isEditMode"
+        class="q-field"
+      >
+        <span class="q-field__label">{{ $t('customer.form.rating.label') }}</span>
+        <div class="customer-form__readonly">
+          {{ rating || '—' }}
         </div>
       </div>
-
-      <div class="w-full my-6">
-        <label class="text-gray-300 text-[14px] font-medium">
-          {{ $t('customer.form.nationalCode.label') }}
-        </label>
-
-        <InputText v-model="nationalCode" class="mt-2" :useGrouping="false" />
-
-        <Message
-          v-if="errors['nationalCode']"
-          class="mt-2"
-          severity="error"
-          size="small"
-          variant="simple"
-          :unstyled="false"
-        >
-          {{ errors['nationalCode'] }}
-        </Message>
-      </div>
-
-      <div class="w-full flex flex-col gap-1">
-        <label class="text-gray-300 text-[14px] font-medium">
-          {{ $t('customer.form.birthDate.label') }}
-        </label>
-
-        <DatePicker
-          v-model="birthDate"
-          :unstyled="false"
-          size="large"
-          view="date"
-          dateFormat="yy/mm/dd"
-        />
-
-        <Message
-          v-if="errors['birthDate']"
-          class="mt-2"
-          severity="error"
-          size="small"
-          variant="simple"
-          :unstyled="false"
-        >
-          {{ errors['birthDate'] }}
-        </Message>
-      </div>
-
-      <div class="flex justify-center my-[32px]">
-        <Divider class="!w-2/3" :unstyled="false" />
-      </div>
-
-      <h2 class="text-[14px] font-medium text-gray-700 mb-4">
-        {{ $t('customer.form.businessInfoTitle') }}
-      </h2>
-
-      <div class="w-full mb-4">
-        <label class="text-gray-300 text-[14px] font-medium">
-          {{ $t('customer.form.businessName.label') }}
-        </label>
-
-        <InputText v-model="businessName" class="mt-2" />
-
-        <Message
-          v-if="errors['business.name']"
-          class="mt-2"
-          severity="error"
-          size="small"
-          variant="simple"
-          :unstyled="false"
-        >
-          {{ errors['business.name'] }}
-        </Message>
-      </div>
-
-      <div class="flex gap-6 mb-4">
-        <div class="w-full">
-          <label class="text-gray-300 text-[14px] font-medium">
-            {{ $t('customer.form.whatsAppPhoneNumber.label') }}
-          </label>
-
-          <InputText v-model="whatsAppPhoneNumber" class="mt-2" type="text" />
-
-          <Message
-            v-if="errors['whatsAppPhoneNumber']"
-            class="mt-2"
-            severity="error"
-            size="small"
-            variant="simple"
-            :unstyled="false"
-          >
-            {{ errors['whatsAppPhoneNumber'] }}
-          </Message>
-        </div>
-
-        <div class="w-full">
-          <label class="text-gray-300 text-[14px] font-medium">
-            {{ $t('customer.form.phoneNumber.label') }}
-          </label>
-
-          <InputText class="mt-2" type="text" v-model="phoneNumber" />
-
-          <Message
-            v-if="errors['phoneNumber']"
-            class="mt-2"
-            severity="error"
-            size="small"
-            variant="simple"
-            :unstyled="false"
-          >
-            {{ errors['phoneNumber'] }}
-          </Message>
-        </div>
-      </div>
-
-      <div class="flex gap-6 mb-4">
-        <div class="w-full">
-          <label class="text-gray-300 text-[14px] font-medium">
-            {{ $t('customer.form.address.label') }}
-          </label>
-
-          <InputText v-model="address" class="mt-2" type="text" />
-
-          <Message
-            v-if="errors['business.address']"
-            class="mt-2"
-            severity="error"
-            size="small"
-            variant="simple"
-            :unstyled="false"
-          >
-            {{ errors['business.address'] }}
-          </Message>
-        </div>
-
-        <div class="w-full">
-          <label class="text-gray-300 text-[14px] font-medium">
-            {{ $t('customer.form.nearestKnownLocation.label') }}
-          </label>
-
-          <InputText v-model="nearestKnownLocation" class="mt-2" type="text" />
-
-          <Message
-            v-if="errors['business.nearestKnownLocation']"
-            class="mt-2"
-            severity="error"
-            size="small"
-            variant="simple"
-            :unstyled="false"
-          >
-            {{ errors['business.nearestKnownLocation'] }}
-          </Message>
-        </div>
-      </div>
+      <AppInput
+        v-model="motherName"
+        :label="$t('customer.form.motherName.label')"
+        :error="errors['motherName']"
+        required
+      />
+      <AppInput
+        v-model="nationalCode"
+        :label="$t('customer.form.nationalCode.label')"
+        :error="errors['nationalCode']"
+        required
+      />
+      <AppDateField
+        v-model="birthDateField"
+        :label="$t('customer.form.birthDate.label')"
+        :error="errors['birthDate']"
+        required
+      />
     </div>
 
-    <div class="flex justify-center items-center gap-4 mt-8 sticky bottom-0">
-      <Button
-        class="!w-[550px] !rounded-xl !bg-primary py-3 !border-none text-white"
+    <h2 class="customer-form__section">
+      {{ $t('customer.form.businessInfoTitle') }}
+    </h2>
+
+    <div class="customer-form__grid">
+      <AppInput
+        v-model="businessName"
+        :label="$t('customer.form.businessName.label')"
+        :error="errors['business.name']"
+        required
+        grow
+      />
+      <AppInput
+        v-model="whatsAppPhoneNumber"
+        :label="$t('customer.form.whatsAppPhoneNumber.label')"
+        :error="errors['whatsAppPhoneNumber']"
+        required
+      />
+      <AppInput
+        v-model="phoneNumber"
+        :label="$t('customer.form.phoneNumber.label')"
+        :error="errors['phoneNumber']"
+        required
+      />
+      <AppInput
+        v-model="address"
+        :label="$t('customer.form.address.label')"
+        :error="errors['business.address']"
+        required
+      />
+      <AppInput
+        v-model="nearestKnownLocation"
+        :label="$t('customer.form.nearestKnownLocation.label')"
+        :error="errors['business.nearestKnownLocation']"
+        required
+      />
+    </div>
+
+    <div class="customer-form__actions">
+      <AppButton
         type="submit"
+        variant="primary"
         :loading="props.loading"
-        :unstyled="false"
       >
         {{ $t('words.save') }}
-      </Button>
-
-      <Button
-        class="w-[80px] !rounded-xl !bg-transparent py-3 !border-none hover:!text-primary !text-primary"
-        :unstyled="false"
-        :loading="props.loading"
+      </AppButton>
+      <AppButton
+        type="button"
+        variant="ghost"
+        :disabled="props.loading"
         @click="navigateToCustomerList"
       >
         {{ $t('words.cancel') }}
-      </Button>
+      </AppButton>
     </div>
   </form>
 </template>
 
 <script setup lang="ts">
 import { computed, watch } from 'vue'
-import { InputText, DatePicker, Divider, Button, Message } from 'primevue'
 import { useI18n } from 'vue-i18n'
 import { useForm } from 'vee-validate'
 import { object, string } from 'yup'
 import { useRouter } from 'vue-router'
+import { AppButton, AppDateField, AppInput } from '@/modules/Core/components/ui'
 import type { Emits, Props } from './CustomerForm.types.ts'
 import type { CustomerForm } from '@/modules/Customer/types/model'
 import type { CustomerCreatePayload } from '@/modules/Customer/types/api'
@@ -263,7 +134,7 @@ const validationSchema = object().shape({
     .required(t('customer.form.required'))
     .matches(
       REGEX.PHONE_11_DIGIT_REGEX,
-      t('customer.form.whatsAppPhoneNumber.match')
+      t('customer.form.whatsAppPhoneNumber.match'),
     ),
   business: object().shape({
     name: string().required(t('customer.form.required')),
@@ -286,22 +157,11 @@ const [businessName] = defineField('business.name')
 const [address] = defineField('business.address')
 const [nearestKnownLocation] = defineField('business.nearestKnownLocation')
 
-const birthDate = computed({
-  get: () => {
-    if (!birthDateField.value) return null
-    return new Date(birthDateField.value)
-  },
-  set: (val: Date | null) => {
-    if (!val) {
-      birthDateField.value = null
-      return
-    }
-    const year = val.getFullYear()
-    const month = String(val.getMonth() + 1).padStart(2, '0')
-    const day = String(val.getDate()).padStart(2, '0')
-    birthDateField.value = `${year}-${month}-${day}`
-  },
-})
+function toDateInput(value: string | null | undefined): string | null {
+  if (!value) return value ?? null
+  const match = /^(\d{4}-\d{2}-\d{2})/.exec(value)
+  return match ? match[1] : value
+}
 
 const router = useRouter()
 
@@ -337,7 +197,7 @@ watch(
         fullName: props.initialValues.fullName,
         motherName: props.initialValues.motherName,
         nationalCode: props.initialValues.nationalCode,
-        birthDate: props.initialValues.birthDate,
+        birthDate: toDateInput(props.initialValues.birthDate),
         phoneNumber: props.initialValues.phoneNumber,
         whatsAppPhoneNumber: props.initialValues.whatsAppPhoneNumber,
         business: {
@@ -349,13 +209,46 @@ watch(
       })
     }
   },
-  { immediate: true }
+  { immediate: true },
 )
 </script>
 
-<style>
-.p-datepicker-input {
-  font-size: 14px !important;
-  padding: 16px !important;
+<style scoped>
+.customer-form {
+  direction: rtl;
+  display: grid;
+  gap: 20px;
+}
+.customer-form__section {
+  margin: 8px 0 0;
+  font-size: 16px;
+  font-weight: 700;
+  color: #006a64;
+}
+.customer-form__grid {
+  display: grid;
+  gap: 16px 14px;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  align-items: start;
+}
+.customer-form__readonly {
+  min-height: 48px;
+  display: flex;
+  align-items: center;
+  padding: 10px 14px;
+  border: 1px solid #cddbd7;
+  border-radius: 12px;
+  background: #f8f8f8;
+  font-weight: 600;
+  color: #00201e;
+}
+.customer-form__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  position: sticky;
+  bottom: 0;
+  padding: 12px 0;
+  background: linear-gradient(180deg, transparent, #fff 30%);
 }
 </style>

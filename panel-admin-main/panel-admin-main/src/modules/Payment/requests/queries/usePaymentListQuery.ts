@@ -1,5 +1,5 @@
-import { type UseQueryOptions, useQuery } from '@tanstack/vue-query'
-import type { Ref } from 'vue'
+import { useQuery } from '@tanstack/vue-query'
+import { computed, type Ref } from 'vue'
 import { axiosInstance } from '@/modules/Core/plugins/axios'
 import { serializeParamsWithSortCriteria } from '@/modules/Core/utils/paramsSerializer'
 import type { PaymentListServerSuccessResponse } from '@/modules/Payment/types/api'
@@ -50,12 +50,6 @@ export function usePaymentListDataQuery(
     property: string
     direction: number
   }> | null>,
-  options?: Omit<
-    UseQueryOptions<
-      UseQueryOptions<Awaited<ReturnType<typeof fetchPaymentList>>>
-    >,
-    'queryKey' | 'queryFn'
-  >
 ) {
   return useQuery({
     queryKey: [
@@ -69,7 +63,7 @@ export function usePaymentListDataQuery(
       endDate,
       sortCriteria,
     ],
-
+    enabled: computed(() => id.value > 0 && branchId.value > 0),
     queryFn: () =>
       fetchPaymentList(
         id.value,
@@ -81,6 +75,5 @@ export function usePaymentListDataQuery(
         endDate?.value ?? null,
         sortCriteria?.value
       ),
-    ...options,
   })
 }

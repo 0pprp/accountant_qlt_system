@@ -1,4 +1,5 @@
-﻿using Application.Common.Interfaces;
+﻿using Application.Common.AdminPanel;
+using Application.Common.Interfaces;
 using Domain.Services.SalesRequestLifecycle;
 using SeedPermissions = Application.Common.SeedData.Permissions;
 
@@ -24,10 +25,31 @@ public static class SalesRequestTabPermissions
             _ => null
         };
 
+    public static string? PanelTabKeyFor(string tab) =>
+        SalesRequestTabMap.Normalize(tab) switch
+        {
+            SalesRequestTabMap.Unassigned => "sr.unassigned",
+            SalesRequestTabMap.Incoming => "sr.incoming",
+            SalesRequestTabMap.Prepared => "sr.prepared",
+            SalesRequestTabMap.Inspected => "sr.inspected",
+            SalesRequestTabMap.Pending => "sr.pending",
+            SalesRequestTabMap.Rejected => "sr.rejected",
+            SalesRequestTabMap.Sold => "sr.sold",
+            SalesRequestTabMap.Sent => "sr.sent",
+            SalesRequestTabMap.Exceptions => "sr.exceptions",
+            SalesRequestTabMap.Deleted => "sr.deleted",
+            SalesRequestTabMap.Legal => "sr.legal",
+            _ => null
+        };
+
     public static bool CanReadTab(ICurrentUserService user, string tab)
     {
         var perm = PermissionForTab(tab);
-        return perm != null && user.HasPermission(perm);
+        if (perm != null && user.HasPermission(perm))
+            return true;
+
+        var panelKey = PanelTabKeyFor(tab);
+        return panelKey != null && user.HasPermission(AdminPanelTabs.PermissionName(panelKey));
     }
 
     /// <summary>تبويبات سير العمل المسموح قراءتها — أساس اتحاد «الكل».</summary>

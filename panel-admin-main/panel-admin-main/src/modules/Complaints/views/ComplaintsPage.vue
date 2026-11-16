@@ -3,6 +3,7 @@ import { computed, ref } from 'vue'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/vue-query'
 import { axiosInstance } from '@/modules/Core/plugins/axios'
 import { useAuthStore } from '@/modules/Auth/store'
+import { AppButton } from '@/modules/Core/components/ui'
 
 interface Row {
   id: number
@@ -94,14 +95,14 @@ const markMut = useMutation({
           الإجمالي: {{ listQuery.data.value?.totalCount ?? '—' }} · غير مقروء:
           {{ listQuery.data.value?.unreadCount ?? '—' }}
         </span>
-        <button
+        <AppButton
           v-if="listQuery.isError.value"
-          type="button"
-          class="cp-btn"
+          variant="secondary"
+          size="sm"
           @click="listQuery.refetch()"
         >
           إعادة المحاولة
-        </button>
+        </AppButton>
       </div>
       <p
         v-if="listQuery.isError.value"
@@ -166,22 +167,17 @@ const markMut = useMutation({
           {{ actionError }}
         </p>
         <div class="cp-actions">
-          <button
+          <AppButton
             v-if="canMark && selected.status === 'Unread'"
-            type="button"
-            class="cp-btn"
             :disabled="markMut.isPending.value"
+            :loading="markMut.isPending.value"
             @click="markMut.mutate(selected)"
           >
             تعليم مقروء
-          </button>
-          <button
-            type="button"
-            class="cp-btn ghost"
-            @click="selected = null"
-          >
+          </AppButton>
+          <AppButton variant="ghost" @click="selected = null">
             إغلاق
-          </button>
+          </AppButton>
         </div>
       </div>
     </div>
@@ -193,7 +189,7 @@ const markMut = useMutation({
   max-width: 960px;
   margin: 0 auto;
   padding: 1rem 1.25rem 2rem;
-  font-family: ElMessiri, 'Segoe UI', Tahoma, sans-serif;
+  font-family: inherit;
   color: #00201e;
 }
 .cp-title {

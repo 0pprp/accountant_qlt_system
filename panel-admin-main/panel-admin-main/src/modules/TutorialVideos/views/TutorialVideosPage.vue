@@ -4,6 +4,18 @@ import { useRoute, useRouter } from 'vue-router'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/vue-query'
 import { axiosInstance } from '@/modules/Core/plugins/axios'
 import { useAuthStore } from '@/modules/Auth/store'
+import { AppButton, AppInput, AppSelect } from '@/modules/Core/components/ui'
+import { formatDateTime } from '@/modules/Core/utils/formatDisplay'
+
+const tvAppKeyOptions = [
+  { label: 'المندوب', value: 'delegate' },
+  { label: 'إدارة الفرع', value: 'branch-manager' },
+  { label: 'المتابع / مسؤول اللجنة', value: 'follower' },
+]
+const tvEnabledOptions = [
+  { label: 'مفعّل', value: '1' },
+  { label: 'معطّل', value: '0' },
+]
 
 interface Row {
   id: number
@@ -154,14 +166,7 @@ async function submit() {
 }
 
 function fmtDate(iso: string) {
-  try {
-    return new Intl.DateTimeFormat('ar-IQ', {
-      dateStyle: 'medium',
-      timeStyle: 'short',
-    }).format(new Date(iso))
-  } catch {
-    return iso
-  }
+  return formatDateTime(iso)
 }
 </script>
 
@@ -185,42 +190,33 @@ function fmtDate(iso: string) {
       ليس لديك صلاحية قراءة الفيديوهات التعليمية.
     </div>
     <template v-else>
-      <div class="tv-toolbar">
-        <select
-          :value="appKey"
-          aria-label="الجمهور"
-          @change="patch({ appKey: ($event.target as HTMLSelectElement).value || null })"
-        >
-          <option value="">كل التطبيقات</option>
-          <option value="delegate">المندوب</option>
-          <option value="branch-manager">إدارة الفرع</option>
-          <option value="follower">المتابع / مسؤول اللجنة</option>
-        </select>
-        <select
-          :value="enabledFilter === null ? '' : enabledFilter ? '1' : '0'"
-          aria-label="الحالة"
-          @change="patch({ enabled: ($event.target as HTMLSelectElement).value || null })"
-        >
-          <option value="">الكل</option>
-          <option value="1">مفعّل</option>
-          <option value="0">معطّل</option>
-        </select>
-        <button
-          v-if="canCreate"
-          type="button"
-          class="tv-btn primary"
-          @click="openCreate"
-        >
+      <div class="q-filters">
+        <AppSelect
+          :model-value="appKey || null"
+          label="الجمهور"
+          placeholder="كل التطبيقات"
+          :options="tvAppKeyOptions"
+          :filterable="false"
+          @update:model-value="(v) => patch({ appKey: v ? String(v) : null })"
+        />
+        <AppSelect
+          :model-value="enabledFilter === null ? null : enabledFilter ? '1' : '0'"
+          label="الحالة"
+          placeholder="الكل"
+          :options="tvEnabledOptions"
+          :filterable="false"
+          @update:model-value="(v) => patch({ enabled: v ? String(v) : null })"
+        />
+        <AppButton v-if="canCreate" variant="primary" @click="openCreate">
           إضافة فيديو
-        </button>
-        <button
+        </AppButton>
+        <AppButton
           v-if="listQuery.isError.value"
-          type="button"
-          class="tv-btn"
+          variant="secondary"
           @click="listQuery.refetch()"
         >
           إعادة المحاولة
-        </button>
+        </AppButton>
       </div>
       <p class="tv-meta">
         الإجمالي:
@@ -319,31 +315,26 @@ function fmtDate(iso: string) {
         aria-modal="true"
       >
         <h2>{{ editing ? 'تعديل فيديو' : 'إضافة فيديو' }}</h2>
-        <label
+        <AppSelect
           v-if="!editing"
-          class="tv-field"
-        >الجمهور
-          <select v-model="form.appKey">
-            <option value="delegate">المندوب</option>
-            <option value="branch-manager">إدارة الفرع</option>
-            <option value="follower">المتابع / مسؤول اللجنة</option>
-          </select>
-        </label>
-        <label class="tv-field">السؤال
-          <input
-            v-model="form.questionAr"
-            type="text"
-            maxlength="400"
-          >
-        </label>
-        <label class="tv-field">رابط الفيديو (http/https)
-          <input
-            v-model="form.videoUrl"
-            type="url"
-            maxlength="1024"
-            dir="ltr"
-          >
-        </label>
+          v-model="form.appKey"
+          label="الجمهور"
+          :options="tvAppKeyOptions"
+          :filterable="false"
+        />
+        <AppInput
+          v-model="form.questionAr"
+          label="السؤال"
+          type="text"
+          :maxlength="400"
+        />
+        <AppInput
+          v-model="form.videoUrl"
+          label="رابط الفيديو (http/https)"
+          type="url"
+          :maxlength="1024"
+          dir="ltr"
+        />
         <label class="tv-check">
           <input
             v-model="form.isEnabled"
@@ -384,7 +375,7 @@ function fmtDate(iso: string) {
   --c-primary: #006a64;
   --c-ink: #00201e;
   --c-field: #f8f8f8;
-  font-family: ElMessiri, 'Segoe UI', Tahoma, sans-serif;
+  font-family: inherit;
   color: var(--c-ink);
   padding: 1rem 1.25rem 2rem;
   max-width: 1100px;
@@ -399,22 +390,6 @@ function fmtDate(iso: string) {
   margin: 0.35rem 0 1rem;
   color: #445;
   font-size: 0.95rem;
-}
-.tv-toolbar {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-  margin-bottom: 0.75rem;
-}
-.tv-toolbar select,
-.tv-field input,
-.tv-field select {
-  background: var(--c-field);
-  border: 1px solid #d0d5d4;
-  border-radius: 8px;
-  padding: 0.45rem 0.65rem;
-  font: inherit;
-  color: inherit;
 }
 .tv-btn {
   border: 1px solid #c5cecc;
@@ -496,11 +471,8 @@ function fmtDate(iso: string) {
   max-height: 90vh;
   overflow: auto;
 }
-.tv-field {
-  display: grid;
-  gap: 0.3rem;
+.tv-dialog :deep(.q-field) {
   margin: 0.65rem 0;
-  font-size: 0.9rem;
 }
 .tv-check {
   display: flex;

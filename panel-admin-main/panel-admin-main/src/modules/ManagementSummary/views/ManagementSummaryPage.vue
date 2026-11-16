@@ -48,7 +48,7 @@ function closeDrill() {
 
 function fmt(n: number | null | undefined) {
   if (n == null || Number.isNaN(n)) return '—'
-  return new Intl.NumberFormat('ar-IQ', {
+  return new Intl.NumberFormat('en-US', {
     maximumFractionDigits: 0,
   }).format(n)
 }

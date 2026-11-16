@@ -1,41 +1,20 @@
 <template>
-  <div class="flex flex-col">
-    <span
-      class="input__label"
-      :class="{ required }"
-      :aria-required="required"
-      :aria-label="$t(label)"
-    >
-      {{ $t(label) }}
-    </span>
-
-    <Select
-      :options="filteredSafe"
-      v-model="selectedSafe"
-      :disabled="readonly || disabled"
-      optionLabel="name"
-      :unstyled="false"
-      class="select"
-      :required="required"
-      :placeholder="$t(placeholder)"
-      @change="onOrderListChange"
-    />
-
-    <Message
-      v-if="error"
-      severity="error"
-      class="text-error text-xs"
-      variant="simple"
-    >
-      {{ error }}
-    </Message>
-  </div>
+  <AppSelect
+    :model-value="selectedSafeId"
+    :label="$t(label)"
+    :placeholder="$t(placeholder)"
+    :options="safeOptions"
+    :error="error"
+    :required="required"
+    :disabled="readonly || disabled"
+    @update:model-value="onPick"
+  />
 </template>
 
 <script setup lang="ts">
-import { computed, ref, watch, onMounted } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { Select, Message } from 'primevue'
+import { AppSelect } from '@/modules/Core/components/ui'
 import type { Props } from './SafeSelectInput.types'
 import { useSafeDataQuery } from '@/modules/Safe/requests/queries'
 import type { Safe } from '@/modules/Safe/types/model'
@@ -44,14 +23,16 @@ const props = defineProps<Props>()
 
 const safeId = defineModel<Props['modelValue']>('modelValue')
 
-type SafeOption = Safe | { id: null; name: string; branchId: null }
+type SafeOption = Safe | { id: number | null; name: string; branchId: null }
 
 const { t } = useI18n()
 const { data } = useSafeDataQuery()
 
+const safeList = ref<Array<Safe>>([])
+
 const filteredSafe = computed<SafeOption[]>(() => {
   const baseList = props.items || safeList.value || []
-  let result = [...baseList]
+  let result: SafeOption[] = [...baseList]
 
   if (props.hasMainSafe) {
     const mainSafe = data.value?.find((safe) => safe.branchId === null)
@@ -68,9 +49,8 @@ const filteredSafe = computed<SafeOption[]>(() => {
       name: t('safe.foreignSafe'),
       branchId: null,
     }
-
     const hasForeign = result.some(
-      (item) => item.id === -1 || (item.id === null && item.branchId === null)
+      (item) => item.id === -1 || (item.id === null && item.branchId === null),
     )
     if (!hasForeign) {
       result = [foreignSafe, ...result]
@@ -80,33 +60,27 @@ const filteredSafe = computed<SafeOption[]>(() => {
   return result
 })
 
-const selectedSafe = ref<SafeOption | null>(null)
+const safeOptions = computed(() =>
+  filteredSafe.value.map((s) => ({
+    label: s.name,
+    value: s.id === null ? -1 : s.id,
+  })),
+)
 
-const safeList = ref<Array<Safe>>([])
+const selectedSafeId = computed(() => {
+  if (safeId.value === null || safeId.value === undefined) return null
+  const id = Array.isArray(safeId.value) ? safeId.value[0] : safeId.value
+  if (id === null || id === -1) return -1
+  return id
+})
 
-function findSafeById(id: number | null): SafeOption | null {
-  if (id === null || id === -1) {
-    if (props.hasForeignSafe) {
-      return (
-        filteredSafe.value.find(
-          (safe) =>
-            safe.id === -1 || (safe.id === null && safe.branchId === null)
-        ) || null
-      )
-    }
-    return null
-  }
-  return filteredSafe.value.find((safe) => safe.id === id) || null
-}
-
-function initializeSelection() {
-  if (safeId.value === null || safeId.value === undefined) {
-    selectedSafe.value = null
+function onPick(v: string | number | null | boolean) {
+  if (v == null || v === '') {
+    safeId.value = null
     return
   }
-
-  const id = Array.isArray(safeId.value) ? safeId.value[0] : safeId.value
-  selectedSafe.value = findSafeById(id)
+  const n = typeof v === 'number' ? v : Number(v)
+  safeId.value = Number.isFinite(n) ? n : null
 }
 
 watch(
@@ -117,47 +91,7 @@ watch(
     } else {
       safeList.value = newData || []
     }
-    initializeSelection()
   },
-  { immediate: true }
+  { immediate: true },
 )
-
-watch(
-  safeId,
-  (newId) => {
-    // اگر newId تعریف نشده، selectedSafe را null کن
-    if (newId === undefined) {
-      if (selectedSafe.value !== null) {
-        selectedSafe.value = null
-      }
-      return
-    }
-
-    const id = newId === null ? null : Array.isArray(newId) ? newId[0] : newId
-    const newSelection = findSafeById(id)
-
-    if (JSON.stringify(selectedSafe.value) !== JSON.stringify(newSelection)) {
-      selectedSafe.value = newSelection
-    }
-  },
-  { immediate: true }
-)
-
-watch(selectedSafe, (newSelection) => {
-  const newModelValue: Props['modelValue'] = newSelection
-    ? newSelection.id
-    : null
-
-  if (JSON.stringify(safeId.value) !== JSON.stringify(newModelValue)) {
-    safeId.value = newModelValue
-  }
-})
-
-function onOrderListChange(event: { value: SafeOption }) {
-  selectedSafe.value = event.value
-}
-
-onMounted(() => {
-  initializeSelection()
-})
 </script>

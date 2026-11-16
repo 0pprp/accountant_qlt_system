@@ -4,6 +4,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/vue-query'
 import { axiosInstance } from '@/modules/Core/plugins/axios'
 import { useAuthStore } from '@/modules/Auth/store'
+import { AppButton } from '@/modules/Core/components/ui'
 
 interface Line {
   productId: number
@@ -118,13 +119,13 @@ const markAll = useMutation({
 })
 
 function fmt(n: number) {
-  return new Intl.NumberFormat('ar-IQ').format(n)
+  return new Intl.NumberFormat('en-US').format(n)
 }
 
 function fmtDate(iso: string | null) {
   if (!iso) return '—'
   try {
-    return new Intl.DateTimeFormat('ar-IQ', {
+    return new Intl.DateTimeFormat('en-US', {
       dateStyle: 'medium',
       timeStyle: 'short',
     }).format(new Date(iso))
@@ -163,23 +164,22 @@ function fmtDate(iso: string | null) {
           >
           غير المقروء فقط
         </label>
-        <button
+        <AppButton
           v-if="canMark"
-          type="button"
-          class="bns-btn"
+          variant="secondary"
           :disabled="markAll.isPending.value"
+          :loading="markAll.isPending.value"
           @click="markAll.mutate()"
         >
           تعليم الكل كمقروء
-        </button>
-        <button
+        </AppButton>
+        <AppButton
           v-if="listQuery.isError.value"
-          type="button"
-          class="bns-btn"
+          variant="secondary"
           @click="listQuery.refetch()"
         >
           إعادة المحاولة
-        </button>
+        </AppButton>
       </div>
       <p class="bns-meta">
         الإجمالي: {{ listQuery.data.value?.totalCount ?? (listQuery.isError.value ? '—' : '…') }}
@@ -266,22 +266,17 @@ function fmtDate(iso: string | null) {
                 {{ line.productName }} × {{ line.quantity }} — {{ fmt(line.lineSalePrice) }}
               </li>
             </ul>
-            <button
+            <AppButton
               v-if="canMark && !detailQuery.data.value.isRead"
-              type="button"
-              class="bns-btn primary"
               :disabled="markOne.isPending.value"
+              :loading="markOne.isPending.value"
               @click="markOne.mutate(detailQuery.data.value.orderId)"
             >
               تعليم كمقروء
-            </button>
-            <button
-              type="button"
-              class="bns-btn"
-              @click="patch({ orderId: null })"
-            >
+            </AppButton>
+            <AppButton variant="ghost" @click="patch({ orderId: null })">
               إغلاق التفاصيل
-            </button>
+            </AppButton>
           </template>
         </section>
       </div>
@@ -294,7 +289,7 @@ function fmtDate(iso: string | null) {
   --c-primary: #006a64;
   --c-ink: #00201e;
   --c-field: #f8f8f8;
-  font-family: ElMessiri, 'Segoe UI', Tahoma, sans-serif;
+  font-family: inherit;
   color: var(--c-ink);
   padding: 1rem 1.25rem 2rem;
   max-width: 1100px;

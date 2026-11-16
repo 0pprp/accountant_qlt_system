@@ -1,6 +1,6 @@
 <template>
   <div>
-    <TheHeader>
+    <TheHeader search-placeholder="header.input.placeholder">
       <template #create>
         <Button
           v-if="canCreateInstallmentPayment"
@@ -11,10 +11,9 @@
           <SvgIcon name="addCircle" />
         </Button>
       </template>
-      <template #calendar> <HeaderDatePicker /> </template
-    ></TheHeader>
+    </TheHeader>
 
-    <OrderList v-if="canReadOrderList" />
+    <PaymentRowsTable v-if="canReadOrderList" />
 
     <CustomDialog
       v-model="isOpen"
@@ -35,8 +34,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { Button } from 'primevue'
-import OrderList from '../components/OrderList/OrderList.vue'
-import HeaderDatePicker from '@/modules/Core/components/base/HeaderDatePicker/HeaderDatePicker.vue'
+import PaymentRowsTable from '../components/PaymentRowsTable/PaymentRowsTable.vue'
 import TheHeader from '@/modules/Core/components/layout/TheHeader/TheHeader.vue'
 import { usePermission } from '@/modules/Core/composable/usePermission'
 import CustomDialog from '@/modules/Core/components/shared/CustomDialog/CustomDialog.vue'

@@ -10,19 +10,26 @@
 
     <div v-if="!canRead" class="slm-state slm-state--denied">غير مخول بقراءة مواقع موظفي المبيعات.</div>
     <template v-else>
-      <div class="slm-filters">
-        <label class="slm-field">
-          <span>الفرع</span>
-          <select v-model="branchModel" class="slm-select">
-            <option :value="null">كل الفروع المسموحة</option>
-            <option v-for="b in branches" :key="b.id" :value="b.id">{{ b.name }}</option>
-          </select>
-        </label>
-        <label class="slm-field slm-field--grow">
-          <span>بحث / رقم موظف</span>
-          <input v-model="searchModel" class="slm-input" type="search" placeholder="اسم أو رقم" />
-        </label>
-        <button type="button" class="slm-btn" @click="recenter">إعادة تمركز</button>
+      <div class="q-filters">
+        <AppSelect
+          v-model="branchModel"
+          label="الفرع"
+          placeholder="كل الفروع المسموحة"
+          :options="branchOptions"
+        />
+        <AppSearchField
+          v-model="searchModel"
+          label="بحث / رقم موظف"
+          placeholder="اسم أو رقم"
+          grow
+        />
+        <AppButton
+          type="button"
+          variant="secondary"
+          @click="recenter"
+        >
+          إعادة تمركز
+        </AppButton>
       </div>
 
       <div v-if="query.isLoading.value" class="slm-state">جاري التحميل…</div>
@@ -62,6 +69,7 @@
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '@/modules/Auth/store'
+import { AppButton, AppSearchField, AppSelect } from '@/modules/Core/components/ui'
 import FollowerMapCanvas, {
   type MapPin,
 } from '@/modules/FollowerWork/components/tracking/FollowerMapCanvas.vue'
@@ -74,6 +82,10 @@ const router = useRouter()
 
 const canRead = computed(() => auth.hasPermission('SalesLocation', 'Read') === true)
 const branches = computed(() => auth.branches ?? [])
+const branchOptions = computed(() => [
+  { label: 'كل الفروع المسموحة', value: null as number | null },
+  ...branches.value.map((b) => ({ label: b.name, value: b.id })),
+])
 
 const branchModel = ref<number | null>(null)
 const searchModel = ref('')
@@ -217,7 +229,7 @@ void recenterToken
   padding: 0.25rem 0 1.5rem;
   background: #f8f8f8;
   min-height: 100%;
-  font-family: ElMessiri, 'El Messiri', sans-serif;
+  font-family: inherit;
   font-size: 16px;
   color: #00201e;
 }

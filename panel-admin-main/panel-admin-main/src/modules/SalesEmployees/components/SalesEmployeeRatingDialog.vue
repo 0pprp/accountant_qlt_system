@@ -171,7 +171,7 @@ const chart = computed(() => {
   border-radius: 12px;
   padding: 1rem;
   color: #00201e;
-  font-family: ElMessiri, 'El Messiri', sans-serif;
+  font-family: inherit;
 }
 .se-dialog__head {
   display: flex;

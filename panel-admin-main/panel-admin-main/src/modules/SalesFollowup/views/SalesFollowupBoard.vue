@@ -1,33 +1,41 @@
 <template>
-  <div class="sf-board" dir="rtl">
-    <section class="sr-filters">
-      <div class="grid gap-3 md:grid-cols-[240px_1fr]">
-        <label class="flex flex-col gap-1 text-sm">
-          <span>{{ $t('salesFollowup.selectBranch') }}</span>
-          <Select
-            v-model="branchId"
-            :options="branchOptions"
-            option-label="name"
-            option-value="id"
-            :unstyled="false"
-            :placeholder="$t('salesFollowup.allBranches')"
-            filter
-            filter-placeholder="ابحث عن الفرع…"
-            empty-filter-message="لا يوجد فرع بهذا الاسم"
-            empty-message="لا توجد فروع متاحة"
-            aria-label="الفرع"
-            class="w-full"
-            :reset-filter-on-hide="true"
-          />
-        </label>
-      </div>
-    </section>
-
-    <p v-if="employeesError" class="sf-error">تعذر تحميل موظفي المبيعات</p>
-    <div v-else-if="employeesLoading" class="sf-muted">جاري التحميل…</div>
-    <div v-else-if="!cards.length" class="sf-muted">
-      {{ $t('salesFollowup.noEmployees') }}
+  <div class="sf-board q-ui" dir="rtl">
+    <div class="q-filters sf-branch-filter">
+      <AppSelectMenu
+        v-model="branchId"
+        :label="$t('salesFollowup.selectBranch')"
+        :placeholder="$t('salesFollowup.allBranches')"
+        :options="branchMenuOptions"
+        filterable
+        filter-placeholder="ابحث عن الفرع…"
+        empty-message="لا يوجد فرع بهذا الاسم"
+      />
     </div>
+
+    <DataState
+      v-if="employeesError"
+      kind="error"
+      title="تعذر التحميل"
+      message="تعذر تحميل موظفي المبيعات"
+    >
+      <template #actions>
+        <AppButton variant="secondary" @click="employeesQuery.refetch()">
+          إعادة المحاولة
+        </AppButton>
+      </template>
+    </DataState>
+    <DataState
+      v-else-if="employeesLoading"
+      kind="loading"
+      title="جاري التحميل"
+      message="جاري جلب موظفي المبيعات."
+    />
+    <DataState
+      v-else-if="!cards.length"
+      kind="empty"
+      title="لا موظفين"
+      :message="$t('salesFollowup.noEmployees')"
+    />
 
     <div class="sf-cards">
       <article
@@ -56,21 +64,18 @@
           </div>
         </dl>
 
-        <button
-          type="button"
-          class="sr-open"
+        <AppButton
+          variant="secondary"
+          block
           :aria-pressed="selectedId === c.employeeId"
           @click="selectEmployee(c)"
         >
-          <span>
-            {{
-              selectedId === c.employeeId
-                ? $t('salesFollowup.detailOpen')
-                : $t('salesFollowup.openDetail')
-            }}
-          </span>
-          <span aria-hidden="true">←</span>
-        </button>
+          {{
+            selectedId === c.employeeId
+              ? $t('salesFollowup.detailOpen')
+              : $t('salesFollowup.openDetail')
+          }}
+        </AppButton>
       </article>
     </div>
 
@@ -166,22 +171,20 @@
         <div class="sf-section">
           <div class="sf-table-tools">
             <h3>{{ $t('salesFollowup.focusTable') }}</h3>
-            <input
+            <AppSearchField
               v-model="searchText"
-              class="sf-input"
               :placeholder="$t('salesFollowup.search')"
-            >
-            <Select
+              grow
+            />
+            <AppSelectMenu
               v-model="tableFilter"
               :options="tableFilterOptions"
-              option-label="label"
-              option-value="value"
+              :filterable="false"
               class="sf-table-filter"
-              :unstyled="false"
             />
-            <button type="button" class="sf-btn" @click="exportCsv">
+            <AppButton variant="primary" @click="exportCsv">
               {{ $t('salesFollowup.exportExcel') }}
-            </button>
+            </AppButton>
           </div>
 
           <div class="sf-table-wrap">
@@ -292,9 +295,15 @@
 import { computed, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { Dialog } from 'primevue'
-import Select from 'primevue/select'
 import { usePermission } from '@/modules/Core/composable/usePermission'
 import { useAuthStore } from '@/modules/Auth/store'
+import {
+  AppButton,
+  AppSearchField,
+  AppSelectMenu,
+  DataState,
+} from '@/modules/Core/components/ui'
+import { formatMoney as formatMoneyShared } from '@/modules/Core/utils/formatDisplay'
 import { useSalesFollowupEmployeesQuery } from '../requests/queries/useSalesFollowupEmployeesQuery'
 import { useSalesFollowupDetailQuery } from '../requests/queries/useSalesFollowupDetailQuery'
 import { useSetAppBlockMutation } from '../requests/mutations/useSetAppBlockMutation'
@@ -306,16 +315,12 @@ const { can } = usePermission()
 const auth = useAuthStore()
 const { t } = useI18n()
 
-const branches = computed(() =>
-  (auth.branches ?? []).map((b: { id: number; name: string }) => ({
-    id: b.id,
-    name: b.name,
-  }))
-)
-
-const branchOptions = computed(() => [
-  { id: null as number | null, name: t('salesFollowup.allBranches') },
-  ...branches.value,
+const branchMenuOptions = computed(() => [
+  { value: null as number | null, label: t('salesFollowup.allBranches') },
+  ...(auth.branches ?? []).map((b: { id: number; name: string }) => ({
+    value: b.id,
+    label: b.name,
+  })),
 ])
 
 /** null = كل الفروع */
@@ -458,7 +463,7 @@ function openProfile(customerId: number) {
 }
 
 function formatMoney(n: number) {
-  return new Intl.NumberFormat('en-IQ').format(Math.round(n))
+  return formatMoneyShared(n, '')
 }
 
 function exportCsv() {
@@ -505,11 +510,11 @@ function exportCsv() {
   display: flex;
   flex-direction: column;
   gap: 1rem;
+  font-family: var(--q-font, ElMessiri, sans-serif);
+  color: #00201e;
 }
-.sr-filters label > span {
-  font-size: 14px;
-  color: #526b67;
-  margin-bottom: 4px;
+.sf-branch-filter {
+  grid-template-columns: minmax(220px, 340px);
 }
 .sf-cards {
   display: grid;
@@ -689,24 +694,22 @@ dd {
   cursor: pointer;
 }
 .sf-table-tools {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.55rem;
-  align-items: center;
-  margin-bottom: 0.55rem;
+  display: grid;
+  grid-template-columns: minmax(180px, 1fr) minmax(140px, 200px) auto;
+  gap: 0.75rem;
+  align-items: end;
+  margin-bottom: 0.75rem;
 }
-.sf-input {
-  border: 1px solid #d7e2e0;
-  border-radius: 0.75rem;
-  padding: 0.55rem 0.75rem;
-  background: #f8f8f8;
-  color: #00201e;
-  font-family: inherit;
-  min-height: 46px;
-  font-size: 16px;
+.sf-table-tools h3 {
+  grid-column: 1 / -1;
 }
 .sf-table-filter {
   min-width: 10rem;
+}
+@media (max-width: 768px) {
+  .sf-table-tools {
+    grid-template-columns: 1fr;
+  }
 }
 .sf-table-wrap {
   overflow: auto;

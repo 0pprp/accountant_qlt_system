@@ -2,6 +2,7 @@ import type { RouteLocationNormalized } from 'vue-router'
 import type { AccessRequirement } from './access.types'
 import { evaluateAccess } from './evaluateAccess'
 import { getNavigationSectionByRouteName } from '@/modules/Core/navigation/navigation.registry'
+import { requirementForNavSectionId } from '@/modules/Core/navigation/panelTabAccess'
 import type {
   PermissionAction,
   PermissionModule,
@@ -123,7 +124,10 @@ export function resolveRequirementForRoute(
     const section = getNavigationSectionByRouteName(String(record.name ?? ''))
     if (section) {
       return {
-        requirement: section.requirement,
+        requirement: requirementForNavSectionId(
+          section.id,
+          section.requirement
+        ),
         isProtected: true,
         isExplicitPublic: false,
         isDeclared: true,
@@ -134,7 +138,10 @@ export function resolveRequirementForRoute(
   const section = getNavigationSectionByRouteName(routeName)
   if (section) {
     return {
-      requirement: section.requirement,
+      requirement: requirementForNavSectionId(
+        section.id,
+        section.requirement
+      ),
       isProtected: true,
       isExplicitPublic: false,
       isDeclared: true,

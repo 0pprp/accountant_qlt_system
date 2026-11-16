@@ -10,9 +10,9 @@
           <span class="df-num">#{{ branchId }}</span>
         </p>
       </div>
-      <button type="button" class="df-btn ghost" @click="goBackToBoard">
+      <AppButton variant="ghost" @click="goBackToBoard">
         {{ $t('delegateFollowup.customersPage.backBoard') }}
-      </button>
+      </AppButton>
     </header>
 
     <div v-if="!canRead || branchId == null || listId == null" class="df-error" role="alert">
@@ -25,36 +25,22 @@
       </div>
       <div v-else-if="customersQuery.isError.value" class="df-error" role="alert">
         {{ $t('delegateFollowup.customers.error') }}
-        <button type="button" class="df-btn ghost" @click="customersQuery.refetch()">
+        <AppButton variant="ghost" size="sm" @click="customersQuery.refetch()">
           {{ $t('delegateFollowup.lists.retry') }}
-        </button>
+        </AppButton>
       </div>
       <template v-else>
-        <div class="df-filters" role="search">
-          <label class="df-search">
-            <i class="pi pi-search" aria-hidden="true" />
-            <input
-              v-model="search"
-              type="search"
-              :placeholder="$t('delegateFollowup.customers.search')"
-            />
-          </label>
-          <div class="df-filter-chips" role="group">
-            <button
-              v-for="f in filters"
-              :key="f.id"
-              type="button"
-              class="df-chip"
-              :class="{ active: statusFilter === f.id }"
-              :aria-pressed="statusFilter === f.id"
-              @click="statusFilter = f.id"
-            >
-              {{ f.label }}
-            </button>
-          </div>
-          <button type="button" class="df-btn ghost" @click="exportCsv">
+        <div class="q-filters" role="search">
+          <AppSearchField
+            v-model="search"
+            :label="$t('delegateFollowup.customers.search')"
+            :placeholder="$t('delegateFollowup.customers.search')"
+            grow
+          />
+          <AppSelect v-model="statusFilter" label="التصنيف" :options="statusOptions" />
+          <AppButton variant="ghost" @click="exportCsv">
             {{ $t('delegateFollowup.customersPage.export') }}
-          </button>
+          </AppButton>
         </div>
 
         <p class="df-muted">
@@ -123,9 +109,9 @@
                 <td>{{ c.saleName ?? '—' }}</td>
                 <td>{{ c.itemsNames ?? '—' }}</td>
                 <td>
-                  <button type="button" class="df-btn ghost small" @click="openPayments(c.customerId)">
+                  <AppButton variant="ghost" size="sm" @click="openPayments(c.customerId)">
                     {{ $t('delegateFollowup.customers.cols.payments') }}
-                  </button>
+                  </AppButton>
                 </td>
               </tr>
             </tbody>
@@ -176,6 +162,7 @@ import { computed, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import Dialog from 'primevue/dialog'
 import { useAuthStore } from '@/modules/Auth/store'
+import { AppButton, AppSearchField, AppSelect } from '@/modules/Core/components/ui'
 import { usePermission } from '@/modules/Core/composable/usePermission'
 import { useCustomersQuery } from '../requests/queries/useCustomersQuery'
 import { useCustomerPaymentsQuery } from '../requests/queries/useCustomerPaymentsQuery'
@@ -205,14 +192,14 @@ const search = ref(String(route.query.search ?? ''))
 const customersQuery = useCustomersQuery(listId, branchId)
 const rows = computed(() => customersQuery.data.value?.customers ?? [])
 
-const filters = [
-  { id: 'all', label: 'الكل' },
-  { id: 'ممتاز', label: 'ممتاز' },
-  { id: 'جيد', label: 'جيد' },
-  { id: 'ضعيف', label: 'ضعيف' },
-  { id: 'متلكئ', label: 'متلكئ' },
-  { id: 'سيء', label: 'سيء' },
-  { id: 'legal', label: 'القانونية' },
+const statusOptions = [
+  { value: 'all', label: 'الكل' },
+  { value: 'ممتاز', label: 'ممتاز' },
+  { value: 'جيد', label: 'جيد' },
+  { value: 'ضعيف', label: 'ضعيف' },
+  { value: 'متلكئ', label: 'متلكئ' },
+  { value: 'سيء', label: 'سيء' },
+  { value: 'legal', label: 'القانونية' },
 ]
 
 const filtered = computed(() => {
@@ -300,7 +287,7 @@ function openPayments(customerId: number) {
 }
 
 function fmtMoney(n: number) {
-  return new Intl.NumberFormat('ar-IQ', { maximumFractionDigits: 0 }).format(n)
+  return new Intl.NumberFormat('en-US', { maximumFractionDigits: 0 }).format(n)
 }
 
 function tierClass(label: string) {

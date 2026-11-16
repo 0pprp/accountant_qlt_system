@@ -1,6 +1,7 @@
 <template>
   <div class="user-create-page q-page" dir="rtl">
     <form
+      v-if="!createdUserId"
       ref="formRef"
       class="user-create-form"
       novalidate
@@ -105,6 +106,32 @@
         </AppButton>
       </div>
     </form>
+
+    <div v-else class="user-create-permissions" dir="rtl">
+      <header class="user-create-form__head user-create-permissions__head">
+        <h1 class="user-create-form__title">الحساب أُنشئ</h1>
+        <p class="user-create-form__sub">
+          خصّص تبويبات الحساب بحسب الدور، أو انتقل للقائمة إن اكتفيت بالافتراضي.
+        </p>
+      </header>
+      <PowersForm
+        v-if="canManagePermissions"
+        ref="powersFormRef"
+        :role-id="createdRoleId!"
+        :user-id="createdUserId"
+        :user-form-mode="FormMode.IsUpdate"
+        :create-retry-notice="permissionsRetryNotice"
+        @save="saveCreatedTabAccess"
+      />
+      <p v-else class="user-create-form__sub">
+        لا تملك صلاحية تخصيص التبويبات — سيُطبَّق إعداد الدور فقط.
+      </p>
+      <div class="user-create-form__actions">
+        <AppButton type="button" variant="primary" @click="goToList">
+          الانتقال إلى قائمة المستخدمين
+        </AppButton>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -116,15 +143,27 @@ import BranchSelectInput from '@/modules/Core/components/shared/BranchSelectInpu
 import { useRoleDataQuery } from '@/modules/Role/requests/queries'
 import { useBranchDataQuery } from '@/modules/Branch/requests/queries'
 import { useCreateUserMutation } from '../../requests/mutations'
+import { usePatchTabAccessMutation } from '../../requests/mutations/usePatchTabAccessMutation'
+import PowersForm from '../UserForms/PowersForm/PowersForm.vue'
+import { FormMode } from '../UserTabs/UserTabs.types'
 import type { UserCreatePayload } from '../../types/api'
 import { useToastStore } from '@/modules/Core/store'
 import { DialogState } from '@/modules/Core/types/model/dialog'
 import { usePermission } from '@/modules/Core/composable/usePermission'
+import useAuthStore from '@/modules/Auth/store'
 
 const router = useRouter()
 const toastStore = useToastStore()
+const authStore = useAuthStore()
 const { can } = usePermission()
 const canCreateUser = can('User', 'Create')
+const canManagePermissions =
+  authStore.isSuperAdmin === true || can('User', 'ManagePermissions')
+
+const createdUserId = ref<number | null>(null)
+const createdRoleId = ref<number | null>(null)
+const permissionsRetryNotice = ref<string | null>(null)
+const powersFormRef = ref<InstanceType<typeof PowersForm> | null>(null)
 
 const username = ref('')
 const password = ref('')
@@ -230,8 +269,17 @@ async function onSubmit() {
   }
 
   try {
-    await createUser(payload)
+    const response = await createUser(payload)
     password.value = ''
+    const id =
+      (response.data as { id?: number; Id?: number } | undefined)?.id ??
+      (response.data as { id?: number; Id?: number } | undefined)?.Id
+    if (canManagePermissions && typeof id === 'number' && id > 0) {
+      createdUserId.value = id
+      createdRoleId.value = payload.roleId
+      permissionsRetryNotice.value = null
+      return
+    }
     await router.push({ name: 'UserListRoute' })
   } catch (err: unknown) {
     const axiosErr = err as {
@@ -265,6 +313,56 @@ async function onSubmit() {
       isOpen: true,
     })
   }
+}
+
+const { mutateAsync: patchTabAccess } = usePatchTabAccessMutation()
+
+async function saveCreatedTabAccess() {
+  if (!createdUserId.value || !powersFormRef.value) return
+  if (powersFormRef.value.canSaveOverrides === false) {
+    toastStore.setMassage({
+      title: 'تعارض في الصلاحيات',
+      description: 'احسم التعارضات قبل الحفظ.',
+      dialogState: DialogState.Error,
+      isOpen: true,
+    })
+    return
+  }
+
+  const changes = powersFormRef.value.getChanges?.() || []
+  if (changes.length === 0) {
+    await goToList()
+    return
+  }
+
+  try {
+    powersFormRef.value.setSaving?.(true)
+    await patchTabAccess({
+      id: createdUserId.value,
+      payload: {
+        expectedVersion: Number(powersFormRef.value.permissionsVersion ?? 0),
+        changes,
+      },
+    })
+    permissionsRetryNotice.value = null
+    await goToList()
+  } catch (err: unknown) {
+    const status = (err as { response?: { status?: number } })?.response?.status
+    if (status === 409) {
+      powersFormRef.value.markConflict?.()
+      permissionsRetryNotice.value =
+        'تعارض أثناء حفظ تخصيص التبويبات. المسودة محفوظة — احسم التعارض ثم أعد الحفظ لنفس الحساب.'
+      return
+    }
+    permissionsRetryNotice.value =
+      'أُنشئ الحساب بنجاح لكن فشل حفظ تخصيص التبويبات. يمكنك إعادة حفظ الصلاحيات لنفس الحساب دون إعادة إنشائه.'
+  } finally {
+    powersFormRef.value.setSaving?.(false)
+  }
+}
+
+async function goToList() {
+  await router.push({ name: 'UserListRoute' })
 }
 </script>
 
@@ -407,6 +505,18 @@ async function onSubmit() {
     width: 100%;
     min-width: 0;
   }
+}
+
+.user-create-permissions {
+  width: 100%;
+  max-width: 1100px;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.user-create-permissions__head {
+  padding-inline: 0.25rem;
 }
 
 @media (max-width: 640px) {
