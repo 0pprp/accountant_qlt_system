@@ -1,12 +1,16 @@
 <template>
-  <label class="q-field" :class="grow ? 'q-field--grow' : undefined">
+  <component
+    :is="tag"
+    class="q-field"
+    :class="grow ? 'q-field--grow' : undefined"
+  >
     <span v-if="label" class="q-field__label" :class="{ 'is-required': required }">
       {{ label }}
     </span>
     <slot />
     <span v-if="hint && !error" class="q-field__hint">{{ hint }}</span>
     <span v-if="error" class="q-field__error" role="alert">{{ error }}</span>
-  </label>
+  </component>
 </template>
 
 <script setup lang="ts">
@@ -17,8 +21,10 @@ withDefaults(
     error?: string
     required?: boolean
     grow?: boolean
+    /** استخدم div للقوائم المركّبة حتى لا يعيد <label> فتح الزر بعد الاختيار. */
+    tag?: 'label' | 'div'
   }>(),
-  { required: false, grow: false },
+  { required: false, grow: false, tag: 'label' },
 )
 </script>
 

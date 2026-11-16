@@ -17,9 +17,20 @@
     --q-danger: #c62828;
     --q-success: #2e7d32;
     --q-warning: #f9a825;
-    --q-radius: 12px;
+    --q-radius: 14px;
     --q-control-h: 48px;
-    --q-focus: 0 0 0 3px rgba(0, 106, 100, 0.18);
+    --q-neo-bg: #eef3f2;
+    --q-neo-inset:
+      inset 3px 3px 7px rgba(0, 32, 30, 0.08),
+      inset -3px -3px 7px rgba(255, 255, 255, 0.85);
+    --q-neo-inset-focus:
+      inset 4px 4px 9px rgba(0, 32, 30, 0.1),
+      inset -3px -3px 7px rgba(255, 255, 255, 0.9),
+      0 0 0 2px rgba(0, 106, 100, 0.22);
+    --q-neo-raised:
+      8px 8px 18px rgba(0, 32, 30, 0.1),
+      -6px -6px 14px rgba(255, 255, 255, 0.92);
+    --q-focus: var(--q-neo-inset-focus);
   }
 
   /* —— App shell —— */
@@ -125,15 +136,16 @@
     width: 100%;
     min-height: var(--q-control-h);
     box-sizing: border-box;
-    border: 1px solid var(--q-border);
+    border: 0;
     border-radius: var(--q-radius);
-    background: #fff;
+    background: var(--q-neo-bg);
     color: var(--q-fg);
     font: inherit;
     font-size: 16px;
     line-height: 1.45;
     padding: 10px 14px;
-    transition: border-color 0.15s, box-shadow 0.15s;
+    box-shadow: var(--q-neo-inset);
+    transition: box-shadow 0.15s, background 0.15s;
     appearance: none;
   }
   .q-textarea,
@@ -143,7 +155,7 @@
   }
   .q-select,
   select.q-control {
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='%2350766c' d='M1 1l5 5 5-5'/%3E%3C/svg%3E");
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='%23006a64' d='M1 1l5 5 5-5'/%3E%3C/svg%3E");
     background-repeat: no-repeat;
     background-position: left 14px center;
     padding-inline-start: 14px;
@@ -153,7 +165,7 @@
   .q-select:hover,
   .q-textarea:hover,
   .q-control:hover {
-    border-color: #86aaa2;
+    background: #e8f0ef;
   }
   .q-input:focus,
   .q-select:focus,
@@ -163,8 +175,8 @@
   .q-select:focus-visible,
   .q-textarea:focus-visible {
     outline: none;
-    border-color: var(--q-primary);
-    box-shadow: var(--q-focus);
+    background: #e8f0ef;
+    box-shadow: var(--q-neo-inset-focus);
   }
   .q-input:disabled,
   .q-select:disabled,
@@ -491,12 +503,12 @@
     width: 100% !important;
     min-height: var(--q-control-h) !important;
     border-radius: var(--q-radius) !important;
-    border: 1px solid var(--q-border) !important;
-    background: #fff !important;
+    border: 0 !important;
+    background: var(--q-neo-bg) !important;
     font-size: 16px !important;
     color: var(--q-fg) !important;
     font-family: inherit !important;
-    box-shadow: none !important;
+    box-shadow: var(--q-neo-inset) !important;
   }
   .p-select,
   .p-multiselect,
@@ -522,15 +534,15 @@
   .p-multiselect:not(.p-disabled).p-focus,
   .p-datepicker:not(.p-disabled).p-focus,
   .p-inputnumber:not(.p-disabled).p-focus {
-    border-color: var(--q-primary) !important;
-    box-shadow: var(--q-focus) !important;
+    box-shadow: var(--q-neo-inset-focus) !important;
   }
   .p-select-overlay,
   .p-multiselect-overlay,
   .p-datepicker-panel {
-    border-radius: 14px !important;
-    border: 1px solid var(--q-line) !important;
-    box-shadow: 0 12px 32px rgba(0, 32, 30, 0.12) !important;
+    border-radius: 16px !important;
+    border: 0 !important;
+    background: var(--q-neo-bg) !important;
+    box-shadow: var(--q-neo-raised) !important;
     font-family: inherit !important;
   }
   .p-select-option,
@@ -687,28 +699,31 @@
   input[class*="-"]:not([class*="q-select-menu"]):not([type='checkbox']):not([type='radio']):not([type='file']):not([type='hidden']):not(.q-input):not(.q-select-menu__search-input) {
     width: 100%;
     min-height: var(--q-control-h) !important;
-    border: 1px solid var(--q-border) !important;
+    border: 0 !important;
     border-radius: var(--q-radius) !important;
-    background: #fff !important;
+    background: var(--q-neo-bg) !important;
     color: var(--q-fg) !important;
     font: inherit !important;
     font-size: 16px !important;
     line-height: 1.45 !important;
     padding: 10px 14px !important;
-    box-shadow: none !important;
+    box-shadow: var(--q-neo-inset) !important;
   }
   [class*="-select"]:not([class*="q-select-menu"]):not([class*="__"]):focus,
   [class*="-input"]:not([class*="q-select-menu"]):not([class*="__"]):not(.q-control-shell):not(.q-input-wrap):not(.q-pw-toggle):not(.q-input-toggle):focus,
   textarea[class*="-"]:not([class*="__"]):focus {
     outline: none !important;
-    border-color: var(--q-primary) !important;
-    box-shadow: var(--q-focus) !important;
+    box-shadow: var(--q-neo-inset-focus) !important;
   }
-  /* Designed select menu — explicit readable control surface */
+  /* نظام تصميم القوائم — neumorphism مسطح بلا كونتينرات متداخلة */
   .q-select-menu {
     position: relative;
     width: 100%;
     min-width: 0;
+    background: transparent;
+    border: 0;
+    box-shadow: none;
+    padding: 0;
   }
   .q-select-menu__trigger {
     display: flex !important;
@@ -719,22 +734,27 @@
     min-height: var(--q-control-h) !important;
     margin: 0;
     padding: 10px 14px !important;
-    border: 1px solid var(--q-border) !important;
+    border: 0 !important;
     border-radius: var(--q-radius) !important;
-    background: #fff !important;
+    background: var(--q-neo-bg) !important;
     color: var(--q-fg) !important;
     font: inherit !important;
     font-size: 16px !important;
     line-height: 1.45 !important;
     text-align: start;
     cursor: pointer;
-    box-shadow: none !important;
+    box-shadow: var(--q-neo-inset) !important;
+    transition: box-shadow 0.15s, background 0.15s;
   }
   .q-select-menu.is-open .q-select-menu__trigger,
   .q-select-menu__trigger:focus-visible {
     outline: none;
-    border-color: var(--q-primary) !important;
-    box-shadow: var(--q-focus) !important;
+    background: #e8f0ef !important;
+    box-shadow: var(--q-neo-inset-focus) !important;
+  }
+  .q-select-menu__trigger:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
   }
   .q-select-menu__value {
     flex: 1;
@@ -750,72 +770,98 @@
     flex-shrink: 0;
     color: var(--q-primary);
     font-size: 12px;
+    transition: transform 0.15s;
+  }
+  .q-select-menu.is-open .q-select-menu__chevron {
+    transform: rotate(180deg);
   }
   .q-select-menu__panel {
     position: absolute;
     z-index: 80;
     inset-inline: 0;
-    top: calc(100% + 6px);
-    max-height: 280px;
+    top: calc(100% + 8px);
+    max-height: min(300px, 52vh);
     display: flex;
     flex-direction: column;
     overflow: hidden;
-    border: 1px solid var(--q-line);
-    border-radius: 14px;
-    background: #fff;
-    box-shadow: 0 12px 32px rgba(0, 32, 30, 0.12);
+    border: 0;
+    border-radius: 16px;
+    background: var(--q-neo-bg);
+    box-shadow: var(--q-neo-raised);
   }
   .q-select-menu__search {
     display: flex;
     align-items: center;
     gap: 8px;
-    padding: 10px 12px;
-    border-bottom: 1px solid var(--q-line);
-    background: var(--q-search);
+    margin: 10px 10px 4px;
+    padding: 0 12px;
+    min-height: 42px;
+    border: 0;
+    border-radius: 12px;
+    background: var(--q-neo-bg);
+    box-shadow: var(--q-neo-inset);
+  }
+  .q-select-menu__search .pi-search {
+    color: var(--q-primary);
+    font-size: 13px;
   }
   .q-select-menu__search-input {
     flex: 1;
     min-width: 0;
-    min-height: 36px !important;
+    min-height: 40px !important;
     margin: 0;
-    padding: 6px 8px !important;
+    padding: 0 !important;
     border: 0 !important;
-    border-radius: 8px !important;
+    border-radius: 0 !important;
     background: transparent !important;
     box-shadow: none !important;
     font: inherit;
-    font-size: 14px !important;
+    font-size: 15px !important;
     color: var(--q-fg);
   }
   .q-select-menu__list {
     margin: 0;
-    padding: 6px;
+    padding: 6px 8px 10px;
     list-style: none;
     overflow: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
   }
   .q-select-menu__option {
     display: flex;
     align-items: center;
     justify-content: space-between;
     gap: 8px;
-    min-height: 40px;
-    padding: 8px 10px;
-    border-radius: 8px;
+    min-height: 44px;
+    padding: 10px 12px;
+    border: 0;
+    border-radius: 12px;
+    background: transparent;
     cursor: pointer;
     color: var(--q-fg);
     font-size: 15px;
     line-height: 1.4;
     overflow-wrap: anywhere;
   }
-  .q-select-menu__option:hover,
+  .q-select-menu__option:hover {
+    background: rgba(255, 255, 255, 0.55);
+  }
   .q-select-menu__option.is-selected {
     background: var(--q-primary-soft);
     color: var(--q-primary);
+    font-weight: 700;
+    box-shadow: var(--q-neo-inset);
+  }
+  .q-select-menu__option .pi-check {
+    color: var(--q-primary);
+    font-size: 13px;
   }
   .q-select-menu__empty {
-    padding: 14px 10px;
+    padding: 16px 10px;
     color: var(--q-muted);
     font-size: 14px;
+    text-align: center;
   }
   /* Prevent nested bordered wrappers inside filter rows */
   [class*="-filters"] > div,

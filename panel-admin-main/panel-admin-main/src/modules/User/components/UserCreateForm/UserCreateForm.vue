@@ -284,14 +284,17 @@ async function onSubmit() {
   margin: 0;
   display: flex;
   flex-direction: column;
-  gap: 22px;
+  gap: 20px;
   padding: 28px 32px;
-  border-radius: 18px;
-  background: #f8f8f8;
+  border: 0;
+  border-radius: 20px;
+  background: var(--q-neo-bg, #eef3f2);
   color: #00201e;
-  box-shadow:
-    8px 8px 16px rgba(0, 32, 30, 0.08),
-    -8px -8px 16px rgba(255, 255, 255, 0.9);
+  box-shadow: var(
+    --q-neo-raised,
+    10px 10px 22px rgba(0, 32, 30, 0.08),
+    -8px -8px 18px rgba(255, 255, 255, 0.95)
+  );
   font-family: var(--q-font, 'ElMessiri', 'Rubik', sans-serif);
   box-sizing: border-box;
 }
@@ -334,6 +337,10 @@ async function onSubmit() {
   flex-direction: column;
   gap: 6px;
   min-width: 0;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+  padding: 0;
 }
 
 .user-create-form__actions {
@@ -344,41 +351,33 @@ async function onSubmit() {
 
 .user-create-form__actions :deep(.q-btn) {
   min-width: 220px;
-}
-
-.user-create-form :deep(.q-input),
-.user-create-form :deep(.q-select-menu__trigger),
-.user-create-form :deep(.q-btn) {
   min-height: 48px;
-  height: 48px;
+  border: 0;
+  border-radius: 14px;
+  box-shadow:
+    5px 5px 12px rgba(0, 32, 30, 0.12),
+    -4px -4px 10px rgba(255, 255, 255, 0.9);
 }
 
 .user-create-form :deep(.q-input),
 .user-create-form :deep(.q-select-menu__trigger) {
-  background: #eef3f2;
-  border: 1px solid #cddbd7;
-  box-shadow:
-    inset 3px 3px 6px rgba(0, 32, 30, 0.06),
-    inset -2px -2px 5px rgba(255, 255, 255, 0.75);
+  min-height: 48px;
+  height: 48px;
 }
 
-.user-create-form :deep(.q-input:focus),
-.user-create-form :deep(.q-select-menu__trigger:focus-visible),
-.user-create-form :deep(.q-select-menu.is-open .q-select-menu__trigger) {
-  border-color: #006a64;
-  box-shadow: 0 0 0 3px rgba(0, 106, 100, 0.18);
-  outline: none;
-}
-
-.user-create-form :deep(.q-field) {
-  border: 0;
-  box-shadow: none;
-  background: transparent;
-  padding: 0;
+.user-create-form :deep(.q-field),
+.user-create-form :deep(.q-control-shell),
+.user-create-form :deep(.q-select-menu) {
+  border: 0 !important;
+  box-shadow: none !important;
+  background: transparent !important;
+  padding: 0 !important;
+  margin: 0;
 }
 
 .user-create-form :deep(.q-btn--primary) {
   background: #006a64;
+  color: #fff;
 }
 
 .user-create-form__retry {

@@ -25,7 +25,7 @@
         v-if="isPassword"
         type="button"
         class="q-pw-toggle"
-        :aria-label="showPassword ? 'إخفاء الرمز السري' : 'إظهار الرمز السري'"
+        :aria-label="showPassword ? 'إخفاء كلمة السر' : 'إظهار كلمة السر'"
         :aria-pressed="showPassword"
         tabindex="0"
         @click="showPassword = !showPassword"
