@@ -112,8 +112,8 @@ public class SafeMovement : AuditableEntity
     /// <summary>تحصيل قسط — يدخل خزينة القائمة أو خزينة المتابع المُحصِّل.</summary>
     public static SafeMovement Collection(
         int safeId, double amount, double balanceAfter, int performedByUserId,
-        int installmentPaymentId, int orderId) =>
-        new(safeId, SafeMovementKind.Collection, Math.Abs(amount), balanceAfter, null, performedByUserId)
+        int installmentPaymentId, int orderId, string? note = null) =>
+        new(safeId, SafeMovementKind.Collection, Math.Abs(amount), balanceAfter, note, performedByUserId)
         {
             InstallmentPaymentId = installmentPaymentId,
             OrderId = orderId

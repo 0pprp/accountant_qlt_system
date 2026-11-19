@@ -75,7 +75,7 @@ public class SetOrderSellerInfoHandler : IRequestHandler<SetOrderSellerInfoComma
         InstallmentPayment? firstInstallmentPayment = null;
         if (order.PrepaymentAmount > 0)
         {
-            firstInstallmentPayment = new InstallmentPayment(order.PrepaymentAmount, request.SaleDate);
+            firstInstallmentPayment = new InstallmentPayment(order.PrepaymentAmount, request.SaleDate, PaymentSafePosting.PrepaymentNote);
 
             var seller = await _dbContext.Users.FirstAsync(x => x.Id == request.SellerId, cancellationToken);
             seller.UndeliveredCashAmount += firstInstallmentPayment.Amount;
@@ -98,6 +98,16 @@ public class SetOrderSellerInfoHandler : IRequestHandler<SetOrderSellerInfoComma
             TargetEntityType.Order,
             request.OrderId);
         await _dbContext.SaveChangesAsync(cancellationToken);
+
+        if (firstInstallmentPayment is not null && order.OrderListId is int orderListId)
+        {
+            var posted = await new PaymentSafePosting(_dbContext, _safeLedger).PostAsync(
+                firstInstallmentPayment.Id, order.Id, orderListId, firstInstallmentPayment.Amount,
+                request.SellerId, cancellationToken, PaymentSafePosting.PrepaymentNote);
+            if (posted.IsFailed)
+                return posted;
+        }
+
         await dbTransaction.CommitAsync(cancellationToken);
 
         return Result.Success();

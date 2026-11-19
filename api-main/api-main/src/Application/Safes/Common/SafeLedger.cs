@@ -116,7 +116,7 @@ public class SafeLedger : ISafeLedger
                 {
                     SafeMovementKind.Collection => SafeMovement.Collection(
                         entry.SafeId, magnitude, balanceAfter, actor,
-                        entry.InstallmentPaymentId ?? 0, entry.OrderId ?? 0),
+                        entry.InstallmentPaymentId ?? 0, entry.OrderId ?? 0, entry.Note),
                     SafeMovementKind.Withdrawal when entry.InstallmentPaymentId is int reversedPaymentId => SafeMovement.CollectionReversal(
                         entry.SafeId, magnitude, balanceAfter, entry.Note, actor, reversedPaymentId, entry.OrderId),
                     SafeMovementKind.Prepayment => SafeMovement.Prepayment(

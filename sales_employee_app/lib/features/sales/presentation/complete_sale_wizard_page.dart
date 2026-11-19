@@ -1,6 +1,7 @@
 import '../domain/entities/sales_request_item.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:sales_employee_app/core/formatting/thousands_separator_input_formatter.dart';
 import 'package:sales_employee_app/core/network/dio_client.dart';
 import 'package:sales_employee_app/core/theme/app_colors.dart';
 import 'package:sales_employee_app/core/time/baghdad_time.dart';
@@ -42,6 +43,7 @@ class _CompleteSaleWizardPageState extends State<CompleteSaleWizardPage> {
   final _shopWidth = TextEditingController();
   final _shopNote = TextEditingController();
   XFile? _shopPhoto;
+  XFile? _uploadedShopPhoto;
   double? _lat;
   double? _lng;
 
@@ -227,9 +229,12 @@ class _CompleteSaleWizardPageState extends State<CompleteSaleWizardPage> {
       );
       _catalog = const [];
     }
-    if (!widget.fromRequest && _selected.isEmpty && _catalog.isNotEmpty) {
-      _qty[_catalog.first.id] = 1;
-      _applyDefaultPrices();
+    if (!widget.fromRequest && _selected.isEmpty) {
+      final first = _catalog.where((p) => _available(p) > 0).firstOrNull;
+      if (first != null) {
+        _qty[first.id] = 1;
+        _applyDefaultPrices();
+      }
     }
     await _restoreLocalDraft();
     if (mounted) setState(() {});
@@ -238,8 +243,8 @@ class _CompleteSaleWizardPageState extends State<CompleteSaleWizardPage> {
   void _hydrateDraft(Map<String, dynamic> d) {
     _shopName.text = '${d['shopName'] ?? ''}';
     _shopType.text = '${d['shopType'] ?? ''}';
-    _goodsValue.text = '${d['goodsValue'] ?? ''}';
-    _dailyIncome.text = '${d['dailyIncome'] ?? ''}';
+    _goodsValue.text = ThousandsSeparatorInputFormatter.formatRaw(d['goodsValue']);
+    _dailyIncome.text = ThousandsSeparatorInputFormatter.formatRaw(d['dailyIncome']);
     _shopLength.text = '${d['shopLength'] ?? ''}';
     _shopWidth.text = '${d['shopWidth'] ?? ''}';
     _shopNote.text = '${d['shopNote'] ?? ''}';
@@ -252,9 +257,9 @@ class _CompleteSaleWizardPageState extends State<CompleteSaleWizardPage> {
     _nearest.text = '${d['nearest'] ?? ''}';
     _mukhtar.text = '${d['mukhtar'] ?? ''}';
     _rationCenter.text = '${d['rationCenter'] ?? _rationCenter.text}';
-    _total.text = '${d['total'] ?? ''}';
-    _dailyInstallment.text = '${d['dailyInstallment'] ?? ''}';
-    _prepayment.text = '${d['prepayment'] ?? ''}';
+    _total.text = ThousandsSeparatorInputFormatter.formatRaw(d['total']);
+    _dailyInstallment.text = ThousandsSeparatorInputFormatter.formatRaw(d['dailyInstallment']);
+    _prepayment.text = ThousandsSeparatorInputFormatter.formatRaw(d['prepayment']);
     _lat = (d['lat'] as num?)?.toDouble();
     _lng = (d['lng'] as num?)?.toDouble();
     final products = d['products'];
@@ -374,13 +379,28 @@ class _CompleteSaleWizardPageState extends State<CompleteSaleWizardPage> {
   void _applyDefaultPrices() {
     final sum = _selected.fold<double>(0, (s, p) => s + (p.price ?? 0) * (_qty[p.id] ?? 1));
     final installment = _selected.fold<double>(0, (s, p) => s + (p.dailyInstallment ?? 0) * (_qty[p.id] ?? 1));
-    if (_total.text.trim().isEmpty) _total.text = sum > 0 ? sum.toStringAsFixed(0) : '';
+    if (_total.text.trim().isEmpty) _total.text = sum > 0 ? ThousandsSeparatorInputFormatter.format(sum) : '';
     if (_dailyInstallment.text.trim().isEmpty) {
-      _dailyInstallment.text = installment > 0 ? installment.toStringAsFixed(0) : '';
+      _dailyInstallment.text = installment > 0 ? ThousandsSeparatorInputFormatter.format(installment) : '';
     }
     if (_prepayment.text.trim().isEmpty && sum > 0) {
-      _prepayment.text = (sum * 0.05).toStringAsFixed(0);
+      _prepayment.text = ThousandsSeparatorInputFormatter.format(sum * 0.05);
     }
+  }
+
+  static double _money(TextEditingController c) => ThousandsSeparatorInputFormatter.parse(c.text) ?? 0;
+
+  static double? _number(TextEditingController c) {
+    final v = ThousandsSeparatorInputFormatter.parse(c.text);
+    return v != null && v > 0 ? v : null;
+  }
+
+  /// المتوفر في المخزن؛ غير المعروف لا يُقيِّد.
+  static double _available(ProductItem p) => p.quantity ?? double.infinity;
+
+  static String _fmt(Object? v) {
+    if (v is num) return ThousandsSeparatorInputFormatter.format(v);
+    return ThousandsSeparatorInputFormatter.formatRaw(v);
   }
 
   @override
@@ -397,16 +417,18 @@ class _CompleteSaleWizardPageState extends State<CompleteSaleWizardPage> {
 
   Map<String, dynamic> _payload() {
     _applyDefaultPrices();
-    final total = double.tryParse(_total.text.trim()) ?? 0;
+    final total = _money(_total);
     final listName = _selectedListLabel;
     return {
       'shopName': _shopName.text.trim(),
       'shopType': _shopType.text.trim(),
-      'goodsValue': _goodsValue.text.trim(),
-      'dailyIncome': _dailyIncome.text.trim(),
-      'shopLength': _shopLength.text.trim(),
-      'shopWidth': _shopWidth.text.trim(),
+      'businessType': _shopType.text.trim(),
+      'goodsValue': _number(_goodsValue),
+      'dailyIncome': _number(_dailyIncome),
+      'shopLength': _number(_shopLength),
+      'shopWidth': _number(_shopWidth),
       'shopNote': _shopNote.text.trim(),
+      'note': _shopNote.text.trim(),
       'shopPhoto': _shopPhoto?.name,
       'lat': _lat,
       'lng': _lng,
@@ -432,8 +454,8 @@ class _CompleteSaleWizardPageState extends State<CompleteSaleWizardPage> {
               })
           .toList(),
       'total': total,
-      'dailyInstallment': double.tryParse(_dailyInstallment.text.trim()) ?? 0,
-      'prepayment': double.tryParse(_prepayment.text.trim()) ?? 0,
+      'dailyInstallment': _money(_dailyInstallment),
+      'prepayment': _money(_prepayment),
       'maxSellAmount': _maxSell,
     };
   }
@@ -478,14 +500,14 @@ class _CompleteSaleWizardPageState extends State<CompleteSaleWizardPage> {
         return true;
       case 3:
         _applyDefaultPrices();
-        final total = double.tryParse(_total.text.trim()) ?? 0;
-        final installment = double.tryParse(_dailyInstallment.text.trim()) ?? 0;
+        final total = _money(_total);
+        final installment = _money(_dailyInstallment);
         if (total <= 0) {
           await showAppMessage(context, title: 'الأسعار', message: 'إجمالي البيع يجب أن يكون أكبر من صفر');
           return false;
         }
         if (_maxSell != null && total > _maxSell!) {
-          await showAppMessage(context, title: 'سقف السعر', message: 'تجاوزت الحد الأقصى المسموح من الطلب ($_maxSell)');
+          await showAppMessage(context, title: 'سقف السعر', message: 'تجاوزت الحد الأقصى المسموح من الطلب (${_fmt(_maxSell)})');
           return false;
         }
         if (installment <= 0) {
@@ -541,6 +563,15 @@ class _CompleteSaleWizardPageState extends State<CompleteSaleWizardPage> {
           _uploadedSaleDocuments[def.$1] = src;
         }
         if (widget.fromRequest) {
+          if (!identical(_uploadedShopPhoto, evidence)) {
+            await Injection.salesRemote.uploadAttachment(
+              orderId: _orderId,
+              fileName: evidence.name.isEmpty ? 'shop_photo.jpg' : evidence.name,
+              bytes: await evidence.readAsBytes(),
+              attachmentType: '9',
+            );
+            _uploadedShopPhoto = evidence;
+          }
           await Injection.salesRemote.checkout(_orderId, payload);
         } else {
         await Injection.salesRemote.completeAttachments(_orderId);
@@ -778,8 +809,8 @@ class _CompleteSaleWizardPageState extends State<CompleteSaleWizardPage> {
           children: [
             _field(_shopName, 'اسم المحل *'),
             _field(_shopType, 'طبيعة العمل *'),
-            _field(_goodsValue, 'تقدير قيمة البضاعة *', number: true),
-            _field(_dailyIncome, 'تقدير الوارد اليومي *', number: true),
+            _field(_goodsValue, 'تقدير قيمة البضاعة *', number: true, money: true),
+            _field(_dailyIncome, 'تقدير الوارد اليومي *', number: true, money: true),
             _field(_shopLength, 'طول المحل *', number: true),
             _field(_shopWidth, 'عرض المحل *', number: true),
             _field(_shopNote, 'ملاحظة الموظف (اختياري)'),
@@ -942,10 +973,17 @@ class _CompleteSaleWizardPageState extends State<CompleteSaleWizardPage> {
                 itemBuilder: (_, i) {
                   final p = _filtered[i];
                   final q = _qty[p.id] ?? 0;
+                  final available = _available(p);
+                  final outOfStock = available <= 0;
                   return Card(
                     child: ListTile(
+                      enabled: !outOfStock || q > 0,
                       title: Text(p.name),
-                      subtitle: Text('بيع: ${p.price?.toStringAsFixed(0) ?? '-'} | قسط: ${p.dailyInstallment?.toStringAsFixed(0) ?? '-'}'),
+                      subtitle: Text(
+                        'بيع: ${p.price == null ? '-' : _fmt(p.price)} | قسط: ${p.dailyInstallment == null ? '-' : _fmt(p.dailyInstallment)}\n'
+                        '${outOfStock ? 'نفد من المخزن' : available.isFinite ? 'المتوفر: ${available.toStringAsFixed(0)}' : ''}',
+                        style: outOfStock ? const TextStyle(color: AppColors.danger) : null,
+                      ),
                       trailing: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
@@ -960,7 +998,7 @@ class _CompleteSaleWizardPageState extends State<CompleteSaleWizardPage> {
                           ),
                           Text('$q'),
                           IconButton(
-                            onPressed: () => setState(() {
+                            onPressed: q + 1 > available ? null : () => setState(() {
                               _qty[p.id] = q + 1;
                               _total.clear();
                               _dailyInstallment.clear();
@@ -982,11 +1020,11 @@ class _CompleteSaleWizardPageState extends State<CompleteSaleWizardPage> {
           padding: const EdgeInsets.all(16),
           children: [
             if (_maxSell != null)
-              Text('الحد الأقصى من الطلب: ${_maxSell!.toStringAsFixed(0)}', style: const TextStyle(color: AppColors.warning)),
+              Text('الحد الأقصى من الطلب: ${_fmt(_maxSell)}', style: const TextStyle(color: AppColors.warning)),
             const SizedBox(height: 8),
-            _field(_total, 'إجمالي البيع *', number: true),
-            _field(_dailyInstallment, 'القسط اليومي *', number: true),
-            _field(_prepayment, 'المقدمة (افتراضي إن فُرغ)', number: true),
+            _field(_total, 'إجمالي البيع *', number: true, money: true),
+            _field(_dailyInstallment, 'القسط اليومي *', number: true, money: true),
+            _field(_prepayment, 'المقدمة (افتراضي إن فُرغ)', number: true, money: true),
             TextButton(
               onPressed: () => setState(_applyDefaultPrices),
               child: const Text('اعتماد الافتراضي من المنتجات'),
@@ -1001,11 +1039,11 @@ class _CompleteSaleWizardPageState extends State<CompleteSaleWizardPage> {
             const Text('مراجعة قبل الإقرار', style: TextStyle(fontWeight: FontWeight.w700, fontSize: 16)),
             const SizedBox(height: 10),
             Text('المحل: ${p['shopName']} — ${p['shopType']}'),
-            Text('المساحة: ${p['shopLength']} × ${p['shopWidth']} | GPS: ${p['lat']}, ${p['lng']}'),
+            Text('المساحة: ${p['shopLength'] ?? '-'} × ${p['shopWidth'] ?? '-'} | GPS: ${p['lat']}, ${p['lng']}'),
             Text('الزبون: ${p['fullName']} | ${p['phone']} | ${p['province']}'),
             Text('القائمة/المندوب: ${p['orderListName']}'),
             Text('المنتجات: ${_selected.length}'),
-            Text('الإجمالي: ${p['total']} | القسط: ${p['dailyInstallment']} | المقدمة: ${p['prepayment']}'),
+            Text('الإجمالي: ${_fmt(p['total'])} | القسط: ${_fmt(p['dailyInstallment'])} | المقدمة: ${_fmt(p['prepayment'])}'),
             Text(
               'صورة محل: ${_shopPhoto != null ? 'نعم' : 'لا'} | '
               'مستندات بيع: ${_saleDocuments.length} | '
@@ -1021,12 +1059,13 @@ class _CompleteSaleWizardPageState extends State<CompleteSaleWizardPage> {
     }
   }
 
-  Widget _field(TextEditingController c, String label, {bool number = false}) {
+  Widget _field(TextEditingController c, String label, {bool number = false, bool money = false}) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
       child: TextField(
         controller: c,
         keyboardType: number ? TextInputType.number : TextInputType.text,
+        inputFormatters: money ? [ThousandsSeparatorInputFormatter()] : null,
         decoration: InputDecoration(labelText: label),
         onChanged: (_) {
           _markDirty();

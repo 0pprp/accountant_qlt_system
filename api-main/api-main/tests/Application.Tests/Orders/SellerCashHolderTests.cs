@@ -252,9 +252,9 @@ public class SellerCashHolderTests
 
         Assert.True(result.IsSucceeded, result.Error?.Message);
         var listSafe = await db.Safes.SingleAsync(x => x.OrderListId == seed.OrderListId);
-        Assert.Equal(15000, listSafe.Balance);
+        Assert.Equal(PrepaymentAmount + 15000, listSafe.Balance);
         Assert.Equal(0, (await db.Safes.SingleAsync(x => x.UserId == seed.MotabaId)).Balance);
-        var movement = await db.SafeMovements.SingleAsync(x => x.SafeId == listSafe.Id);
+        var movement = await db.SafeMovements.SingleAsync(x => x.SafeId == listSafe.Id && x.Note == null);
         Assert.Equal(SafeMovementKind.Collection, movement.Kind);
         Assert.Equal(seed.MotabaId, movement.PerformedByUserId);
         Assert.Equal((await db.InstallmentPayments.SingleAsync(x => x.Amount == 15000)).Id, movement.InstallmentPaymentId);
@@ -286,8 +286,8 @@ public class SellerCashHolderTests
         Assert.True((await new SyncInstallmentPaymentsHandler(Writer(db)).Handle(command, CancellationToken.None)).IsSucceeded);
 
         var listSafe = await db.Safes.SingleAsync(x => x.OrderListId == seed.OrderListId);
-        Assert.Equal(15000, listSafe.Balance);
-        Assert.Single(await db.SafeMovements.Where(x => x.SafeId == listSafe.Id).ToListAsync());
+        Assert.Equal(PrepaymentAmount + 15000, listSafe.Balance);
+        Assert.Single(await db.SafeMovements.Where(x => x.SafeId == listSafe.Id && x.Note == null).ToListAsync());
     }
 
     [Fact]
@@ -300,18 +300,18 @@ public class SellerCashHolderTests
         var created = await new AdminCreateInstallmentHandler(db, currentUser, new DateTimeProviderStub(), new ActivityLogServiceStub(), Posting(db, currentUser))
             .Handle(new AdminCreateInstallment { OrderId = seed.OrderId, Date = new DateOnly(2026, 8, 19), Amount = 15000 }, CancellationToken.None);
         Assert.True(created.IsSucceeded, created.Error?.Message);
-        Assert.Equal(15000, await ListBalance(db, seed));
+        Assert.Equal(PrepaymentAmount + 15000, await ListBalance(db, seed));
 
         var installment = await db.InstallmentPayments.SingleAsync(x => x.Amount == 15000);
         var updated = await new UpdateInstallmentPaymentHandler(db, currentUser, new DateTimeProviderStub(), new ActivityLogServiceStub(), Posting(db, currentUser))
             .Handle(new UpdateInstallmentPaymentCommand { Id = installment.Id, Amount = 10000 }, CancellationToken.None);
         Assert.True(updated.IsSucceeded, updated.Error?.Message);
-        Assert.Equal(10000, await ListBalance(db, seed));
+        Assert.Equal(PrepaymentAmount + 10000, await ListBalance(db, seed));
 
         var deleted = await new DeleteInstallmentPaymentHandler(db, new ActivityLogServiceStub(), Posting(db, currentUser), currentUser)
             .Handle(new DeleteInstallmentPaymentCommand(installment.Id), CancellationToken.None);
         Assert.True(deleted.IsSucceeded, deleted.Error?.Message);
-        Assert.Equal(0, await ListBalance(db, seed));
+        Assert.Equal(PrepaymentAmount, await ListBalance(db, seed));
         Assert.Equal(0, (await db.SafeMovements.Where(x => x.InstallmentPaymentId == installment.Id).ToListAsync()).Sum(x => x.Amount));
     }
 
@@ -325,7 +325,7 @@ public class SellerCashHolderTests
             new AppCreateInstallment { OrderId = seed.OrderId, Amount = 15000, UserId = seed.MotabaId }, CancellationToken.None);
         Assert.True(paid.IsSucceeded, paid.Error?.Message);
         var listSafe = await db.Safes.SingleAsync(x => x.OrderListId == seed.OrderListId);
-        Assert.True((await new SafeLedger(db, currentUser).WithdrawAsync(listSafe.Id, 15000, "تسليم", null, CancellationToken.None)).IsSucceeded);
+        Assert.True((await new SafeLedger(db, currentUser).WithdrawAsync(listSafe.Id, PrepaymentAmount + 15000, "تسليم", null, CancellationToken.None)).IsSucceeded);
 
         var installment = await db.InstallmentPayments.SingleAsync(x => x.Amount == 15000);
         var result = await new DeleteInstallmentPaymentHandler(db, new ActivityLogServiceStub(), Posting(db, currentUser), currentUser)
@@ -340,9 +340,8 @@ public class SellerCashHolderTests
     {
         await using var db = CreateDbContext();
         var seed = await SeedInProgressOrderAsync(db, sellerIsMotaba: false);
-        var listSafe = Domain.Entities.SafeAggregate.Safe.ForOrderList("قائمة", seed.BranchId, seed.OrderListId);
+        var listSafe = await db.Safes.SingleAsync(x => x.OrderListId == seed.OrderListId);
         listSafe.Deactivate();
-        db.Safes.Add(listSafe);
         await db.SaveChangesAsync();
 
         var result = await new AppCreateInstallmentHandler(Writer(db)).Handle(new AppCreateInstallment
@@ -382,8 +381,9 @@ public class SellerCashHolderTests
         Assert.Equal(1, preview.Data!.Count);
         Assert.Equal(15000, preview.Data.Amount);
         Assert.Equal(1, preview.Data.SkippedImported);
-        Assert.Equal(1, preview.Data.SkippedNotEnteredAsPayment);
-        Assert.Equal(0, await db.SafeMovements.CountAsync(x => x.InstallmentPaymentId != null));
+        Assert.Equal(0, preview.Data.SkippedNotEnteredAsPayment);
+        Assert.Equal(1, preview.Data.AlreadyPosted);
+        Assert.Equal(1, await db.SafeMovements.CountAsync(x => x.InstallmentPaymentId != null));
 
         var run = await handler.Handle(new() { BranchId = seed.BranchId, DryRun = false }, CancellationToken.None);
         var again = await handler.Handle(new() { BranchId = seed.BranchId, DryRun = false }, CancellationToken.None);
@@ -391,8 +391,21 @@ public class SellerCashHolderTests
         Assert.True(run.IsSucceeded, run.Error?.Message);
         Assert.Equal(1, run.Data!.Count);
         Assert.Equal(0, again.Data!.Count);
-        Assert.Equal(1, again.Data.AlreadyPosted);
-        Assert.Equal(15000, await ListBalance(db, seed));
+        Assert.Equal(2, again.Data.AlreadyPosted);
+        Assert.Equal(PrepaymentAmount + 15000, await ListBalance(db, seed));
+    }
+
+    [Fact]
+    public async Task SetSellerInfo_PostsPrepaymentToListSafe_WithPrepaymentNote()
+    {
+        await using var db = CreateDbContext();
+        var seed = await SeedInProgressOrderAsync(db, sellerIsMotaba: false);
+
+        var movement = await db.SafeMovements.SingleAsync(x => x.InstallmentPaymentId != null);
+        Assert.Equal(SafeMovementKind.Collection, movement.Kind);
+        Assert.Equal(PaymentSafePosting.PrepaymentNote, movement.Note);
+        Assert.Equal(PrepaymentAmount, await ListBalance(db, seed));
+        Assert.Equal(PaymentSafePosting.PrepaymentNote, (await db.InstallmentPayments.SingleAsync()).Description);
     }
 
     private static async Task<double> ListBalance(TestApplicationDbContext db, Seed seed)

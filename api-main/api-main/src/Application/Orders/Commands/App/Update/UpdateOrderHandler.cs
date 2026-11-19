@@ -88,7 +88,9 @@ public class UpdateOrderHandler : IRequestHandler<UpdateOrderCommand, Result>
             orderListId = orderListIdResult.Data;
 
             ApplySaleDateToFirstInstallment(order, request.SaleDate!.Value);
-            await SynchronizeFirstInstallmentWithPrepaymentAsync(order, request, amounts.Prepayment, cancellationToken);
+            var prepaymentSync = await SynchronizeFirstInstallmentWithPrepaymentAsync(order, request, amounts.Prepayment, cancellationToken);
+            if (prepaymentSync.IsFailed)
+                return prepaymentSync;
         }
 
         order.Update(
@@ -295,14 +297,14 @@ public class UpdateOrderHandler : IRequestHandler<UpdateOrderCommand, Result>
             firstInstallment.Date = saleDate;
     }
 
-    private async Task SynchronizeFirstInstallmentWithPrepaymentAsync(
+    private async Task<Result> SynchronizeFirstInstallmentWithPrepaymentAsync(
         Order order,
         UpdateOrderCommand request,
         double newPrepayment,
         CancellationToken cancellationToken)
     {
         if (order.PrepaymentAmount == newPrepayment)
-            return;
+            return Result.Success();
 
         var firstInstallment = order.InstallmentPayments.FirstOrDefault();
         var previousInstallmentAmount = firstInstallment?.Amount ?? 0;
@@ -318,17 +320,24 @@ public class UpdateOrderHandler : IRequestHandler<UpdateOrderCommand, Result>
         }
         else
         {
+            var adjusted = await new PaymentSafePosting(_dbContext, _safeLedger)
+                .AdjustAsync(firstInstallment.Id, newPrepayment, null, cancellationToken);
+            if (adjusted.IsFailed)
+                return adjusted;
+
             seller.UndeliveredCashAmount -= previousInstallmentAmount;
             seller.UndeliveredCashAmount += newPrepayment;
 
             if (newPrepayment == 0)
             {
                 order.InstallmentPayments.Remove(firstInstallment);
-                return;
+                return Result.Success();
             }
 
             firstInstallment.Amount = newPrepayment;
         }
+
+        return Result.Success();
     }
 
     private static void DetachItemFromOrder(Order order, OrderItem item)

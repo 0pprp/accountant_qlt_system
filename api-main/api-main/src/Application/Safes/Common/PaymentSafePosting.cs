@@ -11,6 +11,8 @@ namespace Application.Safes.Common;
 /// </summary>
 public class PaymentSafePosting
 {
+    public const string PrepaymentNote = "مقدمة";
+
     private readonly IApplicationDbContext _dbContext;
     private readonly ISafeLedger _ledger;
 
@@ -23,7 +25,7 @@ public class PaymentSafePosting
     /// <summary>يُدخل التسديد قاصة قائمته. لا يكرر الحركة إن كان التسديد مُرحَّلاً.</summary>
     public async Task<Result> PostAsync(
         int paymentId, int orderId, int orderListId, double amount, int performedByUserId,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken, string? note = null)
     {
         if (amount <= 0)
             return Result.Success();
@@ -42,6 +44,7 @@ public class PaymentSafePosting
             SafeId = safe.Data!.Id,
             Kind = SafeMovementKind.Collection,
             Amount = amount,
+            Note = note,
             PerformedByUserId = performedByUserId,
             InstallmentPaymentId = paymentId,
             OrderId = orderId

@@ -411,10 +411,11 @@ class SalesRemoteDataSource {
     String? attachmentType,
   }) async {
     final MultipartFile part;
+    final contentType = imageContentType(fileName);
     if (bytes != null) {
-      part = MultipartFile.fromBytes(bytes, filename: fileName);
+      part = MultipartFile.fromBytes(bytes, filename: fileName, contentType: contentType);
     } else if (filePath != null && filePath.isNotEmpty) {
-      part = await MultipartFile.fromFile(filePath, filename: fileName);
+      part = await MultipartFile.fromFile(filePath, filename: fileName, contentType: contentType);
     } else {
       throw ArgumentError('uploadAttachment requires bytes or filePath');
     }
@@ -427,6 +428,14 @@ class SalesRemoteDataSource {
         'file': part,
       }),
     );
+  }
+
+  /// السيرفر يقبل الصور بنوعها الصريح فقط؛ بدونه يصل octet-stream ويُرفض.
+  static DioMediaType imageContentType(String fileName) {
+    final lower = fileName.toLowerCase();
+    if (lower.endsWith('.png')) return DioMediaType('image', 'png');
+    if (lower.endsWith('.webp')) return DioMediaType('image', 'webp');
+    return DioMediaType('image', 'jpeg');
   }
 
   /// يبني FormData لرفع مرفق — للاختبارات دون I/O.

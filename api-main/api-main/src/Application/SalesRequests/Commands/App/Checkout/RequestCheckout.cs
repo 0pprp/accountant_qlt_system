@@ -7,6 +7,8 @@ using Application.Orders.Common;
 using Application.SalesEmployees.Common;
 using Application.SalesRequests.Common;
 using Application.SalesRequests.Realtime;
+using Domain.Entities.AttachmentAggregate.Enums;
+using Domain.Entities.CustomerAggregate;
 using Domain.Entities.OrderAggregate;
 using Domain.Entities.OrderAggregate.Enums;
 using Domain.Entities.SalesRequestAggregate.Enums;
@@ -18,7 +20,9 @@ public record ListChoice(int Id, string Name, string MandobFullName);
 public record CheckoutLists(int OrderId, int? RequestId = null) : IRequest<Result<List<ListChoice>>>;
 public record SaleLine(int Id, int Qty);
 public record CheckoutBody(int OrderListId, List<SaleLine> Products, decimal Total,
-    decimal DailyInstallment, decimal Prepayment, string Address, double Lat, double Lng);
+    decimal DailyInstallment, decimal Prepayment, string Address, double Lat, double Lng,
+    string? ShopName = null, string? BusinessType = null, double? GoodsValue = null, double? DailyIncome = null,
+    double? ShopLength = null, double? ShopWidth = null, string? Note = null);
 public record CheckoutSale(int OrderId, CheckoutBody Body) : IRequest<Result<int>>;
 
 public class RequestCheckout(IApplicationDbContext db, ICurrentUserService user,
@@ -45,13 +49,26 @@ public class RequestCheckout(IApplicationDbContext db, ICurrentUserService user,
 
     public async Task<Result<int>> Handle(CheckoutSale cmd, CancellationToken ct)
     {
+        try
+        {
+            return await CheckoutAsync(cmd, ct);
+        }
+        catch (Exception e) when (e is DbUpdateConcurrencyException
+                                  || e.GetBaseException() is System.Data.Common.DbException { SqlState: "40001" })
+        {
+            return SalesRequestErrors.ConcurrencyConflict;
+        }
+    }
+
+    private async Task<Result<int>> CheckoutAsync(CheckoutSale cmd, CancellationToken ct)
+    {
         var b = cmd.Body;
         if (user.UserId is not int actor) return SalesRequestErrors.NotOwner;
         await using var tx = await db.Database.BeginTransactionAsync(IsolationLevel.Serializable, ct);
         var request = await Owned(cmd.OrderId).SingleOrDefaultAsync(ct);
         if (request == null || !await SalesWorkforce.HasActiveAssignmentAsync(db, actor, request.BranchId, clock.UtcNowOffset, ct))
             return SalesRequestErrors.NotOwner;
-        var order = await db.Orders.Include(o => o.OrderItems).Include(o => o.Attachments)
+        var order = await db.Orders.Include(o => o.OrderItems).Include(o => o.Attachments).Include(o => o.InstallmentPayments)
             .SingleOrDefaultAsync(o => o.Id == cmd.OrderId && o.BranchId == request.BranchId && o.SellerId == actor, ct);
         if (order == null) return OrderErrors.OrderNotFound;
         if (request.Status == SalesRequestStatus.Completed && order.ApprovalStatus == OrderApprovalStatus.Approved)
@@ -107,6 +124,7 @@ public class RequestCheckout(IApplicationDbContext db, ICurrentUserService user,
         var baghdad = now.ToOffset(TimeSpan.FromHours(3)).DateTime;
         order.SetSeller(actor, b.OrderListId, new Location(b.Lat,b.Lng), b.Address.Trim(),
             DateOnly.FromDateTime(baghdad), TimeOnly.FromDateTime(baghdad));
+        db.CustomerShopProfiles.Add(ShopProfile(order, b, now));
         await db.SaveChangesAsync(ct);
         var approval = await mediator.Send(new ChangeOrderApprovalStatusCommand {
             OrderId = order.Id, ApprovalStatus = OrderApprovalStatus.Approved }, ct);
@@ -124,6 +142,37 @@ public class RequestCheckout(IApplicationDbContext db, ICurrentUserService user,
         await TryEnterArchiveAsync(order, ct);
 
         return order.Id;
+    }
+
+    private static CustomerShopProfile ShopProfile(Order order, CheckoutBody b, DateTimeOffset now)
+    {
+        static double? Positive(double? v) => v is > 0 && double.IsFinite(v.Value) ? v : null;
+        static string? Text(string? v, int max) => string.IsNullOrWhiteSpace(v) ? null : v.Trim()[..Math.Min(v.Trim().Length, max)];
+
+        var length = Positive(b.ShopLength);
+        var width = Positive(b.ShopWidth);
+        var photo = order.Attachments
+            .Where(a => a.Type == AttachmentType.CustomerShopPhoto)
+            .OrderByDescending(a => a.Id)
+            .Select(a => a.RelativePath)
+            .FirstOrDefault();
+        var businessType = string.Join(" — ", new[] { b.BusinessType, b.Note }
+            .Where(v => string.IsNullOrWhiteSpace(v) == false)
+            .Select(v => v!.Trim()));
+        var imageKey = photo is not null && photo.Length <= CustomerDocument.MaxKeyLength ? photo : null;
+
+        return new CustomerShopProfile(
+            order.CustomerId,
+            order.Id,
+            Text(b.ShopName, CustomerShopProfile.MaxNameLength),
+            Text(businessType, CustomerShopProfile.MaxNameLength),
+            Positive(b.GoodsValue),
+            Positive(b.DailyIncome),
+            length,
+            width,
+            length is not null && width is not null ? length * width : null,
+            imageKey,
+            now);
     }
 
     private async Task TryEnterArchiveAsync(Order order, CancellationToken ct)

@@ -46,7 +46,10 @@ public class ChangeOrderApprovalStatusHandler : IRequestHandler<ChangeOrderAppro
             return OrderErrors.ApprovalStatusOfOrderHasBeenSetBefore;
 
         // أي خروج مبكر يتراجع تلقائياً عند الـdispose قبل الـcommit
-        await using var dbTransaction = await _dbContext.Database.BeginTransactionAsync(cancellationToken);
+        var ownsTransaction = _dbContext.Database.CurrentTransaction is null;
+        await using var dbTransaction = ownsTransaction
+            ? await _dbContext.Database.BeginTransactionAsync(cancellationToken)
+            : null;
 
         if (request.ApprovalStatus == OrderApprovalStatus.Approved)
         {
@@ -60,7 +63,7 @@ public class ChangeOrderApprovalStatusHandler : IRequestHandler<ChangeOrderAppro
 
             if (order.PrepaymentAmount > 0)
             {
-                var firstInstallmentPayment = new InstallmentPayment(order.PrepaymentAmount, order.SaleDate!.Value);
+                var firstInstallmentPayment = new InstallmentPayment(order.PrepaymentAmount, order.SaleDate!.Value, PaymentSafePosting.PrepaymentNote);
 
                 var seller = await _dbContext.Users.FirstOrDefaultAsync(x => x.Id == order.SellerId, cancellationToken);
                 if (seller is null)
@@ -69,6 +72,16 @@ public class ChangeOrderApprovalStatusHandler : IRequestHandler<ChangeOrderAppro
                 seller.UndeliveredCashAmount += firstInstallmentPayment.Amount;
 
                 order.InstallmentPayments.Add(firstInstallmentPayment);
+
+                if (order.OrderListId is int orderListId)
+                {
+                    await _dbContext.SaveChangesAsync(cancellationToken);
+                    var posted = await new PaymentSafePosting(_dbContext, _safeLedger).PostAsync(
+                        firstInstallmentPayment.Id, order.Id, orderListId, firstInstallmentPayment.Amount,
+                        seller.Id, cancellationToken, PaymentSafePosting.PrepaymentNote);
+                    if (posted.IsFailed)
+                        return posted;
+                }
             }
 
             order.Approve();
@@ -84,7 +97,8 @@ public class ChangeOrderApprovalStatusHandler : IRequestHandler<ChangeOrderAppro
             TargetEntityType.Order,
             request.OrderId);
         await _dbContext.SaveChangesAsync(cancellationToken);
-        await dbTransaction.CommitAsync(cancellationToken);
+        if (dbTransaction is not null)
+            await dbTransaction.CommitAsync(cancellationToken);
 
         return Result.Success();
     }
