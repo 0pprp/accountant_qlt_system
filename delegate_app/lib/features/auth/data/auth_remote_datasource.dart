@@ -117,4 +117,20 @@ class AuthRemoteDataSource {
       );
     } catch (_) {}
   }
+
+  /// Fresh lock flag from profile — do not rely on login-time cache alone.
+  Future<bool?> fetchFollowerCollectionEnabled() async {
+    try {
+      final profile = await _dio.dio.get('api/v1/app/Users/profile');
+      if (profile.data is! Map) return null;
+      final m = profile.data as Map;
+      final orderList = m['orderList'] ?? m['OrderList'];
+      if (orderList is! Map) return false;
+      final olMap = orderList as Map;
+      return olMap['followerCollectionEnabled'] == true ||
+          olMap['FollowerCollectionEnabled'] == true;
+    } catch (_) {
+      return null;
+    }
+  }
 }

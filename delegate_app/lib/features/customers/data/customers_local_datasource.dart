@@ -40,6 +40,10 @@ class CustomersLocalDataSource {
     final batch = db.batch();
     batch.delete('customers');
     for (final c in customers) {
+      final w = List<double>.generate(
+        7,
+        (i) => i < c.weekAmounts.length ? c.weekAmounts[i] : 0,
+      );
       batch.insert('customers', {
         'customer_id': c.customerId,
         'delegate_id': c.delegateId,
@@ -55,10 +59,19 @@ class CustomersLocalDataSource {
         'receipt_total': c.receiptTotal,
         'count_receipt': c.countReceipt,
         'active_order_id': c.activeOrderId,
+        'is_legal': c.isLegal ? 1 : 0,
+        'amount1': w[0],
+        'amount2': w[1],
+        'amount3': w[2],
+        'amount4': w[3],
+        'amount5': w[4],
+        'amount6': w[5],
+        'amount7': w[6],
         'payload_json': jsonEncode({
           'customerId': c.customerId,
           'name': c.name,
           'activeOrderId': c.activeOrderId,
+          'isLegal': c.isLegal,
         }),
       });
     }
@@ -81,6 +94,16 @@ class CustomersLocalDataSource {
       countReceipt: row['count_receipt'] as int?,
       delegateId: row['delegate_id'] as int,
       activeOrderId: (row['active_order_id'] as num?)?.toInt(),
+      isLegal: (row['is_legal'] as num?)?.toInt() == 1,
+      weekAmounts: [
+        (row['amount1'] as num?)?.toDouble() ?? 0,
+        (row['amount2'] as num?)?.toDouble() ?? 0,
+        (row['amount3'] as num?)?.toDouble() ?? 0,
+        (row['amount4'] as num?)?.toDouble() ?? 0,
+        (row['amount5'] as num?)?.toDouble() ?? 0,
+        (row['amount6'] as num?)?.toDouble() ?? 0,
+        (row['amount7'] as num?)?.toDouble() ?? 0,
+      ],
     );
   }
 }

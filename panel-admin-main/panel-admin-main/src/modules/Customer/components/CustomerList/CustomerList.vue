@@ -35,13 +35,25 @@
         {{ data.rating || '-' }}
       </template>
 
-      <template #body-details="{ data: rowData }" v-if="canUpdateCustomer">
-        <SvgIcon
-          name="note"
-          class="w-7.5 h-7.5 text-gray-300 hover:text-primary cursor-pointer transition-colors"
-          :title="$t('words.edit')"
-          @click="navigateToViewPage(rowData.id)"
-        />
+      <template #body-details="{ data: rowData }">
+        <div class="flex items-center gap-2">
+          <button
+            v-if="canReadProfile"
+            type="button"
+            class="customer-list__action"
+            :title="$t('customer.openProfile')"
+            @click="navigateToProfile(rowData.id)"
+          >
+            {{ $t('customer.openProfile') }}
+          </button>
+          <SvgIcon
+            v-if="canUpdateCustomer"
+            name="note"
+            class="w-7.5 h-7.5 text-gray-300 hover:text-primary cursor-pointer transition-colors"
+            :title="$t('words.edit')"
+            @click="navigateToViewPage(rowData.id)"
+          />
+        </div>
       </template>
     </CustomDataTable>
   </div>
@@ -119,6 +131,10 @@ const loading = computed(() => isLoading.value)
 const { t } = useI18n()
 const { can } = usePermission()
 const canUpdateCustomer = can('Customer', 'Update')
+const canReadProfile =
+  can('Customer', 'Read') ||
+  can('SalesRequest', 'ReadAuditProfile') ||
+  can('SalesRequest', 'MatchRead')
 
 const columns = computed(() => {
   const baseColumns = [
@@ -166,12 +182,12 @@ const columns = computed(() => {
     },
   ]
 
-  if (canUpdateCustomer) {
+  if (canUpdateCustomer || canReadProfile) {
     baseColumns.push({
       field: 'details',
       header: t('customer.tableColumns.details'),
       sortable: false,
-      style: 'min-width: 160px',
+      style: 'min-width: 200px',
     })
   }
 
@@ -181,6 +197,10 @@ const router = useRouter()
 
 function navigateToViewPage(id: number) {
   router.push({ name: 'EditCustomerView', params: { id: id } })
+}
+
+function navigateToProfile(id: number) {
+  router.push({ name: 'CustomerAuditProfileRoute', params: { id: id } })
 }
 
 function handleSelectionChange(selection: AllowedTypes[]) {
@@ -215,3 +235,26 @@ function handleSortChange(event: {
   }
 }
 </script>
+
+<style scoped>
+.customer-list__action {
+  padding: 5px 14px;
+  border-radius: 999px;
+  border: 1px solid var(--q-line, #cddbd7);
+  background: var(--q-surface, #fff);
+  color: var(--q-accent, #006a64);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.15s, color 0.15s;
+}
+.customer-list__action:hover {
+  background: var(--q-accent, #006a64);
+  color: #fff;
+}
+.customer-list__action:focus-visible {
+  outline: 2px solid var(--q-accent, #006a64);
+  outline-offset: 2px;
+}
+</style>

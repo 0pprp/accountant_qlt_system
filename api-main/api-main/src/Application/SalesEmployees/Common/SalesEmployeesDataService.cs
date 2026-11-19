@@ -121,6 +121,8 @@ public class SalesEmployeesDataService
                     LastPaymentDate = o.InstallmentPayments.Max(ip => (DateOnly?)ip.Date),
                 })
                 .ToListAsync(ct);
+        var cardUnallocated = await Application.Common.Balances.CustomerBalanceQuery.UnallocatedDetailsAsync(
+            _db, orderFacts.Select(o => o.CustomerId).Distinct().ToList(), ct);
 
         var salesTodayBySeller = ids.Count == 0
             ? new Dictionary<int, int>()
@@ -182,16 +184,17 @@ public class SalesEmployeesDataService
             foreach (var g in empOrders.GroupBy(o => o.CustomerId))
             {
                 var sellTotal = g.Sum(x => x.SellAmount);
-                var receipts = g.Sum(x => x.Receipts);
+                cardUnallocated.TryGetValue(g.Key, out var extra);
+                var receipts = g.Sum(x => x.Receipts) + (extra?.Amount ?? 0);
                 var remaining = sellTotal - receipts;
                 var saleDate = g.Min(x => x.SaleDate);
-                var lastPay = g.Max(x => x.LastPaymentDate);
+                var lastPay = Application.Common.Balances.CustomerBalanceQuery.LatestDate(g.Max(x => x.LastPaymentDate), extra?.LastDate);
                 var real = CustomerRatingCalculator.ScoreFor(
                     sellTotal, receipts, remaining, saleDate, lastPay, asOf, usePhantomSaleDate: false);
                 var phantom = CustomerRatingCalculator.ScoreFor(
                     sellTotal, receipts, remaining, saleDate, lastPay, asOf, usePhantomSaleDate: true);
-                if (real is int rs && remaining > 0) realScores.Add(rs);
-                if (phantom is int ps && remaining > 0) phantomScores.Add(ps);
+                if (real is int rs && Application.Common.Balances.CustomerBalanceRules.HasOpenBalance(remaining)) realScores.Add(rs);
+                if (phantom is int ps && Application.Common.Balances.CustomerBalanceRules.HasOpenBalance(remaining)) phantomScores.Add(ps);
             }
 
             var realAvg = realScores.Count == 0 ? (double?)null : Math.Round(realScores.Average(), 2);
@@ -279,15 +282,18 @@ public class SalesEmployeesDataService
                 LastPaymentDate = o.InstallmentPayments.Max(ip => (DateOnly?)ip.Date),
             })
             .ToListAsync(ct);
+        var summaryUnallocated = await Application.Common.Balances.CustomerBalanceQuery.UnallocatedDetailsAsync(
+            _db, orderRows.Select(o => o.CustomerId).Distinct().ToList(), ct);
 
         var factRows = orderRows
             .GroupBy(o => o.CustomerId)
             .Select(g =>
             {
+                summaryUnallocated.TryGetValue(g.Key, out var extra);
                 var total = g.Sum(x => x.SellAmount);
-                var receipts = g.Sum(x => x.Receipts);
+                var receipts = g.Sum(x => x.Receipts) + (extra?.Amount ?? 0);
                 var saleDate = g.Min(x => x.SaleDate);
-                var lastPay = g.Max(x => x.LastPaymentDate);
+                var lastPay = Application.Common.Balances.CustomerBalanceQuery.LatestDate(g.Max(x => x.LastPaymentDate), extra?.LastDate);
                 var name = g.Select(x => x.CustomerName).FirstOrDefault(n => !string.IsNullOrWhiteSpace(n))
                            ?? $"#{g.Key}";
                 var phone = g.Select(x => x.Phone).FirstOrDefault(p => !string.IsNullOrWhiteSpace(p));

@@ -1,4 +1,4 @@
-namespace Application.Common.SeedData;
+﻿namespace Application.Common.SeedData;
 
 public static class RolePermissions
 {
@@ -15,6 +15,7 @@ public static class RolePermissions
                 .Concat(Permissions.SalesFollowup.OutsideAll.Select(x => x.Name))
                 .Concat(Permissions.SalesOverview.OutsideAll.Select(x => x.Name))
                 .Concat(Permissions.SalesEmployee.OutsideAll.Select(x => x.Name))
+                .Concat(Permissions.Archive.OutsideAll.Select(x => x.Name))
                 .Concat(Permissions.SalesLocation.OutsideAll.Select(x => x.Name))
                 .Concat(Permissions.SalesRoute.OutsideAll.Select(x => x.Name))
                 .Concat(Permissions.SalesSummary.OutsideAll.Select(x => x.Name))
@@ -67,6 +68,8 @@ public static class RolePermissions
                 .Append(Permissions.Waiver.Apply)
                 .Append(Permissions.CustomerDecision.Read)
                 .Append(Permissions.PriceBoard.Read)
+                .Append(Permissions.DelegateFollowup.Read)
+                .Append(Permissions.DelegateFollowup.UpsertAccountantRating)
                 .ToList()
         };
         All.Add(mainAccountant);
@@ -136,6 +139,10 @@ public static class RolePermissions
         branchManager.Permissions.Add(Permissions.ManagementRatings.DetailsRead);
         // مهامي (inbox) — قراءة + إجراءات المكلّف؛ بلا Create/Assign للنظام
         branchManager.Permissions.Add(Permissions.ManagementTask.Read);
+        branchManager.Permissions.Add(Permissions.Archive.Read);
+        branchManager.Permissions.Add(Permissions.Archive.Send);
+        branchManager.Permissions.Add(Permissions.Archive.UndoSend);
+        branchManager.Permissions.Add(Permissions.Archive.ReceiveBranch);
         branchManager.Permissions.Add(Permissions.ManagementTask.Accept);
         branchManager.Permissions.Add(Permissions.ManagementTask.Reject);
         branchManager.Permissions.Add(Permissions.ManagementTask.Complete);
@@ -196,6 +203,9 @@ public static class RolePermissions
         mandob.Permissions.Add(Permissions.SalesRequest.AppTransferName);
         mandob.Permissions.Add(Permissions.SalesRequest.SubmitEmployee);
         mandob.Permissions.Add(Permissions.SalesRequest.SubmitDelegate);
+        mandob.Permissions.Add(Permissions.Archive.Read);
+        mandob.Permissions.Add(Permissions.Archive.Send);
+        mandob.Permissions.Add(Permissions.Archive.UndoSend);
         mandob.Permissions.Add(Permissions.AppNote.Create);
         // شكوى موظف المبيعات — مسار Complaints المنفصل (ليس AppNote).
         mandob.Permissions.Add(Permissions.Complaint.Submit);
@@ -225,6 +235,10 @@ public static class RolePermissions
         motaba.Permissions.Add(Permissions.Expense.Read);
         motaba.Permissions.Add(Permissions.Safe.Read);
         motaba.Permissions.Add(Permissions.SalesRequest.SubmitFollower);
+        motaba.Permissions.Add(Permissions.Archive.Read);
+        motaba.Permissions.Add(Permissions.Archive.Send);
+        motaba.Permissions.Add(Permissions.Archive.UndoSend);
+        motaba.Permissions.Add(Permissions.Archive.ReceiveFollower);
         motaba.Permissions.Add(Permissions.FollowerWork.SalesReviewAuthenticate);
         motaba.Permissions.Add(Permissions.FollowerWork.NotesWrite);
         motaba.Permissions.Add(Permissions.FollowerWork.DelegateNotesWrite);
@@ -243,6 +257,16 @@ public static class RolePermissions
         motaba.Permissions.Add(Permissions.ManagementTask.Complete);
         motaba.Permissions.Add(Permissions.ManagementTask.ReadAttachment);
         All.Add(motaba);
+
+        var archiveOfficer = new RolePermissionDto
+        {
+            RoleName = Roles.ArchiveOfficer.Name
+        };
+        // تبويب واحد لا غير. حزمة إجراءاته تُوسَّع تلقائياً في
+        // EffectivePermissionCalculator، فلا يُمنح شيء خارج الأرشيف.
+        archiveOfficer.Permissions.Add(
+            Application.Common.AdminPanel.AdminPanelTabs.PermissionName("archive"));
+        All.Add(archiveOfficer);
 
         // قوالب لوحة الإدارة — seed يضيف فقط المفقود؛ لا يمحو Deny ولا يغيّر حسابات موجودة
         All.Add(new RolePermissionDto

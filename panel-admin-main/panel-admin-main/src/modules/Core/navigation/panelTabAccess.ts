@@ -64,6 +64,8 @@ export const FOLLOWER_PANEL_TAB_KEYS = [
   'followerCollection',
   'followerLiveMap',
   'followerRoutes',
+  'followerShopCapture',
+  'followerManage',
 ] as const
 
 export const MANAGEMENT_LEAF_PANEL_TAB_KEYS = [
@@ -78,7 +80,6 @@ export const MANAGEMENT_LEAF_PANEL_TAB_KEYS = [
   'managementPriceBoard',
   'managementAnnouncements',
   'managementTutorials',
-  ...FOLLOWER_PANEL_TAB_KEYS,
 ] as const
 
 /** تطابق id السايدبار → مفتاح تبويب واحد */
@@ -89,8 +90,8 @@ export const SIDEBAR_ID_TO_PANEL_TAB: Readonly<Record<string, string>> = {
   customer: 'customer',
   purchases: 'purchases',
   warehouse: 'warehouse',
-  safeMain: 'safeMain',
   safe: 'safe',
+  archive: 'archive',
   order: 'order',
   user: 'user',
   activityLog: 'activityLog',
@@ -123,6 +124,7 @@ export const SIDEBAR_ID_TO_PANEL_TAB: Readonly<Record<string, string>> = {
   followerCollection: 'followerCollection',
   followerLiveMap: 'followerLiveMap',
   followerRoutes: 'followerRoutes',
+  followerShopCapture: 'followerShopCapture',
 }
 
 /** حاويات: أي ابن مفتوح يكفي لعرض الحاوية */
@@ -193,10 +195,23 @@ export const MANAGEMENT_TAB_TO_PANEL_TAB: Readonly<Record<string, string>> = {
   salesEmployeeRating: 'saleEmployees',
 }
 
+export const FOLLOWER_WORK_ACCESS: AccessRequirement = panelTabsAnyOf(
+  FOLLOWER_PANEL_TAB_KEYS as unknown as [string, ...string[]]
+)
+
+export const DELEGATE_FOLLOWUP_ACCESS: AccessRequirement = {
+  type: 'anyOf',
+  permissions: [
+    panelTabRef('managementDelegateFollowup'),
+    { module: 'DelegateFollowup', action: 'UpsertAccountantRating' },
+  ],
+}
+
 export function requirementForNavSectionId(
   sectionId: string,
   fallback: AccessRequirement
 ): AccessRequirement {
+  if (sectionId === 'managementDelegateFollowup') return DELEGATE_FOLLOWUP_ACCESS
   const anyKeys = SIDEBAR_ID_TO_PANEL_TABS_ANY[sectionId]
   if (anyKeys) return panelTabsAnyOf(anyKeys)
 
@@ -239,7 +254,6 @@ export const TAB_EFFECT_NOTES_AR: Readonly<Record<string, string>> = {
   'app-delegate-exceptions':
     'البت في استثناءات المفوض — منفصل عن تقديم الاستثناء من شاشات الطلب.',
   safe: 'يشمل إنشاء وتعديل الحركات المالية ضمن الصندوق.',
-  safeMain: 'عرض الصناديق الرئيسية وحركاتها دون بالضرورة منح تعديل الحركات.',
   user: 'إدارة الحسابات دون منح صلاحية تعديل تبويبات الآخرين تلقائيًا.',
   saleLiveMap: 'عرض مواقع المبيعات الحية على الخريطة.',
   managementSalesMap: 'خريطة مبيعات لوحة الإدارة.',

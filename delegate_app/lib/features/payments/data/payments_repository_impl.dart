@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:uuid/uuid.dart';
 
 import '../../../core/location/location_service.dart';
@@ -6,6 +7,7 @@ import '../../../core/security/secure_session_store.dart';
 import '../../../core/time/iraq_date.dart';
 import '../../customers/data/customers_local_datasource.dart';
 import '../../../core/network/json_map.dart';
+import '../domain/entities/paid_collection.dart';
 import '../domain/entities/pending_payment.dart';
 import '../domain/entities/today_payment_item.dart';
 import '../domain/payment_collection_rules.dart';
@@ -32,6 +34,7 @@ class PaymentsRepositoryImpl implements PaymentsRepository {
   final SecureSessionStore _session;
   final LocationService _location;
   final _uuid = const Uuid();
+  final Set<int> _collectInFlight = <int>{};
 
   String? _lastCollectMessage;
   String? _lastSyncError;
@@ -43,12 +46,14 @@ class PaymentsRepositoryImpl implements PaymentsRepository {
   String? get lastSyncError => _lastSyncError;
 
   @override
-  Future<int> countPending() => _local.countPending();
+  Future<int> countPending() async => (await listPending()).length;
 
   @override
   Future<List<PendingPayment>> listPending() async {
     final owner = await _session.ownerKey ?? '';
     final uid = int.tryParse(await _session.userId ?? '') ?? 0;
+    if (owner.isEmpty || uid <= 0) return [];
+    await _local.reclaimForOwner(ownerKey: owner, delegateId: uid);
     return _local.listUploadable(
       ownerAsyncId: owner,
       delegateId: uid > 0 ? uid : null,
@@ -59,10 +64,60 @@ class PaymentsRepositoryImpl implements PaymentsRepository {
   Future<List<PendingPayment>> listTodayLocal() => _local.listToday();
 
   @override
-  Future<List<TodayPaymentItem>> listTodayMerged() async {
+  Future<PaidCollection?> todayPaidForCustomer(int customerId) async {
+    final uid = int.tryParse(await _session.userId ?? '') ?? 0;
+    if (uid <= 0 || customerId <= 0) return null;
+    final paid = await _local.paidCollectionForCustomer(
+      customerId: customerId,
+      delegateId: uid,
+    );
+    if (paid != null && paid.hasValidUuid && paid.amount > 0) return paid;
+
     final local = await _local.listToday();
-    final items = <TodayPaymentItem>[
-      for (final p in local)
+    for (final p in local) {
+      if (p.delegateId != uid || p.customerId != customerId) continue;
+      if (p.amount <= 0 || p.clientPaymentId.trim().isEmpty) continue;
+      return PaidCollection(
+        customerId: p.customerId,
+        delegateId: p.delegateId,
+        businessDay: IraqDate.isoDate(),
+        amount: p.amount,
+        clientPaymentId: p.clientPaymentId,
+        createdAtUtc: p.createdAtUtc,
+        customerName: p.customerName,
+      );
+    }
+    return null;
+  }
+
+  @override
+  Future<List<TodayPaymentItem>> listTodayMerged() async {
+    final uid = int.tryParse(await _session.userId ?? '') ?? 0;
+    final local = await _local.listToday();
+    final ledger = await _local.listPaidCollectionsToday(
+      delegateId: uid > 0 ? uid : null,
+    );
+
+    final seenCustomers = <int>{};
+    final seenClientPaymentIds = <String>{};
+    final items = <TodayPaymentItem>[];
+    var skippedLocalDup = 0;
+
+    // 1) طابور محلي — صف واحد لكل زبون (الأحدث أولاً من listToday)
+    for (final p in local) {
+      if (p.delegateId != uid) continue;
+      if (p.customerId > 0 && seenCustomers.contains(p.customerId)) {
+        skippedLocalDup++;
+        debugPrint(
+          'PaymentDup: skip local id=${p.id} customer=${p.customerId} '
+          'cpid=${p.clientPaymentId} status=${p.syncStatus}',
+        );
+        continue;
+      }
+      if (p.customerId > 0) seenCustomers.add(p.customerId);
+      final cpid = p.clientPaymentId.trim();
+      if (cpid.isNotEmpty) seenClientPaymentIds.add(cpid.toLowerCase());
+      items.add(
         TodayPaymentItem(
           keyId: 'local-${p.id}',
           customerId: p.customerId,
@@ -73,9 +128,33 @@ class PaymentsRepositoryImpl implements PaymentsRepository {
           orderId: p.orderId,
           syncError: p.syncError,
           createdAtUtc: p.createdAtUtc,
+          clientPaymentId: p.clientPaymentId,
         ),
-    ];
+      );
+    }
 
+    // 2) مخزن المسددين (يبقى بعد الحذف من الطابور)
+    for (final p in ledger) {
+      if (seenCustomers.contains(p.customerId)) continue;
+      if (!p.hasValidUuid || p.amount <= 0) continue;
+      seenCustomers.add(p.customerId);
+      seenClientPaymentIds.add(p.clientPaymentId.trim().toLowerCase());
+      items.add(
+        TodayPaymentItem(
+          keyId: 'paid-${p.clientPaymentId}',
+          customerId: p.customerId,
+          customerName: p.customerName ?? 'زبون #${p.customerId}',
+          amount: p.amount,
+          isLocal: false,
+          statusLabel: 'مسدد اليوم',
+          createdAtUtc: p.createdAtUtc,
+          clientPaymentId: p.clientPaymentId,
+          dateLabel: p.businessDay,
+        ),
+      );
+    }
+
+    // 3) سيرفر — احتياطي
     try {
       final day = IraqDate.isoDate();
       final remote = await _remote.fetchTodayPayments(
@@ -91,11 +170,30 @@ class PaymentsRepositoryImpl implements PaymentsRepository {
         ]);
         final amount = JsonMap.asDouble(e, ['amount', 'Amount']) ?? 0;
         final orderId = JsonMap.asInt(e, ['orderId', 'OrderId']);
+        final customerId = JsonMap.asInt(e, ['customerId', 'CustomerId']);
         final id = JsonMap.asInt(e, ['id', 'Id']) ?? 0;
         final date = JsonMap.str(e, ['date', 'Date']);
+        final remoteCpid = JsonMap.str(e, [
+          'clientPaymentId',
+          'ClientPaymentId',
+        ]).trim().toLowerCase();
+        if (remoteCpid.isNotEmpty &&
+            seenClientPaymentIds.contains(remoteCpid)) {
+          continue;
+        }
+        if (customerId != null &&
+            customerId > 0 &&
+            seenCustomers.contains(customerId)) {
+          continue;
+        }
+        if (customerId != null && customerId > 0) {
+          seenCustomers.add(customerId);
+        }
+        if (remoteCpid.isNotEmpty) seenClientPaymentIds.add(remoteCpid);
         items.add(
           TodayPaymentItem(
             keyId: 'server-$id',
+            customerId: customerId,
             customerName: name.isEmpty ? 'زبون' : name,
             amount: amount,
             isLocal: false,
@@ -106,7 +204,14 @@ class PaymentsRepositoryImpl implements PaymentsRepository {
         );
       }
     } catch (_) {
-      // Keep local rows even if remote fails.
+      // Keep local/ledger rows even if remote fails.
+    }
+
+    if (skippedLocalDup > 0) {
+      debugPrint(
+        'PaymentDup: collapsed $skippedLocalDup local row(s); '
+        'shown=${items.length}',
+      );
     }
 
     items.sort((a, b) {
@@ -133,119 +238,178 @@ class PaymentsRepositoryImpl implements PaymentsRepository {
   Future<bool> collectOffline({
     required int customerId,
     required String customerName,
+    int? saleOrderId,
     required double amount,
   }) async {
     _lastCollectMessage = null;
+    debugPrint('PaymentDup: collect start customer=$customerId amount=$amount');
 
-    final amountError = PaymentCollectionRules.validateAmount(amount);
-    if (amountError != null) {
-      _lastCollectMessage = amountError;
+    if (!_collectInFlight.add(customerId)) {
+      debugPrint('PaymentDup: blocked in-flight customer=$customerId');
+      _lastCollectMessage = 'جاري حفظ تسديد هذا الزبون — انتظر لحظة';
       return false;
     }
-
-    final ownerKey = await _session.ownerKey;
-    final userIdStr = await _session.userId;
-    if (ownerKey == null || userIdStr == null) {
-      _lastCollectMessage = 'يجب تسجيل الدخول أولاً';
-      return false;
-    }
-    final delegateId = int.tryParse(userIdStr) ?? 0;
-    if (delegateId <= 0) {
-      _lastCollectMessage = 'جلسة المندوب غير صالحة';
-      return false;
-    }
-
-    final customer = await _customersLocal.byId(customerId);
-    if (customer == null) {
-      _lastCollectMessage =
-          'الزبون غير موجود في الكاش المحلي — حدّث القائمة أولاً';
-      return false;
-    }
-    final orderId = customer.activeOrderId;
-    if (orderId == null || orderId <= 0) {
-      _lastCollectMessage =
-          'لا يوجد طلب نشط محفوظ لهذا الزبون — حدّث القائمة ثم أعد المحاولة';
-      return false;
-    }
-
-    final day = IraqDate.isoDate();
-    final hasUnsyncedPending =
-        await _local.hasUnsyncedForCustomer(customerId);
-    if (hasUnsyncedPending) {
-      _lastCollectMessage = PaymentCollectionRules.blockMessage(
-        alreadyCollectedToday: false,
-        hasUnsyncedPending: true,
-      );
-      return false;
-    }
-
-    var alreadyCollectedToday = await _local.hasDayLock(
-      customerId: customerId,
-      delegateId: delegateId,
-      businessDay: day,
-    );
-    var offlineStaleLock = false;
-
-    if (alreadyCollectedToday) {
-      final onServer = await _remote.customerHasPaymentOnDate(
-        customerId: customerId,
-        isoDate: day,
-      );
-      if (onServer == false) {
-        await _local.clearDayLock(
-          customerId: customerId,
-          delegateId: delegateId,
-          businessDay: day,
-        );
-        alreadyCollectedToday = false;
-      } else if (onServer == null) {
-        offlineStaleLock = true;
-      }
-    }
-
-    if (PaymentCollectionRules.blocksNewCollection(
-      alreadyCollectedToday: alreadyCollectedToday,
-      hasUnsyncedPending: false,
-    )) {
-      _lastCollectMessage = PaymentCollectionRules.blockMessage(
-        alreadyCollectedToday: alreadyCollectedToday,
-        hasUnsyncedPending: false,
-        offlineStaleLock: offlineStaleLock,
-      );
-      return false;
-    }
-
-    final location = await _location.tryGetLocation() ?? '';
-    final clientPaymentId = _uuid.v4();
-    final createdAtUtc = DateTime.now().toUtc().toIso8601String();
-    final receiptNumber = 'R-${DateTime.now().millisecondsSinceEpoch}';
-
-    final payment = PendingPayment(
-      id: 0,
-      customerId: customerId,
-      customerName: customerName,
-      delegateId: delegateId,
-      orderId: orderId,
-      amount: amount,
-      location: location,
-      clientPaymentId: clientPaymentId,
-      createdAtUtc: createdAtUtc,
-      receiptNumber: receiptNumber,
-      ownerAsyncId: ownerKey,
-      syncStatus: PaymentSyncStatuses.pending,
-    );
 
     try {
-      await _local.insertPending(payment);
-      await _local.insertDayLock(
+      final ownerKey = await _session.ownerKey;
+      final userIdStr = await _session.userId;
+      if (ownerKey == null || userIdStr == null) {
+        _lastCollectMessage = 'يجب تسجيل الدخول أولاً';
+        return false;
+      }
+      final delegateId = int.tryParse(userIdStr) ?? 0;
+      if (delegateId <= 0) {
+        _lastCollectMessage = 'جلسة المندوب غير صالحة';
+        return false;
+      }
+
+      final customer = await _customersLocal.byId(customerId);
+      if (customer == null && saleOrderId == null) {
+        _lastCollectMessage =
+            'الزبون غير موجود في الكاش المحلي — حدّث القائمة أولاً';
+        return false;
+      }
+      final amountError = PaymentCollectionRules.validateAmount(
+        amount,
+        remaining: customer?.remaining,
+      );
+      if (amountError != null) {
+        _lastCollectMessage = amountError;
+        return false;
+      }
+      final orderId = saleOrderId ?? customer?.activeOrderId;
+      if (orderId == null || orderId <= 0) {
+        _lastCollectMessage =
+            'لا يوجد طلب نشط محفوظ لهذا الزبون — حدّث القائمة ثم أعد المحاولة';
+        return false;
+      }
+
+      final collectedAt = DateTime.now().toUtc();
+      final day = IraqDate.isoDate(collectedAt);
+      final hasUnsyncedPending =
+          await _local.hasUnsyncedForCustomer(customerId, delegateId, day);
+      if (hasUnsyncedPending) {
+        debugPrint('PaymentDup: blocked unsynced pending customer=$customerId');
+        _lastCollectMessage = PaymentCollectionRules.blockMessage(
+          alreadyCollectedToday: false,
+          hasUnsyncedPending: true,
+        );
+        return false;
+      }
+
+      // مخزن المسددين يمنع إعادة التحصيل حتى لو اُزيل قفل اليوم بالخطأ.
+      final existingPaid = await _local.paidCollectionForCustomer(
+        customerId: customerId,
+        delegateId: delegateId,
+      );
+      if (existingPaid != null &&
+          existingPaid.hasValidUuid &&
+          existingPaid.amount > 0) {
+        debugPrint(
+          'PaymentDup: blocked paid-wallet customer=$customerId '
+          'cpid=${existingPaid.clientPaymentId}',
+        );
+        _lastCollectMessage = PaymentCollectionRules.blockMessage(
+          alreadyCollectedToday: true,
+          hasUnsyncedPending: false,
+        );
+        return false;
+      }
+
+      var alreadyCollectedToday = await _local.hasDayLock(
         customerId: customerId,
         delegateId: delegateId,
         businessDay: day,
       );
-      return true;
-    } catch (e) {
-      _lastCollectMessage = 'تعذر حفظ التسديد محلياً';
-      return false;
+      var offlineStaleLock = false;
+
+      if (alreadyCollectedToday) {
+        final onServer = await _remote.customerHasPaymentOnDate(
+          customerId: customerId,
+          isoDate: day,
+        );
+        if (onServer == false) {
+          // لا تمسح القفل إن وُجدت حافظة محلية — فقط قفل يتيم بلا أثر محلي.
+          final paidAfter = await _local.paidCollectionForCustomer(
+            customerId: customerId,
+            delegateId: delegateId,
+          );
+          if (paidAfter == null) {
+            await _local.clearDayLock(
+              customerId: customerId,
+              delegateId: delegateId,
+              businessDay: day,
+            );
+            alreadyCollectedToday = false;
+            debugPrint('PaymentDup: cleared orphan day-lock customer=$customerId');
+          } else {
+            debugPrint(
+              'PaymentDup: keep lock; paid wallet exists customer=$customerId',
+            );
+          }
+        } else if (onServer == null) {
+          offlineStaleLock = true;
+        }
+      }
+
+      if (PaymentCollectionRules.blocksNewCollection(
+        alreadyCollectedToday: alreadyCollectedToday,
+        hasUnsyncedPending: false,
+      )) {
+        _lastCollectMessage = PaymentCollectionRules.blockMessage(
+          alreadyCollectedToday: alreadyCollectedToday,
+          hasUnsyncedPending: false,
+          offlineStaleLock: offlineStaleLock,
+        );
+        return false;
+      }
+
+      final location = await _location.tryGetLocation() ?? '';
+      final clientPaymentId = _uuid.v4();
+      final createdAtUtc = collectedAt.toIso8601String();
+      final receiptNumber = 'R-${DateTime.now().millisecondsSinceEpoch}';
+
+      final payment = PendingPayment(
+        id: 0,
+        customerId: customerId,
+        customerName: customerName,
+        delegateId: delegateId,
+        orderId: orderId,
+        amount: amount,
+        location: location,
+        clientPaymentId: clientPaymentId,
+        createdAtUtc: createdAtUtc,
+        receiptNumber: receiptNumber,
+        ownerAsyncId: ownerKey,
+        syncStatus: PaymentSyncStatuses.pending,
+      );
+
+      try {
+        final rejected = await _local.insertCollectAtomic(
+          payment: payment,
+          businessDay: day,
+        );
+        if (rejected != null) {
+          debugPrint(
+            'PaymentDup: atomic reject reason=$rejected customer=$customerId',
+          );
+          _lastCollectMessage = PaymentCollectionRules.blockMessage(
+            alreadyCollectedToday: rejected == 'collected',
+            hasUnsyncedPending: rejected == 'pending',
+          );
+          return false;
+        }
+        debugPrint(
+          'PaymentDup: collect ok customer=$customerId cpid=$clientPaymentId',
+        );
+        return true;
+      } catch (e) {
+        debugPrint('PaymentDup: collect insert failed customer=$customerId err=$e');
+        _lastCollectMessage = 'تعذر حفظ التسديد محلياً';
+        return false;
+      }
+    } finally {
+      _collectInFlight.remove(customerId);
     }
   }
 
@@ -289,7 +453,7 @@ class PaymentsRepositoryImpl implements PaymentsRepository {
         final result = await _remote.postPaymentIdempotent(payment);
         if (result.success) {
           // حذف محلي فقط بعد إقرار يثبت نفس العملية.
-          await _local.deleteById(payment.id);
+          await _local.confirmPayment(payment, PaymentsRemoteDataSource.collectionDateOf(payment));
           uploaded++;
         } else {
           final err = result.message ?? 'فشل الإرسال';

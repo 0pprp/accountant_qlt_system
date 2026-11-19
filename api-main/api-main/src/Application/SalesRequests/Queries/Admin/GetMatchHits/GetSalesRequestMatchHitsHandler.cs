@@ -82,10 +82,7 @@ public class GetSalesRequestMatchHitsHandler
             .ToList();
 
         var asOf = _clock.Today;
-        var qualified = await SalesMatchSignificantPayment.LoadQualifiedAsync(
-            _db, hitIds, asOf, cancellationToken);
-
-        var qualifiedIds = hitIds.Where(id => qualified.ContainsKey(id)).ToList();
+        var qualifiedIds = hitIds;
         var total = qualifiedIds.Count;
         var pageIds = qualifiedIds
             .Skip((request.Pagination.PageIndex - 1) * request.Pagination.PageSize)
@@ -99,6 +96,8 @@ public class GetSalesRequestMatchHitsHandler
         }
 
         var canReadFinancial = _currentUser.HasPermission(SeedPermissions.SalesRequest.ReadFinancial);
+        var qualified = await SalesMatchSignificantPayment.LoadQualifiedAsync(
+            _db, pageIds, asOf, cancellationToken);
 
         var rows = await _db.Customers.AsNoTracking()
             .Where(x => pageIds.Contains(x.Id))
@@ -132,15 +131,18 @@ public class GetSalesRequestMatchHitsHandler
             .ToListAsync(cancellationToken);
 
         var byId = rows.ToDictionary(r => r.Id);
+        var unallocatedPaid = await Application.Common.Balances.CustomerBalanceQuery.UnallocatedByCustomerAsync(
+            _db, rows.Select(r => r.Id).ToList(), null, cancellationToken);
         var items = new List<GetSalesRequestMatchHitItem>(pageIds.Count);
         foreach (var id in pageIds)
         {
             if (!byId.TryGetValue(id, out var row))
                 continue;
 
-            var remaining = row.SellAmount - row.PaidAmount;
+            var paidTotal = row.PaidAmount + unallocatedPaid.GetValueOrDefault(row.Id);
+            var remaining = Application.Common.Balances.CustomerBalanceRules.RoundToUnit(row.SellAmount - paidTotal);
             var rating = CustomerRatingCalculator.EvaluateLabel(
-                row.SellAmount, row.PaidAmount, remaining, row.SaleDate, row.LastPayment, asOf);
+                row.SellAmount, paidTotal, row.SellAmount - paidTotal, row.SaleDate, row.LastPayment, asOf);
             var paymentDays = row.SaleDate is { } sd && row.LastPayment is { } lp
                 ? CustomerRatingCalculator.DiffDaysInclusive(
                     CustomerRatingCalculator.AdjustSaleDate(sd), lp)
@@ -148,7 +150,7 @@ public class GetSalesRequestMatchHitsHandler
 
             qualified.TryGetValue(id, out var sig);
             double? sell = canReadFinancial ? row.SellAmount : null;
-            double? paid = canReadFinancial ? row.PaidAmount : null;
+            double? paid = canReadFinancial ? paidTotal : null;
             double? rem = canReadFinancial ? remaining : null;
             int? payCount = canReadFinancial ? row.PaymentCount : null;
             int? payDays = canReadFinancial ? paymentDays : null;

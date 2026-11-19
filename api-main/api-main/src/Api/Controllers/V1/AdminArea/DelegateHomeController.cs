@@ -12,6 +12,11 @@ public class DelegateHomeController : ApiController
 
     [HasPermission(Permissions.DelegateHome.Read)]
     [HttpGet("summary")]
-    public async Task<ActionResult<DelegateHomeSummaryDto>> Summary()
-        => (await _mediator.Send(new GetDelegateHomeSummaryQuery(), CancellationToken)).ToHttpResponse();
+    public async Task<ActionResult<DelegateHomeSummaryDto>> Summary([FromQuery] int? branchId = null)
+        => (await _mediator.Send(new GetDelegateHomeSummaryQuery { BranchId = branchId }, CancellationToken)).ToHttpResponse();
+
+    [HasPermission(Permissions.DelegateHome.Read)]
+    [HttpGet("account")]
+    public async Task<ActionResult<DelegateAccountDto>> Account()
+        => (await _mediator.Send(new GetDelegateAccountQuery(), CancellationToken)).ToHttpResponse();
 }

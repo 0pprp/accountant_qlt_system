@@ -1,3 +1,4 @@
+﻿using Application.Safes.Common;
 using Application.Common.Models;
 using Application.InstallmentPayments.Commands.Admin.Create;
 using Application.InstallmentPayments.Commands.Admin.Delete;
@@ -9,14 +10,11 @@ using Application.Orders.Commands.Admin.ChangeApprovalStatus;
 using Application.Orders.Commands.Admin.SetSellerInfo;
 using Application.Orders.Commands.Admin.Update;
 using Application.Orders.Common;
-using Application.Safes.Commands.Admin.CreateCashDelivery;
-using Application.Safes.Queries.Admin.GetByBranch;
-using Application.Safes.Queries.Admin.GetSellers;
 using Application.Tests;
-using Application.Transactions.Commands.Admin.ChangeStatus;
 using Application.Users.Queries.Admin.GetUserDailyInstallmentCollectionsReport;
 using Domain.Entities.BranchAggregate;
 using Domain.Entities.CustomerAggregate;
+using Domain.Entities.InstallmentPaymentAggregate;
 using Domain.Entities.OrderAggregate;
 using Domain.Entities.OrderAggregate.Enums;
 using Domain.Entities.OrderListAggregate;
@@ -49,7 +47,7 @@ public class SellerCashHolderTests
         Assert.Equal(PrepaymentAmount, (await db.Users.SingleAsync(x => x.Id == seed.MandobId)).UndeliveredCashAmount);
         Assert.Equal(0, (await db.Users.SingleAsync(x => x.Id == seed.MotabaId)).UndeliveredCashAmount);
         Assert.Equal(PrepaymentAmount, Assert.Single(await db.InstallmentPayments.ToListAsync()).Amount);
-        Assert.Equal(seed.InitialSafeRemaining, (await db.Safes.SingleAsync(x => x.Id == seed.SafeId)).RemainingCashAmount);
+        Assert.Equal(seed.InitialSafeRemaining, (await db.Safes.SingleAsync(x => x.Id == seed.SafeId)).Balance);
     }
 
     [Fact]
@@ -74,7 +72,8 @@ public class SellerCashHolderTests
         await using var db = CreateDbContext();
         var seed = await SeedPendingAppOrderAsync(db, sellerIsMotaba: true);
 
-        var handler = new ChangeOrderApprovalStatusHandler(db, new NotificationServiceStub(), new ActivityLogServiceStub());
+        var handler = new ChangeOrderApprovalStatusHandler(db, new NotificationServiceStub(), new ActivityLogServiceStub(),
+            new SafeLedger(db, new CurrentUserServiceStub()));
         var command = new ChangeOrderApprovalStatusCommand
         {
             OrderId = seed.OrderId,
@@ -105,7 +104,8 @@ public class SellerCashHolderTests
             CurrentUser(seed.BranchId),
             new DateTimeProviderStub(),
             new NotificationServiceStub(),
-            new ActivityLogServiceStub());
+            new ActivityLogServiceStub(),
+            new SafeLedger(db, new CurrentUserServiceStub()));
 
         var result = await handler.Handle(new UpdateOrderCommand
         {
@@ -143,7 +143,7 @@ public class SellerCashHolderTests
         await using var db = CreateDbContext();
         var seed = await SeedInProgressOrderAsync(db, sellerIsMotaba: true);
 
-        var writer = new AppInstallmentPaymentWriter(db, new DateTimeProviderStub(), new ActivityLogServiceStub());
+        var writer = Writer(db);
         var handler = new AppCreateInstallmentHandler(writer);
         var result = await handler.Handle(new AppCreateInstallment
         {
@@ -163,7 +163,7 @@ public class SellerCashHolderTests
         await using var db = CreateDbContext();
         var seed = await SeedInProgressOrderAsync(db, sellerIsMotaba: false);
 
-        var writer = new AppInstallmentPaymentWriter(db, new DateTimeProviderStub(), new ActivityLogServiceStub());
+        var writer = Writer(db);
         var handler = new SyncInstallmentPaymentsHandler(writer);
         var result = await handler.Handle(new SyncInstallmentPaymentsCommand
         {
@@ -195,7 +195,8 @@ public class SellerCashHolderTests
             db,
             currentUser,
             new DateTimeProviderStub(),
-            new ActivityLogServiceStub());
+            new ActivityLogServiceStub(),
+            Posting(db, currentUser));
         var createResult = await createHandler.Handle(new AdminCreateInstallment
         {
             OrderId = seed.OrderId,
@@ -212,7 +213,8 @@ public class SellerCashHolderTests
             db,
             currentUser,
             new DateTimeProviderStub(),
-            new ActivityLogServiceStub());
+            new ActivityLogServiceStub(),
+            Posting(db, currentUser));
         var updateResult = await updateHandler.Handle(new UpdateInstallmentPaymentCommand
         {
             Id = installment.Id,
@@ -223,7 +225,7 @@ public class SellerCashHolderTests
         Assert.True(updateResult.IsSucceeded);
         Assert.Equal(PrepaymentAmount + 20000, (await db.Users.SingleAsync(x => x.Id == seed.MotabaId)).UndeliveredCashAmount);
 
-        var deleteResult = await new DeleteInstallmentPaymentHandler(db, new ActivityLogServiceStub())
+        var deleteResult = await new DeleteInstallmentPaymentHandler(db, new ActivityLogServiceStub(), Posting(db, currentUser), currentUser)
             .Handle(new DeleteInstallmentPaymentCommand(installment.Id), CancellationToken.None);
 
         Assert.True(deleteResult.IsSucceeded);
@@ -231,68 +233,176 @@ public class SellerCashHolderTests
         Assert.Equal(0, (await db.Users.SingleAsync(x => x.Id == seed.MandobId)).UndeliveredCashAmount);
     }
 
+
+
     [Fact]
-    public async Task SafeScreen_IncludesMandobAndMotaba_AndShowsEachBalance()
+    public async Task AppInstallment_GoesToListSafe_EvenWhenMotabaHasOwnSafe()
     {
         await using var db = CreateDbContext();
-        var seed = await SeedInProgressOrderAsync(db, sellerIsMotaba: true);
-        (await db.Users.SingleAsync(x => x.Id == seed.MandobId)).UndeliveredCashAmount = 10000;
+        var seed = await SeedInProgressOrderAsync(db, sellerIsMotaba: false);
+        db.Safes.Add(Domain.Entities.SafeAggregate.Safe.ForEmployee("المتابع", seed.BranchId, seed.MotabaId));
         await db.SaveChangesAsync();
 
-        var sellers = await new GetSafeSellersHandler(db).Handle(new GetSafeSellersQuery
+        var result = await new AppCreateInstallmentHandler(Writer(db)).Handle(new AppCreateInstallment
         {
-            SafeId = seed.SafeId,
-            Pagination = new Pagination(1, 10),
-            Filter = new GetSafeSellersFilter()
+            OrderId = seed.OrderId,
+            Amount = 15000,
+            UserId = seed.MotabaId
         }, CancellationToken.None);
 
-        Assert.True(sellers.IsSucceeded);
-        Assert.Equal(2, sellers.Data!.TotalCount);
-        var tahir = Assert.Single(sellers.Data.Items, x => x.Id == seed.MotabaId);
-        var mandob = Assert.Single(sellers.Data.Items, x => x.Id == seed.MandobId);
-        Assert.Equal(PrepaymentAmount, tahir.UndeliveredCashAmount);
-        Assert.Equal("المتابع", tahir.RoleName);
-        Assert.Equal(10000, mandob.UndeliveredCashAmount);
-        Assert.Equal("المندوب", mandob.RoleName);
-
-        var safe = await new GetSafeByBranchHandler(db, new CurrentUserServiceStub { Role = SeedRoles.Admin.Name })
-            .Handle(new GetSafeByBranchQuery(seed.BranchId), CancellationToken.None);
-
-        Assert.True(safe.IsSucceeded);
-        Assert.Equal(PrepaymentAmount + 10000, safe.Data!.TotalUndeliveredCashAmount);
+        Assert.True(result.IsSucceeded, result.Error?.Message);
+        var listSafe = await db.Safes.SingleAsync(x => x.OrderListId == seed.OrderListId);
+        Assert.Equal(15000, listSafe.Balance);
+        Assert.Equal(0, (await db.Safes.SingleAsync(x => x.UserId == seed.MotabaId)).Balance);
+        var movement = await db.SafeMovements.SingleAsync(x => x.SafeId == listSafe.Id);
+        Assert.Equal(SafeMovementKind.Collection, movement.Kind);
+        Assert.Equal(seed.MotabaId, movement.PerformedByUserId);
+        Assert.Equal((await db.InstallmentPayments.SingleAsync(x => x.Amount == 15000)).Id, movement.InstallmentPaymentId);
     }
 
     [Fact]
-    public async Task CashDelivery_WhenSellerIsMotaba_ReducesSellerAndIncreasesSafeAfterApproval()
+    public async Task AppSync_RetryWithSameKey_PostsOnce()
     {
         await using var db = CreateDbContext();
-        var seed = await SeedInProgressOrderAsync(db, sellerIsMotaba: true);
-        var remainingBefore = (await db.Safes.SingleAsync(x => x.Id == seed.SafeId)).RemainingCashAmount;
+        var seed = await SeedInProgressOrderAsync(db, sellerIsMotaba: false);
+        var key = Guid.NewGuid();
+        var command = new SyncInstallmentPaymentsCommand
+        {
+            UserId = seed.MotabaId,
+            InstallmentPayments =
+            [
+                new InstallmentPaymentDto
+                {
+                    OrderId = seed.OrderId,
+                    Amount = 15000,
+                    Date = new DateOnly(2026, 8, 19),
+                    ClientPaymentId = key,
+                    CheckLegacyPayments = false
+                }
+            ]
+        };
 
-        var createResult = await new CreateCashDeliveryHandler(db, new NotificationServiceStub(), new ActivityLogServiceStub())
-            .Handle(new CreateCashDeliveryCommand
-            {
-                SafeId = seed.SafeId,
-                SellerId = seed.MotabaId,
-                Amount = PrepaymentAmount,
-                Date = new DateOnly(2026, 8, 19),
-                Description = "تسليم"
-            }, CancellationToken.None);
+        Assert.True((await new SyncInstallmentPaymentsHandler(Writer(db)).Handle(command, CancellationToken.None)).IsSucceeded);
+        Assert.True((await new SyncInstallmentPaymentsHandler(Writer(db)).Handle(command, CancellationToken.None)).IsSucceeded);
 
-        Assert.True(createResult.IsSucceeded);
-
-        var transaction = await db.Transactions.SingleAsync(x => x.Type == TransactionType.SellerPayment);
-        var approveResult = await new ChangeTransactionStatusHandler(db, new ActivityLogServiceStub())
-            .Handle(new ChangeTransactionStatusCommand
-            {
-                Id = transaction.Id,
-                Status = TransactionStatus.Approved
-            }, CancellationToken.None);
-
-        Assert.True(approveResult.IsSucceeded);
-        Assert.Equal(0, (await db.Users.SingleAsync(x => x.Id == seed.MotabaId)).UndeliveredCashAmount);
-        Assert.Equal(remainingBefore + PrepaymentAmount, (await db.Safes.SingleAsync(x => x.Id == seed.SafeId)).RemainingCashAmount);
+        var listSafe = await db.Safes.SingleAsync(x => x.OrderListId == seed.OrderListId);
+        Assert.Equal(15000, listSafe.Balance);
+        Assert.Single(await db.SafeMovements.Where(x => x.SafeId == listSafe.Id).ToListAsync());
     }
+
+    [Fact]
+    public async Task AdminInstallment_PostsToListSafe_UpdateAdjusts_DeleteReverses()
+    {
+        await using var db = CreateDbContext();
+        var seed = await SeedInProgressOrderAsync(db, sellerIsMotaba: false);
+        var currentUser = CurrentUser(seed.BranchId);
+
+        var created = await new AdminCreateInstallmentHandler(db, currentUser, new DateTimeProviderStub(), new ActivityLogServiceStub(), Posting(db, currentUser))
+            .Handle(new AdminCreateInstallment { OrderId = seed.OrderId, Date = new DateOnly(2026, 8, 19), Amount = 15000 }, CancellationToken.None);
+        Assert.True(created.IsSucceeded, created.Error?.Message);
+        Assert.Equal(15000, await ListBalance(db, seed));
+
+        var installment = await db.InstallmentPayments.SingleAsync(x => x.Amount == 15000);
+        var updated = await new UpdateInstallmentPaymentHandler(db, currentUser, new DateTimeProviderStub(), new ActivityLogServiceStub(), Posting(db, currentUser))
+            .Handle(new UpdateInstallmentPaymentCommand { Id = installment.Id, Amount = 10000 }, CancellationToken.None);
+        Assert.True(updated.IsSucceeded, updated.Error?.Message);
+        Assert.Equal(10000, await ListBalance(db, seed));
+
+        var deleted = await new DeleteInstallmentPaymentHandler(db, new ActivityLogServiceStub(), Posting(db, currentUser), currentUser)
+            .Handle(new DeleteInstallmentPaymentCommand(installment.Id), CancellationToken.None);
+        Assert.True(deleted.IsSucceeded, deleted.Error?.Message);
+        Assert.Equal(0, await ListBalance(db, seed));
+        Assert.Equal(0, (await db.SafeMovements.Where(x => x.InstallmentPaymentId == installment.Id).ToListAsync()).Sum(x => x.Amount));
+    }
+
+    [Fact]
+    public async Task Delete_IsRefused_WhenListSafeNoLongerHoldsTheMoney()
+    {
+        await using var db = CreateDbContext();
+        var seed = await SeedInProgressOrderAsync(db, sellerIsMotaba: false);
+        var currentUser = CurrentUser(seed.BranchId);
+        var paid = await new AppCreateInstallmentHandler(Writer(db)).Handle(
+            new AppCreateInstallment { OrderId = seed.OrderId, Amount = 15000, UserId = seed.MotabaId }, CancellationToken.None);
+        Assert.True(paid.IsSucceeded, paid.Error?.Message);
+        var listSafe = await db.Safes.SingleAsync(x => x.OrderListId == seed.OrderListId);
+        Assert.True((await new SafeLedger(db, currentUser).WithdrawAsync(listSafe.Id, 15000, "تسليم", null, CancellationToken.None)).IsSucceeded);
+
+        var installment = await db.InstallmentPayments.SingleAsync(x => x.Amount == 15000);
+        var result = await new DeleteInstallmentPaymentHandler(db, new ActivityLogServiceStub(), Posting(db, currentUser), currentUser)
+            .Handle(new DeleteInstallmentPaymentCommand(installment.Id), CancellationToken.None);
+
+        Assert.True(result.IsFailed);
+        Assert.Equal(SafeErrors.ListSafeCannotCoverPaymentReversal.Code, result.Error!.Value.Code);
+    }
+
+    [Fact]
+    public async Task AppInstallment_IsRefused_WhenListSafeIsInactive()
+    {
+        await using var db = CreateDbContext();
+        var seed = await SeedInProgressOrderAsync(db, sellerIsMotaba: false);
+        var listSafe = Domain.Entities.SafeAggregate.Safe.ForOrderList("قائمة", seed.BranchId, seed.OrderListId);
+        listSafe.Deactivate();
+        db.Safes.Add(listSafe);
+        await db.SaveChangesAsync();
+
+        var result = await new AppCreateInstallmentHandler(Writer(db)).Handle(new AppCreateInstallment
+        {
+            OrderId = seed.OrderId,
+            Amount = 15000,
+            UserId = seed.MotabaId
+        }, CancellationToken.None);
+
+        Assert.True(result.IsFailed);
+        Assert.Equal(SafeErrors.SafeIsInactive.Code, result.Error!.Value.Code);
+    }
+
+    [Fact]
+    public async Task Backfill_PostsOnlyEnteredPayments_AndIsIdempotent()
+    {
+        await using var db = CreateDbContext();
+        var seed = await SeedInProgressOrderAsync(db, sellerIsMotaba: false);
+        var order = await db.Orders.Include(x => x.InstallmentPayments).SingleAsync(x => x.Id == seed.OrderId);
+        var entered = new InstallmentPayment(15000, new DateOnly(2026, 8, 19));
+        var imported = new InstallmentPayment(9000, new DateOnly(2026, 1, 1)) { ImportKey = "najaf|CustomersPayments|1" };
+        order.InstallmentPayments.Add(entered);
+        order.InstallmentPayments.Add(imported);
+        await db.SaveChangesAsync();
+        db.ActivityLogs.Add(new Domain.Entities.ActivityLogAggregate.ActivityLog(
+            Domain.Entities.ActivityLogAggregate.Enums.ActivityType.InstallmentPaymentsSynced, "", "", "",
+            Domain.Entities.ActivityLogAggregate.Enums.TargetEntityType.InstallmentPayment, entered.Id,
+            null, null, default, null, null, seed.BranchId, seed.MotabaId));
+        await db.SaveChangesAsync();
+
+        var currentUser = CurrentUser(seed.BranchId);
+        var handler = new Application.Safes.Commands.Admin.BackfillPaymentCollections.BackfillPaymentCollectionsHandler(
+            db, currentUser, new SafeLedger(db, currentUser), new ActivityLogServiceStub());
+
+        var preview = await handler.Handle(new() { BranchId = seed.BranchId, DryRun = true }, CancellationToken.None);
+        Assert.True(preview.IsSucceeded, preview.Error?.Message);
+        Assert.Equal(1, preview.Data!.Count);
+        Assert.Equal(15000, preview.Data.Amount);
+        Assert.Equal(1, preview.Data.SkippedImported);
+        Assert.Equal(1, preview.Data.SkippedNotEnteredAsPayment);
+        Assert.Equal(0, await db.SafeMovements.CountAsync(x => x.InstallmentPaymentId != null));
+
+        var run = await handler.Handle(new() { BranchId = seed.BranchId, DryRun = false }, CancellationToken.None);
+        var again = await handler.Handle(new() { BranchId = seed.BranchId, DryRun = false }, CancellationToken.None);
+
+        Assert.True(run.IsSucceeded, run.Error?.Message);
+        Assert.Equal(1, run.Data!.Count);
+        Assert.Equal(0, again.Data!.Count);
+        Assert.Equal(1, again.Data.AlreadyPosted);
+        Assert.Equal(15000, await ListBalance(db, seed));
+    }
+
+    private static async Task<double> ListBalance(TestApplicationDbContext db, Seed seed)
+        => (await db.Safes.SingleAsync(x => x.OrderListId == seed.OrderListId)).Balance;
+
+    private static AppInstallmentPaymentWriter Writer(TestApplicationDbContext db)
+        => new(db, new DateTimeProviderStub(), new ActivityLogServiceStub(), Posting(db, new CurrentUserServiceStub()));
+
+    private static PaymentSafePosting Posting(TestApplicationDbContext db, CurrentUserServiceStub currentUser)
+        => new(db, new SafeLedger(db, currentUser));
 
     [Fact]
     public async Task DailyReport_UsesOrderSellerInstallments()
@@ -320,7 +430,8 @@ public class SellerCashHolderTests
             CurrentUser(seed.BranchId),
             new DateTimeProviderStub(),
             new NotificationServiceStub(),
-            new ActivityLogServiceStub());
+            new ActivityLogServiceStub(),
+            new SafeLedger(db, new CurrentUserServiceStub()));
 
         return await handler.Handle(new SetOrderSellerInfoCommand
         {
@@ -367,8 +478,11 @@ public class SellerCashHolderTests
         await db.SaveChangesAsync();
 
         var branch = new Branch("الشمالية", province.Id);
-        branch.Safe!.RemainingCashAmount = 5000000;
         db.Branches.Add(branch);
+        await db.SaveChangesAsync();
+
+        var branchSafe = branch.Safes.Single(x => x.Kind == SafeKind.Branch);
+        branchSafe.TryApplyDelta(5000000);
         await db.SaveChangesAsync();
 
         var mandobRole = new Role(SeedRoles.Mandob.Name, SeedRoles.Mandob.DisplayName);
@@ -418,12 +532,12 @@ public class SellerCashHolderTests
             order.Id,
             customer.Id,
             branch.Id,
-            branch.Safe!.Id,
+            branchSafe.Id,
             orderList.Id,
             mandob.Id,
             motaba.Id,
             sellerId,
-            branch.Safe.RemainingCashAmount);
+            branchSafe.Balance);
     }
 
     private static async Task<Seed> SeedPendingAppOrderAsync(TestApplicationDbContext db, bool sellerIsMotaba)

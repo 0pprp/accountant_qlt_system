@@ -32,12 +32,25 @@ public class UpdateCustomerHandler : IRequestHandler<UpdateCustomerCommand, Resu
             request.Business,
             request.BranchId);
 
+        customer.SetDiscounts(request.SellAmountDiscount, request.DailyInstallmentDiscount);
+
+        await using var transaction = await _dbContext.Database.BeginTransactionAsync(cancellationToken);
+
+        var reconciled = await CustomerDiscountApplier.ReconcileCustomerOrdersAsync(
+            _dbContext, customer, _activityLogService, cancellationToken);
+        if (reconciled.IsFailed)
+        {
+            await transaction.RollbackAsync(cancellationToken);
+            return reconciled.Error!;
+        }
+
         await _activityLogService.AddAsync(
             customer.BranchId,
             ActivityType.CustomerUpdated,
             TargetEntityType.Customer,
             request.Id);
         await _dbContext.SaveChangesAsync(cancellationToken);
+        await transaction.CommitAsync(cancellationToken);
 
         return Result.Success();
     }

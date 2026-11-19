@@ -19,4 +19,12 @@ export const FollowerWorkEndpoints = {
   liveLocations: '/admin/FollowerTracking/latest',
   route: (followerId: number) =>
     `/admin/FollowerTracking/${followerId}/route`,
+  sectionCounts: (followerId: number) =>
+    `/admin/FollowerWork/${followerId}/section-counts`,
+  customerProfile: (followerId: number, customerId: number) =>
+    `/admin/FollowerWork/${followerId}/customers/${customerId}/profile`,
+  shopCapture: '/admin/FollowerWork/shop-capture',
+  shopPhoto: (photoId: number) => `/admin/FollowerWork/shop-capture/photos/${photoId}`,
+  manageFollowers: '/admin/FollowerWork/followers',
+  manageFollower: (followerId: number) => `/admin/FollowerWork/followers/${followerId}`,
 } as const

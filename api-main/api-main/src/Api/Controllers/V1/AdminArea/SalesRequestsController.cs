@@ -1,6 +1,15 @@
 using Application.SalesRequests.Queries.Admin.FilterOptions;
 using Application.SalesRequests.Commands.Admin.ApproveException;
 using Application.SalesRequests.Commands.Admin.Assign;
+using Application.SalesRequests.Commands.Admin.AssignBatch;
+using Application.SalesRequests.Commands.Admin.CancelToUnassigned;
+using Application.SalesRequests.Commands.Admin.DeleteSoldSale;
+using Application.SalesRequests.Queries.Admin.DeletedSales;
+using Application.SalesRequests.Queries.Admin.ExceptionInbox;
+using Application.SalesRequests.Commands.Admin.MarkExceptionRead;
+using Application.SalesRequests.Commands.Admin.ManagerProgress;
+using Application.SalesRequests.Commands.Admin.Return;
+using Application.SalesRequests.Commands.Admin.TransferBranch;
 using Application.SalesRequests.Commands.Admin.Reject;
 using Application.SalesRequests.Commands.Admin.RejectException;
 using Application.SalesRequests.Commands.Admin.RequestException;
@@ -295,6 +304,112 @@ public class SalesRequestsController : ApiController
         return result.ToHttpResponse();
     }
 
+    [HasPermission(Permissions.SalesRequest.Assign)]
+    [HttpPost("assign-batch")]
+    public async Task<ActionResult<AssignSalesRequestBatchResponse>> AssignBatch([FromBody] AssignBatchBody body)
+        => (await _mediator.Send(new AssignSalesRequestBatchCommand
+        {
+            RequestIds = body.RequestIds ?? [],
+            EmployeeId = body.EmployeeId
+        }, CancellationToken)).ToHttpResponse();
+
+    [HasPermission(Permissions.SalesRequest.ReturnRequest)]
+    [HttpPost("{id:int}/return")]
+    public async Task<ActionResult> ReturnToEmployee([FromRoute] int id, [FromBody] NoteBody body)
+        => (await _mediator.Send(new ReturnSalesRequestCommand { RequestId = id, Note = body.Note ?? "" }, CancellationToken)).ToHttpResponse();
+
+    [HasPermission(Permissions.SalesRequest.ManagerPrepare)]
+    [HttpPost("{id:int}/prepare")]
+    public async Task<ActionResult> ManagerPrepare([FromRoute] int id, [FromBody] NoteBody body)
+        => (await _mediator.Send(new ManagerProgressSalesRequestCommand
+        {
+            RequestId = id,
+            Action = ManagerProgressAction.Prepare,
+            Note = body.Note
+        }, CancellationToken)).ToHttpResponse();
+
+    [HasPermission(Permissions.SalesRequest.ManagerPend)]
+    [HttpPost("{id:int}/pend")]
+    public async Task<ActionResult> ManagerPend([FromRoute] int id, [FromBody] NoteBody body)
+        => (await _mediator.Send(new ManagerProgressSalesRequestCommand
+        {
+            RequestId = id,
+            Action = ManagerProgressAction.Pend,
+            Note = body.Note
+        }, CancellationToken)).ToHttpResponse();
+
+    [HasPermission(Permissions.SalesRequest.CancelToUnassigned)]
+    [HttpPost("{id:int}/cancel-to-unassigned")]
+    public async Task<ActionResult> CancelToUnassigned([FromRoute] int id, [FromBody] RejectBody body)
+        => (await _mediator.Send(new CancelSalesRequestToUnassignedCommand { RequestId = id, Reason = body.Reason ?? "" }, CancellationToken)).ToHttpResponse();
+
+    [HasPermission(Permissions.SalesRequest.TransferBranch)]
+    [HttpPost("{id:int}/transfer-branch")]
+    public async Task<ActionResult> TransferBranch([FromRoute] int id, [FromBody] TransferBranchBody body)
+        => (await _mediator.Send(new TransferSalesRequestBranchCommand
+        {
+            RequestId = id,
+            TargetBranchId = body.TargetBranchId,
+            EmployeeId = body.EmployeeId,
+            Reason = body.Reason ?? ""
+        }, CancellationToken)).ToHttpResponse();
+
+    [HasPermission(Permissions.SalesRequest.DeleteSoldSale)]
+    [HttpGet("{id:int}/delete-sold-impact")]
+    public async Task<ActionResult<DeleteSoldSaleImpact>> DeleteSoldImpact([FromRoute] int id)
+        => (await _mediator.Send(new GetDeleteSoldSaleImpactQuery(id), CancellationToken)).ToHttpResponse();
+
+    [HasPermission(Permissions.SalesRequest.DeleteSoldSale)]
+    [HttpPost("{id:int}/delete-sold")]
+    public async Task<ActionResult<DeleteSoldSaleImpact>> DeleteSold([FromRoute] int id, [FromBody] DeleteSoldBody body)
+        => (await _mediator.Send(new DeleteSoldSaleCommand
+        {
+            RequestId = id,
+            Reason = body.Reason ?? "",
+            ConfirmPayments = body.ConfirmPayments
+        }, CancellationToken)).ToHttpResponse();
+
+    [HasPermission(Permissions.SalesRequest.DeletedSalesRead)]
+    [HttpGet("deleted-sales")]
+    public async Task<ActionResult<GetDeletedSalesResponse>> DeletedSales(
+        [FromQuery] int? branchId = null,
+        [FromQuery] string? search = null,
+        [FromQuery] int page = 1,
+        [FromQuery] int pageSize = 25)
+        => (await _mediator.Send(new GetDeletedSalesQuery
+        {
+            BranchId = branchId,
+            Search = search,
+            Page = page,
+            PageSize = pageSize
+        }, CancellationToken)).ToHttpResponse();
+
+    [Authorize]
+    [HttpGet("exception-inbox")]
+    public async Task<ActionResult<ExceptionInboxResponse>> ExceptionInbox(
+        [FromQuery] ExceptionInboxStatus status = ExceptionInboxStatus.Pending,
+        [FromQuery] int? branchId = null,
+        [FromQuery] string? search = null,
+        [FromQuery] int page = 1,
+        [FromQuery] int pageSize = 20)
+        => (await _mediator.Send(new GetExceptionInboxQuery
+        {
+            Status = status,
+            BranchId = branchId,
+            Search = search,
+            Page = page,
+            PageSize = pageSize
+        }, CancellationToken)).ToHttpResponse();
+
+    [Authorize]
+    [HttpPost("{id:int}/exception-read")]
+    public async Task<ActionResult<MarkExceptionReadResponse>> MarkExceptionRead([FromRoute] int id)
+        => (await _mediator.Send(new MarkExceptionReadCommand(id), CancellationToken)).ToHttpResponse();
+
+    public record DeleteSoldBody(string? Reason, bool ConfirmPayments);
+    public record AssignBatchBody(List<int>? RequestIds, int EmployeeId);
+    public record NoteBody(string? Note);
+    public record TransferBranchBody(int TargetBranchId, int? EmployeeId, string? Reason);
     public record MatchSummaryBody(List<int>? RequestIds);
     public record AssignBody(int EmployeeId, string? Reason);
     public record UpdateBody(

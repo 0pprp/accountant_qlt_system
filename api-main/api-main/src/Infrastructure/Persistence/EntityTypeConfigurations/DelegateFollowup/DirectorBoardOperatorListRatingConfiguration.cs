@@ -12,7 +12,11 @@ public class DirectorBoardOperatorListRatingConfiguration : IEntityTypeConfigura
         builder.HasKey(x => x.Id);
         builder.Property(x => x.Note).HasMaxLength(500);
         builder.Property(x => x.RatedByUserName).HasMaxLength(200);
-        builder.HasIndex(x => new { x.OrderListId, x.RatingDate }).IsUnique();
+        builder.Property(x => x.RaterSlot)
+            .HasMaxLength(DirectorBoardOperatorListRating.MaxSlotLength)
+            .HasDefaultValue(DirectorBoardOperatorListRating.SlotCommittee)
+            .IsRequired();
+        builder.HasIndex(x => new { x.OrderListId, x.RatingDate, x.RaterSlot }).IsUnique();
         builder.HasIndex(x => new { x.BranchId, x.RatingDate });
 
         builder.HasOne<Domain.Entities.OrderListAggregate.OrderList>()

@@ -1,77 +1,94 @@
-export enum TransactionType {
-  SellerPayment,
-  Purchase,
-  Expense,
-  SafeTransfer,
-}
-export enum TransactionStatus {
-  Pending,
-  Approved,
-  Rejected,
+/** نوع الخزينة — يطابق Domain.Entities.SafeAggregate.Enums.SafeKind */
+export enum SafeKind {
+  Branch = 0,
+  Expenses = 1,
+  OrderList = 2,
+  Employee = 3,
+  Misc = 4,
 }
 
-export enum TransactionDirection {
-  In,
-  Out,
-}
-
-export interface SafeCurrent {
-  id: number
-  name: string
-  remainingCashAmount: number
-  netBalance: number
-  totalAmount: number
-  totalUndeliveredCashAmount: number | null
-  totalBranchesRemainingCashAmount: number | null
-  branchId: number | null
+/** نوع الحركة — يطابق Domain.Entities.SafeAggregate.Enums.SafeMovementKind */
+export enum SafeMovementKind {
+  Opening = 0,
+  Deposit = 1,
+  Withdrawal = 2,
+  TransferIn = 3,
+  TransferOut = 4,
+  Collection = 5,
+  Prepayment = 6,
+  ExpenseOut = 7,
+  PurchaseOut = 8,
+  Refund = 9,
 }
 
 export interface Safe {
-  id: number | null
+  id: number
   name: string
-  branchId: number | null
-}
-
-export interface SafeSellers {
-  id: number
-  fullName: string
-  roleName: string | null
+  kind: SafeKind
+  branchId: number
+  orderListId: number | null
   orderListName: string | null
-  deliveredCashAmount: number
-  undeliveredCashAmount: number
-  lastCashDeliveryDate: string
-  lastCashDeliveryDescription: string | null
+  userId: number | null
+  userFullName: string | null
+  balance: number
+  isSystem: boolean
+  isActive: boolean
+  movementsCount: number
 }
 
-export interface SafeTransactions {
+export interface SafeMovement {
   id: number
-  source: string
-  destination: string
+  kind: SafeMovementKind
+  /** موقّع: موجب داخل، سالب خارج */
   amount: number
-  type: TransactionType
-  status: TransactionStatus
-  statusDescription: string | null
-  direction: TransactionDirection
-  createdAt: string
+  balanceAfter: number
+  note: string | null
+  counterpartySafeId: number | null
+  counterpartySafeName: string | null
+  performedByUserId: number
+  performedByFullName: string | null
+  createdAt: string | null
+  installmentPaymentId: number | null
+  customerFullName: string | null
 }
 
-export interface ChangeStatusForm {
-  status: TransactionStatus
-  statusDescription: null | string
+export interface BackfillPaymentCollectionsResult {
+  dryRun: boolean
+  count: number
+  amount: number
+  lists: { orderListId: number; orderListName: string; count: number; amount: number }[]
+  skippedImported: number
+  skippedNotEnteredAsPayment: number
+  alreadyPosted: number
 }
 
-export interface SomeSellersCashDeliveriesForm {
-  sellerIds: Array<number>
+export interface SafeVerification {
+  safeId: number
+  safeName: string
+  storedBalance: number
+  ledgerBalance: number
+  difference: number
+  movementsCount: number
+  isBalanced: boolean
+  inconsistentSnapshots: number
 }
 
-export interface SellerCashDeliveriesForm {
+export interface SafeAmountForm {
   amount: number
-  date: string
-  description: null | string
+  note: string | null
+  operationKey: string
 }
-export interface TransferForm {
-  amount: number
-  sourceSafeId: number | null
+
+export interface SafeTransferForm {
+  sourceSafeId: number
   destinationSafeId: number
-  description: string | null
+  amount: number
+  note: string | null
+  operationKey: string
+}
+
+export interface CreateSafeForm {
+  branchId: number
+  orderListId: number | null
+  userId: number | null
 }

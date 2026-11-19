@@ -41,6 +41,8 @@ public class GetOrderByIdHandler : IRequestHandler<GetOrderByIdQuery, Result<Get
                     SellAmount = x.SellAmount,
                     PrepaymentAmount = x.PrepaymentAmount,
                     DailyInstallmentAmount = x.DailyInstallmentAmount,
+                    SellAmountDiscountApplied = x.SellAmountDiscountApplied,
+                    DailyInstallmentDiscountApplied = x.DailyInstallmentDiscountApplied,
                     Attachments = x.Attachments.Select(a => new GetAttachmentDto
                     {
                         Id = a.Id,

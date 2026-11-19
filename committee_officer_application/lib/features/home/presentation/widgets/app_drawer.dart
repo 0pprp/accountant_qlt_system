@@ -12,6 +12,7 @@ import 'package:committee_officer_application/features/sales/presentation/sales_
 import 'package:committee_officer_application/features/stats/presentation/list_stats_page.dart';
 import 'package:committee_officer_application/features/management_tasks/presentation/my_tasks_page.dart';
 import 'package:committee_officer_application/features/tasks/presentation/tasks_page.dart';
+import 'package:committee_officer_application/features/archive/presentation/archive_bundles_page.dart';
 import 'package:committee_officer_application/injection.dart';
 import 'package:flutter/material.dart';
 
@@ -102,6 +103,9 @@ class AppDrawer extends StatelessWidget {
                       _item(context, Icons.bar_chart_rounded, 'الإحصائيات', () {
                         _open(context, const ListStatsPage());
                       }),
+                      _item(context, Icons.archive_outlined, 'الأرشيف', () {
+                        _open(context, const ArchiveBundlesPage());
+                      }),
                       _item(context, Icons.gavel_outlined, 'الزبائن القديمة', () {
                         _open(context, const LegalFollowupsPage());
                       }),
@@ -137,6 +141,7 @@ class AppDrawer extends StatelessWidget {
                     Navigator.pop(context);
                     final ok = await showConfirmDialog(context, title: 'تسجيل الخروج', message: 'هل تريد الخروج؟');
                     if (!ok) return;
+                    Injection.shift.stopLiveLoop();
                     await Injection.auth.logout();
                     onLogout();
                   },

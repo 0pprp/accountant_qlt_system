@@ -34,9 +34,12 @@ export interface DelegateFollowupDayRating {
   label: string
   boardOperatorScore: number | null
   boardOperatorNote: string | null
+  ratedByUserName?: string | null
 }
 
 export interface DelegateFollowupTierMoney {
+  customerCount: number
+  payersYesterday: number
   label: string
   requiredDueAvailable: boolean
   requiredDue: number | null
@@ -143,6 +146,11 @@ export interface DelegateFollowupSummary {
 
   conversion: DelegateFollowupConversion
   boardOperatorRating: DelegateFollowupBoardRating
+  boardOperatorRatingToday: DelegateFollowupBoardRating
+  accountantRating: DelegateFollowupBoardRating
+  accountantRatingToday: DelegateFollowupBoardRating
+  accountantRatingLast30Days: DelegateFollowupDayRating[]
+  reportedYesterday: string
 
   unresolvedNotes: DelegateFollowupUnresolvedField[]
 }
@@ -172,6 +180,7 @@ export interface DelegateFollowupCustomer {
   realRatingLabel: string
   isLegal: boolean
   isNewSaleUnpaid3Days: boolean
+  isActive: boolean
   notes: string | null
   receiptName: string | null
 }
@@ -212,6 +221,7 @@ export interface UpsertBoardRatingPayload {
   branchId: number
   score: number
   note: string | null
+  slot?: RatingSlot
 }
 
 export type CustomerTableFilter = 'all' | 'tiers' | 'lt100' | '100to200'
@@ -220,3 +230,60 @@ export const BOARD_SCORE_MIN = 0
 export const BOARD_SCORE_MAX = 10
 export const BOARD_NOTE_MAX = 500
 export const BRANCH_STORAGE_KEY = 'delegate-followup-branch'
+
+export type RatingSlot = 'committee' | 'accountant'
+
+export type SalesOrderOutcome = 'sold' | 'rejected' | 'open'
+
+export interface DelegateSalesOrder {
+  requestId: number
+  customerName: string
+  customerPhone: string | null
+  createdAtIraq: string | null
+  outcome: SalesOrderOutcome
+  statusLabel: string
+  rejectionReason: string | null
+  targetEmployeeName: string | null
+  shopRating: number | null
+  isWrongSale: boolean
+  evaluationLevel: number
+  evaluationLabel: string
+  customerId: number | null
+  soldAtIraq: string | null
+  finalSalePrice: number | null
+  isNewCustomer: boolean | null
+  oldCustomerReason: string | null
+  matchedCustomerId: number | null
+  matchedCustomerName: string | null
+  paymentRatingLabel: string | null
+  isDeclaredOld: boolean
+}
+
+export interface DelegateSalesOrdersCount {
+  key: string
+  label: string
+  count: number
+}
+
+export interface DelegateSalesOrders {
+  listId: number
+  total: number
+  sold: number
+  rejected: number
+  open: number
+  conversionPercent: number
+  newCustomerSales: number
+  newCustomerSalesThisMonth: number
+  oldCustomerSales: number
+  soldThisMonth: number
+  ordersThisMonth: number
+  wrongSales: number
+  totalSoldValue: number
+  averageShopRating: number | null
+  averageDaysToSale: number | null
+  evaluations: DelegateSalesOrdersCount[]
+  paymentRatings: DelegateSalesOrdersCount[]
+  orders: DelegateSalesOrder[]
+}
+
+export const BOARD_NOTE_REQUIRED_BELOW = 7

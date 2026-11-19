@@ -27,17 +27,22 @@ public static class SalesRatingCustomerProjector
                 LastPaymentDate = g.SelectMany(x => x.InstallmentPayments).Max(ip => (DateOnly?)ip.Date)
             })
             .ToListAsync(cancellationToken);
+        var unallocated = await Application.Common.Balances.CustomerBalanceQuery.UnallocatedDetailsAsync(
+            dbContext, rows.Select(r => r.CustomerId).Distinct().ToList(), cancellationToken);
 
         var result = new List<SalesRatedCustomer>();
         foreach (var row in rows)
         {
-            var remaining = row.AmountTotalSales - row.ReceiptsTotal;
+            unallocated.TryGetValue(row.CustomerId, out var extra);
+            var receipts = row.ReceiptsTotal + (extra?.Amount ?? 0);
+            var lastPayment = Application.Common.Balances.CustomerBalanceQuery.LatestDate(row.LastPaymentDate, extra?.LastDate);
+            var remaining = row.AmountTotalSales - receipts;
             var score = CustomerRatingCalculator.ScoreFor(
                 row.AmountTotalSales,
-                row.ReceiptsTotal,
+                receipts,
                 remaining,
                 row.SaleDate,
-                row.LastPaymentDate,
+                lastPayment,
                 asOf);
             if (score is null)
                 continue;
@@ -51,11 +56,11 @@ public static class SalesRatingCustomerProjector
                 Level = level,
                 RatingLabel = level,
                 Score = score.Value,
-                AmountRemaining = remaining,
+                AmountRemaining = Application.Common.Balances.CustomerBalanceRules.RoundToUnit(remaining),
                 SaleDate = row.SaleDate,
-                LastPaymentDate = row.LastPaymentDate,
+                LastPaymentDate = lastPayment,
                 AmountTotalSales = row.AmountTotalSales,
-                ReceiptsTotal = row.ReceiptsTotal
+                ReceiptsTotal = receipts
             });
         }
 

@@ -80,17 +80,64 @@ export interface CustomerAuditStaffRating {
   ratedByName?: string | null
   ratedAtUtc?: string | null
   orderId?: number | null
+  shopStockEstimatedValue?: number | null
+  estimatedDailyRevenue?: number | null
+  contextAmount?: number | null
+  occasion?: string | null
+  occasionLabel?: string | null
+  isWrongSale?: boolean | null
+}
+
+export interface CustomerAuditShopSurvey {
+  title: string
+  shopName?: string | null
+  businessType?: string | null
+  stockEstimatedValue?: number | null
+  estimatedDailyRevenue?: number | null
+  shopLength?: number | null
+  shopWidth?: number | null
+  shopArea?: number | null
+  latitude?: number | null
+  longitude?: number | null
+  photoId?: number | null
+  createdAtUtc?: string | null
 }
 
 export interface CustomerAuditRatingsAndLocation {
   delegateRating?: CustomerAuditStaffRating | null
   committeeFieldRating?: CustomerAuditStaffRating | null
-  salesEmployeeRating?: CustomerAuditStaffRating | null
+  shopSurvey?: CustomerAuditShopSurvey | null
   gpsLatitude?: number | null
   gpsLongitude?: number | null
   hasGps: boolean
   latestOrderLatitude?: number | null
   latestOrderLongitude?: number | null
+  snapshots?: CustomerAuditRatingSnapshot[] | null
+  locations?: CustomerAuditLocation[] | null
+  photos?: CustomerAuditPhoto[] | null
+}
+
+export interface CustomerAuditRatingSnapshot {
+  origin: string
+  ratingLabel?: string | null
+  score?: number | null
+  captureDate: string
+}
+
+export interface CustomerAuditLocation {
+  source: string
+  sourceLabel: string
+  latitude: number
+  longitude: number
+  accuracyMeters?: number | null
+  confidence?: number | null
+  capturedAtUtc?: string | null
+}
+
+export interface CustomerAuditPhoto {
+  id: number
+  contentType?: string | null
+  capturedAtUtc?: string | null
 }
 
 export function fetchCustomerAuditProfile(

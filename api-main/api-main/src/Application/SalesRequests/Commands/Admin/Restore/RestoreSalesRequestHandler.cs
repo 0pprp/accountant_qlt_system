@@ -43,6 +43,9 @@ public class RestoreSalesRequestHandler : IRequestHandler<RestoreSalesRequestCom
         if (entity is null || branches.Contains(entity.BranchId) == false)
             return SalesRequestErrors.NotFound;
 
+        if (entity.IsDeleted && entity.Status == Domain.Entities.SalesRequestAggregate.Enums.SalesRequestStatus.Completed)
+            return SalesRequestErrors.SoldSaleWiped;
+
         var at = _clock.UtcNowOffset;
         var assigneeEligible = true;
         if (entity.TargetEmployeeId is > 0)

@@ -1,237 +1,172 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import { useRouter } from 'vue-router'
-import { useQuery } from '@tanstack/vue-query'
-import { axiosInstance } from '@/modules/Core/plugins/axios'
+import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '@/modules/Auth/store'
-import { AppButton } from '@/modules/Core/components/ui'
-
-interface Summary {
-  unreadComplaints: number | null
-  unreadComplaintsAvailable: boolean
-  pendingExceptions: number | null
-  pendingExceptionsAvailable: boolean
-  unreadWrongSales: number | null
-  unreadWrongSalesAvailable: boolean
-  approvedExceptions: number | null
-  rejectedExceptions: number | null
-  cancelledExceptions: number | null
-  totalExceptions: number | null
-  exceptionsSummaryAvailable: boolean
-}
+import { getTabByIds } from '@/modules/Management/domain/sections'
+import { useManagementAccess } from '@/modules/Management/composables/useManagementAccess'
+import { useDelegateBranchId, useDelegateSummary } from '@/modules/DelegateManager/composables/useDelegateSummary'
 
 const auth = useAuthStore()
+const route = useRoute()
 const router = useRouter()
+const branchId = useDelegateBranchId()
 const canRead = computed(() => auth.hasPermission('DelegateHome', 'Read') === true)
-const canComplaints = computed(() => auth.hasPermission('Complaint', 'Read') === true)
-const canExceptions = computed(
-  () =>
-    auth.hasPermission('SalesRequest', 'TabExceptions') === true ||
-    auth.hasPermission('SalesRequest', 'ExceptionDecide') === true
-)
-const canWrong = computed(() => auth.hasPermission('WrongSale', 'Read') === true)
+const summaryQuery = useDelegateSummary(branchId)
+const { canOpenTab } = useManagementAccess()
+const data = computed(() => summaryQuery.data.value)
 
-const summaryQuery = useQuery({
-  queryKey: computed(() => ['delegate-home', auth.sessionGeneration]),
-  enabled: computed(() => canRead.value && auth.permissionsReady),
-  queryFn: async ({ signal }) => {
-    const { data } = await axiosInstance.get<Summary>('/admin/DelegateHome/summary', {
-      signal,
-    })
-    return data
-  },
-})
-
-function fmt(available: boolean, value: number | null | undefined) {
-  if (!available) return 'غير متاح'
-  if (value == null) return '—'
-  return String(value)
+interface Tile {
+  key: string
+  label: string
+  value: number | null | undefined
+  available: boolean
+  chip: string
+  tone: 'info' | 'warn' | 'danger'
+  tabId: string
+  query?: Record<string, string>
 }
 
-function go(path: string, query?: Record<string, string>) {
-  router.push({ path, query })
+const tiles = computed<Tile[]>(() => {
+  const d = data.value
+  return [
+    { key: 'complaints', label: 'رسائل وشكاوى غير مقروءة', value: d?.unreadComplaints, available: d?.unreadComplaintsAvailable === true, chip: 'جديدة', tone: 'info', tabId: 'complaints' },
+    { key: 'exceptions', label: 'طلبات استثناء قيد الانتظار', value: d?.pendingExceptions, available: d?.pendingExceptionsAvailable === true, chip: 'تحتاج قرارك', tone: 'warn', tabId: 'exceptions' },
+    { key: 'wrong', label: 'مبيعات خاطئة غير مقروءة', value: d?.unreadWrongSales, available: d?.unreadWrongSalesAvailable === true, chip: 'اطلاع', tone: 'danger', tabId: 'wrongSalesDelegate', query: { mailbox: 'unread' } },
+    { key: 'waivers', label: 'طلبات تنازل قيد الانتظار', value: d?.pendingWaivers, available: d?.waiversAvailable === true, chip: 'تحتاج قرارك', tone: 'warn', tabId: 'delegateWaivers' },
+  ]
+})
+
+const exceptionSummary = computed(() => {
+  const d = data.value
+  if (!d?.exceptionsSummaryAvailable) return null
+  return [
+    { label: 'موافق عليه', value: d.approvedExceptions, tone: 'good' },
+    { label: 'مرفوض', value: d.rejectedExceptions, tone: 'bad' },
+    { label: 'ملغى', value: d.cancelledExceptions, tone: 'muted' },
+    { label: 'الإجمالي', value: d.totalExceptions, tone: '' },
+  ]
+})
+
+const waiverSummary = computed(() => {
+  const d = data.value
+  if (!d?.waiversAvailable) return null
+  return [
+    { label: 'بانتظار المحاسب', value: d.awaitingAccountantWaivers, tone: 'warn' },
+    { label: 'مطبّق', value: d.approvedWaivers, tone: 'good' },
+    { label: 'مرفوض', value: d.rejectedWaivers, tone: 'bad' },
+    { label: 'الإجمالي', value: d.totalWaivers, tone: '' },
+  ]
+})
+
+function open(tile: Tile) {
+  if (!tile.available) return
+  const tab = getTabByIds('delegate', tile.tabId)
+  if (!tab) return
+  if (!canOpenTab(tab)) {
+    void router.push({ name: 'AccessDeniedRoute', query: { from: tab.routeName } })
+    return
+  }
+  const query: Record<string, string> = { ...(tile.query ?? {}) }
+  if (branchId.value != null) query.branchId = String(branchId.value)
+  void router.push({ name: tab.routeName, query })
+}
+
+function num(v: number | null | undefined) {
+  return v == null ? '—' : v.toLocaleString('en-US')
 }
 </script>
 
 <template>
-  <div
-    class="dh-page"
-    dir="rtl"
-  >
-    <header>
-      <h1 class="dh-title">الرئيسية</h1>
-      <p class="dh-sub">
-        مؤشرات ضمن نطاق حسابك وصلاحياتك — ليست لوحة عامة.
-      </p>
+  <div class="dh-page" dir="rtl">
+    <header class="dh-head">
+      <h2 class="dfb-title">الرئيسية</h2>
+      <p class="dfb-subtitle">ما يحتاج انتباهك. اضغط على أي بطاقة لفتح قسمها.</p>
     </header>
 
-    <div
-      v-if="!canRead"
-      class="dh-state"
-      role="alert"
-    >
-      ليس لديك صلاحية قراءة رئيسية المفوض.
-    </div>
+    <p v-if="!canRead" class="dfb-error" role="alert">ليس لديك صلاحية قراءة رئيسية المفوض.</p>
     <template v-else>
-      <AppButton
-        v-if="summaryQuery.isError.value"
-        variant="secondary"
-        @click="summaryQuery.refetch()"
-      >
-        إعادة المحاولة
-      </AppButton>
-      <p
-        v-if="summaryQuery.isError.value"
-        class="dh-err"
-        role="alert"
-      >
-        تعذر تحميل الملخص — لم نعرض أصفارًا بديلة.
-      </p>
-      <div
-        v-else-if="summaryQuery.isPending.value"
-        class="dh-state"
-      >
-        جاري التحميل…
+      <div v-if="summaryQuery.isError.value" class="dfb-error" role="alert">
+        تعذر تحميل الملخص.
+        <button type="button" class="dfb-button is-small" @click="summaryQuery.refetch()">إعادة المحاولة</button>
       </div>
-      <div
-        v-else
-        class="dh-grid"
-      >
-        <button
-          type="button"
-          class="dh-card"
-          :disabled="!canComplaints"
-          @click="canComplaints && go('/management/delegate/complaints')"
-        >
-          <span>رسائل وشكاوى غير مقروءة</span>
-          <strong>{{
-            fmt(
-              summaryQuery.data.value?.unreadComplaintsAvailable === true,
-              summaryQuery.data.value?.unreadComplaints
-            )
-          }}</strong>
-        </button>
-        <button
-          type="button"
-          class="dh-card"
-          :disabled="!canExceptions"
-          @click="canExceptions && go('/management/delegate/exceptions')"
-        >
-          <span>طلبات استثناء قيد الانتظار</span>
-          <strong>{{
-            fmt(
-              summaryQuery.data.value?.pendingExceptionsAvailable === true,
-              summaryQuery.data.value?.pendingExceptions
-            )
-          }}</strong>
-        </button>
-        <button
-          type="button"
-          class="dh-card"
-          :disabled="!canWrong"
-          @click="
-            canWrong &&
-              go('/management/delegate/wrong-sales', { mailbox: 'unread' })
-          "
-        >
-          <span>مبيعات خاطئة غير مقروءة</span>
-          <strong>{{
-            fmt(
-              summaryQuery.data.value?.unreadWrongSalesAvailable === true,
-              summaryQuery.data.value?.unreadWrongSales
-            )
-          }}</strong>
-        </button>
-      </div>
-      <section
-        v-if="summaryQuery.data.value?.exceptionsSummaryAvailable"
-        class="dh-section"
-      >
-        <h2>ملخص طلبات الاستثناء</h2>
-        <p>موافق: {{ summaryQuery.data.value?.approvedExceptions ?? '—' }}</p>
-        <p>مرفوض: {{ summaryQuery.data.value?.rejectedExceptions ?? '—' }}</p>
-        <p>ملغى: {{ summaryQuery.data.value?.cancelledExceptions ?? '—' }}</p>
-        <p>الإجمالي: {{ summaryQuery.data.value?.totalExceptions ?? '—' }}</p>
-      </section>
-      <p
-        v-else-if="summaryQuery.data.value && !summaryQuery.isError.value"
-        class="dh-meta"
-      >
-        ملخص الاستثناءات غير متاح لصلاحياتك أو نطاقك.
-      </p>
+      <p v-else-if="summaryQuery.isPending.value" class="dfb-state" role="status">جاري التحميل…</p>
+      <template v-else>
+        <div class="dh-tiles">
+          <button
+            v-for="t in tiles"
+            :key="t.key"
+            type="button"
+            class="dh-tile"
+            :disabled="!t.available"
+            @click="open(t)"
+          >
+            <span class="dh-chip" :class="`is-${t.tone}`">{{ t.available ? t.chip : 'غير متاح' }}</span>
+            <strong class="dh-value">{{ t.available ? num(t.value) : '—' }}</strong>
+            <span class="dh-label">{{ t.label }}</span>
+          </button>
+        </div>
+
+        <div class="dh-summaries">
+          <section v-if="exceptionSummary" class="dh-summary" aria-label="ملخص طلبات الاستثناء">
+            <h3>ملخص طلبات الاستثناء</h3>
+            <div class="dh-cells">
+              <div v-for="c in exceptionSummary" :key="c.label" class="dh-cell">
+                <strong :class="`is-${c.tone}`">{{ num(c.value) }}</strong>
+                <span>{{ c.label }}</span>
+              </div>
+            </div>
+          </section>
+          <section v-if="waiverSummary" class="dh-summary" aria-label="ملخص طلبات التنازل">
+            <h3>ملخص طلبات التنازل</h3>
+            <div class="dh-cells">
+              <div v-for="c in waiverSummary" :key="c.label" class="dh-cell">
+                <strong :class="`is-${c.tone}`">{{ num(c.value) }}</strong>
+                <span>{{ c.label }}</span>
+              </div>
+            </div>
+          </section>
+        </div>
+        <p class="dfb-subtitle">الأرقام ضمن المحافظة المختارة في الأعلى ونطاق حسابك.</p>
+      </template>
     </template>
   </div>
 </template>
 
 <style scoped>
-.dh-page {
-  max-width: 960px;
-  margin: 0 auto;
-  padding: 1rem 1.25rem 2rem;
-  font-family: inherit;
-  color: #00201e;
+.dh-page { display: flex; flex-direction: column; gap: 18px; color: var(--dfb-ink, #00201e); }
+.dh-head { display: flex; flex-direction: column; gap: 2px; }
+.dh-tiles { display: grid; gap: 18px; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); }
+.dh-tile {
+  align-items: flex-start; background: var(--dfb-raised, #f6f9f8); border: 0; border-radius: 20px;
+  box-shadow: var(--dfb-up); color: inherit; cursor: pointer; display: flex; flex-direction: column;
+  font: inherit; gap: 8px; padding: 18px 20px; text-align: start; transition: box-shadow .18s ease;
 }
-.dh-title {
-  margin: 0;
-  color: #006a64;
-  font-size: 1.35rem;
-}
-.dh-sub {
-  margin: 0.35rem 0 1rem;
-  font-size: 0.9rem;
-}
-.dh-grid {
-  display: grid;
-  gap: 0.75rem;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-}
-.dh-card {
-  background: #f8f8f8;
-  border: 0;
-  border-radius: 10px;
-  padding: 1rem;
-  text-align: right;
-  cursor: pointer;
-  font: inherit;
-  color: inherit;
-  display: grid;
-  gap: 0.5rem;
-}
-.dh-card:disabled {
-  opacity: 0.55;
-  cursor: not-allowed;
-}
-.dh-card strong {
-  font-size: 1.6rem;
-  color: #006a64;
-}
-.dh-section {
-  margin-top: 1.25rem;
-  background: #f8f8f8;
-  border-radius: 8px;
-  padding: 1rem;
-}
-.dh-state,
-.dh-err {
-  padding: 1rem;
-  background: #f8f8f8;
-  border-radius: 8px;
-}
-.dh-err {
-  color: #8b1a1a;
-}
-.dh-btn {
-  background: #006a64;
-  color: #fff;
-  border: 0;
-  padding: 0.45rem 0.9rem;
-  border-radius: 6px;
-  margin-bottom: 0.75rem;
-  cursor: pointer;
-}
-.dh-meta {
-  margin-top: 1rem;
-  font-size: 0.9rem;
-  opacity: 0.85;
+.dh-tile:hover:not(:disabled) { box-shadow: var(--dfb-up-hover); }
+.dh-tile:active:not(:disabled) { box-shadow: var(--dfb-down); }
+.dh-tile:focus-visible { outline: 3px solid #71b4a9; outline-offset: 3px; }
+.dh-tile:disabled { cursor: default; opacity: .7; }
+.dh-chip { border-radius: 999px; font-size: 12px; font-weight: 600; padding: 2px 10px; }
+.dh-chip.is-info { background: var(--dfb-primary-soft); color: var(--dfb-primary); }
+.dh-chip.is-warn { background: var(--dfb-warn-soft); color: var(--dfb-tier-weak); }
+.dh-chip.is-danger { background: var(--dfb-danger-soft); color: var(--dfb-tier-bad); }
+.dh-value { font-size: 38px; font-variant-numeric: tabular-nums; line-height: 1.2; }
+.dh-label { color: var(--dfb-muted); font-size: 15px; }
+.dh-summaries { display: grid; gap: 18px; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); }
+.dh-summary { background: var(--dfb-well); border-radius: 20px; box-shadow: var(--dfb-down); display: flex; flex-direction: column; gap: 12px; padding: 18px 20px; }
+.dh-summary h3 { font-size: 17px; margin: 0; }
+.dh-cells { display: grid; gap: 10px; grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.dh-cell { background: var(--dfb-raised); border-radius: 14px; display: flex; flex-direction: column; gap: 2px; padding: 10px 12px; }
+.dh-cell strong { font-size: 22px; font-variant-numeric: tabular-nums; }
+.dh-cell span { color: var(--dfb-muted); font-size: 13px; }
+.is-good { color: var(--dfb-tier-excellent); }
+.is-bad { color: var(--dfb-tier-bad); }
+.is-warn { color: var(--dfb-tier-weak); }
+.is-muted { color: var(--dfb-muted); }
+@media (max-width: 600px) {
+  .dh-tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+  .dh-tile { padding: 14px; }
+  .dh-value { font-size: 30px; }
+  .dh-summaries { grid-template-columns: minmax(0, 1fr); }
+  .dh-cells { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 </style>

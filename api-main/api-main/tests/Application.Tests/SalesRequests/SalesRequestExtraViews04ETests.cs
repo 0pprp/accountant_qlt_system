@@ -339,7 +339,7 @@ public class SalesRequestExtraViews04ETests
     public void Legal_view_is_implemented_and_has_tab_permission()
     {
         Assert.False(SalesRequestTabMap.IsExtraNotImplemented("legal"));
-        Assert.True(SalesRequestTabMap.IsExtraImplemented("legal"));
+        Assert.Contains("legal", SalesRequestTabMap.WorkflowTabs);
         Assert.Equal(
             SeedPermissions.SalesRequest.TabLegal,
             SalesRequestTabPermissions.PermissionForTab("legal"));
@@ -372,24 +372,40 @@ public class SalesRequestExtraViews04ETests
             null, null, SalesRequestSourceType.Manual));
 
         var sentOnly = User(1, SeedPermissions.SalesRequest.TabSent);
-        Assert.True(SalesRequestAdminQuery.CanReadRow(
-            sentOnly, false, SalesRequestStatus.Completed, 7,
-            null, null, SalesRequestSourceType.Delegate));
         Assert.False(SalesRequestAdminQuery.CanReadRow(
             sentOnly, false, SalesRequestStatus.Completed, 7,
-            null, null, SalesRequestSourceType.Manual));
+            null, null, SalesRequestSourceType.Delegate));
+
+        var assignedHeld = User(1, SeedPermissions.SalesRequest.TabExceptions);
+        Assert.True(SalesRequestAdminQuery.CanReadRow(
+            assignedHeld, false, SalesRequestStatus.Assigned, 7,
+            SalesRequestExceptionHoldStatus.Pending, null, SalesRequestSourceType.Manual));
     }
 
     [Fact]
-    public void Extra_views_do_not_feed_the_all_tab_or_workflow_union()
+    public void Deleted_view_does_not_feed_the_all_tab_and_sent_is_gone()
     {
         var all = User(1, SeedPermissions.SalesRequest.TabSent, SeedPermissions.SalesRequest.TabDeleted);
 
         Assert.Empty(SalesRequestTabPermissions.AllowedWorkflowTabs(all));
-        Assert.Equal(["sent", "deleted"], SalesRequestTabPermissions.AllowedExtraViews(all));
+        Assert.Equal(["deleted"], SalesRequestTabPermissions.AllowedExtraViews(all));
         Assert.True(SalesRequestTabPermissions.HasAnyReadableView(all));
         Assert.DoesNotContain("sent", SalesRequestTabMap.WorkflowTabs);
     }
+
+    [Theory]
+    [InlineData(SalesRequestStatus.New, null, null, "unassigned")]
+    [InlineData(SalesRequestStatus.Pending, null, null, "unassigned")]
+    [InlineData(SalesRequestStatus.Assigned, 7, null, "incoming")]
+    [InlineData(SalesRequestStatus.Assigned, 7, SalesRequestExceptionHoldStatus.Pending, "exceptions")]
+    [InlineData(SalesRequestStatus.New, null, SalesRequestExceptionHoldStatus.Rejected, "exceptions")]
+    [InlineData(SalesRequestStatus.Inspected, 7, null, "inspected")]
+    [InlineData(SalesRequestStatus.Rejected, 7, SalesRequestExceptionHoldStatus.Pending, "rejected")]
+    [InlineData(SalesRequestStatus.LegalFollowup, null, null, "legal")]
+    [InlineData(SalesRequestStatus.Completed, 7, null, "sold")]
+    public void Every_request_lands_in_exactly_one_tab(
+        SalesRequestStatus status, int? target, SalesRequestExceptionHoldStatus? hold, string expected)
+        => Assert.Equal(expected, SalesRequestAdminQuery.TabKeyFor(status, target, hold, null));
 
     [Fact]
     public async Task Handlers_approve_by_different_user_then_assign_consumes_hold_once()
@@ -437,15 +453,15 @@ public class SalesRequestExtraViews04ETests
     }
 
     [Fact]
-    public async Task Handlers_reject_exception_blocks_assign_and_requires_reason()
+    public async Task Handlers_reject_exception_blocks_assign_and_limits_note_length()
     {
         await using var db = CreateDb();
         var requestId = await SeedHeldRequestAsync(db, requesterUserId: 5);
         var decider = Admin(6, SeedPermissions.SalesRequest.ExceptionDecide);
 
-        var noReason = await new RejectSalesRequestExceptionHandler(db, decider, new ClockStub())
-            .Handle(new RejectSalesRequestExceptionCommand { RequestId = requestId, Reason = " " }, default);
-        Assert.Equal(SalesRequestErrors.NoteRequired.Code, noReason.Error!.Value.Code);
+        var tooLong = await new RejectSalesRequestExceptionHandler(db, decider, new ClockStub())
+            .Handle(new RejectSalesRequestExceptionCommand { RequestId = requestId, Reason = new string('x', 501) }, default);
+        Assert.Equal(SalesRequestErrors.DecisionNoteTooLong.Code, tooLong.Error!.Value.Code);
 
         var rejected = await new RejectSalesRequestExceptionHandler(db, decider, new ClockStub())
             .Handle(new RejectSalesRequestExceptionCommand { RequestId = requestId, Reason = "غير مبرر" }, default);

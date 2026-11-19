@@ -76,5 +76,5 @@ export function getImplementedSections(): FollowerSectionDef[] {
   return FOLLOWER_WORK_SECTIONS.filter((s) => s.status === 'ready')
 }
 
-export const FOLLOWER_WORK_CANONICAL_PATH = '/management/follower-work'
-export const FOLLOWER_WORK_ROUTE_NAME = 'ManagementFollowerWorkRoute'
+export const FOLLOWER_WORK_CANONICAL_PATH = '/follower-work'
+export const FOLLOWER_WORK_ROUTE_NAME = 'FollowerWorkBoardRoute'

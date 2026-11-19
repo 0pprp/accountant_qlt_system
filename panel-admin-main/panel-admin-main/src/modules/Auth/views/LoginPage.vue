@@ -126,6 +126,7 @@ import LoginForm from '../components/LoginForm/LoginForm.vue'
 import type { AuthLoginForm } from '../types/model'
 import { useAuthLoginMutation } from '@/modules/Auth/requests/mutations'
 import { useAuthStore } from '@/modules/Auth/store'
+import { resolveLandingRouteName } from '@/modules/Core/navigation/landingRoute'
 import { AppButton } from '@/modules/Core/components/ui'
 
 const router = useRouter()
@@ -154,7 +155,7 @@ onUnmounted(() => {
 async function onSubmit(values: AuthLoginForm) {
   const { data } = await mutateAsync(values)
   authStore.replaceSession(data)
-  router.push({ name: 'HomeMainRoute' })
+  router.push({ name: resolveLandingRouteName(authStore.hasPermission) })
 }
 </script>
 

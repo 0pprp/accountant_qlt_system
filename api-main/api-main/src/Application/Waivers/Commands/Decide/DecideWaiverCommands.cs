@@ -1,4 +1,4 @@
-using Application.Common.Interfaces;
+﻿using Application.Common.Interfaces;
 using Application.SalesRequests.Common;
 using Application.Waivers.Common;
 using Domain.Entities.CustomerDecisionAggregate;
@@ -40,11 +40,7 @@ file static class WaiverDecideSupport
         if (entity is null)
             return WaiverErrors.NotFound;
 
-        var branchIds = current.BranchIds ?? [];
-        if (branchIds.Count > 0
-            && current.HasPermission(SeedPermissions.Waiver.Apply) == false
-            && current.HasPermission(SeedPermissions.Waiver.Decide) == false
-            && branchIds.Contains(entity.BranchId) == false)
+        if (WaiverScope.InScope(current, entity.BranchId) == false)
             return WaiverErrors.BranchDenied;
 
         var customer = await db.Customers.AsNoTracking()
@@ -66,7 +62,7 @@ file static class WaiverDecideSupport
             sell = await db.Orders.AsNoTracking().Where(o => o.CustomerId == entity.CustomerId).SumAsync(o => (double?)o.SellAmount, ct) ?? 0;
             paid = orderIds.Count == 0
                 ? 0
-                : await db.InstallmentPayments.AsNoTracking().Where(p => orderIds.Contains(p.OrderId)).SumAsync(p => (double?)p.Amount, ct) ?? 0;
+                : await db.InstallmentPayments.AsNoTracking().Where(p => p.OrderId != null && orderIds.Contains(p.OrderId.Value)).SumAsync(p => (double?)p.Amount, ct) ?? 0;
         }
 
         return (entity, customer?.FullName ?? $"#{entity.CustomerId}", customer?.PhoneNumber, branchName, sell, paid);
@@ -92,6 +88,9 @@ public sealed class RejectWaiverHandler : IRequestHandler<RejectWaiverCommand, R
             return WaiverErrors.Forbidden;
         if (_current.UserId is not int actorId)
             return WaiverErrors.Forbidden;
+        var note = WaiverScope.NormalizeNote(request.Note);
+        if (note is { Length: > WaiverScope.DecisionNoteMaxLength })
+            return WaiverErrors.DecisionNoteTooLong;
 
         var loaded = await WaiverDecideSupport.LoadAsync(_db, _current, request.Id, ct);
         if (loaded.IsFailed)
@@ -102,7 +101,7 @@ public sealed class RejectWaiverHandler : IRequestHandler<RejectWaiverCommand, R
             .Where(u => u.Id == actorId).Select(u => u.FullName).FirstOrDefaultAsync(ct);
         try
         {
-            entity.Reject(actorId, actorName, request.Note, request.ExpectedVersion, _clock.UtcNowOffset);
+            entity.Reject(actorId, actorName, note, request.ExpectedVersion, _clock.UtcNowOffset);
         }
         catch (InvalidOperationException ex) when (ex.Message.Contains("صاحب الطلب"))
         {
@@ -145,8 +144,11 @@ public sealed class ApproveWaiverByDelegateHandler
             return WaiverErrors.Forbidden;
         if (_current.UserId is not int actorId)
             return WaiverErrors.Forbidden;
-        if (request.ApprovedAmount <= 0)
+        if (double.IsFinite(request.ApprovedAmount) == false || request.ApprovedAmount <= 0)
             return WaiverErrors.AmountRequired;
+        var note = WaiverScope.NormalizeNote(request.Note);
+        if (note is { Length: > WaiverScope.DecisionNoteMaxLength })
+            return WaiverErrors.DecisionNoteTooLong;
 
         var loaded = await WaiverDecideSupport.LoadAsync(_db, _current, request.Id, ct);
         if (loaded.IsFailed)
@@ -160,7 +162,7 @@ public sealed class ApproveWaiverByDelegateHandler
         await using var tx = await _db.Database.BeginTransactionAsync(ct);
         try
         {
-            entity.ApproveByDelegate(actorId, actorName, request.ApprovedAmount, request.Note, request.ExpectedVersion, at);
+            entity.ApproveByDelegate(actorId, actorName, request.ApprovedAmount, note, request.ExpectedVersion, at);
         }
         catch (InvalidOperationException ex) when (ex.Message.Contains("صاحب الطلب"))
         {
@@ -178,7 +180,7 @@ public sealed class ApproveWaiverByDelegateHandler
         _db.CustomerDecisions.Add(new CustomerDecision(
             entity.CustomerId, entity.BranchId, actorId, actorName,
             CustomerDecisionType.WaiverRequest,
-            $"موافقة مفوض بمبلغ {request.ApprovedAmount:0.##}. {request.Note}".Trim(),
+            $"موافقة مفوض بمبلغ {request.ApprovedAmount:0.##}. {note}".Trim(),
             null, sell, null, null, entity.Id, null, at));
         var saved = await WaiverConcurrency.SaveWithConflictGuardAsync(
             ct2 => _db.SaveChangesAsync(ct2), ct);
@@ -259,7 +261,7 @@ public sealed class ApplyWaiverByAccountantHandler
             {
                 var order = await _db.Orders.FirstOrDefaultAsync(o => o.Id == oid, ct);
                 if (order is not null)
-                    order.SellAmount = Math.Max(0, order.SellAmount - capped);
+                    order.ApplyWaiverDiscount(capped);
             }
             else
             {
@@ -269,7 +271,7 @@ public sealed class ApplyWaiverByAccountantHandler
                     .OrderByDescending(o => o.Id)
                     .FirstOrDefaultAsync(ct);
                 if (order is not null)
-                    order.SellAmount = Math.Max(0, order.SellAmount - capped);
+                    order.ApplyWaiverDiscount(capped);
             }
 
             _db.CustomerDecisions.Add(new CustomerDecision(

@@ -208,6 +208,7 @@ public class FollowerCollectionDataService
         int listId,
         bool enabled,
         int? expectedVersion,
+        int? expectedFollowerId,
         IReadOnlyList<int> authorizedBranches,
         int _actorUserId,
         CancellationToken ct)
@@ -221,6 +222,9 @@ public class FollowerCollectionDataService
 
         if (authorizedBranches.Contains(list.BranchId) == false)
             return FollowerWorkErrors.CollectionListOutOfScope;
+
+        if (expectedFollowerId is int followerId && list.MotabaId != followerId)
+            return FollowerWorkErrors.CollectionListNotFollowers;
 
         // القائمة ضمن تكليف متابع في فرع مسموح — لا نقبل followerId من العميل
         var hasAssignment = await _db.OrderLists.AsNoTracking()

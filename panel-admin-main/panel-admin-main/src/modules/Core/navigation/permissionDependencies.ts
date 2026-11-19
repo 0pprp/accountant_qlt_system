@@ -17,6 +17,11 @@ export const PERMISSION_DEPENDENCIES: readonly PermissionDependency[] = [
     noteAr: 'تقييم عامل اللوحة يتطلب قراءة متابعة المندوبين لفتح التبويب؛ لا يُمنح Read تلقائيًا.',
   },
   {
+    action: { module: 'DelegateFollowup', action: 'UpsertAccountantRating' },
+    requires: [{ module: 'DelegateFollowup', action: 'Read' }],
+    noteAr: 'تقييم المحاسب الرئيسي للقائمة يتطلب قراءة متابعة المندوبين؛ لا يُمنح Read تلقائيًا.',
+  },
+  {
     action: { module: 'SalesFollowup', action: 'UpsertManagerRating' },
     requires: [{ module: 'SalesFollowup', action: 'Read' }],
     noteAr: 'تقييم المدير يتطلب قراءة متابعة المبيعات؛ لا يُمنح Read تلقائيًا.',

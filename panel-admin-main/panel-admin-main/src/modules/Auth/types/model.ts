@@ -41,6 +41,13 @@ export type PermissionAction =
   | 'TabSold'
   | 'TimelineRead'
   | 'TabSent'
+  | 'ReturnRequest'
+  | 'ManagerPrepare'
+  | 'ManagerPend'
+  | 'CancelToUnassigned'
+  | 'TransferBranch'
+  | 'DeleteSoldSale'
+  | 'DeletedSalesRead'
   | 'TabExceptions'
   | 'TabDeleted'
   | 'TabLegal'
@@ -56,6 +63,7 @@ export type PermissionAction =
   | 'Transfer'
   | 'ReadAttachment'
   | 'UpsertBoardRating'
+  | 'UpsertAccountantRating'
   | 'Drilldown'
   | 'DetailsRead'
   | 'Authenticate'
@@ -65,6 +73,7 @@ export type PermissionAction =
   | 'FieldUpload'
   | 'FieldComplete'
   | 'ManageEnabled'
+  | 'ManageFollowers'
   | 'ManageAssignment'
   | 'Decide'
   | 'Apply'
@@ -142,6 +151,7 @@ export type PermissionModule =
   | 'BranchManagerAccount'
   | 'DelegateHome'
   | 'PanelTab'
+  | 'Archive'
   | FollowerWorkPermissionModule
 
 export interface ModulePermissions {
@@ -183,6 +193,7 @@ export interface ModulePermissions {
   Transfer?: boolean
   ReadAttachment?: boolean
   UpsertBoardRating?: boolean
+  UpsertAccountantRating?: boolean
   Drilldown?: boolean
   DetailsRead?: boolean
   Authenticate?: boolean
@@ -192,6 +203,7 @@ export interface ModulePermissions {
   FieldUpload?: boolean
   FieldComplete?: boolean
   ManageEnabled?: boolean
+  ManageFollowers?: boolean
   ManageAssignment?: boolean
   Decide?: boolean
   Apply?: boolean

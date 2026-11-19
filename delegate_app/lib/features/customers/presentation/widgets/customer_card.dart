@@ -1,15 +1,13 @@
-import 'dart:typed_data';
-
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
 import '../../../../core/widgets/brand_wave_painter.dart';
+import '../../../../injection.dart';
 import '../../../payments/presentation/collect_payment_sheet.dart';
 import '../../../payments/presentation/payment_success_feedback.dart';
 import '../../../receipts/data/receipt_build_helper.dart';
-import '../../../receipts/presentation/receipt_preview_page.dart';
 import '../../domain/entities/customer.dart';
 import '../customer_detail_page.dart';
 
@@ -28,7 +26,6 @@ class CustomerCard extends StatefulWidget {
 }
 
 class _CustomerCardState extends State<CustomerCard> {
-  Uint8List? _receiptBytes;
   bool _printing = false;
 
   Customer get c => widget.customer;
@@ -47,17 +44,6 @@ class _CustomerCardState extends State<CustomerCard> {
     return '${local.year}-${local.month.toString().padLeft(2, '0')}-${local.day.toString().padLeft(2, '0')}';
   }
 
-  Future<void> _openReceipt(Uint8List bytes) async {
-    await Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (_) => ReceiptPreviewPage(
-          bytes: bytes,
-          title: receiptPreviewTitle(c.name),
-        ),
-      ),
-    );
-  }
-
   Future<void> _openDetails() async {
     await Navigator.of(context).push(
       MaterialPageRoute(builder: (_) => CustomerDetailPage(customer: c)),
@@ -73,13 +59,11 @@ class _CustomerCardState extends State<CustomerCard> {
     if (!mounted) return;
 
     try {
-      final bytes = await buildCustomerReceiptPdf(
+      await openCustomerReceiptPdf(
+        context: context,
         customer: c,
         amountPaid: result.amount,
       );
-      if (!mounted) return;
-      setState(() => _receiptBytes = bytes);
-      await _openReceipt(bytes);
     } catch (_) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -90,11 +74,30 @@ class _CustomerCardState extends State<CustomerCard> {
   }
 
   Future<void> _print() async {
-    final bytes = _receiptBytes;
-    if (bytes == null || _printing) return;
+    if (_printing) return;
     setState(() => _printing = true);
     try {
-      await _openReceipt(bytes);
+      final paid =
+          await Injection.paymentsRepository.todayPaidForCustomer(c.customerId);
+      if (!mounted) return;
+      if (paid == null || !paid.hasValidUuid || paid.amount <= 0) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('طباعة الوصل فقط بعد التسديد — لا يوجد UUID لتسديدة اليوم'),
+          ),
+        );
+        return;
+      }
+      await openCustomerReceiptPdf(
+        context: context,
+        customer: c,
+        amountPaid: paid.amount,
+      );
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('تعذر تجهيز ملف الوصل')),
+      );
     } finally {
       if (mounted) setState(() => _printing = false);
     }
@@ -103,7 +106,6 @@ class _CustomerCardState extends State<CustomerCard> {
   @override
   Widget build(BuildContext context) {
     final paid = c.receiptTotal;
-    final canPrint = _receiptBytes != null;
 
     return Material(
       color: Colors.transparent,
@@ -179,20 +181,18 @@ class _CustomerCardState extends State<CustomerCard> {
                           const SizedBox(width: 10),
                           Expanded(
                             child: OutlinedButton.icon(
-                              onPressed: canPrint && !_printing ? _print : null,
+                              onPressed: _printing ? null : _print,
                               icon: Icon(
-                                Icons.print_outlined,
+                                _printing
+                                    ? Icons.hourglass_top_rounded
+                                    : Icons.print_outlined,
                                 size: 18,
-                                color: canPrint
-                                    ? AppColors.primary
-                                    : AppColors.muted,
+                                color: AppColors.primary,
                               ),
                               label: Text(
-                                'طباعة',
+                                'طباعة الوصل',
                                 style: AppTextStyles.body.copyWith(
-                                  color: canPrint
-                                      ? AppColors.primary
-                                      : AppColors.muted,
+                                  color: AppColors.primary,
                                   fontWeight: FontWeight.w600,
                                 ),
                               ),
@@ -200,11 +200,7 @@ class _CustomerCardState extends State<CustomerCard> {
                                 minimumSize: const Size.fromHeight(42),
                                 padding:
                                     const EdgeInsets.symmetric(horizontal: 8),
-                                side: BorderSide(
-                                  color: canPrint
-                                      ? AppColors.primary
-                                      : AppColors.border,
-                                ),
+                                side: const BorderSide(color: AppColors.primary),
                               ),
                             ),
                           ),

@@ -199,9 +199,11 @@ public class FollowerWorkDataService
         }
 
         List<RatingCustomerFact> facts;
+        List<RatingCustomerFact> weekFacts;
         try
         {
-            facts = await MaterializeFactsForListsAsync(allListIds, ct);
+            facts = await FollowerFactsQuery.LoadAsync(_db, allListIds, null, null, ct);
+            weekFacts = await FollowerFactsQuery.LoadAsync(_db, allListIds, weekAgo, null, ct);
         }
         catch
         {
@@ -214,29 +216,30 @@ public class FollowerWorkDataService
             .Where(f => f.OrderListId is > 0)
             .GroupBy(f => f.OrderListId!.Value)
             .ToDictionary(g => g.Key, g => g.ToList());
+        var weekFactsByList = weekFacts
+            .Where(f => f.OrderListId is > 0)
+            .GroupBy(f => f.OrderListId!.Value)
+            .ToDictionary(g => g.Key, g => g.ToList());
 
         foreach (var f in followers)
         {
             try
             {
-                var listScores = new List<double>(f.ListIds.Count);
-                var weekScores = new List<double>(f.ListIds.Count);
-                var ratedToday = 0;
-                var ratedWeek = 0;
+                var todayAggs = new List<RatingAggregateResult>(f.ListIds.Count);
+                var weekAggs = new List<RatingAggregateResult>(f.ListIds.Count);
 
                 foreach (var listId in f.ListIds)
                 {
                     factsByList.TryGetValue(listId, out var listFacts);
-                    listFacts ??= [];
-
-                    var todayAgg = ActiveRatingCohort.Aggregate(listFacts, asOf, usePhantomSaleDate: true);
-                    listScores.Add(todayAgg.AverageScore);
-                    ratedToday += todayAgg.CustomerCount;
-
-                    var weekAgg = ActiveRatingCohort.Aggregate(listFacts, weekAgo, usePhantomSaleDate: true);
-                    weekScores.Add(weekAgg.AverageScore);
-                    ratedWeek += weekAgg.CustomerCount;
+                    weekFactsByList.TryGetValue(listId, out var listWeekFacts);
+                    todayAggs.Add(ActiveRatingCohort.Aggregate(listFacts ?? [], asOf, usePhantomSaleDate: true));
+                    weekAggs.Add(ActiveRatingCohort.Aggregate(listWeekFacts ?? [], weekAgo, usePhantomSaleDate: true));
                 }
+
+                var listScores = FollowerFactsQuery.NonEmptyListAverages(todayAggs);
+                var weekScores = FollowerFactsQuery.NonEmptyListAverages(weekAggs);
+                var ratedToday = todayAggs.Sum(a => a.CustomerCount);
+                var ratedWeek = weekAggs.Sum(a => a.CustomerCount);
 
                 if (listScores.Count == 0)
                 {
@@ -245,11 +248,11 @@ public class FollowerWorkDataService
                 }
 
                 var avg = listScores.Average();
-                var weekAvg = weekScores.Average();
+                double? weekAvg = weekScores.Count == 0 ? null : weekScores.Average();
                 result[f.FollowerId] = new CardMetricScratch(
                     Math.Round(avg, 2, MidpointRounding.AwayFromZero),
                     RatingAggregator.ClassifyAverageLabel(avg),
-                    Math.Round(weekAvg, 2, MidpointRounding.AwayFromZero),
+                    weekAvg is null ? null : Math.Round(weekAvg.Value, 2, MidpointRounding.AwayFromZero),
                     FollowerWorkRules.ComputeScoreTrend(avg, weekAvg),
                     ratedToday,
                     ratedWeek,
@@ -264,58 +267,6 @@ public class FollowerWorkDataService
         }
 
         return result;
-    }
-
-    private async Task<List<RatingCustomerFact>> MaterializeFactsForListsAsync(
-        IReadOnlyList<int> listIds,
-        CancellationToken ct)
-    {
-        var rows = await _db.Orders.AsNoTracking()
-            .Where(o => o.ApprovalStatus == OrderApprovalStatus.Approved
-                        && o.OrderListId != null
-                        && listIds.Contains(o.OrderListId.Value))
-            .Select(o => new
-            {
-                o.CustomerId,
-                o.OrderListId,
-                o.SellerId,
-                o.SellAmount,
-                o.DailyInstallmentAmount,
-                o.SaleDate,
-                o.CreatedAt,
-                Receipts = o.InstallmentPayments.Sum(ip => ip.Amount),
-                LastPaymentDate = o.InstallmentPayments.Max(ip => (DateOnly?)ip.Date),
-                IsLegal = o.Customer != null && o.Customer.IsLegal
-            })
-            .ToListAsync(ct);
-
-        return rows
-            .GroupBy(r => new { r.CustomerId, r.OrderListId })
-            .Select(g =>
-            {
-                var saleDates = g.Where(x => x.SaleDate != null).Select(x => x.SaleDate!.Value).ToList();
-                DateOnly? saleDate = saleDates.Count > 0
-                    ? saleDates.Min()
-                    : g.Where(x => x.CreatedAt != null)
-                        .Select(x => IraqCalendar.ToLocalDate(x.CreatedAt!.Value))
-                        .OrderBy(d => d)
-                        .Cast<DateOnly?>()
-                        .FirstOrDefault();
-
-                return new RatingCustomerFact
-                {
-                    CustomerId = g.Key.CustomerId,
-                    OrderListId = g.Key.OrderListId,
-                    SellerId = g.Select(x => x.SellerId).FirstOrDefault(x => x != null),
-                    AmountTotalSales = g.Sum(x => x.SellAmount),
-                    ReceiptsTotal = g.Sum(x => x.Receipts),
-                    AmountDaySales = g.Sum(x => x.DailyInstallmentAmount),
-                    SaleDate = saleDate,
-                    LastPaymentDate = g.Max(x => x.LastPaymentDate),
-                    IsLegal = g.Any(x => x.IsLegal)
-                };
-            })
-            .ToList();
     }
 
     private sealed record FollowerAgg(

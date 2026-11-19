@@ -8,6 +8,6 @@ public record GetPaginatedInstallmentPaymentsResponse
     public double Amount { get; set; }
     public DateOnly Date { get; set; }
     public DateTimeOffset LastUpdatedAt { get; set; }
-    public int OrderId { get; set; }
+    public int? OrderId { get; set; }
     public int OrderListId { get; set; }
 }

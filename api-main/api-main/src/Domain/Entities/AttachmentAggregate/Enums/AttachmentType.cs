@@ -10,5 +10,6 @@ public enum AttachmentType : byte
     TrustReceipt = 5,
     SaleContract = 6,
     ProfilePicture = 7,
-    Factor = 8
+    Factor = 8,
+    CustomerShopPhoto = 9
 }

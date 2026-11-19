@@ -15,6 +15,7 @@ public sealed class ListBranchVisitsQuery : IRequest<Result<BranchVisitListRespo
 {
     public int Page { get; init; } = 1;
     public int PageSize { get; init; } = 50;
+    public int? BranchId { get; init; }
 }
 
 public sealed class GetBranchVisitAttachmentQuery : IRequest<Result<(byte[] Bytes, string ContentType, string FileName)>>
@@ -44,6 +45,7 @@ public sealed class GetActiveBranchVisitHandler : IRequestHandler<GetActiveBranc
 
         var visit = await _db.BranchVisits.AsNoTracking()
             .Include(v => v.Ratings).Include(v => v.Members).Include(v => v.Attachments)
+            .AsSplitQuery()
             .Where(v => v.OpenedByUserId == actorId && v.Status == BranchVisitStatus.Open)
             .OrderByDescending(v => v.ArrivedAtUtc)
             .FirstOrDefaultAsync(ct);
@@ -80,7 +82,15 @@ public sealed class ListBranchVisitsHandler : IRequestHandler<ListBranchVisitsQu
 
         var q = _db.BranchVisits.AsNoTracking()
             .Include(v => v.Ratings).Include(v => v.Members).Include(v => v.Attachments)
+            .AsSplitQuery()
             .Where(v => scope.Contains(v.BranchId));
+
+        if (request.BranchId is int branchId)
+        {
+            if (scope.Contains(branchId) == false)
+                return new BranchVisitListResponse([], 0, page, pageSize);
+            q = q.Where(v => v.BranchId == branchId);
+        }
 
         var total = await q.CountAsync(ct);
         var items = await q
@@ -90,7 +100,15 @@ public sealed class ListBranchVisitsHandler : IRequestHandler<ListBranchVisitsQu
             .Take(pageSize)
             .ToListAsync(ct);
 
-        return new BranchVisitListResponse(items.Select(v => BranchVisitMapper.ToDto(v)).ToList(), total, page, pageSize);
+        var branchIds = items.Select(v => v.BranchId).Distinct().ToList();
+        var branchNames = await _db.Branches.AsNoTracking()
+            .Where(b => branchIds.Contains(b.Id))
+            .Select(b => new { b.Id, b.Name })
+            .ToDictionaryAsync(b => b.Id, b => b.Name, ct);
+
+        return new BranchVisitListResponse(
+            items.Select(v => BranchVisitMapper.ToDto(v, null, branchNames.GetValueOrDefault(v.BranchId))).ToList(),
+            total, page, pageSize);
     }
 }
 

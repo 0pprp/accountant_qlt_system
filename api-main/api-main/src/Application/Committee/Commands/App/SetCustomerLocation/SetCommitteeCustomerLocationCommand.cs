@@ -1,6 +1,7 @@
 using Application.Common.Interfaces;
 using Application.Committee.Common;
 using Application.ManagementSalesMap.Common;
+using Domain.Entities.CustomerAggregate;
 using Domain.Entities.OrderAggregate;
 using Domain.Entities.OrderAggregate.Enums;
 using Microsoft.EntityFrameworkCore;
@@ -29,8 +30,13 @@ public class SetCommitteeCustomerLocationHandler
     : IRequestHandler<SetCommitteeCustomerLocationCommand, Result<CommitteeCustomerLocationDto>>
 {
     private readonly IApplicationDbContext _db;
+    private readonly IDateTimeProvider _clock;
 
-    public SetCommitteeCustomerLocationHandler(IApplicationDbContext db) => _db = db;
+    public SetCommitteeCustomerLocationHandler(IApplicationDbContext db, IDateTimeProvider clock)
+    {
+        _db = db;
+        _clock = clock;
+    }
 
     public async Task<Result<CommitteeCustomerLocationDto>> Handle(
         SetCommitteeCustomerLocationCommand request,
@@ -56,6 +62,14 @@ public class SetCommitteeCustomerLocationHandler
             return new Error("الزبون ليس ضمن هذه القائمة", "Committee_Customer_NotOnList");
 
         customer.Business.SetGps(location.Latitude, location.Longitude);
+        _db.CustomerLocations.Add(new CustomerLocation(
+            customer.Id,
+            CustomerLocationSource.Captured,
+            location.Latitude,
+            location.Longitude,
+            null,
+            null,
+            _clock.UtcNowOffset));
 
         int? savedOrderId = null;
         var orderLocationSaved = false;

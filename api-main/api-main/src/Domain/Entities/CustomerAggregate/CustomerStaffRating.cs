@@ -14,6 +14,12 @@ public class CustomerStaffRating : Entity
     public const int MaxNoteLength = 2000;
     public const int MaxNameLength = 200;
 
+    /// <summary>الدرجة التي تحتها تصير الملاحظة إجبارية — قاعدة النظام الميداني.</summary>
+    public const int NoteRequiredBelowScore = 7;
+
+    /// <summary>الدرجة التي عندها فما دون يُعدّ المبيع خاطئاً.</summary>
+    public const int WrongSaleMaxScore = 6;
+
     private CustomerStaffRating()
     {
     }
@@ -49,6 +55,37 @@ public class CustomerStaffRating : Entity
     public DateTimeOffset RatedAtUtc { get; private set; }
     public int? OrderId { get; private set; }
 
+    /// <summary>حقول استمارة التقييم — قيمة المخزون المقدّرة وقت التقييم.</summary>
+    public double? ShopStockEstimatedValue { get; private set; }
+
+    /// <summary>الإيراد اليومي المقدّر وقت التقييم.</summary>
+    public double? EstimatedDailyRevenue { get; private set; }
+
+    /// <summary>المبلغ المرتبط بلحظة التقييم — مبلغ البيع للمندوب، وسقف البيع للمبيعات.</summary>
+    public double? ContextAmount { get; private set; }
+
+    /// <summary>اللحظة التي التُقط فيها التقييم — مصادقة أو بيع أو أول تسديد.</summary>
+    public string? Occasion { get; private set; }
+
+    /// <summary>مبيع خاطئ — الدرجة ستة فأقل، تُحوَّل في النظام الميداني إلى صندوق الاستثناءات.</summary>
+    public bool IsWrongSale => Score <= WrongSaleMaxScore;
+
+    public const string OccasionAuthentication = "Authentication";
+    public const string OccasionSale = "Sale";
+    public const string OccasionFirstCollection = "FirstCollection";
+
+    public void SetFormDetails(
+        double? shopStockEstimatedValue,
+        double? estimatedDailyRevenue,
+        double? contextAmount,
+        string? occasion)
+    {
+        ShopStockEstimatedValue = shopStockEstimatedValue;
+        EstimatedDailyRevenue = estimatedDailyRevenue;
+        ContextAmount = contextAmount;
+        Occasion = occasion;
+    }
+
     public void Apply(
         int score,
         string? note,
@@ -61,6 +98,8 @@ public class CustomerStaffRating : Entity
             throw new InvalidOperationException("التقييم يجب أن يكون من 1 إلى 10");
         if (ratedByUserId <= 0)
             throw new InvalidOperationException("RatedByUserId مطلوب");
+        if (score < NoteRequiredBelowScore && string.IsNullOrWhiteSpace(note))
+            throw new InvalidOperationException("الملاحظة إجبارية عندما يكون التقييم أقل من 7");
 
         Score = score;
         Note = NormalizeNote(note);

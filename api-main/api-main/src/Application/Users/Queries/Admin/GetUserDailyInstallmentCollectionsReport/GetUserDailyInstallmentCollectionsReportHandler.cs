@@ -72,25 +72,28 @@ public class GetUserDailyInstallmentCollectionsReportHandler : IRequestHandler<G
         return aggregated.ToDictionary(x => x.Date, x => x.Amount);
     }
 
+    /// <summary>
+    /// التسليم في النموذج الجديد = نقل خارج من خزينة الموظف. التجميع بتاريخ بغداد (UTC+3)
+    /// يُنفَّذ في الذاكرة على نافذة ضيقة حتى يبقى شرط قاعدة البيانات قابلاً للفهرسة.
+    /// </summary>
     private async Task<Dictionary<DateOnly, double>> GetDailyCashDeliveriesByDate(
         int userId, DateOnly startDate, DateOnly endDate, CancellationToken cancellationToken)
     {
-        var aggregated = await _dbContext.SellerCashDeliveryTransactions.AsNoTracking()
-            .Where(x => x.SellerId == userId
-                        && x.Date >= startDate
-                        && x.Date <= endDate
-                        && x.Transaction!.Status == TransactionStatus.Approved)
-            .GroupBy(x => x.Date)
-            .Select(x => new
-            {
-                Date = x.Key,
-                Amount = x.Sum(d => d.Transaction!.Amount)
-            })
+        var fromUtc = ToUtcWindowStart(startDate);
+        var toUtc = ToUtcWindowStart(endDate.AddDays(1));
+
+        var movements = await _dbContext.SafeMovements.AsNoTracking()
+            .Where(x => x.Safe!.UserId == userId
+                        && x.Kind == SafeMovementKind.TransferOut
+                        && x.CreatedAt != null
+                        && x.CreatedAt >= fromUtc
+                        && x.CreatedAt < toUtc)
+            .Select(x => new { x.CreatedAt, x.Amount })
             .ToListAsync(cancellationToken);
 
-        return aggregated
-            .Where(x => x.Date.HasValue)
-            .ToDictionary(x => x.Date!.Value, x => x.Amount);
+        return movements
+            .GroupBy(x => BaghdadDate(x.CreatedAt!.Value))
+            .ToDictionary(x => x.Key, x => x.Sum(m => Math.Abs(m.Amount)));
     }
 
     private async Task<double> GetBaselineUndeliveredAmount(
@@ -100,14 +103,23 @@ public class GetUserDailyInstallmentCollectionsReportHandler : IRequestHandler<G
             .Where(x => x.Order!.SellerId == userId && x.Date < beforeDate)
             .SumAsync(x => x.Amount, cancellationToken);
 
-        var totalDeliveries = await _dbContext.SellerCashDeliveryTransactions.AsNoTracking()
-            .Where(x => x.SellerId == userId
-                        && x.Date < beforeDate
-                        && x.Transaction!.Status == TransactionStatus.Approved)
-            .SumAsync(x => x.Transaction!.Amount, cancellationToken);
+        var beforeUtc = ToUtcWindowStart(beforeDate);
 
-        return totalInstallments - totalDeliveries;
+        var totalDeliveries = await _dbContext.SafeMovements.AsNoTracking()
+            .Where(x => x.Safe!.UserId == userId
+                        && x.Kind == SafeMovementKind.TransferOut
+                        && x.CreatedAt != null
+                        && x.CreatedAt < beforeUtc)
+            .SumAsync(x => x.Amount, cancellationToken);
+
+        return totalInstallments - Math.Abs(totalDeliveries);
     }
+
+    private static DateTimeOffset ToUtcWindowStart(DateOnly baghdadDate) =>
+        new(baghdadDate.ToDateTime(TimeOnly.MinValue).AddHours(-3), TimeSpan.Zero);
+
+    private static DateOnly BaghdadDate(DateTimeOffset createdAt) =>
+        DateOnly.FromDateTime(createdAt.UtcDateTime.AddHours(3));
 
     private static List<GetUserDailyInstallmentCollectionsReportItem> BuildReportItems(
         Dictionary<DateOnly, double> installmentsByDate,

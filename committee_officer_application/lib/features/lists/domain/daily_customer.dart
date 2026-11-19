@@ -10,6 +10,8 @@ class DailyCustomer {
     this.hasNote = false,
     this.latestFieldFollowupNote,
     this.hasLocation = false,
+    this.hasPhoto = false,
+    this.shopName,
     this.activeOrderId,
   });
   final int id;
@@ -20,7 +22,10 @@ class DailyCustomer {
   final bool hasNote;
   final String? latestFieldFollowupNote;
   final bool hasLocation;
+  final bool hasPhoto;
+  final String? shopName;
   final int? activeOrderId;
+  bool get isCaptureComplete => hasLocation && hasPhoto;
   bool get hasPayment => paid > 0;
   bool get belowInstallment => hasPayment && paid < installment;
 
@@ -30,6 +35,8 @@ class DailyCustomer {
     double number(String name) => double.tryParse('${read(name)}') ?? 0;
     final noteFlag = read('hasNote');
     final locFlag = read('hasLocation');
+    final photoFlag = read('hasPhoto');
+    final shop = '${read('shopName') ?? ''}'.trim();
     final latest = '${read('latestFieldFollowupNote') ?? ''}'.trim();
     final orderId = int.tryParse('${read('activeOrderId') ?? ''}');
     return DailyCustomer(
@@ -41,11 +48,13 @@ class DailyCustomer {
       hasNote: noteFlag == true || noteFlag == 'true',
       latestFieldFollowupNote: latest.isEmpty ? null : latest,
       hasLocation: locFlag == true || locFlag == 'true',
+      hasPhoto: photoFlag == true || photoFlag == 'true',
+      shopName: shop.isEmpty ? null : shop,
       activeOrderId: orderId is int && orderId > 0 ? orderId : null,
     );
   }
 
-  DailyCustomer copyWith({bool? hasLocation}) => DailyCustomer(
+  DailyCustomer copyWith({bool? hasLocation, bool? hasPhoto}) => DailyCustomer(
         id: id,
         name: name,
         phone: phone,
@@ -54,6 +63,8 @@ class DailyCustomer {
         hasNote: hasNote,
         latestFieldFollowupNote: latestFieldFollowupNote,
         hasLocation: hasLocation ?? this.hasLocation,
+        hasPhoto: hasPhoto ?? this.hasPhoto,
+        shopName: shopName,
         activeOrderId: activeOrderId,
       );
 

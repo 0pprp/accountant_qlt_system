@@ -1,6 +1,7 @@
-using Application.Common.Interfaces;
+﻿using Application.Common.Interfaces;
 using Application.FollowerWork.Common;
 using Application.Orders.Common;
+using Application.Safes.Common;
 using Application.Users.Common;
 using Domain.Entities.ActivityLogAggregate.Enums;
 using Domain.Entities.InstallmentPaymentAggregate;
@@ -25,15 +26,18 @@ public class AppInstallmentPaymentWriter
     private readonly IApplicationDbContext _db;
     private readonly IDateTimeProvider _clock;
     private readonly IActivityLogService _activity;
+    private readonly PaymentSafePosting _safePosting;
 
     public AppInstallmentPaymentWriter(
         IApplicationDbContext db,
         IDateTimeProvider clock,
-        IActivityLogService activity)
+        IActivityLogService activity,
+        PaymentSafePosting safePosting)
     {
         _db = db;
         _clock = clock;
         _activity = activity;
+        _safePosting = safePosting;
     }
 
     public async Task<Result<InstallmentPaymentWriteResultDto>> WriteAsync(
@@ -136,6 +140,12 @@ public class AppInstallmentPaymentWriter
             return FollowerWorkErrors.MandobCollectionLocked;
         }
 
+        // طلبات مرحّلة قد تفقد SellerId — املأه من مندوب القائمة قبل الجباية.
+        if (order.SellerId is null)
+        {
+            order.SellerId = list.MandobId;
+        }
+
         if (order.SellerId is int sellerId)
             await AcquireCashHolderLockAsync(sellerId, ct);
 
@@ -199,6 +209,13 @@ public class AppInstallmentPaymentWriter
             return racedDecision;
         }
 
+        var posted = await _safePosting.PostAsync(payment.Id, order.Id, list.Id, payment.Amount, userId, ct);
+        if (posted.IsFailed)
+        {
+            await tx.RollbackAsync(ct);
+            return posted.Error!;
+        }
+
         await _activity.AddAsync(
             order.BranchId,
             activityType,
@@ -236,7 +253,7 @@ public class AppInstallmentPaymentWriter
 
         return new InstallmentPaymentWriteResultDto(
             existing.Id,
-            existing.OrderId,
+            orderId,
             existing.Amount,
             existing.Date,
             existing.ClientPaymentId,

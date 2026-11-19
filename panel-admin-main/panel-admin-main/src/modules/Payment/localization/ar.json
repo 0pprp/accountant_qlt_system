@@ -65,6 +65,8 @@
   },
   "payments": "التسديدات",
   "payment": "تسديد",
+  "allLists": "كل القوائم",
+  "selectList": "اختر القائمة",
   "updateTitleSuccess": "تسديد ناجح",
   "updateDescriptionSuccess": "تم أضافة التسديد  بنجاح",
   "updateTitleError": "فشل التسديد",

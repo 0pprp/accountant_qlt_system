@@ -5,6 +5,7 @@ public record GetCommitteePendingSalesQuery(int UserId)
 
 public record CommitteePendingSaleDto
 {
+    public int CustomerId { get; set; }
     public int OrderId { get; set; }
     public int? ListId { get; set; }
     public required string CustomerName { get; set; }

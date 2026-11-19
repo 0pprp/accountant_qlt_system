@@ -1,3 +1,5 @@
+import 'package:dio/dio.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:committee_officer_application/core/network/dio_client.dart';
 
 class CommitteeListCard {
@@ -12,6 +14,8 @@ class CommitteeListCard {
     required this.collectionEnabled,
     required this.locatedCustomers,
     required this.locationCustomersTotal,
+    required this.photographedCustomers,
+    required this.completedCustomers,
   });
 
   final int listId;
@@ -24,6 +28,8 @@ class CommitteeListCard {
   final bool collectionEnabled;
   final int locatedCustomers;
   final int locationCustomersTotal;
+  final int photographedCustomers;
+  final int completedCustomers;
 
   factory CommitteeListCard.fromJson(
     Map<String, dynamic> j,
@@ -42,6 +48,14 @@ class CommitteeListCard {
             0,
     locationCustomersTotal: int.tryParse(
           '${j['locationCustomersTotal'] ?? j['LocationCustomersTotal'] ?? 0}',
+        ) ??
+        0,
+    photographedCustomers: int.tryParse(
+          '${j['photographedCustomers'] ?? j['PhotographedCustomers'] ?? 0}',
+        ) ??
+        0,
+    completedCustomers: int.tryParse(
+          '${j['completedCustomers'] ?? j['CompletedCustomers'] ?? 0}',
         ) ??
         0,
   );
@@ -76,6 +90,11 @@ class CommitteeRemote {
       }
     }
     return const [];
+  }
+
+  Future<void> uploadCustomerPhoto(int listId, int customerId, XFile image) async {
+    await _dio.dio.post('api/v1/app/committee/lists/$listId/customers/$customerId/photo',
+      data: FormData.fromMap({'file': MultipartFile.fromBytes(await image.readAsBytes(), filename: image.name)}));
   }
 
   Future<void> addDelegateNote(int listId, String noteText) async {

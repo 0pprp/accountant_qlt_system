@@ -1,4 +1,4 @@
-using Application.Common.AdminPanel;
+﻿using Application.Common.AdminPanel;
 using Application.Common.Interfaces;
 using Application.Common.Models;
 using Application.Users.Commands.Admin.PatchPermissionOverrides;
@@ -63,7 +63,7 @@ public class TabAccessHandlerTests
         db.Provinces.Add(province);
         await db.SaveChangesAsync();
 
-        var branch = new Branch("فرع1", province.Id) { Safe = null };
+        var branch = new Branch("فرع1", province.Id) { Safes = [] };
         db.Branches.Add(branch);
 
         var adminRole = new Role("Admin", "المدير");

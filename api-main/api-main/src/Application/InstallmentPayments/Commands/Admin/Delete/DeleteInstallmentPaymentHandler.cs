@@ -1,6 +1,7 @@
 ﻿using Application.Common.Interfaces;
 using Application.InstallmentPayments.Common;
 using Application.Orders.Common;
+using Application.Safes.Common;
 using Domain.Entities.ActivityLogAggregate.Enums;
 using Domain.Entities.OrderAggregate.Enums;
 using Microsoft.EntityFrameworkCore;
@@ -11,11 +12,16 @@ public class DeleteInstallmentPaymentHandler : IRequestHandler<DeleteInstallment
 {
     private readonly IApplicationDbContext _dbContext;
     private readonly IActivityLogService _activityLogService;
+    private readonly PaymentSafePosting _safePosting;
+    private readonly ICurrentUserService _currentUserService;
 
-    public DeleteInstallmentPaymentHandler(IApplicationDbContext dbContext, IActivityLogService activityLogService)
+    public DeleteInstallmentPaymentHandler(IApplicationDbContext dbContext, IActivityLogService activityLogService,
+        PaymentSafePosting safePosting, ICurrentUserService currentUserService)
     {
         _dbContext = dbContext;
         _activityLogService = activityLogService;
+        _safePosting = safePosting;
+        _currentUserService = currentUserService;
     }
 
     public async Task<Result> Handle(DeleteInstallmentPaymentCommand request, CancellationToken cancellationToken)
@@ -30,6 +36,16 @@ public class DeleteInstallmentPaymentHandler : IRequestHandler<DeleteInstallment
             return InstallmentPaymentErrors.InstallmentPaymentNotFound;
         
         var order = installmentPayment.Order;
+
+        await using var transaction = await _dbContext.Database.BeginTransactionAsync(cancellationToken);
+
+        var reversed = await _safePosting.AdjustAsync(
+            installmentPayment.Id, 0, _currentUserService.UserId, cancellationToken);
+        if (reversed.IsFailed)
+        {
+            await transaction.RollbackAsync(cancellationToken);
+            return reversed.Error!;
+        }
 
         var cashHolderResult = await OrderCashHolder.GetAsync(_dbContext, order!.SellerId, cancellationToken);
         if (cashHolderResult.IsFailed)
@@ -48,6 +64,7 @@ public class DeleteInstallmentPaymentHandler : IRequestHandler<DeleteInstallment
             TargetEntityType.InstallmentPayment,
             request.Id);
         await _dbContext.SaveChangesAsync(cancellationToken);
+        await transaction.CommitAsync(cancellationToken);
 
         return Result.Success();
     }

@@ -11,6 +11,7 @@ export interface AppTab { id: string; label: string; icon: string; tabId?: strin
 export const APP_TABS: Record<AppWorkspaceId, AppTab[]> = {
   branch: [
     { id: 'tasks', label: 'مهامي', icon: 'pi-check-square', tabId: 'branchAssignedTasks' },
+    { id: 'archive', label: 'الأرشيف', icon: 'pi-folder', tabId: 'branchArchive' },
     { id: 'legal', label: 'أسماء قانونية', icon: 'pi-shield', tabId: 'legalNames' },
     { id: 'declining', label: 'الزبائن المتدنية', icon: 'pi-chart-line', tabId: 'branchDeclining' },
     { id: 'customers', label: 'الزبائن', icon: 'pi-users', tabId: 'customers' },
@@ -57,7 +58,7 @@ function anyRead(tabs: ManagementTabDefinition[]): AccessRequirement {
   if (!permissions.length) throw new Error('Workspace requires explicit permissions')
   return { type: 'anyOf', permissions: permissions as [PermissionRef, ...PermissionRef[]] }
 }
-export const oversightRequirement = anyRead(getReadyTabsForSection('oversight'))
+export const oversightRequirement = anyRead(getReadyTabsForSection('oversight').filter(tab => tab.id !== 'delegateFollowup' && tab.id.startsWith('follower') === false))
 export function appRequirement(section: AppWorkspaceId) { return anyRead(appReadyTabs(section)) }
 export const appNavigationParents: NavigationSectionDefinition[] = (['branch', 'delegate'] as const).map((section, index) => ({
   id: section === 'branch' ? 'managementBranch' : 'managementDelegate',

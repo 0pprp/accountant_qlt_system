@@ -1,3 +1,4 @@
+﻿using Application.Safes.Common;
 using Application.Orders.Commands.Admin.ChangeApprovalStatus;
 using Application.Orders.Common;
 using Application.Purchases.Queries.Admin.GetLastFactorNumber;
@@ -181,13 +182,15 @@ public class ChangeOrderApprovalStatusHandlerTests
 
     private static ChangeOrderApprovalStatusHandler CreateHandler(TestApplicationDbContext dbContext)
     {
-        return new ChangeOrderApprovalStatusHandler(dbContext, new NotificationServiceStub(), new ActivityLogServiceStub());
+        return new ChangeOrderApprovalStatusHandler(dbContext, new NotificationServiceStub(), new ActivityLogServiceStub(),
+            new SafeLedger(dbContext, new CurrentUserServiceStub()));
     }
 
     private static TestApplicationDbContext CreateDbContext()
     {
         var options = new DbContextOptionsBuilder<TestApplicationDbContext>()
             .UseInMemoryDatabase(Guid.NewGuid().ToString())
+            .ConfigureWarnings(w => w.Ignore(Microsoft.EntityFrameworkCore.Diagnostics.InMemoryEventId.TransactionIgnoredWarning))
             .Options;
 
         return new TestApplicationDbContext(options);
@@ -204,7 +207,7 @@ public class ChangeOrderApprovalStatusHandlerTests
         await dbContext.SaveChangesAsync();
 
         var branch = new Branch("الفرع الرئيسي", province.Id);
-        branch.Safe!.RemainingCashAmount = 100000;
+        branch.Safes.Single(x => x.Kind == SafeKind.Branch).TryApplyDelta(100000);
         dbContext.Branches.Add(branch);
         await dbContext.SaveChangesAsync();
 
@@ -301,7 +304,7 @@ public class ChangeOrderApprovalStatusHandlerTests
         dbContext.Orders.Add(order);
         await dbContext.SaveChangesAsync();
 
-        return new SeedResult(order.Id, branch.Id, branch.Safe!.Id);
+        return new SeedResult(order.Id, branch.Id, branch.Safes.Single(x => x.Kind == SafeKind.Branch).Id);
     }
 
     private sealed record SeedResult(int OrderId, int BranchId, int SafeId);

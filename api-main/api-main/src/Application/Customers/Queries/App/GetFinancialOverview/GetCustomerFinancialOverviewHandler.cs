@@ -56,11 +56,15 @@ public class GetCustomerFinancialOverviewHandler : IRequestHandler<GetCustomerFi
                 CompletedOrdersCount = g.Count(x => x.ExecutionStatus == OrderExecutionStatus.Completed)
             })
             .FirstOrDefaultAsync(cancellationToken);
+        var unallocated = aggregation is null
+            ? 0
+            : (await Application.Common.Balances.CustomerBalanceQuery.UnallocatedByCustomerAsync(
+                _dbContext, [request.CustomerId], null, cancellationToken)).GetValueOrDefault(request.CustomerId);
 
         return new GetCustomerFinancialOverviewResponse
         {
             CustomerId = request.CustomerId,
-            TotalPaidAmount = aggregation?.TotalPaidAmount ?? 0,
+            TotalPaidAmount = (aggregation?.TotalPaidAmount ?? 0) + unallocated,
             TotalOverdueAmount = aggregation?.TotalOverdueAmount ?? 0,
             TotalSellAmount = aggregation?.TotalSellAmount ?? 0,
             TotalDailyInstallmentAmount = aggregation?.TotalDailyInstallmentAmount ?? 0,

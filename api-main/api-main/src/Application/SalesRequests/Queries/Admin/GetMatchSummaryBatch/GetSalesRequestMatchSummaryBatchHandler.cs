@@ -40,44 +40,25 @@ public class GetSalesRequestMatchSummaryBatchHandler
             .Select(x => new { x.Id, x.CustomerName, x.CustomerPhone, x.BranchId, x.ProvinceId })
             .ToListAsync(cancellationToken);
 
-        var asOf = _clock.Today;
+        var candidatesByScope = new Dictionary<string, List<SalesMatchCandidate>>();
         var items = new List<SalesMatchSummaryItemDto>(requests.Count);
         foreach (var req in requests)
         {
             var matchBranches = await SalesMatchCandidateSelector.ResolveProvinceBranchIdsAsync(
                 _db, req.BranchId, req.ProvinceId, cancellationToken);
+            var scopeKey = string.Join(",", matchBranches.OrderBy(id => id));
+            if (!candidatesByScope.TryGetValue(scopeKey, out var customers))
+            {
+                customers = await SalesMatchCandidateSelector.LoadCustomerScopeAsync(
+                    _db, matchBranches, cancellationToken);
+                candidatesByScope[scopeKey] = customers;
+            }
             var cards = new List<SalesMatchCardDto>(SalesMatchCriteria.All.Length);
             foreach (var key in SalesMatchCriteria.All)
             {
-                var customers = await SalesMatchCandidateSelector.LoadCustomerCandidatesAsync(
-                    _db, matchBranches, key, req.CustomerName, req.CustomerPhone, cancellationToken);
 
-                var probe = SalesRequestMatchEvaluator.EvaluateCard(
-                    key, req.CustomerName, req.CustomerPhone, customers);
-                if (probe.State is "insufficientData" or "failed")
-                {
-                    cards.Add(probe);
-                    continue;
-                }
-
-                var matchedIds = SalesRequestMatchEvaluator
-                    .FilterHits(key, req.CustomerName, req.CustomerPhone, customers)
-                    .Select(c => c.Id)
-                    .Distinct()
-                    .ToList();
-
-                var qualified = await SalesMatchSignificantPayment.LoadQualifiedAsync(
-                    _db, matchedIds, asOf, cancellationToken);
-                var count = matchedIds.Count(id => qualified.ContainsKey(id));
-                var label = SalesMatchCardLabels.For(key);
-                cards.Add(new SalesMatchCardDto
-                {
-                    Key = key,
-                    Label = label,
-                    State = SalesMatchCardLabels.StateName(
-                        count > 0 ? SalesMatchCardState.Results : SalesMatchCardState.NoResults),
-                    Count = count
-                });
+                cards.Add(SalesRequestMatchEvaluator.EvaluateCard(
+                    key, req.CustomerName, req.CustomerPhone, customers));
             }
 
             items.Add(new SalesMatchSummaryItemDto

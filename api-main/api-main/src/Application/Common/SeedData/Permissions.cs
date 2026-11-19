@@ -1,4 +1,4 @@
-using PermissionEntity = Domain.Entities.RoleAggregate.Permission;
+﻿using PermissionEntity = Domain.Entities.RoleAggregate.Permission;
 
 namespace Application.Common.SeedData;
 
@@ -443,6 +443,13 @@ public static class Permissions
             new(Restore, "استعادة طلب محذوف", nameof(SalesRequest), SalesRequestDisplayName),
             new(TimelineRead, "قراءة سجل حركة الطلب", nameof(SalesRequest), SalesRequestDisplayName),
             new(UpdateRequest, "تعديل بيانات الطلب", nameof(SalesRequest), SalesRequestDisplayName),
+            new(ReturnRequest, "إرجاع الطلب المرفوض للموظف", nameof(SalesRequest), SalesRequestDisplayName),
+            new(ManagerPrepare, "تجهيز الطلب للبيع (مدير المبيعات)", nameof(SalesRequest), SalesRequestDisplayName),
+            new(ManagerPend, "تعليق الطلب (مدير المبيعات)", nameof(SalesRequest), SalesRequestDisplayName),
+            new(CancelToUnassigned, "إلغاء الطلب وإعادته لغير المسند", nameof(SalesRequest), SalesRequestDisplayName),
+            new(TransferBranch, "نقل الطلب لفرع آخر", nameof(SalesRequest), SalesRequestDisplayName),
+            new(DeleteSoldSale, "حذف طلب مباع ومسح المبيع", nameof(SalesRequest), SalesRequestDisplayName),
+            new(DeletedSalesRead, "قراءة حذوفات المبيعات", nameof(SalesRequest), SalesRequestDisplayName),
         ];
 
         public const string ReadUnassigned =
@@ -509,6 +516,20 @@ public static class Permissions
 
         public const string UpdateRequest =
             $"{nameof(Domain.Entities.SalesRequestAggregate.SalesRequest)}.{nameof(UpdateRequest)}";
+        public const string ReturnRequest =
+            $"{nameof(Domain.Entities.SalesRequestAggregate.SalesRequest)}.{nameof(ReturnRequest)}";
+        public const string ManagerPrepare =
+            $"{nameof(Domain.Entities.SalesRequestAggregate.SalesRequest)}.{nameof(ManagerPrepare)}";
+        public const string ManagerPend =
+            $"{nameof(Domain.Entities.SalesRequestAggregate.SalesRequest)}.{nameof(ManagerPend)}";
+        public const string CancelToUnassigned =
+            $"{nameof(Domain.Entities.SalesRequestAggregate.SalesRequest)}.{nameof(CancelToUnassigned)}";
+        public const string TransferBranch =
+            $"{nameof(Domain.Entities.SalesRequestAggregate.SalesRequest)}.{nameof(TransferBranch)}";
+        public const string DeleteSoldSale =
+            $"{nameof(Domain.Entities.SalesRequestAggregate.SalesRequest)}.{nameof(DeleteSoldSale)}";
+        public const string DeletedSalesRead =
+            $"{nameof(Domain.Entities.SalesRequestAggregate.SalesRequest)}.{nameof(DeletedSalesRead)}";
     }
 
     /// <summary>خارج Permissions.All عمدًا — تُمنح لـ Admin (ومستخدمي اللوحة المخصصين) فقط.</summary>
@@ -608,10 +629,12 @@ public static class Permissions
         [
             new(Read, "رؤية لوحة متابعة المندوبين", nameof(DelegateFollowup), Display),
             new(UpsertBoardRating, "تقييم مشغّل اللوحة للقائمة", nameof(DelegateFollowup), Display),
+            new(UpsertAccountantRating, "تقييم المحاسب الرئيسي للقائمة", nameof(DelegateFollowup), Display),
         ];
 
         public const string Read = "DelegateFollowup.Read";
         public const string UpsertBoardRating = "DelegateFollowup.UpsertBoardRating";
+        public const string UpsertAccountantRating = "DelegateFollowup.UpsertAccountantRating";
     }
 
     /// <summary>
@@ -694,6 +717,7 @@ public static class Permissions
             new(CollectionManageEnabled, "تشغيل/إيقاف جباية المتابع على القائمة", "FollowerCollection", Display),
             new(LocationRead, "الموقع المباشر — عمل المتابعين", "FollowerLocation", Display),
             new(RouteRead, "المسارات — عمل المتابعين", "FollowerRoute", Display),
+            new(ManageFollowers, "إنشاء وتعديل وحذف حسابات المتابعين وإسناد القوائم", nameof(FollowerWork), Display),
         ];
 
         public const string Read = "FollowerWork.Read";
@@ -709,6 +733,7 @@ public static class Permissions
         public const string CollectionManageEnabled = "FollowerCollection.ManageEnabled";
         public const string LocationRead = "FollowerLocation.Read";
         public const string RouteRead = "FollowerRoute.Read";
+        public const string ManageFollowers = "FollowerWork.ManageFollowers";
     }
 
     /// <summary>متابعة قانونية — قراءة/إنشاء خارج Permissions.All؛ Cancel مستقل.</summary>
@@ -764,6 +789,35 @@ public static class Permissions
         public const string Confirm = "Task.Confirm";
         public const string Transfer = "Task.Transfer";
         public const string ReadAttachment = "Task.ReadAttachment";
+    }
+
+    /// <summary>أرشيف المعاملات — سلسلة العهدة الورقية. خارج Permissions.All.</summary>
+    public static class Archive
+    {
+        private const string Display = "الأرشيف";
+
+        public static readonly PermissionEntity[] OutsideAll =
+        [
+            new(Read, "قراءة حزم الأرشيف", nameof(Archive), Display),
+            new(Send, "إرسال حزمة للمرحلة التالية", nameof(Archive), Display),
+            new(UndoSend, "إلغاء إرسال لم يُستلم بعد", nameof(Archive), Display),
+            new(ReceiveBranch, "استلام المعاملات في إدارة الفرع", nameof(Archive), Display),
+            new(ReceiveFollower, "استلام المعاملات عند المتابع", nameof(Archive), Display),
+            new(ReceiveArchive, "استلام المعاملات في الأرشيف", nameof(Archive), Display),
+            new(Return, "استرجاع معاملة ناقصة", nameof(Archive), Display),
+            new(Oversight, "لوحة تدفّق الحزم", nameof(Archive), Display),
+            new(Reconcile, "مصالحة الأرشيف مع المبيعات", nameof(Archive), Display),
+        ];
+
+        public const string Read = "Archive.Read";
+        public const string Send = "Archive.Send";
+        public const string UndoSend = "Archive.UndoSend";
+        public const string ReceiveBranch = "Archive.ReceiveBranch";
+        public const string ReceiveFollower = "Archive.ReceiveFollower";
+        public const string ReceiveArchive = "Archive.ReceiveArchive";
+        public const string Return = "Archive.Return";
+        public const string Oversight = "Archive.Oversight";
+        public const string Reconcile = "Archive.Reconcile";
     }
 
     /// <summary>نشرة مهام اللجنة — خارج Permissions.All.</summary>

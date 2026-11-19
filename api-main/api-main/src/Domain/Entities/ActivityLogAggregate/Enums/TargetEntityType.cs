@@ -1,4 +1,4 @@
-namespace Domain.Entities.ActivityLogAggregate.Enums;
+﻿namespace Domain.Entities.ActivityLogAggregate.Enums;
 
 public enum TargetEntityType : byte
 {
@@ -16,5 +16,6 @@ public enum TargetEntityType : byte
     Transaction = 11,
     Attachment = 12,
     Notification = 13,
-    ManagementTask = 14
+    ManagementTask = 14,
+    ArchiveBundle = 15
 }

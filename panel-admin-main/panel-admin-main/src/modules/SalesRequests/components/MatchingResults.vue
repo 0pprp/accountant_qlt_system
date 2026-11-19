@@ -162,7 +162,7 @@ const copiedKey = ref<string | null>(null)
 let copiedTimer: ReturnType<typeof setTimeout> | null = null
 
 function formatMoney(value: number) {
-  return new Intl.NumberFormat('en-US').format(value)
+  return new Intl.NumberFormat('en-US', { maximumFractionDigits: 0 }).format(value)
 }
 
 function formatDate(value?: string | null) {

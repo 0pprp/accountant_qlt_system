@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
+import { computed, inject, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '@/modules/Auth/store'
 import { useFollowerSalesReviewQuery } from '../requests/queries/useFollowerSalesReviewQuery'
@@ -104,7 +104,21 @@ const profileRow = computed(() => {
   return salesQuery.data.value?.salesRows.find((r) => r.orderId === id) ?? null
 })
 
+const openInDrawer = inject<((customerId: number) => void) | null>('fwOpenCustomer', null)
+
+function openCustomerQuick(customerId: number) {
+  if (openInDrawer) {
+    openInDrawer(customerId)
+    return
+  }
+  openFullCustomerProfile(customerId)
+}
+
 function openProfile(row: SalesReviewSaleRow) {
+  if (openInDrawer) {
+    openInDrawer(row.customerId)
+    return
+  }
   profileOrderId.value = row.orderId
 }
 
@@ -221,7 +235,7 @@ const workspace = computed(() => salesQuery.data.value)
             type="button"
             class="fsr-name"
             @click="
-              openFullCustomerProfile(r.customerId)
+              openCustomerQuick(r.customerId)
             "
           >
             <span class="fsr-name__title">{{ r.customerName }}</span>

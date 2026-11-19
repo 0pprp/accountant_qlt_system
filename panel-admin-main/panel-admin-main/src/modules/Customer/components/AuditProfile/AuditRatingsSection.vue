@@ -9,17 +9,167 @@
         <header class="neo-box__title">{{ box.title }}</header>
         <div v-if="box.score != null" class="neo-box__body">
           <p class="neo-box__score">{{ box.score }} / 10</p>
+          <p v-if="box.isWrongSale" class="rating-wrong">مبيع خاطئ</p>
+          <p v-if="box.occasionLabel" class="rating-occasion">{{ box.occasionLabel }}</p>
           <p v-if="box.ratedByName" class="neo-box__meta">
             بواسطة: {{ box.ratedByName }}
           </p>
           <p v-if="box.ratedAtUtc" class="neo-box__meta">
             {{ formatDate(box.ratedAtUtc) }}
           </p>
+          <dl v-if="hasForm(box)" class="rating-form">
+            <template v-if="box.shopStockEstimatedValue != null">
+              <dt>قيمة المخزون المقدّرة</dt>
+              <dd>{{ money(box.shopStockEstimatedValue) }}</dd>
+            </template>
+            <template v-if="box.estimatedDailyRevenue != null">
+              <dt>الإيراد اليومي المقدّر</dt>
+              <dd>{{ money(box.estimatedDailyRevenue) }}</dd>
+            </template>
+            <template v-if="box.contextAmount != null">
+              <dt>{{ box.role === 'Delegate' ? 'مبلغ البيع' : 'سقف البيع' }}</dt>
+              <dd>{{ money(box.contextAmount) }}</dd>
+            </template>
+          </dl>
           <p v-if="box.note" class="neo-box__note">{{ box.note }}</p>
         </div>
         <p v-else class="neo-box__empty">لا يوجد تقييم مسجّل بعد</p>
       </article>
+
+      <article v-if="survey" class="neo-box">
+        <header class="neo-box__title">{{ survey.title }}</header>
+        <div class="neo-box__body">
+          <p class="rating-occasion">عند البيع — كشف بلا درجة</p>
+          <dl class="rating-form">
+            <template v-if="survey.shopName">
+              <dt>اسم المحل</dt>
+              <dd>{{ survey.shopName }}</dd>
+            </template>
+            <template v-if="survey.businessType">
+              <dt>طبيعة العمل</dt>
+              <dd>{{ survey.businessType }}</dd>
+            </template>
+            <template v-if="survey.stockEstimatedValue != null">
+              <dt>قيمة البضاعة المقدّرة</dt>
+              <dd>{{ money(survey.stockEstimatedValue) }}</dd>
+            </template>
+            <template v-if="survey.estimatedDailyRevenue != null">
+              <dt>الإيراد اليومي المقدّر</dt>
+              <dd>{{ money(survey.estimatedDailyRevenue) }}</dd>
+            </template>
+            <template v-if="survey.shopLength != null">
+              <dt>الطول</dt>
+              <dd>{{ survey.shopLength }} م</dd>
+            </template>
+            <template v-if="survey.shopWidth != null">
+              <dt>العرض</dt>
+              <dd>{{ survey.shopWidth }} م</dd>
+            </template>
+            <template v-if="survey.shopArea != null">
+              <dt>المساحة</dt>
+              <dd>{{ survey.shopArea }} م²</dd>
+            </template>
+            <template v-if="survey.createdAtUtc">
+              <dt>تاريخ الكشف</dt>
+              <dd>{{ formatDate(survey.createdAtUtc) }}</dd>
+            </template>
+          </dl>
+          <a
+            v-if="survey.latitude != null && survey.longitude != null"
+            class="neo-box__map-link"
+            :href="mapsLink(survey.latitude, survey.longitude)"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            موقع الكشف على الخريطة
+          </a>
+          <button
+            v-if="survey.photoId != null"
+            type="button"
+            class="audit-btn"
+            @click="openPhoto(survey.photoId)"
+          >
+            فتح صورة المحل
+          </button>
+        </div>
+      </article>
     </div>
+
+    <article class="neo-box">
+      <header class="neo-box__title">مواقع الزبون — كل مصدر</header>
+      <ul v-if="locations.length" class="audit-list">
+        <li v-for="loc in locations" :key="loc.source" class="audit-list__row">
+          <span>
+            {{ loc.sourceLabel }}
+            <span class="audit-list__dim">
+              {{ loc.latitude.toFixed(6) }}, {{ loc.longitude.toFixed(6) }}
+              <template v-if="loc.accuracyMeters != null">
+                · دقة {{ Math.round(loc.accuracyMeters) }} م
+              </template>
+              <template v-if="loc.confidence != null">
+                · ثقة {{ Math.round(loc.confidence * 100) }}٪
+              </template>
+            </span>
+          </span>
+          <a
+            class="audit-btn"
+            :href="mapsLink(loc.latitude, loc.longitude)"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            فتح
+          </a>
+        </li>
+      </ul>
+      <p v-else class="neo-box__empty">لا مواقع مسجّلة لهذا الزبون</p>
+    </article>
+
+    <article class="neo-box">
+      <header class="neo-box__title">صور المحل</header>
+      <div v-if="photos.length" class="audit-photos">
+        <figure v-for="photo in photos" :key="photo.id" class="audit-photo">
+          <img v-if="photoSrc[photo.id]" :src="photoSrc[photo.id]" alt="صورة المحل" />
+          <div v-else class="audit-photo__placeholder">جارٍ التحميل…</div>
+          <figcaption>
+            <button type="button" class="audit-btn" @click="openPhoto(photo.id)">
+              فتح
+            </button>
+          </figcaption>
+        </figure>
+      </div>
+      <p v-else class="neo-box__empty">لا صور محل محفوظة</p>
+    </article>
+
+    <article class="neo-box">
+      <header class="neo-box__title">لقطات التقييم</header>
+      <div v-if="snapshots.length" class="audit-scroll">
+        <table class="audit-table">
+          <thead>
+            <tr>
+              <th>المصدر</th>
+              <th>التسمية</th>
+              <th>الدرجة</th>
+              <th>التاريخ</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="(snap, i) in snapshots" :key="i">
+              <td>{{ snap.origin }}</td>
+              <td>{{ snap.ratingLabel ?? '—' }}</td>
+              <td>{{ snap.score ?? '—' }}</td>
+              <td>{{ snap.captureDate }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <p v-else class="neo-box__empty">لا لقطات تقييم لهذا الزبون</p>
+    </article>
+
+    <MediaViewerDialog
+      v-model="viewerOpen"
+      :path="viewerPath"
+      :title="viewerTitle"
+    />
 
     <article class="neo-box neo-box--location">
       <header class="neo-box__title">الموقع</header>
@@ -52,12 +202,68 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, reactive, ref, watch } from 'vue'
+import { useAuthedMedia } from '@/modules/Core/composable/useAuthedMedia'
+import MediaViewerDialog from '@/modules/Core/components/shared/MediaViewerDialog/MediaViewerDialog.vue'
+import { formattedPrice } from '@/modules/Core/utils/price'
 import type { CustomerAuditRatingsAndLocation } from '../../requests/queries/useCustomerAuditProfileQuery'
 
 const props = defineProps<{
   ratings: CustomerAuditRatingsAndLocation
 }>()
+
+const { fetchBlobUrl } = useAuthedMedia()
+
+const viewerOpen = ref(false)
+const viewerPath = ref<string | null>(null)
+const viewerTitle = ref('')
+
+const locations = computed(() => props.ratings.locations ?? [])
+const photos = computed(() => props.ratings.photos ?? [])
+const snapshots = computed(() => props.ratings.snapshots ?? [])
+const survey = computed(() => props.ratings.shopSurvey ?? null)
+
+const photoSrc = reactive<Record<number, string>>({})
+
+watch(
+  photos,
+  async (list) => {
+    for (const photo of list) {
+      if (photoSrc[photo.id]) continue
+      const url = await fetchBlobUrl(`admin/CustomerMedia/photos/${photo.id}`)
+      if (url) photoSrc[photo.id] = url
+    }
+  },
+  { immediate: true },
+)
+
+type RatingBox = {
+  shopStockEstimatedValue?: number | null
+  estimatedDailyRevenue?: number | null
+  contextAmount?: number | null
+}
+
+function hasForm(box: RatingBox) {
+  return (
+    box.shopStockEstimatedValue != null ||
+    box.estimatedDailyRevenue != null ||
+    box.contextAmount != null
+  )
+}
+
+function money(value: number) {
+  return formattedPrice(value)
+}
+
+function mapsLink(lat: number, lng: number) {
+  return `https://www.google.com/maps?q=${lat},${lng}`
+}
+
+function openPhoto(id: number) {
+  viewerPath.value = `admin/CustomerMedia/photos/${id}`
+  viewerTitle.value = 'صورة المحل'
+  viewerOpen.value = true
+}
 
 const boxes = computed(() => {
   const r = props.ratings
@@ -69,6 +275,11 @@ const boxes = computed(() => {
       note: r.delegateRating?.note ?? null,
       ratedByName: r.delegateRating?.ratedByName ?? null,
       ratedAtUtc: r.delegateRating?.ratedAtUtc ?? null,
+      shopStockEstimatedValue: r.delegateRating?.shopStockEstimatedValue ?? null,
+      estimatedDailyRevenue: r.delegateRating?.estimatedDailyRevenue ?? null,
+      contextAmount: r.delegateRating?.contextAmount ?? null,
+      occasionLabel: r.delegateRating?.occasionLabel ?? null,
+      isWrongSale: r.delegateRating?.isWrongSale ?? false,
     },
     {
       role: 'CommitteeField',
@@ -78,14 +289,11 @@ const boxes = computed(() => {
       note: r.committeeFieldRating?.note ?? null,
       ratedByName: r.committeeFieldRating?.ratedByName ?? null,
       ratedAtUtc: r.committeeFieldRating?.ratedAtUtc ?? null,
-    },
-    {
-      role: 'SalesEmployee',
-      title: r.salesEmployeeRating?.title ?? 'تقييم موظف المبيعات',
-      score: r.salesEmployeeRating?.score ?? null,
-      note: r.salesEmployeeRating?.note ?? null,
-      ratedByName: r.salesEmployeeRating?.ratedByName ?? null,
-      ratedAtUtc: r.salesEmployeeRating?.ratedAtUtc ?? null,
+      shopStockEstimatedValue: r.committeeFieldRating?.shopStockEstimatedValue ?? null,
+      estimatedDailyRevenue: r.committeeFieldRating?.estimatedDailyRevenue ?? null,
+      contextAmount: r.committeeFieldRating?.contextAmount ?? null,
+      occasionLabel: r.committeeFieldRating?.occasionLabel ?? null,
+      isWrongSale: r.committeeFieldRating?.isWrongSale ?? false,
     },
   ]
 })
@@ -203,4 +411,49 @@ function formatDate(value: string) {
 .neo-box__map-link:hover {
   text-decoration: underline;
 }
+
+.audit-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.audit-list__row {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  padding: 10px 12px; border-radius: 10px; background: rgba(0, 106, 100, 0.05);
+}
+.audit-list__dim { color: #50666a; font-size: 13px; margin-inline-start: 10px; }
+.audit-btn {
+  display: inline-block; padding: 5px 14px; border-radius: 999px;
+  border: 1px solid #006a64; color: #006a64; background: #fff;
+  font-size: 13px; font-weight: 600; text-decoration: none; white-space: nowrap;
+}
+.audit-btn:hover { background: #006a64; color: #fff; }
+.audit-photos { display: flex; flex-wrap: wrap; gap: 14px; }
+.audit-photo { margin: 0; display: grid; gap: 8px; justify-items: center; }
+.audit-photo img {
+  width: 190px; height: 190px; object-fit: cover;
+  border-radius: 12px; border: 1px solid #cddbd7; background: #f1f5f4;
+}
+.audit-scroll { overflow-x: auto; max-height: 340px; overflow-y: auto; }
+.audit-table { width: 100%; border-collapse: collapse; font-size: 14px; }
+.audit-table th, .audit-table td {
+  text-align: right; padding: 8px 10px; border-bottom: 1px solid #e3ecea; white-space: nowrap;
+}
+.audit-table th { position: sticky; top: 0; background: #f1f5f4; font-size: 13px; color: #50666a; }
+.audit-photo__placeholder {
+  width: 190px; height: 190px; display: flex; align-items: center; justify-content: center;
+  border-radius: 12px; border: 1px dashed #cddbd7; color: #50666a; font-size: 13px;
+  background: #f1f5f4;
+}
+button.audit-btn { cursor: pointer; font-family: inherit; }
+.rating-occasion {
+  display: inline-block; margin: 2px 0 6px; padding: 2px 10px; border-radius: 999px;
+  background: rgba(0, 106, 100, 0.1); color: #006a64; font-size: 12px; font-weight: 600;
+}
+.rating-form {
+  display: grid; grid-template-columns: auto 1fr; gap: 3px 12px;
+  margin: 8px 0 0; font-size: 13px;
+}
+.rating-wrong {
+  display: inline-block; margin: 2px 0 6px; padding: 2px 10px; border-radius: 999px;
+  background: rgba(186, 26, 26, 0.12); color: #ba1a1a; font-size: 12px; font-weight: 700;
+}
+.rating-form dt { color: #50666a; }
+.rating-form dd { margin: 0; font-weight: 600; }
 </style>

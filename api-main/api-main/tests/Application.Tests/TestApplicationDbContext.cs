@@ -1,4 +1,4 @@
-using Application.Common.Interfaces;
+﻿using Application.Common.Interfaces;
 using Domain.Entities.ActivityLogAggregate;
 using Domain.Entities.AttachmentAggregate;
 using Domain.Entities.BranchAggregate;
@@ -8,6 +8,7 @@ using Domain.Entities.FollowerWorkAggregate;
 using Domain.Entities.LegalFollowupAggregate;
 using Domain.Entities.InstallmentPaymentAggregate;
 using Domain.Entities.DelegateFollowupAggregate;
+using Domain.Entities.ArchiveAggregate;
 using Domain.Entities.ManagementTaskAggregate;
 using Domain.Entities.NotificationAggregate;
 using Domain.Entities.OrderAggregate;
@@ -59,9 +60,8 @@ public class TestApplicationDbContext : DbContext, IApplicationDbContext
     public DbSet<Purchase> Purchases { get; set; }
     public DbSet<PurchaseItem> PurchaseItems { get; set; }
     public DbSet<Safe> Safes { get; set; }
+    public DbSet<SafeMovement> SafeMovements { get; set; }
     public DbSet<Transaction> Transactions { get; set; }
-    public DbSet<SafeTransferTransaction> SafeTransferTransactions { get; set; }
-    public DbSet<SellerCashDeliveryTransaction> SellerCashDeliveryTransactions { get; set; }
     public DbSet<Notification> Notifications { get; set; }
     public DbSet<ActivityLog> ActivityLogs { get; set; }
     public DbSet<SalesShift> SalesShifts { get; set; }
@@ -80,6 +80,15 @@ public class TestApplicationDbContext : DbContext, IApplicationDbContext
     public DbSet<ManagementTaskEvent> ManagementTaskEvents { get; set; }
     public DbSet<ManagementTaskAttachment> ManagementTaskAttachments { get; set; }
     public DbSet<ManagementTaskChangeOutbox> ManagementTaskChangeOutboxes { get; set; }
+    public DbSet<ArchiveBundle> ArchiveBundles { get; set; }
+    public DbSet<ArchiveTransaction> ArchiveTransactions { get; set; }
+    public DbSet<ArchiveTransactionEvent> ArchiveTransactionEvents { get; set; }
+    public DbSet<ArchiveChangeOutbox> ArchiveChangeOutboxes { get; set; }
+    public DbSet<CustomerLocation> CustomerLocations { get; set; }
+    public DbSet<CustomerShopPhoto> CustomerShopPhotos { get; set; }
+    public DbSet<CustomerDocument> CustomerDocuments { get; set; }
+    public DbSet<CustomerRatingSnapshot> CustomerRatingSnapshots { get; set; }
+    public DbSet<CustomerShopProfile> CustomerShopProfiles { get; set; }
     public DbSet<FollowerSaleAuthentication> FollowerSaleAuthentications { get; set; }
     public DbSet<FollowerCustomerRatingSnapshot> FollowerCustomerRatingSnapshots { get; set; }
     public DbSet<CustomerNote> CustomerNotes { get; set; }
@@ -138,11 +147,18 @@ public class TestApplicationDbContext : DbContext, IApplicationDbContext
         modelBuilder.Entity<Safe>(entity =>
         {
             entity.HasOne(x => x.Branch)
-                .WithOne(x => x.Safe)
-                .HasForeignKey<Safe>(x => x.BranchId);
-            entity.HasMany(x => x.Transactions)
+                .WithMany(x => x.Safes)
+                .HasForeignKey(x => x.BranchId);
+            entity.HasMany(x => x.Movements)
                 .WithOne(x => x.Safe)
                 .HasForeignKey(x => x.SafeId);
+            entity.Ignore(x => x.OrderList);
+            entity.Ignore(x => x.User);
+        });
+
+        modelBuilder.Entity<SafeMovement>(entity =>
+        {
+            entity.Ignore(x => x.CounterpartySafe);
         });
 
         modelBuilder.Entity<Purchase>(entity =>
@@ -178,25 +194,7 @@ public class TestApplicationDbContext : DbContext, IApplicationDbContext
             .WithMany(x => x.UserRoles)
             .HasForeignKey(x => x.RoleId);
 
-        modelBuilder.Entity<SellerCashDeliveryTransaction>(entity =>
-        {
-            entity.HasOne(x => x.Seller)
-                .WithMany(x => x.SellerCashDeliveryTransactions)
-                .HasForeignKey(x => x.SellerId);
-            entity.HasOne(x => x.Transaction)
-                .WithOne(x => x.SellerCashDeliveryTransaction)
-                .HasForeignKey<SellerCashDeliveryTransaction>(x => x.TransactionId);
-        });
 
-        modelBuilder.Entity<SafeTransferTransaction>(entity =>
-        {
-            entity.HasOne(x => x.SourceSafe)
-                .WithMany()
-                .HasForeignKey(x => x.SourceSafeId);
-            entity.HasOne(x => x.DestinationSafe)
-                .WithMany()
-                .HasForeignKey(x => x.DestinationSafeId);
-        });
 
         modelBuilder.Entity<UserBranch>().HasKey(x => new { x.UserId, x.BranchId });
         modelBuilder.Entity<UserPermission>().HasKey(x => new { x.UserId, x.PermissionId });

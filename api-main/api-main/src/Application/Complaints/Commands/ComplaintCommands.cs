@@ -25,6 +25,11 @@ public sealed class MarkComplaintReadCommand : IRequest<Result<ComplaintDto>>
     public int ExpectedVersion { get; init; }
 }
 
+public sealed class MarkAllComplaintsReadCommand : IRequest<Result<MarkAllComplaintsReadResponse>>
+{
+    public int? BranchId { get; init; }
+}
+
 public sealed class SubmitComplaintHandler : IRequestHandler<SubmitComplaintCommand, Result<ComplaintDto>>
 {
     public const string SourceCommittee = "committee";
@@ -131,8 +136,7 @@ public sealed class MarkComplaintReadHandler : IRequestHandler<MarkComplaintRead
         if (entity is null)
             return ComplaintErrors.NotFound;
 
-        var scope = _current.BranchIds ?? [];
-        if (scope.Count > 0 && entity.BranchId is int bid && scope.Contains(bid) == false)
+        if (ComplaintScope.Contains(_current.BranchIds ?? [], entity.BranchId) == false)
             return ComplaintErrors.BranchScope;
 
         try
@@ -146,5 +150,56 @@ public sealed class MarkComplaintReadHandler : IRequestHandler<MarkComplaintRead
 
         await _db.SaveChangesAsync(ct);
         return ComplaintMapper.ToDto(entity);
+    }
+}
+
+public sealed class MarkAllComplaintsReadHandler
+    : IRequestHandler<MarkAllComplaintsReadCommand, Result<MarkAllComplaintsReadResponse>>
+{
+    private readonly IApplicationDbContext _db;
+    private readonly ICurrentUserService _current;
+    private readonly IDateTimeProvider _clock;
+
+    public MarkAllComplaintsReadHandler(IApplicationDbContext db, ICurrentUserService current, IDateTimeProvider clock)
+    {
+        _db = db;
+        _current = current;
+        _clock = clock;
+    }
+
+    public async Task<Result<MarkAllComplaintsReadResponse>> Handle(MarkAllComplaintsReadCommand request, CancellationToken ct)
+    {
+        if (_current.HasPermission(SeedPermissions.Complaint.MarkRead) == false)
+            return ComplaintErrors.Forbidden;
+        if (_current.UserId is not int actorId)
+            return ComplaintErrors.Forbidden;
+        if (request.BranchId is <= 0)
+            return ComplaintErrors.InvalidBranch;
+
+        var unread = await ComplaintScope
+            .Apply(_db.ComplaintMessages, _current.BranchIds ?? [], request.BranchId)
+            .Where(c => c.Status == ComplaintStatus.Unread)
+            .ToListAsync(ct);
+        if (unread.Count == 0)
+            return new MarkAllComplaintsReadResponse(0);
+
+        var now = _clock.UtcNowOffset;
+        var updated = 0;
+        foreach (var c in unread)
+        {
+            if (c.MarkRead(actorId, now, c.ConcurrencyStamp))
+                updated++;
+        }
+
+        try
+        {
+            await _db.SaveChangesAsync(ct);
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            return ComplaintErrors.Concurrency;
+        }
+
+        return new MarkAllComplaintsReadResponse(updated);
     }
 }

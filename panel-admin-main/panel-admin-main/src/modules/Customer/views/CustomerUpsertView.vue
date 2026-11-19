@@ -111,6 +111,10 @@ const initialValues = computed<form>(() => {
     whatsAppPhoneNumber: customerByIdData.value?.whatsAppPhoneNumber ?? '',
     phoneNumber: customerByIdData.value?.phoneNumber ?? '',
     branchId: authStore.selectedBranch?.id ?? 0,
+    sellAmountDiscount: String(customerByIdData.value?.sellAmountDiscount ?? 0),
+    dailyInstallmentDiscount: String(
+      customerByIdData.value?.dailyInstallmentDiscount ?? 0,
+    ),
     business: {
       name: customerByIdData.value?.business.name ?? '',
       address: customerByIdData.value?.business.address ?? '',

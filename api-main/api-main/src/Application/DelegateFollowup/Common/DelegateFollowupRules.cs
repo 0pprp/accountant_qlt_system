@@ -6,7 +6,11 @@ public static class DelegateFollowupRules
     public const int CollectedHistoryDays = 30;
     public const int BoardOperatorScoreMin = 0;
     public const int BoardOperatorScoreMax = 10;
+    public const int BoardOperatorNoteRequiredBelow = 7;
     public const int NewSaleUnpaidMinDays = 3;
+    public const int SettledCustomerKeepDays = 2;
+    public const int ActiveCustomerDays = 30;
+    public const double OpenBalanceRoundingStep = 1_000;
 
     public const double RemainingBand100k = 100_000;
     public const double RemainingBand200k = 200_000;
@@ -71,12 +75,58 @@ public static class DelegateFollowupRules
         return asOf.AddDays(-daysBack);
     }
 
+    public static DateOnly ReportedYesterday(DateOnly asOf)
+    {
+        var day = asOf.AddDays(-1);
+        return day.DayOfWeek == DayOfWeek.Friday ? day.AddDays(-1) : day;
+    }
+
+    public static double RoundedRemaining(double amountRemaining)
+        => Math.Round(amountRemaining / OpenBalanceRoundingStep, 0, MidpointRounding.AwayFromZero)
+           * OpenBalanceRoundingStep;
+
+    public static bool IsOpenBalance(double amountRemaining) => RoundedRemaining(amountRemaining) > 0;
+
+    public static bool KeepSettledCustomer(
+        double amountRemaining,
+        double amountTotalSales,
+        DateOnly? lastPaymentDate,
+        DateOnly asOf)
+    {
+        if (IsOpenBalance(amountRemaining) || amountTotalSales <= 0)
+            return false;
+        if (lastPaymentDate is not DateOnly paid)
+            return false;
+        return paid <= asOf && paid >= asOf.AddDays(-SettledCustomerKeepDays);
+    }
+
+    public static int DeviceDays(DateOnly? saleDate, double amountRemaining, DateOnly? lastPaymentDate, DateOnly asOf)
+    {
+        if (saleDate is not DateOnly sold)
+            return 0;
+        var end = amountRemaining <= 0 && lastPaymentDate is DateOnly paid ? paid : asOf;
+        return end.DayNumber - sold.DayNumber + 1;
+    }
+
+    public static bool IsActiveCustomer(DateOnly? lastPaymentDate, DateOnly asOf)
+        => lastPaymentDate is DateOnly paid && paid >= asOf.AddDays(-ActiveCustomerDays) && paid <= asOf;
+
+    public static int CountDistinctPayers(
+        IEnumerable<(int CustomerId, DateOnly Date, double Amount)> payments,
+        IReadOnlySet<int> customerIds,
+        DateOnly day)
+        => payments
+            .Where(p => p.Date == day && p.Amount > 0 && customerIds.Contains(p.CustomerId))
+            .Select(p => p.CustomerId)
+            .Distinct()
+            .Count();
+
     public static IReadOnlyList<DateOnly> LastNCalendarDaysEndingYesterday(DateOnly asOf, int days)
     {
         if (days <= 0)
             return [];
 
-        var yesterday = asOf.AddDays(-1);
+        var yesterday = ReportedYesterday(asOf);
         var list = new List<DateOnly>(days);
         for (var i = 0; i < days; i++)
             list.Add(yesterday.AddDays(-i));
@@ -170,6 +220,9 @@ public static class DelegateFollowupRules
                 .Select(x => (From: x.Key, Count: x.Value))
                 .ToList());
     }
+
+    public static bool BoardOperatorNoteIsRequired(int score) =>
+        score < BoardOperatorNoteRequiredBelow;
 
     public static bool IsValidBoardOperatorScore(int score) =>
         score >= BoardOperatorScoreMin && score <= BoardOperatorScoreMax;

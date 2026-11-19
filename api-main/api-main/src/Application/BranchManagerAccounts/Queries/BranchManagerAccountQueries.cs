@@ -53,6 +53,7 @@ public sealed class ListBranchManagerAccountsHandler
                 u.Username,
                 u.FullName,
                 IsActive = u.UserRoles.Any(ur => ur.RoleId == bmRoleId),
+                AllBranchIds = u.UserBranches.Select(ub => ub.BranchId).ToList(),
                 Branches = u.UserBranches
                     .Where(ub => scope.Contains(ub.BranchId))
                     .Select(ub => new { ub.BranchId, Name = ub.Branch!.Name })
@@ -61,10 +62,9 @@ public sealed class ListBranchManagerAccountsHandler
             .OrderBy(u => u.FullName)
             .ToListAsync(ct);
 
-        // فقط حسابات مدير فرع ضمن نطاق الفاعل (كل فروعه ⊆ النطاق)
         var items = rows
             .Where(u => u.Branches.Count > 0
-                        && u.Branches.All(b => scope.Contains(b.BranchId)))
+                        && u.AllBranchIds.All(b => scope.Contains(b)))
             .Select(u => new BranchManagerAccountDto(
                 u.Id,
                 u.Username,

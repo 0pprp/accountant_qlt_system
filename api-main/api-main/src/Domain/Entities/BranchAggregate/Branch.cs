@@ -18,7 +18,7 @@ public class Branch : AuditableEntity
     {
         Name = name;
         ProvinceId = provinceId;
-        Safe = new Safe(name);
+        Safes = new HashSet<Safe> { Safe.ForBranch(name, Id), Safe.ForExpenses(name, Id) };
         Warehouses = new HashSet<Warehouse>();
         OrderLists = new HashSet<OrderList>();
         UserBranches = new HashSet<UserBranch>();
@@ -34,7 +34,10 @@ public class Branch : AuditableEntity
     public int ProvinceId { get; set; }
 
     public Province? Province { get; set; }
-    public Safe? Safe { get; set; }
+
+    /// <summary>خزائن الفرع — قاصة الفرع وسجل الصرفيات نظاميتان، والباقي قوائم وموظفون.</summary>
+    public ICollection<Safe> Safes { get; set; }
+
     public ICollection<Warehouse> Warehouses { get; set; }
     public ICollection<OrderList> OrderLists { get; set; }
     public ICollection<UserBranch> UserBranches { get; set; }

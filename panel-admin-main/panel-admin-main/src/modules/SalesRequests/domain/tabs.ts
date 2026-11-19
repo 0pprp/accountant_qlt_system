@@ -82,12 +82,27 @@ export const WORKFLOW_TABS: readonly TabDefinition[] = [
     permissionAction: 'TabSold',
     implementationStatus: 'ready',
   },
+  {
+    key: 'exceptions',
+    label: 'الاستثناءات',
+    color: '#AF601A',
+    group: 'workflow',
+    permissionAction: 'TabExceptions',
+    implementationStatus: 'ready',
+  },
+  {
+    key: 'legal',
+    label: 'القانونية',
+    color: '#4A235A',
+    group: 'workflow',
+    permissionAction: 'TabLegal',
+    implementationStatus: 'ready',
+  },
 ] as const
 
 /**
- * عروض إضافية — «الكل» اتحاد سير العمل فقط.
- * sent/exceptions/deleted/legal جاهزة؛ legal عبر LegalFollowupCases + TabLegal.
- * sent/exceptions متداخلة مع تبويبات سير العمل ولا تدخل في «الكل» ولا مجموع العدادات.
+ * كل طلب في تبويب واحد فقط، و«الكل» = مجموع تبويبات سير العمل (منها الاستثناءات والقانونية).
+ * «المحذوفة» خارج «الكل». «المرسلة» أُلغيت — المصدر صار فلتراً.
  */
 export const EXTRA_VIEWS: readonly TabDefinition[] = [
   {
@@ -96,30 +111,6 @@ export const EXTRA_VIEWS: readonly TabDefinition[] = [
     color: '#34495E',
     group: 'extra',
     permissionAction: null,
-    implementationStatus: 'ready',
-  },
-  {
-    key: 'sent',
-    label: 'الطلبات المرسلة',
-    color: '#5D6D7E',
-    group: 'extra',
-    permissionAction: 'TabSent',
-    implementationStatus: 'ready',
-  },
-  {
-    key: 'exceptions',
-    label: 'الاستثناءات',
-    color: '#AF601A',
-    group: 'extra',
-    permissionAction: 'TabExceptions',
-    implementationStatus: 'ready',
-  },
-  {
-    key: 'legal',
-    label: 'القانونية',
-    color: '#4A235A',
-    group: 'extra',
-    permissionAction: 'TabLegal',
     implementationStatus: 'ready',
   },
   {
@@ -140,13 +131,12 @@ export const WORKFLOW_PERMISSION_ACTIONS: readonly PermissionAction[] = [
   'TabPending',
   'TabRejected',
   'TabSold',
+  'TabExceptions',
+  'TabLegal',
 ]
 
 export const EXTRA_VIEW_PERMISSION_ACTIONS: readonly PermissionAction[] = [
-  'TabSent',
-  'TabExceptions',
   'TabDeleted',
-  'TabLegal',
 ]
 
 /** كل صلاحيات التبويبات — أساس anyOf لفتح الحاوية والتنقل. */
@@ -156,7 +146,7 @@ export const TAB_PERMISSION_ACTIONS: readonly PermissionAction[] = [
 ]
 
 /** عروض متداخلة: صف الطلب قد يظهر فيها وفي تبويب سير العمل معًا. */
-export const OVERLAPPING_VIEW_KEYS: readonly string[] = ['sent', 'exceptions']
+export const OVERLAPPING_VIEW_KEYS: readonly string[] = []
 
 export function isOverlappingView(key: string): boolean {
   return OVERLAPPING_VIEW_KEYS.includes(key)

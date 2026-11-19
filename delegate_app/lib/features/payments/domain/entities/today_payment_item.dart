@@ -1,4 +1,4 @@
-/// Unified row for the تسديدات tab (local queue + server today).
+/// Unified row for the تسديدات tab (local queue + paid store + server today).
 class TodayPaymentItem {
   const TodayPaymentItem({
     required this.keyId,
@@ -11,6 +11,7 @@ class TodayPaymentItem {
     this.syncError,
     this.createdAtUtc,
     this.dateLabel,
+    this.clientPaymentId,
   });
 
   final String keyId;
@@ -23,4 +24,5 @@ class TodayPaymentItem {
   final String? syncError;
   final String? createdAtUtc;
   final String? dateLabel;
+  final String? clientPaymentId;
 }

@@ -63,11 +63,14 @@ public class GetCollectionBookHandler
                 LastPaymentDate = o.InstallmentPayments.Max(ip => (DateOnly?)ip.Date)
             })
             .ToListAsync(cancellationToken);
+        var unallocated = await Application.Common.Balances.CustomerBalanceQuery.UnallocatedDetailsAsync(
+            _db, rows.Select(r => r.CustomerId).Distinct().ToList(), cancellationToken);
 
         var customers = rows
             .GroupBy(r => r.CustomerId)
             .Select(g =>
             {
+                unallocated.TryGetValue(g.Key, out var extra);
                 var saleDates = g.Where(x => x.SaleDate != null).Select(x => x.SaleDate!.Value).ToList();
                 DateOnly? saleDate = saleDates.Count > 0
                     ? saleDates.Min()
@@ -78,8 +81,9 @@ public class GetCollectionBookHandler
                         .FirstOrDefault();
 
                 var sell = g.Sum(x => x.SellAmount);
-                var paid = g.Sum(x => x.Receipts);
-                var remaining = Math.Round(sell - paid, MidpointRounding.AwayFromZero);
+                var paid = g.Sum(x => x.Receipts) + (extra?.Amount ?? 0);
+                var remaining = Application.Common.Balances.CustomerBalanceRules.RoundToUnit(sell - paid);
+                var lastPayment = Application.Common.Balances.CustomerBalanceQuery.LatestDate(g.Max(x => x.LastPaymentDate), extra?.LastDate);
                 var daily = g
                     .Where(x => x.ExecutionStatus == OrderExecutionStatus.InProgress)
                     .Sum(x => x.DailyInstallmentAmount);
@@ -93,7 +97,7 @@ public class GetCollectionBookHandler
                 // RealRating: بدون phantom sale-date boost
                 var score = remaining > 0
                     ? CustomerRatingCalculator.ScoreFor(
-                        sell, paid, remaining, saleDate, g.Max(x => x.LastPaymentDate), asOf, false)
+                        sell, paid, remaining, saleDate, lastPayment, asOf, false)
                     : null;
 
                 var sample = g.First();
@@ -111,7 +115,7 @@ public class GetCollectionBookHandler
                     AmountRemaining = remaining,
                     DailyInstallmentAmount = daily,
                     SaleDate = saleDate,
-                    LastPaymentDate = g.Max(x => x.LastPaymentDate),
+                    LastPaymentDate = lastPayment,
                     ActiveOrderId = activeOrder,
                     IsLegal = g.Any(x => x.IsLegal),
                     Score = score,

@@ -61,6 +61,10 @@ public class CreateOrderHandler : IRequestHandler<CreateOrderCommand, Result<Cre
             request.UserId,
             orderItems);
 
+        var discounted = CustomerDiscountApplier.ApplyToNewOrder(order, customer);
+        if (discounted.IsFailed)
+            return discounted.Error!;
+
         _dbContext.Orders.Add(order);
         await _dbContext.SaveChangesAsync(cancellationToken);
 

@@ -6,7 +6,6 @@ import '../../../core/theme/app_text_styles.dart';
 import '../../payments/presentation/collect_payment_sheet.dart';
 import '../../payments/presentation/payment_success_feedback.dart';
 import '../../receipts/data/receipt_build_helper.dart';
-import '../../receipts/presentation/receipt_preview_page.dart';
 import '../domain/entities/customer.dart';
 
 class CustomerDetailPage extends StatelessWidget {
@@ -71,18 +70,11 @@ class CustomerDetailPage extends StatelessWidget {
               await PaymentSuccessFeedback.playLocalSaveSuccess(context);
               if (!context.mounted) return;
               try {
-                final bytes = await buildCustomerReceiptPdf(
+                if (!context.mounted) return;
+                await openCustomerReceiptPdf(
+                  context: context,
                   customer: customer,
                   amountPaid: result.amount,
-                );
-                if (!context.mounted) return;
-                await Navigator.of(context).push(
-                  MaterialPageRoute(
-                    builder: (_) => ReceiptPreviewPage(
-                      bytes: bytes,
-                      title: receiptPreviewTitle(customer.name),
-                    ),
-                  ),
                 );
               } catch (_) {
                 if (!context.mounted) return;

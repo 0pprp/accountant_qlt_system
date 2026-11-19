@@ -31,7 +31,70 @@ public sealed record WrongSaleListResponse(
     int UnreadCount,
     int UnreviewedCount,
     int Page,
-    int PageSize);
+    int PageSize,
+    int SeenCount = 0,
+    int ReviewedCount = 0);
+
+public sealed record WrongSaleReviewInfoDto(
+    string? ReviewerName,
+    DateTimeOffset ReviewedAtUtc,
+    string? Note);
+
+public sealed record WrongSaleCustomerInfoDto(
+    string Name,
+    string? Phone,
+    int BranchId,
+    string? BranchName,
+    string? Address,
+    int? ListId,
+    string? ListName);
+
+public sealed record WrongSaleSaleInfoDto(
+    decimal SellAmount,
+    decimal DailyInstallment,
+    decimal PaidOnOrder,
+    decimal RemainingOnOrder,
+    decimal CustomerRemaining,
+    DateOnly? SaleDate);
+
+public sealed record WrongSaleEvaluationDto(
+    string Source,
+    string Title,
+    string EvaluatorLabel,
+    string? EvaluatorName,
+    string? ListName,
+    bool IsEvaluated,
+    int Rating,
+    string? Note,
+    decimal ShopStockEstimatedValue,
+    decimal EstimatedDailyRevenue,
+    decimal? SaleAmountAtEvaluation);
+
+public sealed record WrongSalePaymentDto(
+    int Id,
+    DateOnly Date,
+    decimal Amount,
+    string? Description);
+
+public sealed record WrongSaleMatchDto(
+    int CustomerId,
+    string Name,
+    string? Phone,
+    IReadOnlyList<string> MatchReasons,
+    DateOnly? LastSaleDate,
+    decimal TotalSales,
+    decimal TotalPaid,
+    decimal Remaining);
+
+public sealed record WrongSaleDetailDto(
+    WrongSaleNoticeDto Notice,
+    WrongSaleReviewInfoDto? Review,
+    WrongSaleCustomerInfoDto Customer,
+    WrongSaleSaleInfoDto Sale,
+    WrongSaleEvaluationDto Evaluation,
+    int PaymentsCount,
+    IReadOnlyList<WrongSalePaymentDto> Payments,
+    IReadOnlyList<WrongSaleMatchDto> Matches);
 
 /// <summary>
 /// نتيجة تقييم أول تحصيل للمندوب — يطابق مصدر FirstCollectionEvaluation:

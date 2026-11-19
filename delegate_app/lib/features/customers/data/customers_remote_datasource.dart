@@ -3,180 +3,114 @@ import '../../../core/network/json_map.dart';
 import '../../../core/security/secure_session_store.dart';
 import '../domain/entities/customer.dart';
 
+class CollectionBookSnapshot {
+  const CollectionBookSnapshot({
+    required this.customers,
+    required this.averageScore,
+    required this.averageLabel,
+    required this.previousWeekScore,
+    required this.ratedCustomerCount,
+    required this.installmentSum,
+    this.listId,
+    this.listName,
+  });
+
+  final List<Customer> customers;
+  final double averageScore;
+  final String averageLabel;
+  final double previousWeekScore;
+  final int ratedCustomerCount;
+  final double installmentSum;
+  final int? listId;
+  final String? listName;
+}
+
 class CustomersRemoteDataSource {
   CustomersRemoteDataSource(this._dio, this._session);
 
   final DioClient _dio;
   final SecureSessionStore _session;
 
-  Future<List<Customer>> fetchAllForDelegate() async {
+  /// دفتر التحصيل دفعة واحدة (بدل آلاف طلبات الإثراء).
+  Future<CollectionBookSnapshot> fetchCollectionBook() async {
     final userId = int.tryParse((await _session.userId) ?? '') ?? 0;
-    final basics = await _fetchAllPages();
-    if (basics.isEmpty) return [];
-
-    final enriched = <Customer>[];
-    const chunk = 6;
-    for (var i = 0; i < basics.length; i += chunk) {
-      final slice = basics.sublist(
-        i,
-        (i + chunk).clamp(0, basics.length),
+    final res = await _dio.dio.get('api/v1/app/Customers/collection-book');
+    final root = res.data;
+    if (root is! Map) {
+      return CollectionBookSnapshot(
+        customers: const [],
+        averageScore: 0,
+        averageLabel: 'ضعيف',
+        previousWeekScore: 0,
+        ratedCustomerCount: 0,
+        installmentSum: 0,
       );
-      final parts = await Future.wait(slice.map((c) => _enrich(c, userId)));
-      enriched.addAll(parts);
     }
-    return enriched;
-  }
 
-  Future<List<Customer>> _fetchAllPages() async {
-    final all = <Customer>[];
-    String? lastId;
-    for (var page = 0; page < 50; page++) {
-      final res = await _dio.dio.get(
-        'api/v1/app/Customers',
-        queryParameters: {
-          'size': 50,
-          if (lastId != null) 'lastId': lastId,
-        },
-      );
-      final data = res.data;
-      if (data is! List || data.isEmpty) break;
-
-      for (final e in data.whereType<Map>()) {
-        final id = JsonMap.asInt(e, ['id', 'Id']) ?? 0;
+    final m = Map<String, dynamic>.from(root);
+    final rawCustomers = JsonMap.pick(m, ['customers', 'Customers']);
+    final customers = <Customer>[];
+    if (rawCustomers is List) {
+      for (final e in rawCustomers.whereType<Map>()) {
+        final row = Map<String, dynamic>.from(e);
+        final id = JsonMap.asInt(row, ['customerId', 'CustomerId']) ?? 0;
         if (id <= 0) continue;
-        final name = JsonMap.str(e, ['fullName', 'FullName', 'name', 'Name']);
-        final shop = JsonMap.str(e, [
-          'businessName',
-          'BusinessName',
-        ]);
-        final created = JsonMap.str(e, ['createdAt', 'CreatedAt']);
-        all.add(
+        final name = JsonMap.str(row, ['fullName', 'FullName', 'name', 'Name']);
+        final shop = JsonMap.str(row, ['businessName', 'BusinessName']);
+        final phone = JsonMap.str(row, ['phoneNumber', 'PhoneNumber']);
+        final address = JsonMap.str(row, ['address', 'Address']);
+        final saleDate = JsonMap.str(row, ['saleDate', 'SaleDate']);
+        final lastPay = JsonMap.str(row, ['lastPaymentDate', 'LastPaymentDate']);
+        customers.add(
           Customer(
             customerId: id,
             name: name.isEmpty ? 'زبون #$id' : name,
             shopName: shop.isEmpty ? null : shop,
-            delegateId: 0,
-            dateSaleDevice: created.isEmpty ? null : created,
+            phone: phone.isEmpty ? null : phone,
+            address: address.isEmpty ? null : address,
+            delegateId: userId,
+            salePrice: JsonMap.asDouble(row, ['amountTotalSales', 'AmountTotalSales']),
+            remaining: JsonMap.asDouble(row, ['amountRemaining', 'AmountRemaining']),
+            receiptTotal: JsonMap.asDouble(row, ['receiptsTotal', 'ReceiptsTotal']),
+            dailyInstallment:
+                JsonMap.asDouble(row, ['dailyInstallmentAmount', 'DailyInstallmentAmount']),
+            dateSaleDevice: saleDate.isEmpty ? null : saleDate,
+            lastPaymentDate: lastPay.isEmpty ? null : lastPay,
+            activeOrderId: JsonMap.asInt(row, ['activeOrderId', 'ActiveOrderId']),
+            isLegal: JsonMap.asBool(row, ['isLegal', 'IsLegal']),
+            weekAmounts: [
+              JsonMap.asDouble(row, ['amount1', 'Amount1']) ?? 0,
+              JsonMap.asDouble(row, ['amount2', 'Amount2']) ?? 0,
+              JsonMap.asDouble(row, ['amount3', 'Amount3']) ?? 0,
+              JsonMap.asDouble(row, ['amount4', 'Amount4']) ?? 0,
+              JsonMap.asDouble(row, ['amount5', 'Amount5']) ?? 0,
+              JsonMap.asDouble(row, ['amount6', 'Amount6']) ?? 0,
+              JsonMap.asDouble(row, ['amount7', 'Amount7']) ?? 0,
+            ],
           ),
         );
-        if (created.isNotEmpty) lastId = created;
       }
-
-      if (data.length < 50) break;
     }
-    return all;
+
+    return CollectionBookSnapshot(
+      customers: customers,
+      averageScore: JsonMap.asDouble(m, ['averageScore', 'AverageScore']) ?? 0,
+      averageLabel: JsonMap.str(m, ['averageLabel', 'AverageLabel'], fallback: 'ضعيف'),
+      previousWeekScore:
+          JsonMap.asDouble(m, ['previousWeekScore', 'PreviousWeekScore']) ?? 0,
+      ratedCustomerCount:
+          JsonMap.asInt(m, ['ratedCustomerCount', 'RatedCustomerCount']) ?? 0,
+      installmentSum: JsonMap.asDouble(m, ['installmentSum', 'InstallmentSum']) ?? 0,
+      listId: JsonMap.asInt(m, ['listId', 'ListId']),
+      listName: () {
+        final n = JsonMap.str(m, ['listName', 'ListName']);
+        return n.isEmpty ? null : n;
+      }(),
+    );
   }
 
-  Future<Customer> _enrich(Customer base, int userId) async {
-    double? remaining;
-    double? sale;
-    double? paid;
-    double? daily;
-    int? orderId;
-    String? lastPay;
-    String? phone;
-    String? address;
-
-    try {
-      final fin = await _dio.dio.get(
-        'api/v1/app/Customers/${base.customerId}/financial-overview',
-      );
-      if (fin.data is Map) {
-        final m = fin.data as Map;
-        sale = JsonMap.asDouble(m, [
-          'totalSellAmount',
-          'TotalSellAmount',
-        ]);
-        paid = JsonMap.asDouble(m, [
-          'totalPaidAmount',
-          'TotalPaidAmount',
-        ]);
-        remaining = JsonMap.asDouble(m, [
-          'totalRemainingAmount',
-          'TotalRemainingAmount',
-        ]);
-        if (remaining == null && sale != null && paid != null) {
-          remaining = sale - paid;
-        }
-        daily = JsonMap.asDouble(m, [
-          'totalDailyInstallmentAmount',
-          'TotalDailyInstallmentAmount',
-        ]);
-      }
-    } catch (_) {}
-
-    try {
-      final detail = await _dio.dio.get(
-        'api/v1/app/Customers/${base.customerId}',
-      );
-      if (detail.data is Map) {
-        final m = detail.data as Map;
-        final p = JsonMap.str(m, [
-          'phoneNumber',
-          'PhoneNumber',
-          'phone',
-          'Phone',
-        ]);
-        if (p.isNotEmpty) phone = p;
-        final business = m['business'] ?? m['Business'];
-        if (business is Map) {
-          final addr = JsonMap.str(business, [
-            'address',
-            'Address',
-            'location',
-            'Location',
-          ]);
-          if (addr.isNotEmpty) address = addr;
-        }
-      }
-    } catch (_) {}
-
-    try {
-      final orders = await _dio.dio.get(
-        'api/v1/app/Customers/${base.customerId}/orders',
-      );
-      if (orders.data is List) {
-        for (final e in (orders.data as List).whereType<Map>()) {
-          final id = JsonMap.asInt(e, ['id', 'Id']) ?? 0;
-          final sell = JsonMap.asDouble(e, ['sellAmount', 'SellAmount']) ?? 0;
-          final paidAmt =
-              JsonMap.asDouble(e, ['paidAmount', 'PaidAmount']) ?? 0;
-          if (id > 0 && sell > paidAmt) {
-            orderId = id;
-            break;
-          }
-          if (orderId == null && id > 0) orderId = id;
-        }
-      }
-    } catch (_) {}
-
-    try {
-      final pays = await _dio.dio.get(
-        'api/v1/app/Customers/${base.customerId}/installment-payments',
-      );
-      if (pays.data is List && (pays.data as List).isNotEmpty) {
-        final first = (pays.data as List).first;
-        if (first is Map) {
-          final d = JsonMap.str(first, ['date', 'Date', 'createdAt', 'CreatedAt']);
-          if (d.isNotEmpty) lastPay = d;
-        }
-      }
-    } catch (_) {}
-
-    return Customer(
-      customerId: base.customerId,
-      name: base.name,
-      shopName: base.shopName,
-      phone: phone ?? base.phone,
-      address: address ?? base.address,
-      delegateId: userId,
-      salePrice: sale,
-      remaining: remaining,
-      dailyInstallment: daily,
-      receiptTotal: paid,
-      dateSaleDevice: base.dateSaleDevice,
-      lastPaymentDate: lastPay,
-      activeOrderId: orderId,
-    );
+  Future<List<Customer>> fetchAllForDelegate() async {
+    final book = await fetchCollectionBook();
+    return book.customers;
   }
 }

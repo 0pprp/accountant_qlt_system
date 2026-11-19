@@ -1,6 +1,7 @@
 import '../../../core/security/secure_session_store.dart';
 import '../../../core/time/iraq_date.dart';
 import '../../customers/data/customers_local_datasource.dart';
+import '../../customers/data/customers_remote_datasource.dart';
 import '../../payments/data/payments_local_datasource.dart';
 import '../../ratings/domain/services/customer_rating_calculator.dart';
 import '../domain/entities/delegate_home_snapshot.dart';
@@ -13,22 +14,75 @@ class HomeRepositoryImpl implements HomeRepository {
     required CustomersLocalDataSource customersLocal,
     required PaymentsLocalDataSource paymentsLocal,
     required SecureSessionStore session,
+    CustomersRemoteDataSource? customersRemote,
     AnnouncementsRemoteDataSource? announcementsRemote,
   })  : _customersLocal = customersLocal,
         _paymentsLocal = paymentsLocal,
         _session = session,
+        _customersRemote = customersRemote,
         _announcementsRemote = announcementsRemote;
 
   final CustomersLocalDataSource _customersLocal;
   final PaymentsLocalDataSource _paymentsLocal;
   final SecureSessionStore _session;
+  final CustomersRemoteDataSource? _customersRemote;
   final AnnouncementsRemoteDataSource? _announcementsRemote;
 
   @override
   Future<DelegateHomeSnapshot> loadHomeSnapshot() async {
-    final asOf = IraqDate.calendarDate();
     final name = (await _session.delegateName)?.trim();
     final city = (await _session.cityName)?.trim();
+    final announcements = await _loadAnnouncements();
+    final yesterday = await _yesterdayIncome();
+
+    // مصدر التقييم الصحيح: دفتر التحصيل من السيرفر (باقي > 0).
+    final remote = _customersRemote;
+    if (remote != null && await _session.hasSession) {
+      try {
+        final book = await remote.fetchCollectionBook();
+        if (book.customers.isNotEmpty) {
+          await _customersLocal.replaceAll(book.customers);
+        }
+        final listLabel = (book.listName != null && book.listName!.trim().isNotEmpty)
+            ? book.listName!.trim()
+            : ((city != null && city.isNotEmpty) ? city : 'قائمة التحصيل');
+        final previous = book.previousWeekScore;
+        final current = book.averageScore;
+        return DelegateHomeSnapshot(
+          delegateName: (name != null && name.isNotEmpty)
+              ? name
+              : 'مندوب #${await _session.delegateId ?? ''}',
+          listName: listLabel,
+          currentRating: current,
+          previousWeekRating: previous,
+          trend: CustomerRatingCalculator.trendArrow(current, previous),
+          installmentSum: book.installmentSum,
+          yesterdayIncome: yesterday,
+          announcements: announcements.items,
+          announcementsState: announcements.state,
+          announcementsError: announcements.errorMessage,
+          tutorialVideoUrl: null,
+        );
+      } catch (_) {
+        // سقوط إلى الحساب المحلي
+      }
+    }
+
+    return _fromLocalCache(
+      name: name,
+      city: city,
+      yesterday: yesterday,
+      announcements: announcements,
+    );
+  }
+
+  Future<DelegateHomeSnapshot> _fromLocalCache({
+    required String? name,
+    required String? city,
+    required double yesterday,
+    required AnnouncementsLoadResult announcements,
+  }) async {
+    final asOf = IraqDate.calendarDate();
     final customers = await _customersLocal.list();
 
     final scores = <int>[];
@@ -57,12 +111,8 @@ class HomeRepositoryImpl implements HomeRepository {
     }
 
     final current = CustomerRatingCalculator.averageScore(scores);
-    // Preview prior week: slightly lower seed until historical API exists.
     final previous = scores.isEmpty ? 0.0 : (current - 0.8);
     final trend = CustomerRatingCalculator.trendArrow(current, previous);
-
-    final yesterday = await _yesterdayIncome();
-    final announcements = await _loadAnnouncements();
 
     return DelegateHomeSnapshot(
       delegateName: (name != null && name.isNotEmpty)
@@ -108,5 +158,4 @@ class HomeRepositoryImpl implements HomeRepository {
       return 0;
     }
   }
-
 }

@@ -1,4 +1,5 @@
 using Application.Common.Interfaces;
+using Application.FollowerWork.Common;
 using Application.ManagementSummary.Common;
 using Application.SalesRatings.Common;
 using Domain.Entities.OrderAggregate.Enums;
@@ -41,7 +42,10 @@ public class GetCommitteeListCardsHandler
             return new List<CommitteeListCardDto>();
 
         var listIds = lists.Select(x => x.Id).ToList();
-        var facts = await MaterializeFactsForListsAsync(listIds, request.ListId.HasValue, cancellationToken);
+        var facts = await MaterializeFactsForListsAsync(listIds, cancellationToken);
+        var captureByList = (await ShopCaptureProgressQuery.LoadAsync(_db, listIds, cancellationToken))
+            .GroupBy(r => r.ListId)
+            .ToDictionary(g => g.Key, g => g.ToList());
         var factsByList = facts
             .Where(f => f.OrderListId is > 0)
             .GroupBy(f => f.OrderListId!.Value)
@@ -56,8 +60,8 @@ public class GetCommitteeListCardsHandler
             // نفس معادلة دفتر التحصيل عند المندوب: RealRating + متوسط بسيط
             var (todayAvg, todayCount, todayLabel) = AverageLikeCollectionBook(listFacts, asOf);
             var (weekAvg, _, _) = AverageLikeCollectionBook(listFacts, weekAgo);
-            var continuous = listFacts.Where(f => DelegateContinuousCustomerRules.IsContinuous(
-                f.IsLegal, f.AmountRemaining, f.LastPaymentDate, asOf)).ToList();
+            captureByList.TryGetValue(list.Id, out var capture);
+            capture ??= [];
 
             cards.Add(new CommitteeListCardDto
             {
@@ -69,10 +73,19 @@ public class GetCommitteeListCardsHandler
                 PreviousMonthScore = Math.Round(weekAvg, 2, MidpointRounding.AwayFromZero),
                 ActiveCustomers = todayCount,
                 CollectionEnabled = list.CollectionEnabled,
-                LocatedCustomers = continuous.Count(f => f.CustomerHasGps || f.OrderHasGps),
-                LocationCustomers = request.ListId.HasValue ? continuous.OrderBy(f => f.FullName).ThenBy(f => f.CustomerId)
-                    .Select(f => new CommitteeLocationCustomer(f.CustomerId, f.FullName, f.Phone, f.CustomerHasGps || f.OrderHasGps)).ToList() : null,
-                LocationCustomersTotal = continuous.Count
+                LocatedCustomers = capture.Count(r => r.HasLocation),
+                PhotographedCustomers = capture.Count(r => r.HasPhoto),
+                CompletedCustomers = capture.Count(r => r.IsComplete),
+                LocationCustomers = request.ListId.HasValue
+                    ? capture
+                        .OrderBy(r => r.IsComplete ? 1 : 0)
+                        .ThenBy(r => r.CustomerName, StringComparer.CurrentCultureIgnoreCase)
+                        .ThenBy(r => r.CustomerId)
+                        .Select(r => new CommitteeLocationCustomer(
+                            r.CustomerId, r.CustomerName, r.PhoneNumber ?? "", r.HasLocation, r.HasPhoto, r.ShopName))
+                        .ToList()
+                    : null,
+                LocationCustomersTotal = capture.Count
             });
         }
 
@@ -106,72 +119,24 @@ public class GetCommitteeListCardsHandler
     }
 
     private async Task<List<ListCardFact>> MaterializeFactsForListsAsync(
-        IReadOnlyList<int> listIds, bool includeNames,
+        IReadOnlyList<int> listIds,
         CancellationToken ct)
-    {
-        var rows = await _db.Orders.AsNoTracking()
-            .Where(o => o.ApprovalStatus == OrderApprovalStatus.Approved
-                        && o.OrderListId != null
-                        && listIds.Contains(o.OrderListId.Value))
-            .Select(o => new
+        => (await FollowerFactsQuery.LoadAsync(_db, listIds, null, null, ct))
+            .Select(f => new ListCardFact
             {
-                o.CustomerId,
-                FullName = includeNames ? o.Customer!.FullName : "",
-                Phone = includeNames ? o.Customer!.PhoneNumber : "",
-                o.OrderListId,
-                o.SellAmount,
-                o.SaleDate,
-                o.CreatedAt,
-                Receipts = o.InstallmentPayments.Sum(ip => ip.Amount),
-                LastPaymentDate = o.InstallmentPayments.Max(ip => (DateOnly?)ip.Date),
-                IsLegal = o.Customer != null && o.Customer.IsLegal,
-                CustomerHasGps = o.Customer != null
-                                 && o.Customer.Business.GpsLatitude != null
-                                 && o.Customer.Business.GpsLongitude != null
-                                 && !(o.Customer.Business.GpsLatitude == 0
-                                      && o.Customer.Business.GpsLongitude == 0),
-                OrderHasGps = o.Location != null
-                              && !(o.Location.Latitude == 0 && o.Location.Longitude == 0)
-            })
-            .ToListAsync(ct);
-
-        return rows
-            .GroupBy(r => new { r.CustomerId, r.OrderListId })
-            .Select(g =>
-            {
-                var saleDates = g.Where(x => x.SaleDate != null).Select(x => x.SaleDate!.Value).ToList();
-                DateOnly? saleDate = saleDates.Count > 0
-                    ? saleDates.Min()
-                    : g.Where(x => x.CreatedAt != null)
-                        .Select(x => IraqCalendar.ToLocalDate(x.CreatedAt!.Value))
-                        .OrderBy(d => d)
-                        .Cast<DateOnly?>()
-                        .FirstOrDefault();
-
-                var sell = g.Sum(x => x.SellAmount);
-                var paid = g.Sum(x => x.Receipts);
-                return new ListCardFact
-                {
-                    CustomerId = g.Key.CustomerId,
-                    FullName = g.First().FullName, Phone = g.First().Phone,
-                    OrderListId = g.Key.OrderListId,
-                    AmountTotalSales = sell,
-                    ReceiptsTotal = paid,
-                    AmountRemaining = Math.Round(sell - paid, MidpointRounding.AwayFromZero),
-                    SaleDate = saleDate,
-                    LastPaymentDate = g.Max(x => x.LastPaymentDate),
-                    IsLegal = g.Any(x => x.IsLegal),
-                    CustomerHasGps = g.Any(x => x.CustomerHasGps),
-                    OrderHasGps = g.Any(x => x.OrderHasGps)
-                };
+                CustomerId = f.CustomerId,
+                OrderListId = f.OrderListId,
+                AmountTotalSales = f.AmountTotalSales,
+                ReceiptsTotal = f.ReceiptsTotal,
+                AmountRemaining = f.AmountRemaining,
+                SaleDate = f.SaleDate,
+                LastPaymentDate = f.LastPaymentDate,
+                IsLegal = f.IsLegal
             })
             .ToList();
-    }
 
     private sealed class ListCardFact
     {
-        public string FullName { get; init; } = "";
-        public string Phone { get; init; } = "";
         public int CustomerId { get; init; }
         public int? OrderListId { get; init; }
         public double AmountTotalSales { get; init; }
@@ -180,7 +145,5 @@ public class GetCommitteeListCardsHandler
         public DateOnly? SaleDate { get; init; }
         public DateOnly? LastPaymentDate { get; init; }
         public bool IsLegal { get; init; }
-        public bool CustomerHasGps { get; init; }
-        public bool OrderHasGps { get; init; }
     }
 }

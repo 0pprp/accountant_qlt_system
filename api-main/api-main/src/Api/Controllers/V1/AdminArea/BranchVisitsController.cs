@@ -16,8 +16,9 @@ public class BranchVisitsController : ApiController
     [HttpGet]
     public async Task<ActionResult<BranchVisitListResponse>> List(
         [FromQuery] int page = 1,
-        [FromQuery] int pageSize = 50)
-        => (await _mediator.Send(new ListBranchVisitsQuery { Page = page, PageSize = pageSize }, CancellationToken))
+        [FromQuery] int pageSize = 50,
+        [FromQuery] int? branchId = null)
+        => (await _mediator.Send(new ListBranchVisitsQuery { Page = page, PageSize = pageSize, BranchId = branchId }, CancellationToken))
             .ToHttpResponse();
 
     [HasPermission(Permissions.BranchVisit.Read)]

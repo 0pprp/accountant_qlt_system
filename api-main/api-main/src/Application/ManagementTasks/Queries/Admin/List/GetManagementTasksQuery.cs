@@ -11,4 +11,5 @@ public record GetManagementTasksQuery : IRequest<Result<PaginatedList<Management
     public ManagementTaskStatus? Status { get; init; }
     public string? Search { get; init; }
     public bool InboxForMe { get; init; }
+    public bool IncludeTransferredByMe { get; init; }
 }

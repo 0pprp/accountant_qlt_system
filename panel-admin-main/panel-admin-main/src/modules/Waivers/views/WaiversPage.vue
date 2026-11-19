@@ -5,6 +5,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/vue-query'
 import { axiosInstance } from '@/modules/Core/plugins/axios'
 import { useAuthStore } from '@/modules/Auth/store'
 import { AppButton, AppInput, AppSearchField, AppSelect, AppTextarea } from '@/modules/Core/components/ui'
+import DelegateWaiversBoard from '@/modules/Waivers/components/DelegateWaiversBoard.vue'
 
 interface WaiverSummary {
   id: number
@@ -53,6 +54,7 @@ const amount = ref('')
 const note = ref('')
 const createCustomerId = ref('')
 const formError = ref<string | null>(null)
+const applyError = ref<string | null>(null)
 const submitting = ref(false)
 
 let t: ReturnType<typeof setTimeout> | null = null
@@ -74,7 +76,7 @@ const listQuery = useQuery({
     auth.branchGeneration,
     auth.sessionGeneration,
   ]),
-  enabled: computed(() => canRead.value && auth.permissionsReady),
+  enabled: computed(() => canRead.value && auth.permissionsReady && scope.value !== 'delegate'),
   queryFn: async ({ signal }) => {
     const { data } = await axiosInstance.get<WaiverListResponse>('/admin/Waivers', {
       signal,
@@ -92,7 +94,7 @@ const listQuery = useQuery({
 
 const detailQuery = useQuery({
   queryKey: computed(() => ['waivers', 'detail', selectedId.value]),
-  enabled: computed(() => canRead.value && selectedId.value != null),
+  enabled: computed(() => canRead.value && selectedId.value != null && scope.value !== 'delegate'),
   queryFn: async ({ signal }) => {
     const { data } = await axiosInstance.get(`/admin/Waivers/${selectedId.value}`, { signal })
     return data as WaiverSummary & {
@@ -152,7 +154,15 @@ const applyMut = useMutation({
     })
     return data
   },
-  onSuccess: async () => qc.invalidateQueries({ queryKey: ['waivers'] }),
+  onSuccess: async () => {
+    applyError.value = null
+    await qc.invalidateQueries({ queryKey: ['waivers'] })
+  },
+  onError: (e: unknown) => {
+    const body = (e as { response?: { data?: { errors?: { message?: string }[]; detail?: string } } }).response?.data
+    applyError.value = body?.errors?.[0]?.message || body?.detail || 'تعذر تطبيق الخصم. تحقق من الحالة والصلاحية.'
+    void qc.invalidateQueries({ queryKey: ['waivers'] })
+  },
 })
 const createMut = useMutation({
   mutationFn: async () => {
@@ -243,7 +253,9 @@ const title = computed(() => {
 </script>
 
 <template>
+  <DelegateWaiversBoard v-if="scope === 'delegate'" />
   <div
+    v-else
     class="wv-page"
     dir="rtl"
   >
@@ -385,6 +397,7 @@ const title = computed(() => {
                 تطبيق الخصم
               </AppButton>
             </div>
+            <p v-if="applyError" class="wv-err" role="alert">{{ applyError }}</p>
           </template>
         </aside>
       </div>

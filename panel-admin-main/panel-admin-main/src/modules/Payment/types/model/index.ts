@@ -19,6 +19,7 @@ export interface Payment {
   date: string
   dailyInstallmentAmount: number
   sellerFullName: string | null
+  orderListName?: string | null
   amount: string | number
   description: string | null
 }

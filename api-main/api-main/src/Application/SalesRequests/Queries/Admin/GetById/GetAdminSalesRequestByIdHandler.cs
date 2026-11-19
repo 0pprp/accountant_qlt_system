@@ -2,6 +2,8 @@ using Application.Common.Interfaces;
 using Application.SalesRequests.Common;
 using Application.SalesRequests.Queries.Admin.List;
 using Microsoft.EntityFrameworkCore;
+using Domain.Entities.SalesRequestAggregate.Enums;
+using SeedPermissions = Application.Common.SeedData.Permissions;
 
 namespace Application.SalesRequests.Queries.Admin.GetById;
 
@@ -39,9 +41,20 @@ public class GetAdminSalesRequestByIdHandler
             row.ExceptionConsumedAtUtc,
             row.SourceType);
 
-        if (allowed == false)
+        if (allowed == false && await IsExceptionReaderAsync(row.Id, row.ExceptionHoldStatus, cancellationToken) == false)
             return SalesRequestErrors.TabForbidden;
 
         return AdminSalesRequestRowMapper.ToItem(row);
+    }
+
+    private async Task<bool> IsExceptionReaderAsync(int requestId, SalesRequestExceptionHoldStatus? hold, CancellationToken ct)
+    {
+        if (_currentUser.HasPermission(SeedPermissions.SalesRequest.TabExceptions) == false
+            && _currentUser.HasPermission(SeedPermissions.SalesRequest.ExceptionDecide) == false)
+            return false;
+        if (hold is not null)
+            return true;
+        return await _db.SalesRequestTimelineEntries.AsNoTracking()
+            .AnyAsync(e => e.SalesRequestId == requestId && e.EventType == SalesRequestTimelineEventType.ExceptionRequested, ct);
     }
 }

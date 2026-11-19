@@ -11,10 +11,12 @@ import 'package:sales_employee_app/features/sales/presentation/orders_tab.dart';
 import 'package:sales_employee_app/features/sales/presentation/sales_nav.dart';
 import 'package:sales_employee_app/features/sales/presentation/submitted_sales_requests_page.dart';
 import 'package:sales_employee_app/features/shift/presentation/shift_page.dart';
+import 'package:sales_employee_app/features/management_tasks/presentation/my_tasks_page.dart';
 import 'package:sales_employee_app/features/support/presentation/send_manager_note_page.dart';
 import 'package:sales_employee_app/features/support/presentation/submit_complaint_page.dart';
 import 'package:sales_employee_app/features/support/presentation/tutorial_videos_page.dart';
 import 'package:sales_employee_app/injection.dart';
+import '../../../archive/presentation/archive_bundles_page.dart';
 
 class HomeDrawer extends StatefulWidget {
   const HomeDrawer({
@@ -178,6 +180,18 @@ class _HomeDrawerState extends State<HomeDrawer> with SingleTickerProviderStateM
                       Navigator.pop(context);
                       Navigator.of(context).push(
                         MaterialPageRoute(
+                          builder: (_) => const ArchiveBundlesPage(),
+                        ),
+                      );
+                    },
+                  ),
+                  _item(
+                    icon: Icons.outbox_outlined,
+                    title: 'طلباتي المرسلة',
+                    onTap: () {
+                      Navigator.pop(context);
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
                           builder: (_) => const SubmittedSalesRequestsPage(),
                         ),
                       );
@@ -194,6 +208,18 @@ class _HomeDrawerState extends State<HomeDrawer> with SingleTickerProviderStateM
                         fontSize: 12,
                       ),
                     ),
+                  ),
+                  _item(
+                    icon: Icons.task_alt_outlined,
+                    title: 'مهامي',
+                    onTap: () {
+                      Navigator.pop(context);
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => const MyTasksPage(),
+                        ),
+                      );
+                    },
                   ),
                   _item(
                     icon: Icons.ondemand_video_rounded,

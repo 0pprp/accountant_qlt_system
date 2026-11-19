@@ -94,7 +94,8 @@ public sealed record ManagementRatingsCustomerCardDto(
     double? AmountRemaining,
     double? AmountTotal,
     bool IsLegal,
-    bool HidePaidRemaining);
+    bool HidePaidRemaining,
+    double? Installment = null);
 
 public sealed record ManagementRatingsCustomersResponse(
     string Scope,

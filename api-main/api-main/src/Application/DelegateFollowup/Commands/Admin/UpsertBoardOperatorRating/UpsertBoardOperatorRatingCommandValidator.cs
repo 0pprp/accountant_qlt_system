@@ -21,6 +21,11 @@ public class UpsertBoardOperatorRatingCommandValidator : AbstractValidator<Upser
             .WithMessage("التقييم يجب أن يكون بين 0 و 10");
 
         RuleFor(x => x.Note)
+            .NotEmpty()
+            .When(x => DelegateFollowupRules.BoardOperatorNoteIsRequired(x.Score))
+            .WithMessage("الملاحظة إلزامية عندما يكون التقييم 6 أو أقل");
+
+        RuleFor(x => x.Note)
             .MaximumLength(500)
             .WithMessage("يجب ألا تتجاوز الملاحظة 500 حرف");
     }

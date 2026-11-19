@@ -12,7 +12,7 @@ public record GetPurchaseExcelReportItem
     public int Id { get; set; }
     public int FactorNumber { get; set; }
     public double TotalAmount { get; set; }
-    public required string SafeName { get; set; }
+    public string? SafeName { get; set; }
     public int PurchaseItemsCount { get; set; }
     public DateTimeOffset CreatedAt { get; set; }
 }

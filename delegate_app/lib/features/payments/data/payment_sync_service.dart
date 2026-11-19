@@ -15,7 +15,8 @@ class PaymentSyncService with WidgetsBindingObserver {
   StreamSubscription<List<ConnectivityResult>>? _sub;
   bool _started = false;
   bool _wasOffline = true;
-  bool _running = false;
+  Future<int>? _running;
+  final queueChanged = ValueNotifier<int>(0);
 
   int lastUploaded = 0;
   String? lastError;
@@ -43,18 +44,22 @@ class PaymentSyncService with WidgetsBindingObserver {
     }
   }
 
-  Future<int> syncNow({SyncProgressCallback? onProgress}) async {
-    if (_running) return lastUploaded;
-    _running = true;
+  Future<int> syncNow({SyncProgressCallback? onProgress}) {
+    return _running ??= _run(onProgress);
+  }
+
+  Future<int> _run(SyncProgressCallback? onProgress) async {
     try {
       lastError = null;
+      lastUploaded = 0;
       lastUploaded = await _syncUseCase(onProgress: onProgress);
       return lastUploaded;
     } catch (e) {
       lastError = '$e'.replaceFirst(RegExp(r'^[^:]+:\s*'), '');
       return 0;
     } finally {
-      _running = false;
+      _running = null;
+      if (lastUploaded > 0) queueChanged.value++;
     }
   }
 

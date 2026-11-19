@@ -11,11 +11,13 @@ class CollectPaymentUseCase {
   Future<bool> call({
     required int customerId,
     required String customerName,
+    int? saleOrderId,
     required double amount,
   }) {
     return _repo.collectOffline(
       customerId: customerId,
       customerName: customerName,
+        saleOrderId: saleOrderId,
       amount: amount,
     );
   }

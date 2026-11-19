@@ -107,10 +107,19 @@ public class Order : AuditableEntity
     public DateTimeOffset? SalesCompletedAtUtc { get; private set; }
     /// <summary>قراءة مشتركة لصندوق مبيعات الفرع (ليست لكل مستخدم) — لا تغيّر حالة البيع.</summary>
     public DateTimeOffset? BranchManagerReadAtUtc { get; private set; }
+    /// <summary>ما طُبِّق فعلاً من خصم الزبون على هذا الطلب — SellAmount صافٍ، وهذا يعيد بناء الإجمالي.</summary>
+    public double SellAmountDiscountApplied { get; private set; }
+
+    /// <summary>ما طُبِّق فعلاً من خصم القسط اليومي على هذا الطلب.</summary>
+    public double DailyInstallmentDiscountApplied { get; private set; }
+
     public int? SellerId { get; set; }
     public int CustomerId { get; set; }
     public int BranchId { get; set; }
     public int? OrderListId { get; set; }
+
+    /// <summary>مفتاح استيراد ثابت — مثال: najaf|CustomersSales|{id}.</summary>
+    public string? ImportKey { get; set; }
 
     public User? Seller { get; set; }
     public Customer? Customer { get; set; }
@@ -219,11 +228,51 @@ public class Order : AuditableEntity
             Step = OrderStep.SellerInfo;
     }
 
+    /// <summary>سعر البيع قبل خصم الزبون — دالة لا خاصية حتى لا يولّد EF لها عموداً.</summary>
+    public double GrossSell() => SellAmount + SellAmountDiscountApplied;
+
+    /// <summary>القسط اليومي قبل خصم الزبون.</summary>
+    public double GrossDaily() => DailyInstallmentAmount + DailyInstallmentDiscountApplied;
+
+    /// <summary>
+    /// يعيد بناء الإجمالي ثم يطرح الخصم الهدف، فإعادة النداء بنفس القيمة عملية صفرية
+    /// ولا يتراكم خصم على خصم.
+    /// </summary>
+    public void ApplyCustomerDiscounts(double sellDiscount, double dailyDiscount)
+    {
+        SellAmount = Math.Round(GrossSell() - sellDiscount, 2);
+        DailyInstallmentAmount = Math.Round(GrossDaily() - dailyDiscount, 2);
+        SellAmountDiscountApplied = Math.Round(sellDiscount, 2);
+        DailyInstallmentDiscountApplied = Math.Round(dailyDiscount, 2);
+    }
+
+    /// <summary>يضبط مبالغ البيع من قيم إجمالية ثم يطبّق خصم الزبون — مسار الـcheckout.</summary>
+    public void SetSaleAmounts(
+        double grossSellAmount,
+        double prepaymentAmount,
+        double grossDailyInstallmentAmount,
+        double sellDiscount,
+        double dailyDiscount)
+    {
+        SellAmount = grossSellAmount;
+        DailyInstallmentAmount = grossDailyInstallmentAmount;
+        SellAmountDiscountApplied = 0;
+        DailyInstallmentDiscountApplied = 0;
+        PrepaymentAmount = prepaymentAmount;
+        ApplyCustomerDiscounts(sellDiscount, dailyDiscount);
+    }
+
+    /// <summary>الإعفاء يُنقص الصافي ولا يمسّ خصم الزبون المطبَّق.</summary>
+    public void ApplyWaiverDiscount(double capped)
+    {
+        SellAmount = Math.Max(0, SellAmount - capped);
+    }
+
     public void Update(
         double buyAmount,
-        double sellAmount,
+        double grossSellAmount,
         double prepaymentAmount,
-        double dailyInstallmentAmount,
+        double grossDailyInstallmentAmount,
         Location? location,
         string? creationAddress,
         DateOnly? saleDate,
@@ -232,9 +281,12 @@ public class Order : AuditableEntity
         int? orderListId)
     {
         BuyAmount = buyAmount;
-        SellAmount = sellAmount;
-        PrepaymentAmount = prepaymentAmount;
-        DailyInstallmentAmount = dailyInstallmentAmount;
+        SetSaleAmounts(
+            grossSellAmount,
+            prepaymentAmount,
+            grossDailyInstallmentAmount,
+            SellAmountDiscountApplied,
+            DailyInstallmentDiscountApplied);
         Location = location;
         CreationAddress = creationAddress;
         SaleDate = saleDate;

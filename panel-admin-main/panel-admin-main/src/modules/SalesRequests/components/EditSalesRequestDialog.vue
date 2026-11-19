@@ -54,7 +54,8 @@
       />
 
       <AppSelect
-        v-model="provinceId"
+        :model-value="provinceId"
+        @update:model-value="onProvinceSelected"
         label="المحافظة"
         placeholder="اختر محافظة"
         :options="provinceOptions"
@@ -253,11 +254,15 @@ const branchChanged = computed(
   () => branchId.value != null && branchId.value !== props.request.branchId,
 )
 
+const normalizedPhone = computed(() => customerPhone.value
+  .replace(/[٠-٩]/g, c => String(c.charCodeAt(0) - 0x660))
+  .replace(/[۰-۹]/g, c => String(c.charCodeAt(0) - 0x6f0))
+  .replace(/[\s()-]/g, ''))
+
 const canSubmit = computed(() => {
   if (!customerName.value.trim()) return false
-  if (!/^07\d{9}$/.test(customerPhone.value.trim())) return false
+  if (!/^07\d{9}$/.test(normalizedPhone.value)) return false
   if (!branchId.value) return false
-  if (!provinceId.value) return false
   if (branchChanged.value && !employeeId.value) return false
   if ((employeeChanged.value || branchChanged.value) && !reason.value.trim())
     return false
@@ -307,8 +312,10 @@ watch(
   },
 )
 
-watch(provinceId, (next, prev) => {
-  if (!props.open || next === prev) return
+function onProvinceSelected(value: string | number | boolean | null) {
+  const next = typeof value === 'number' ? value : null
+  if (next === provinceId.value) return
+  provinceId.value = next
   const stillValid = allBranches.value.some(
     (b) => b.id === branchId.value && b.province?.id === next,
   )
@@ -316,7 +323,7 @@ watch(provinceId, (next, prev) => {
     branchId.value = null
     employeeId.value = null
   }
-})
+}
 
 watch(branchId, (next, prev) => {
   if (!props.open || next === prev) return
@@ -326,16 +333,16 @@ watch(branchId, (next, prev) => {
 })
 
 function submit() {
-  if (!canSubmit.value || !branchId.value) return
+  if (props.busy || !canSubmit.value || !branchId.value) return
   errorMsg.value = null
   emit('confirm', {
     customerName: customerName.value.trim(),
-    customerPhone: customerPhone.value.trim(),
+    customerPhone: normalizedPhone.value,
     address: address.value.trim() || undefined,
     requestedProduct: requestedProduct.value.trim() || undefined,
     branchId: branchId.value,
     provinceId: provinceId.value,
-    employeeId: employeeId.value,
+    employeeId: employeeChanged.value || branchChanged.value ? employeeId.value : undefined,
     reason: reason.value.trim() || undefined,
   })
 }

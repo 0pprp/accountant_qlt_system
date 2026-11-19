@@ -2,6 +2,7 @@ import { FOLLOWER_WORK_CANONICAL_PATH } from '../domain/sections'
 
 const ALLOWED_PREFIXES = [
   FOLLOWER_WORK_CANONICAL_PATH,
+  '/management/follower-work',
   '/management/oversight/follower-work',
   '/management/director/follower-work',
 ] as const

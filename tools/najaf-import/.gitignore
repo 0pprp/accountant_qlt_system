@@ -1,0 +1,6 @@
+.local/
+state.json
+exceptions.jsonl
+*.env
+__pycache__/
+.venv/

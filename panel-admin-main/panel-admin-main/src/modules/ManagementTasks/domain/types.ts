@@ -205,3 +205,5 @@ export interface ResendManagementTaskPayload {
 }
 
 export type ManagementTaskSimpleAction = 'accept' | 'complete' | 'confirm'
+
+export const MANAGEMENT_TASK_BRANCH_MANAGER_AUDIENCE = 'branchManager'

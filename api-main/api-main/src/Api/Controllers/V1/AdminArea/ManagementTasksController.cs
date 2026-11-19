@@ -44,7 +44,8 @@ public class ManagementTasksController : ApiController
         [FromQuery] int? branchId,
         [FromQuery] ManagementTaskStatus? status,
         [FromQuery] string? search,
-        [FromQuery] bool inboxForMe = false)
+        [FromQuery] bool inboxForMe = false,
+        [FromQuery] bool includeTransferredByMe = false)
     {
         var result = await _mediator.Send(new GetManagementTasksQuery
         {
@@ -52,7 +53,8 @@ public class ManagementTasksController : ApiController
             BranchId = branchId,
             Status = status,
             Search = search,
-            InboxForMe = inboxForMe
+            InboxForMe = inboxForMe,
+            IncludeTransferredByMe = includeTransferredByMe
         }, CancellationToken);
         return result.ToHttpResponse();
     }
@@ -60,11 +62,25 @@ public class ManagementTasksController : ApiController
     [HasPermission(Permissions.ManagementTask.Assign)]
     [HttpGet("assignee-options")]
     public async Task<ActionResult<List<ManagementTaskAssigneeOptionDto>>> AssigneeOptions(
-        [FromQuery] int branchId)
+        [FromQuery] int branchId,
+        [FromQuery] string? audience = null)
     {
         var result = await _mediator.Send(new GetManagementTaskAssigneeOptionsQuery
         {
-            BranchId = branchId
+            BranchId = branchId,
+            Audience = audience
+        }, CancellationToken);
+        return result.ToHttpResponse();
+    }
+
+    [HasPermission(Permissions.ManagementTask.Transfer)]
+    [HttpGet("transfer-targets")]
+    public async Task<ActionResult<List<ManagementTaskAssigneeOptionDto>>> TransferTargets([FromQuery] int branchId)
+    {
+        var result = await _mediator.Send(new GetManagementTaskAssigneeOptionsQuery
+        {
+            BranchId = branchId,
+            Audience = "branchManager"
         }, CancellationToken);
         return result.ToHttpResponse();
     }

@@ -33,6 +33,13 @@ class SecureSessionStore {
     return v == '1' || v == 'true';
   }
 
+  Future<void> setFollowerCollectionEnabled(bool enabled) async {
+    await _storage.write(
+      key: _kFollowerCollectionEnabled,
+      value: enabled ? '1' : '0',
+    );
+  }
+
   Future<String?> get ownerKey async {
     final current = await _storage.read(key: _kOwnerKey);
     if (current != null && current.isNotEmpty) return current;

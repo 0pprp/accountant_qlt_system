@@ -12,7 +12,9 @@ export function useUpsertBoardRatingMutation() {
   return useMutation({
     mutationFn: async (args: UpsertBoardRatingPayload) => {
       const { data } = await axiosInstance.post<DelegateFollowupActionResult>(
-        DelegateFollowupEndpoints.boardRating(args.listId),
+        args.slot === 'accountant'
+          ? DelegateFollowupEndpoints.accountantRating(args.listId)
+          : DelegateFollowupEndpoints.boardRating(args.listId),
         { score: args.score, note: args.note },
         { params: { branchId: args.branchId } }
       )

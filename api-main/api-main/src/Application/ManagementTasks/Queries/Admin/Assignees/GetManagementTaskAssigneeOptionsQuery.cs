@@ -6,4 +6,5 @@ public record GetManagementTaskAssigneeOptionsQuery : IRequest<Result<List<Manag
 {
     public int? BranchId { get; init; }
     public string? Search { get; init; }
+    public string? Audience { get; init; }
 }

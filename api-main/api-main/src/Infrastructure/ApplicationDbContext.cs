@@ -1,4 +1,4 @@
-using System.Reflection;
+﻿using System.Reflection;
 using Application.Common.Interfaces;
 using Domain.Entities.AttachmentAggregate;
 using Domain.Entities.BranchAggregate;
@@ -8,6 +8,7 @@ using Domain.Entities.FollowerWorkAggregate;
 using Domain.Entities.LegalFollowupAggregate;
 using Domain.Entities.InstallmentPaymentAggregate;
 using Domain.Entities.DelegateFollowupAggregate;
+using Domain.Entities.ArchiveAggregate;
 using Domain.Entities.ManagementTaskAggregate;
 using Domain.Entities.ActivityLogAggregate;
 using Domain.Entities.NotificationAggregate;
@@ -62,6 +63,11 @@ public class ApplicationDbContext : DbContext, IApplicationDbContext
     public DbSet<User> Users { get; set; }
     public DbSet<Customer> Customers { get; set; }
     public DbSet<CustomerStaffRating> CustomerStaffRatings { get; set; }
+    public DbSet<CustomerLocation> CustomerLocations { get; set; }
+    public DbSet<CustomerShopPhoto> CustomerShopPhotos { get; set; }
+    public DbSet<CustomerDocument> CustomerDocuments { get; set; }
+    public DbSet<CustomerRatingSnapshot> CustomerRatingSnapshots { get; set; }
+    public DbSet<CustomerShopProfile> CustomerShopProfiles { get; set; }
     public DbSet<UserLogin> UserLogins { get; set; }
     public DbSet<UserRole> UserRoles { get; set; }
     public DbSet<Role> Roles { get; set; }
@@ -84,9 +90,8 @@ public class ApplicationDbContext : DbContext, IApplicationDbContext
     public DbSet<Purchase> Purchases { get; set; }
     public DbSet<PurchaseItem> PurchaseItems { get; set; }
     public DbSet<Safe> Safes { get; set; }
+    public DbSet<SafeMovement> SafeMovements { get; set; }
     public DbSet<Transaction> Transactions { get; set; }
-    public DbSet<SafeTransferTransaction> SafeTransferTransactions { get; set; }
-    public DbSet<SellerCashDeliveryTransaction> SellerCashDeliveryTransactions { get; set; }
     public DbSet<Notification> Notifications { get; set; }
     public DbSet<ActivityLog> ActivityLogs { get; set; }
     public DbSet<SalesShift> SalesShifts { get; set; }
@@ -105,6 +110,10 @@ public class ApplicationDbContext : DbContext, IApplicationDbContext
     public DbSet<ManagementTaskEvent> ManagementTaskEvents { get; set; }
     public DbSet<ManagementTaskAttachment> ManagementTaskAttachments { get; set; }
     public DbSet<ManagementTaskChangeOutbox> ManagementTaskChangeOutboxes { get; set; }
+    public DbSet<ArchiveBundle> ArchiveBundles { get; set; }
+    public DbSet<ArchiveTransaction> ArchiveTransactions { get; set; }
+    public DbSet<ArchiveTransactionEvent> ArchiveTransactionEvents { get; set; }
+    public DbSet<ArchiveChangeOutbox> ArchiveChangeOutboxes { get; set; }
     public DbSet<FollowerSaleAuthentication> FollowerSaleAuthentications { get; set; }
     public DbSet<FollowerCustomerRatingSnapshot> FollowerCustomerRatingSnapshots { get; set; }
     public DbSet<CustomerNote> CustomerNotes { get; set; }

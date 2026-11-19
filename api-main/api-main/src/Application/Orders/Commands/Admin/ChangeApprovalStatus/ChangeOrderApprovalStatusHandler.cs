@@ -18,13 +18,15 @@ public class ChangeOrderApprovalStatusHandler : IRequestHandler<ChangeOrderAppro
     private readonly IApplicationDbContext _dbContext;
     private readonly INotificationService _notificationService;
     private readonly IActivityLogService _activityLogService;
+    private readonly ISafeLedger _safeLedger;
 
     public ChangeOrderApprovalStatusHandler(IApplicationDbContext dbContext, INotificationService notificationService,
-        IActivityLogService activityLogService)
+        IActivityLogService activityLogService, ISafeLedger safeLedger)
     {
         _dbContext = dbContext;
         _notificationService = notificationService;
         _activityLogService = activityLogService;
+        _safeLedger = safeLedger;
     }
 
     public async Task<Result> Handle(ChangeOrderApprovalStatusCommand request, CancellationToken cancellationToken)
@@ -42,6 +44,9 @@ public class ChangeOrderApprovalStatusHandler : IRequestHandler<ChangeOrderAppro
 
         if (order.ApprovalStatus != OrderApprovalStatus.Pending)
             return OrderErrors.ApprovalStatusOfOrderHasBeenSetBefore;
+
+        // أي خروج مبكر يتراجع تلقائياً عند الـdispose قبل الـcommit
+        await using var dbTransaction = await _dbContext.Database.BeginTransactionAsync(cancellationToken);
 
         if (request.ApprovalStatus == OrderApprovalStatus.Approved)
         {
@@ -79,6 +84,7 @@ public class ChangeOrderApprovalStatusHandler : IRequestHandler<ChangeOrderAppro
             TargetEntityType.Order,
             request.OrderId);
         await _dbContext.SaveChangesAsync(cancellationToken);
+        await dbTransaction.CommitAsync(cancellationToken);
 
         return Result.Success();
     }
@@ -96,18 +102,16 @@ public class ChangeOrderApprovalStatusHandler : IRequestHandler<ChangeOrderAppro
             .Select(x => (int?)x.FactorNumber)
             .MaxAsync(cancellationToken) ?? 0;
 
-        var branchSafe = await _dbContext.Safes.FirstOrDefaultAsync(x => x.BranchId == order.BranchId, cancellationToken);
-        if (branchSafe is null)
-            return SafeErrors.SafeNotFound;
-
-        branchSafe.RemainingCashAmount -= foreignProductsBuyAmount;
+        var branchSafe = await _safeLedger.GetBranchSafeAsync(order.BranchId, cancellationToken);
+        if (branchSafe.IsFailed)
+            return branchSafe.Error;
 
         var transaction = new Transaction(
             foreignProductsBuyAmount,
             TransactionType.Purchase,
             TransactionStatus.Approved,
             TransactionDirection.Out,
-            branchSafe.Id);
+            branchSafe.Data!.Id);
 
         var purchase = new Purchase(
             lastFactorNumber + 1,
@@ -125,6 +129,20 @@ public class ChangeOrderApprovalStatusHandler : IRequestHandler<ChangeOrderAppro
         _dbContext.Purchases.Add(purchase);
 
         _notificationService.AddTransactionCreatedNotification(transaction, order.BranchId);
+
+        var debit = await _safeLedger.RecordAsync(
+            new SafeLedgerEntry
+            {
+                SafeId = branchSafe.Data!.Id,
+                Kind = SafeMovementKind.PurchaseOut,
+                Amount = foreignProductsBuyAmount,
+                Note = $"شراء منتجات خارجية للمبيع {order.Id}",
+                OrderId = order.Id
+            },
+            cancellationToken);
+
+        if (debit.IsFailed)
+            return debit.Error;
 
         return Result.Success();
     }

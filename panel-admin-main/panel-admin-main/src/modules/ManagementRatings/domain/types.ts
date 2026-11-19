@@ -107,6 +107,7 @@ export interface RatingsCustomerCard {
   amountTotal: number | null
   isLegal: boolean
   hidePaidRemaining: boolean
+  installment: number | null
 }
 
 export interface RatingsCustomersResponse {

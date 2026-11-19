@@ -8,7 +8,10 @@ import '../../../core/widgets/brand_wave_painter.dart';
 import '../../../core/widgets/empty_state.dart';
 import '../../../core/widgets/loading_view.dart';
 import '../../../injection.dart';
-import '../../sync/presentation/sync_status_banner.dart';
+import '../../customers/domain/entities/customer.dart';
+import '../../receipts/data/customer_no_receipt_report.dart';
+import '../../receipts/data/customer_receipt_report.dart';
+import '../data/delegate_business_date_service.dart';
 import '../domain/entities/today_payment_item.dart';
 
 class TodayPaymentsPage extends StatefulWidget {
@@ -22,79 +25,195 @@ class _TodayPaymentsPageState extends State<TodayPaymentsPage> {
   List<TodayPaymentItem> _items = [];
   bool _loading = true;
   bool _sending = false;
+  bool _exporting = false;
   int _pendingCount = 0;
+  int _paidCount = 0;
+  double _paidTotal = 0;
 
   @override
   void initState() {
     super.initState();
+    DelegateBusinessDateService.dayRevision.addListener(_onDayRollover);
+    Injection.paymentSyncService.queueChanged.addListener(_onDayRollover);
     _load();
+  }
+
+  void _onDayRollover() {
+    if (!mounted) return;
+    _load();
+  }
+
+  @override
+  void dispose() {
+    DelegateBusinessDateService.dayRevision.removeListener(_onDayRollover);
+    Injection.paymentSyncService.queueChanged.removeListener(_onDayRollover);
+    super.dispose();
+  }
+
+  /// نفس فلتر زر «المسددين»: مبلغ > 0 ومعرّف محلي أو صف سيرفر.
+  static List<TodayPaymentItem> _paidWalletItems(List<TodayPaymentItem> items) {
+    return items.where((p) {
+      if (p.amount <= 0) return false;
+      final hasUuid =
+          (p.clientPaymentId != null && p.clientPaymentId!.trim().isNotEmpty) ||
+              !p.isLocal;
+      return hasUuid;
+    }).toList();
   }
 
   Future<void> _load() async {
     setState(() => _loading = true);
     final items = await Injection.paymentsRepository.listTodayMerged();
-    final pending = await Injection.paymentsRepository.countPending();
+    final pending = await Injection.paymentsRepository.listPending();
+    final paid = _paidWalletItems(items);
     if (!mounted) return;
     setState(() {
       _items = items;
-      _pendingCount = pending;
+      _pendingCount = pending.length;
+      _paidCount = paid.length;
+      _paidTotal = paid.fold<double>(0, (sum, p) => sum + p.amount);
       _loading = false;
     });
   }
 
-  Future<void> _sendAll() async {
-    if (_sending) return;
-    final pending = await Injection.paymentsRepository.countPending();
-    if (!mounted) return;
-    if (pending <= 0) {
-      await AppDialog.message(
-        context,
-        title: 'إرسال التسديدات',
-        body: 'لا توجد تسديدات معلّقة للإرسال.',
-      );
-      await _load();
-      return;
-    }
+  Future<(String listName, String collector)> _sessionNames() async {
+    final session = await Injection.authRepository.currentSession();
+    final listName = (session?.cityName ?? '').trim().isEmpty
+        ? '—'
+        : session!.cityName!.trim();
+    final collectorRaw =
+        (session?.delegateName ?? session?.username ?? '').trim();
+    final collector = collectorRaw.isEmpty ? '—' : collectorRaw;
+    return (listName, collector);
+  }
 
-    setState(() => _sending = true);
-    final progress = ValueNotifier(SyncProgress(done: 0, total: pending));
-    // ignore: unawaited_futures
-    AppDialog.showProgress(context, progress: progress);
-
+  Future<void> _exportPaid() async {
+    if (_exporting) return;
+    setState(() => _exporting = true);
     try {
-      final n = await Injection.paymentSyncService.syncNow(
-        onProgress: (done, total) {
-          progress.value = SyncProgress(done: done, total: total);
-        },
-      );
-      if (!mounted) return;
-      if (Navigator.of(context).canPop()) {
-        Navigator.of(context).pop();
+      // أعد الجلب مباشرة من المستودع حتى لا نعتمد على حالة شاشة قديمة
+      final items = await Injection.paymentsRepository.listTodayMerged();
+      final customers = await Injection.getLocalCustomers();
+      final byName = <String, Customer>{
+        for (final c in customers) c.name.trim(): c,
+      };
+
+      final receiptData = <Map<String, dynamic>>[];
+      for (final p in _paidWalletItems(items)) {
+        var id = p.customerId ?? 0;
+        if (id <= 0) {
+          final match = byName[p.customerName.trim()];
+          if (match != null) id = match.customerId;
+        }
+        receiptData.add({
+          'CustomerId': id,
+          'CustomerName': p.customerName,
+          'Amount': p.amount,
+        });
       }
-      final detail = Injection.paymentsRepository.lastSyncError ??
-          Injection.paymentSyncService.lastError;
-      await AppDialog.message(
-        context,
-        title: 'نتيجة الإرسال',
-        body: n > 0
-            ? 'تم إرسال $n من $pending تسديد بنجاح.${detail != null && detail.isNotEmpty && n < pending ? '\n\nتنبيه: $detail' : ''}'
-            : (detail != null && detail.isNotEmpty
-                ? detail
-                : 'لم يُرسل شيء — راجع التسديدات المحلية.'),
+
+      if (receiptData.isEmpty) {
+        if (!mounted) return;
+        await AppDialog.message(
+          context,
+          title: 'المسددين',
+          body: 'لا يوجد مسددون اليوم في المخزن المحلي.',
+        );
+        return;
+      }
+
+      if (mounted) setState(() => _items = items);
+
+      final names = await _sessionNames();
+      if (!mounted) return;
+      final report = CustomerReceiptReport.fromToday(
+        delegateName: names.$1,
+        receiptName: names.$2,
+        receiptData: receiptData,
+        customers: customers,
       );
-      await _load();
+      await report.printReceipt(context);
     } catch (e) {
       if (!mounted) return;
-      if (Navigator.of(context).canPop()) {
-        Navigator.of(context).pop();
-      }
       await AppDialog.message(
         context,
-        title: 'فشل الإرسال',
+        title: 'تعذر التصدير',
         body: '$e'.replaceFirst(RegExp(r'^[^:]+:\s*'), ''),
       );
     } finally {
-      progress.dispose();
+      if (mounted) setState(() => _exporting = false);
+    }
+  }
+
+  Future<void> _exportUnpaid() async {
+    if (_exporting) return;
+    setState(() => _exporting = true);
+    try {
+      final items = await Injection.paymentsRepository.listTodayMerged();
+      final customers = await Injection.getLocalCustomers();
+      final paidIds = <int>{};
+      final paidNames = <String>{};
+      for (final p in items) {
+        final id = p.customerId;
+        if (id != null && id > 0) paidIds.add(id);
+        final n = p.customerName.trim();
+        if (n.isNotEmpty) paidNames.add(n);
+      }
+      if (mounted) setState(() => _items = items);
+
+      // غير المسددين = المستمرين الظاهرين بلا دفع اليوم (بدون قانونية/مصفرين)
+      final unpaid = customers
+          .where(
+            (c) =>
+                c.isContinuous &&
+                !paidIds.contains(c.customerId) &&
+                !paidNames.contains(c.name.trim()),
+          )
+          .toList()
+        ..sort((a, b) => a.name.compareTo(b.name));
+
+      if (unpaid.isEmpty) {
+        if (!mounted) return;
+        await AppDialog.message(
+          context,
+          title: 'الغير مسددين',
+          body: 'لا يوجد غير مسددين (مستمرين بلا تسديد اليوم).',
+        );
+        return;
+      }
+
+      final names = await _sessionNames();
+      if (!mounted) return;
+      final report = CustomerNoReceiptReport(
+        delegateName: names.$1,
+        receiptName: names.$2,
+        customerData: unpaid,
+      );
+      await report.printReport(context);
+    } catch (e) {
+      if (!mounted) return;
+      await AppDialog.message(
+        context,
+        title: 'تعذر التصدير',
+        body: '$e'.replaceFirst(RegExp(r'^[^:]+:\s*'), ''),
+      );
+    } finally {
+      if (mounted) setState(() => _exporting = false);
+    }
+  }
+
+  Future<void> _sendAll() async {
+    if (_sending) return;
+    setState(() => _sending = true);
+    try {
+      await Injection.paymentSyncService.syncNow();
+      if (!mounted) return;
+      await _load();
+      if (!mounted || _pendingCount == 0) return;
+      await AppDialog.message(context, title: 'تعذر تأكيد بعض التسديدات',
+        body: Injection.paymentsRepository.lastSyncError ??
+            Injection.paymentSyncService.lastError ?? 'تحقق من الاتصال وأعد المحاولة.');
+    } finally {
       if (mounted) setState(() => _sending = false);
     }
   }
@@ -108,7 +227,6 @@ class _TodayPaymentsPageState extends State<TodayPaymentsPage> {
       bottom: false,
       child: Column(
         children: [
-          const SyncStatusBanner(),
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 10, 16, 6),
             child: Row(
@@ -119,46 +237,97 @@ class _TodayPaymentsPageState extends State<TodayPaymentsPage> {
                     style: AppTextStyles.title.copyWith(fontSize: 18),
                   ),
                 ),
-                if (_pendingCount > 0)
-                  Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: AppColors.warning.withValues(alpha: 0.18),
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: Text(
-                      'معلّق: $_pendingCount',
-                      style: AppTextStyles.muted.copyWith(
-                        color: AppColors.foreground,
-                        fontWeight: FontWeight.w700,
-                        fontSize: 12,
-                      ),
-                    ),
-                  ),
               ],
             ),
           ),
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
-            child: FilledButton.icon(
-              onPressed: _sending ? null : _sendAll,
-              icon: _sending
-                  ? const SizedBox(
-                      width: 18,
-                      height: 18,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        color: AppColors.onPrimary,
-                      ),
-                    )
-                  : const Icon(Icons.cloud_upload_outlined),
-              label: const Text('إرسال التسديدات'),
-              style: FilledButton.styleFrom(
-                minimumSize: const Size.fromHeight(46),
-              ),
+            child: Row(
+              children: [
+                Expanded(
+                  child: FilledButton.icon(
+                    onPressed: _exporting ? null : _exportPaid,
+                    icon: const Icon(Icons.print, size: 18),
+                    label: const Text('المسددين'),
+                    style: FilledButton.styleFrom(
+                      backgroundColor: AppColors.secondary,
+                      minimumSize: const Size.fromHeight(44),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: FilledButton.icon(
+                    onPressed: _exporting ? null : _exportUnpaid,
+                    icon: const Icon(Icons.print_disabled, size: 18),
+                    label: const Text('الغير مسددين'),
+                    style: FilledButton.styleFrom(
+                      backgroundColor: AppColors.danger,
+                      minimumSize: const Size.fromHeight(44),
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
+          if (_pendingCount > 0 || _sending)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+              child: FilledButton.icon(
+                onPressed: _sending ? null : _sendAll,
+                icon: _sending
+                    ? const SizedBox(
+                        width: 18,
+                        height: 18,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: AppColors.onPrimary,
+                        ),
+                      )
+                    : const Icon(Icons.cloud_upload_outlined),
+                label: const Text('إرسال التسديدات'),
+                style: FilledButton.styleFrom(
+                  minimumSize: const Size.fromHeight(46),
+                ),
+              ),
+            ),
+          if (_paidCount > 0)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+              child: Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: AppColors.surface,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: AppColors.border),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.04),
+                      blurRadius: 12,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: _PendingMetricCard(
+                        title: 'عدد التسديدات',
+                        value: '$_paidCount',
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: _PendingMetricCard(
+                        title: 'المبلغ الكلي',
+                        value: money.format(_paidTotal),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
           Expanded(
             child: RefreshIndicator(
               color: AppColors.primary,
@@ -175,8 +344,7 @@ class _TodayPaymentsPageState extends State<TodayPaymentsPage> {
                         )
                       : ListView.separated(
                           physics: const AlwaysScrollableScrollPhysics(),
-                          padding:
-                              EdgeInsets.fromLTRB(16, 8, 16, bottomPad),
+                          padding: EdgeInsets.fromLTRB(16, 8, 16, bottomPad),
                           itemCount: _items.length,
                           separatorBuilder: (_, _) =>
                               const SizedBox(height: 10),
@@ -194,7 +362,8 @@ class _TodayPaymentsPageState extends State<TodayPaymentsPage> {
                                     ),
                                   ),
                                   Material(
-                                    color: AppColors.card.withValues(alpha: 0.92),
+                                    color:
+                                        AppColors.card.withValues(alpha: 0.92),
                                     child: ListTile(
                                       contentPadding:
                                           const EdgeInsets.symmetric(
@@ -242,6 +411,48 @@ class _TodayPaymentsPageState extends State<TodayPaymentsPage> {
                             );
                           },
                         ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _PendingMetricCard extends StatelessWidget {
+  const _PendingMetricCard({
+    required this.title,
+    required this.value,
+  });
+
+  final String title;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+      decoration: BoxDecoration(
+        color: AppColors.card,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: AppColors.border),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.03),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          Text(title, style: AppTextStyles.muted),
+          const SizedBox(height: 6),
+          Text(
+            value,
+            style: AppTextStyles.amount.copyWith(
+              color: AppColors.primary,
+              fontSize: 20,
             ),
           ),
         ],

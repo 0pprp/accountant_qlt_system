@@ -1,4 +1,4 @@
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 
 namespace Domain.Entities.ActivityLogAggregate.Enums;
 
@@ -134,5 +134,23 @@ public enum ActivityType : byte
     ManagementTaskCreated = 42,
 
     [Display(Name = "تحديث مهمة إدارية")]
-    ManagementTaskUpdated = 43
+    ManagementTaskUpdated = 43,
+
+    [Display(Name = "إضافة نقد لخزينة")]
+    SafeDeposit = 44,
+
+    [Display(Name = "سحب نقد من خزينة")]
+    SafeWithdrawal = 45,
+
+    [Display(Name = "نقل بين الخزائن")]
+    SafeTransfer = 46,
+
+    [Display(Name = "إنشاء خزينة")]
+    SafeCreated = 47,
+
+    [Display(Name = "حذف خزينة")]
+    SafeDeleted = 48,
+
+    [Display(Name = "تغيّر عهدة معاملة أرشيف")]
+    ArchiveCustodyChanged = 49
 }

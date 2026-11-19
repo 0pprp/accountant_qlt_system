@@ -58,6 +58,7 @@ export type ManagementTabId =
   | 'committeeRatings'
   | 'wrongSalesBranch'
   | 'wrongSalesDelegate'
+  | 'branchArchive'
   | 'branchDeclining'
   | 'branchRatings'
   | 'delegateHome'
@@ -112,6 +113,7 @@ export interface ManagementTabDefinition {
     | 'TutorialVideosPage'
     | 'WrongSalesPage'
     | 'BranchNewSalesPage'
+    | 'ArchiveWorkspace'
     | 'BranchDecliningPage'
     | 'ComplaintsPage'
     | 'BranchVisitsPage'
@@ -421,6 +423,20 @@ export const MANAGEMENT_TABS: readonly ManagementTabDefinition[] = [
     reuse: 'BranchManagerAccountsPage',
     notes:
       'حسابات مدير الفرع ضمن نطاق المفوض فقط — BranchManagerAccount.* بلا ManagePermissions',
+  },
+  {
+    id: 'branchArchive',
+    sectionId: 'branch',
+    labelKey: 'tabs.branchArchive',
+    tabPath: 'archive',
+    routeName: 'ManagementBranchArchiveRoute',
+    requirement: {
+      type: 'single',
+      permission: { module: 'Archive', action: 'Read' },
+    },
+    implementationStatus: 'ready',
+    reuse: 'ArchiveWorkspace',
+    notes: 'وارد الفرع من حزم موظفي المبيعات — استلام ثم تمرير للمتابع',
   },
   {
     id: 'branchDeclining',

@@ -1,4 +1,4 @@
-namespace Application.FollowerWork.Common;
+﻿namespace Application.FollowerWork.Common;
 
 public sealed record FollowerCollectionListDto(
     int ListId,
@@ -15,7 +15,7 @@ public sealed record FollowerCollectionListDto(
 
 public sealed record FollowerCollectionPaymentDto(
     int PaymentId,
-    int OrderId,
+    int? OrderId,
     int CustomerId,
     string CustomerName,
     int ListId,

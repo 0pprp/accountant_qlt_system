@@ -28,6 +28,7 @@ public class GetCommitteePendingSalesHandler
             .Select(o => new CommitteePendingSaleDto
             {
                 OrderId = o.Id,
+                CustomerId = o.CustomerId,
                 ListId = o.OrderListId,
                 CustomerName = o.Customer!.FullName,
                 SellAmount = o.SellAmount,

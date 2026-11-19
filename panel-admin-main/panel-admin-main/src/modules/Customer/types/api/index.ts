@@ -22,6 +22,8 @@ export type CustomerCreatePayload = {
   whatsAppPhoneNumber: string
   business: Business
   branchId: number
+  sellAmountDiscount: number
+  dailyInstallmentDiscount: number
 }
 
 export type CustomerOrdersResponse = Array<CustomerOrder>

@@ -1,0 +1,134 @@
+.dmb-layout {
+  grid-template-columns: minmax(220px, 264px) minmax(0, 1fr);
+}
+
+.dmb-rail {
+  background: var(--dfb-raised);
+  box-shadow: var(--dfb-up);
+  padding: 14px 10px;
+}
+
+.dmb-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.dmb-nav-item {
+  align-items: center;
+  background: transparent;
+  border: 0;
+  border-radius: 12px;
+  color: var(--dfb-ink);
+  cursor: pointer;
+  display: flex;
+  font: inherit;
+  font-size: 15px;
+  gap: 10px;
+  min-block-size: 44px;
+  padding: 9px 12px;
+  text-align: start;
+  width: 100%;
+}
+
+.dmb-nav-item .pi {
+  color: var(--dfb-muted);
+  font-size: 15px;
+}
+
+.dmb-nav-label {
+  flex: 1;
+}
+
+.dmb-nav-item:hover:not(:disabled) {
+  background: var(--dfb-well);
+}
+
+.dmb-nav-item:focus-visible {
+  outline: 3px solid #71b4a9;
+  outline-offset: 2px;
+}
+
+.dmb-nav-item.is-active {
+  background: var(--dfb-well);
+  box-shadow: var(--dfb-down);
+  color: var(--dfb-primary);
+  font-weight: 700;
+}
+
+.dmb-nav-item.is-active .pi {
+  color: var(--dfb-primary);
+}
+
+.dmb-nav-item.is-locked {
+  color: var(--dfb-muted);
+}
+
+.dmb-nav-item:disabled {
+  color: #7b8b88;
+  cursor: default;
+}
+
+.dmb-count {
+  border-radius: 999px;
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+  min-inline-size: 24px;
+  padding: 1px 8px;
+  text-align: center;
+}
+
+.dmb-count.is-info {
+  background: var(--dfb-primary-soft);
+  color: var(--dfb-primary);
+}
+
+.dmb-count.is-warn {
+  background: var(--dfb-warn-soft);
+  color: var(--dfb-tier-weak);
+}
+
+.dmb-count.is-danger {
+  background: var(--dfb-danger-soft);
+  color: var(--dfb-tier-bad);
+}
+
+.dmb-soon {
+  background: #f1f3f2;
+  border-radius: 6px;
+  color: #6c746f;
+  font-size: 11px;
+  padding: 1px 6px;
+}
+
+.dmb-main {
+  background: var(--dfb-raised);
+  border-radius: 24px;
+  box-shadow: var(--dfb-up);
+  min-inline-size: 0;
+  padding: 22px;
+}
+
+@media (max-width: 900px) {
+  .dmb-layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .dmb-rail {
+    position: static;
+    max-block-size: none;
+    padding: 10px;
+  }
+
+  .dmb-nav {
+    display: none;
+  }
+
+  .dmb-main {
+    padding: 14px;
+  }
+}

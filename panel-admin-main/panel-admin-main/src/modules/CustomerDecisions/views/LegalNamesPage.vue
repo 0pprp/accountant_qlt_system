@@ -165,7 +165,7 @@ function onDecisionType(v: string | number | null | boolean) {
 }
 
 function fmt(n: number) {
-  return new Intl.NumberFormat('en-US').format(n)
+  return new Intl.NumberFormat('en-US', { maximumFractionDigits: 0 }).format(n)
 }
 </script>
 

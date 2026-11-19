@@ -1,6 +1,8 @@
 using Application.Common.Interfaces;
 using Application.SalesRequests.Common;
 using Domain.Entities.ComplaintAggregate;
+using Domain.Entities.ManagementTaskAggregate.Enums;
+using Domain.Entities.WaiverAggregate.Enums;
 using Domain.Entities.SalesRequestAggregate.Enums;
 using Domain.Entities.WrongSaleAggregate;
 using Microsoft.EntityFrameworkCore;
@@ -19,9 +21,20 @@ public sealed record DelegateHomeSummaryDto(
     int? RejectedExceptions,
     int? CancelledExceptions,
     int? TotalExceptions,
-    bool ExceptionsSummaryAvailable);
+    bool ExceptionsSummaryAvailable,
+    int? PendingWaivers = null,
+    int? AwaitingAccountantWaivers = null,
+    int? ApprovedWaivers = null,
+    int? RejectedWaivers = null,
+    int? TotalWaivers = null,
+    bool WaiversAvailable = false,
+    int? OpenTasks = null,
+    bool OpenTasksAvailable = false);
 
-public sealed class GetDelegateHomeSummaryQuery : IRequest<Result<DelegateHomeSummaryDto>>;
+public sealed class GetDelegateHomeSummaryQuery : IRequest<Result<DelegateHomeSummaryDto>>
+{
+    public int? BranchId { get; init; }
+}
 
 public sealed class GetDelegateHomeSummaryHandler
     : IRequestHandler<GetDelegateHomeSummaryQuery, Result<DelegateHomeSummaryDto>>
@@ -42,6 +55,8 @@ public sealed class GetDelegateHomeSummaryHandler
             return new Error("لا صلاحية لرئيسية المفوض.", "DelegateHome.Forbidden");
 
         var scope = _current.BranchIds ?? [];
+        if (request.BranchId is int only)
+            scope = scope.Contains(only) ? [only] : [];
         // الفشل ليس صفرًا — عند غياب النطاق نعيد null مع Available=false
         if (scope.Count == 0)
         {
@@ -54,10 +69,9 @@ public sealed class GetDelegateHomeSummaryHandler
         var complaintsOk = _current.HasPermission(SeedPermissions.Complaint.Read);
         if (complaintsOk)
         {
-            unreadComplaints = await _db.ComplaintMessages.AsNoTracking()
-                .CountAsync(c =>
-                    c.Status == ComplaintStatus.Unread
-                    && (c.BranchId == null || scope.Contains(c.BranchId.Value)), ct);
+            unreadComplaints = await Application.Complaints.Common.ComplaintScope
+                .Apply(_db.ComplaintMessages.AsNoTracking(), _current.BranchIds ?? [], request.BranchId)
+                .CountAsync(c => c.Status == ComplaintStatus.Unread, ct);
         }
 
         int? unreadWrong = null;
@@ -79,15 +93,55 @@ public sealed class GetDelegateHomeSummaryHandler
             pending = await q.CountAsync(r => r.ExceptionHoldStatus == SalesRequestExceptionHoldStatus.Pending, ct);
             approved = await q.CountAsync(r => r.ExceptionHoldStatus == SalesRequestExceptionHoldStatus.Approved, ct);
             rejected = await q.CountAsync(r => r.ExceptionHoldStatus == SalesRequestExceptionHoldStatus.Rejected, ct);
-            // المصدر يعرض «ملغاة»؛ العقد الحالي للاستثناء لا يحتفظ بحالة إلغاء منفصلة
-            cancelled = 0;
-            total = await q.CountAsync(ct);
+            cancelled = await _db.SalesRequests.AsNoTracking()
+                .Where(r => r.IsDeleted == false && scope.Contains(r.BranchId) && r.ExceptionHoldStatus == null
+                            && _db.SalesRequestTimelineEntries.Any(c =>
+                                c.SalesRequestId == r.Id
+                                && c.EventType == SalesRequestTimelineEventType.CancelledToUnassigned
+                                && _db.SalesRequestTimelineEntries.Any(e =>
+                                    e.SalesRequestId == r.Id
+                                    && e.EventType == SalesRequestTimelineEventType.ExceptionRequested
+                                    && e.OccurredAtUtc < c.OccurredAtUtc)))
+                .CountAsync(ct);
+            total = await q.CountAsync(ct) + cancelled;
+        }
+
+        int? wPending = null, wAwaiting = null, wApproved = null, wRejected = null, wTotal = null;
+        var waiversOk = _current.HasPermission(SeedPermissions.Waiver.Read);
+        if (waiversOk)
+        {
+            var counts = await _db.CustomerWaiverRequests.AsNoTracking()
+                .Where(w => scope.Contains(w.BranchId))
+                .GroupBy(w => w.Status)
+                .Select(g => new { Status = g.Key, Count = g.Count() })
+                .ToListAsync(ct);
+            int Of(WaiverRequestStatus s) => counts.Where(c => c.Status == s).Sum(c => c.Count);
+            wPending = Of(WaiverRequestStatus.Pending);
+            wAwaiting = Of(WaiverRequestStatus.AwaitingAccountant);
+            wApproved = Of(WaiverRequestStatus.Approved);
+            wRejected = Of(WaiverRequestStatus.Rejected);
+            wTotal = counts.Sum(c => c.Count);
+        }
+
+        int? openTasks = null;
+        var tasksOk = _current.HasPermission(SeedPermissions.ManagementTask.Read) && _current.UserId is not null;
+        if (tasksOk)
+        {
+            var me = _current.UserId!.Value;
+            openTasks = await _db.ManagementTasks.AsNoTracking()
+                .CountAsync(t => t.CurrentHolderUserId == me
+                                 && scope.Contains(t.BranchId)
+                                 && (t.Status == ManagementTaskStatus.Sent
+                                     || t.Status == ManagementTaskStatus.Accepted
+                                     || t.Status == ManagementTaskStatus.AwaitingDelegatedConfirm), ct);
         }
 
         return new DelegateHomeSummaryDto(
             unreadComplaints, complaintsOk,
             pending, exOk,
             unreadWrong, wrongOk,
-            approved, rejected, cancelled, total, exOk);
+            approved, rejected, cancelled, total, exOk,
+            wPending, wAwaiting, wApproved, wRejected, wTotal, waiversOk,
+            openTasks, tasksOk);
     }
 }

@@ -83,9 +83,12 @@ public class GetCustomerAuditProfileHandler
         var notImplemented = new List<string> { "notes", "legal" };
         var partial = new List<string> { "shop" };
 
-        var remaining = customer.SellAmount - customer.PaidAmount;
+        var unallocatedPaid = (await Application.Common.Balances.CustomerBalanceQuery.UnallocatedByCustomerAsync(
+            _db, [request.CustomerId], null, cancellationToken)).GetValueOrDefault(request.CustomerId);
+        var paidTotal = customer.PaidAmount + unallocatedPaid;
+        var remaining = Application.Common.Balances.CustomerBalanceRules.RoundToUnit(customer.SellAmount - paidTotal);
         var rating = CustomerRatingCalculator.EvaluateLabel(
-            customer.SellAmount, customer.PaidAmount, remaining,
+            customer.SellAmount, paidTotal, customer.SellAmount - paidTotal,
             customer.SaleDate, customer.LastPayment, _clock.Today);
 
         var response = new GetCustomerAuditProfileResponse
@@ -112,7 +115,7 @@ public class GetCustomerAuditProfileHandler
                     BusinessType = customer.BusinessName,
                     RatingLabel = rating,
                     SellTotal = canFinancial ? customer.SellAmount : null,
-                    PaidTotal = canFinancial ? customer.PaidAmount : null,
+                    PaidTotal = canFinancial ? paidTotal : null,
                     Remaining = canFinancial ? remaining : null
                 }
                 : null,
@@ -132,7 +135,9 @@ public class GetCustomerAuditProfileHandler
                     customer.GpsLongitude,
                     cancellationToken)
                 : null,
-            Shop = null,
+            Shop = sections.Contains("shop") || sections.Contains("ratings")
+                ? await LoadShopAsync(request.CustomerId, cancellationToken)
+                : null,
             Notes = null
         };
 
@@ -163,7 +168,19 @@ public class GetCustomerAuditProfileHandler
                 Note = row.Note,
                 RatedByName = row.RatedByName,
                 RatedAtUtc = row.RatedAtUtc,
-                OrderId = row.OrderId
+                OrderId = row.OrderId,
+                ShopStockEstimatedValue = row.ShopStockEstimatedValue,
+                EstimatedDailyRevenue = row.EstimatedDailyRevenue,
+                ContextAmount = row.ContextAmount,
+                Occasion = row.Occasion,
+                OccasionLabel = row.Occasion switch
+                {
+                    CustomerStaffRating.OccasionAuthentication => "عند المصادقة على البيع",
+                    CustomerStaffRating.OccasionSale => "عند البيع",
+                    CustomerStaffRating.OccasionFirstCollection => "عند أول تسديد",
+                    _ => null
+                },
+                IsWrongSale = row.IsWrongSale
             };
         }
 
@@ -177,15 +194,76 @@ public class GetCustomerAuditProfileHandler
                      && gpsLongitude is double lng
                      && !(Math.Abs(lat) < 1e-9 && Math.Abs(lng) < 1e-9);
 
+        var snapshots = await LoadRatingSnapshotsAsync(customerId, ct);
+
+        var survey = await _db.CustomerShopProfiles.AsNoTracking()
+            .Where(x => x.CustomerId == customerId)
+            .OrderByDescending(x => x.Id)
+            .Select(x => new CustomerAuditShopSurveyDto
+            {
+                Title = "كشف المحل — موظف المبيعات",
+                ShopName = x.ShopName,
+                BusinessType = x.BusinessType,
+                StockEstimatedValue = x.StockEstimatedValue,
+                EstimatedDailyRevenue = x.EstimatedDailyRevenue,
+                ShopLength = x.ShopLength,
+                ShopWidth = x.ShopWidth,
+                ShopArea = x.ShopArea,
+                CreatedAtUtc = x.CreatedAtUtc
+            })
+            .FirstOrDefaultAsync(ct);
+
+        var locations = await _db.CustomerLocations.AsNoTracking()
+            .Where(x => x.CustomerId == customerId)
+            .OrderBy(x => x.Source)
+            .Select(x => new CustomerAuditLocationDto
+            {
+                Source = x.Source.ToString(),
+                SourceLabel = x.Source == CustomerLocationSource.Captured ? "موقع ملتقط ميدانياً"
+                    : x.Source == CustomerLocationSource.Estimated ? "موقع مُقدَّر من نقاط المندوب"
+                    : x.Source == CustomerLocationSource.ShopProfile ? "موقع من بروفايل المحل"
+                    : "موقع من الملف القانوني",
+                Latitude = x.Latitude,
+                Longitude = x.Longitude,
+                AccuracyMeters = x.AccuracyMeters,
+                Confidence = x.Confidence,
+                CapturedAtUtc = x.CapturedAtUtc
+            })
+            .ToListAsync(ct);
+
+        var photos = await _db.CustomerShopPhotos.AsNoTracking()
+            .Where(x => x.CustomerId == customerId)
+            .OrderByDescending(x => x.Id)
+            .Select(x => new CustomerAuditPhotoDto
+            {
+                Id = x.Id,
+                ContentType = x.ContentType,
+                CapturedAtUtc = x.CapturedAtUtc
+            })
+            .ToListAsync(ct);
+
+        if (survey is not null)
+        {
+            var surveyLocation = locations.FirstOrDefault(x =>
+                x.Source == nameof(CustomerLocationSource.ShopProfile));
+            survey = survey with
+            {
+                Latitude = surveyLocation?.Latitude,
+                Longitude = surveyLocation?.Longitude,
+                PhotoId = photos.FirstOrDefault()?.Id
+            };
+        }
+
         return new CustomerAuditRatingsAndLocationDto
         {
+            Snapshots = snapshots,
+            Locations = locations,
+            Photos = photos,
             DelegateRating = Map(CustomerStaffRating.RoleDelegate, "تقييم المندوب"),
             CommitteeFieldRating = Map(
                 CustomerStaffRating.RoleCommitteeField,
                 "تقييم مسؤول اللجنة الميدانية"),
-            SalesEmployeeRating = Map(
-                CustomerStaffRating.RoleSalesEmployee,
-                "تقييم موظف المبيعات"),
+            ShopSurvey = survey,
             GpsLatitude = hasGps ? gpsLatitude : null,
             GpsLongitude = hasGps ? gpsLongitude : null,
             HasGps = hasGps,
@@ -293,11 +371,97 @@ public class GetCustomerAuditProfileHandler
             }))
             .ToListAsync(ct);
 
+        var imported = await _db.CustomerDocuments.AsNoTracking()
+            .Where(x => x.CustomerId == customerId)
+            .OrderBy(x => x.Id)
+            .Select(x => new CustomerAuditDocumentDto
+            {
+                Id = x.Id,
+                OwnerType = x.OrderId != null ? "order" : "customer",
+                OwnerId = x.OrderId ?? customerId,
+                OriginalFileName = x.FileName ?? x.FileKey,
+                RelativePath = x.FileKey,
+                Type = x.DocumentType
+            })
+            .ToListAsync(ct);
+
+        customerDocs.AddRange(imported.Where(x => x.OwnerType == "customer"));
+        saleDocs.AddRange(imported.Where(x => x.OwnerType == "order"));
+
         return new CustomerAuditDocumentsDto
         {
             CustomerDocuments = customerDocs,
             SaleDocuments = saleDocs
         };
+    }
+
+    private async Task<CustomerAuditShopDto?> LoadShopAsync(int customerId, CancellationToken ct)
+    {
+        var profile = await _db.CustomerShopProfiles.AsNoTracking()
+            .Where(x => x.CustomerId == customerId)
+            .OrderByDescending(x => x.Id)
+            .Select(x => new
+            {
+                x.ShopName, x.BusinessType, x.StockEstimatedValue,
+                x.EstimatedDailyRevenue, x.ShopLength, x.ShopWidth, x.ShopArea, x.ShopImageKey
+            })
+            .FirstOrDefaultAsync(ct);
+
+        var location = await _db.CustomerLocations.AsNoTracking()
+            .Where(x => x.CustomerId == customerId)
+            .OrderBy(x => x.Source)
+            .Select(x => new { x.Latitude, x.Longitude, x.Source })
+            .FirstOrDefaultAsync(ct);
+
+        var photoId = await _db.CustomerShopPhotos.AsNoTracking()
+            .Where(x => x.CustomerId == customerId)
+            .OrderByDescending(x => x.Id)
+            .Select(x => (int?)x.Id)
+            .FirstOrDefaultAsync(ct);
+
+        var address = await _db.Customers.AsNoTracking()
+            .Where(x => x.Id == customerId)
+            .Select(x => x.Business.Address)
+            .FirstOrDefaultAsync(ct);
+
+        if (profile is null && location is null && photoId is null)
+            return null;
+
+        return new CustomerAuditShopDto
+        {
+            Address = address,
+            Location = location is null
+                ? null
+                : $"{location.Latitude:0.######},{location.Longitude:0.######}",
+            ImplementationStatus = "ready",
+            ShopName = profile?.ShopName,
+            BusinessType = profile?.BusinessType,
+            StockEstimatedValue = profile?.StockEstimatedValue,
+            EstimatedDailyRevenue = profile?.EstimatedDailyRevenue,
+            ShopLength = profile?.ShopLength,
+            ShopWidth = profile?.ShopWidth,
+            ShopArea = profile?.ShopArea,
+            ShopImageKey = profile?.ShopImageKey,
+            ShopPhotoId = photoId,
+            LocationSource = location?.Source.ToString()
+        };
+    }
+
+    private async Task<List<CustomerAuditRatingSnapshotDto>> LoadRatingSnapshotsAsync(
+        int customerId, CancellationToken ct)
+    {
+        return await _db.CustomerRatingSnapshots.AsNoTracking()
+            .Where(x => x.CustomerId == customerId)
+            .OrderByDescending(x => x.CaptureDate)
+            .Take(60)
+            .Select(x => new CustomerAuditRatingSnapshotDto
+            {
+                Origin = x.Origin,
+                RatingLabel = x.RatingLabel,
+                Score = x.Score,
+                CaptureDate = x.CaptureDate
+            })
+            .ToListAsync(ct);
     }
 
     private static HashSet<string> ParseSections(string? sections)

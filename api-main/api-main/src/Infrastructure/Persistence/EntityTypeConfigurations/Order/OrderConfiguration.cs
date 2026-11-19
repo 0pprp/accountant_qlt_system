@@ -9,10 +9,18 @@ public class OrderConfiguration : IEntityTypeConfiguration<Domain.Entities.Order
     {
         builder.HasKey(x => x.Id);
 
+        builder.Property(x => x.ImportKey).HasMaxLength(120);
+        builder.HasIndex(x => x.ImportKey)
+            .IsUnique()
+            .HasFilter("\"ImportKey\" IS NOT NULL")
+            .HasDatabaseName("UX_Orders_ImportKey");
+
         builder.Property(x => x.BuyAmount).IsRequired();
         builder.Property(x => x.SellAmount).IsRequired();
         builder.Property(x => x.PrepaymentAmount).IsRequired();
         builder.Property(x => x.DailyInstallmentAmount).IsRequired();
+        builder.Property(x => x.SellAmountDiscountApplied).HasDefaultValue(0d);
+        builder.Property(x => x.DailyInstallmentDiscountApplied).HasDefaultValue(0d);
         builder.Property(x => x.Location).HasColumnType("jsonb").IsRequired(false);
         builder.Property(x => x.CreationAddress).HasMaxLength(400).IsRequired(false);
         builder.Property(x => x.SaleDate).IsRequired(false);

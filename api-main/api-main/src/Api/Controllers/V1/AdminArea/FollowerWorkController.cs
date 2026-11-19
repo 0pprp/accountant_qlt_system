@@ -7,6 +7,14 @@ using Application.FollowerWork.Queries.Admin.GetNotes;
 using Application.FollowerWork.Queries.Admin.GetOldCustomers;
 using Application.FollowerWork.Queries.Admin.GetRemainingCustomers;
 using Application.FollowerWork.Queries.Admin.GetSalesReview;
+using Application.FollowerWork.Commands.Admin.CreateFollower;
+using Application.FollowerWork.Commands.Admin.DeleteFollower;
+using Application.FollowerWork.Commands.Admin.UpdateFollower;
+using Application.FollowerWork.Queries.Admin.GetAssignableLists;
+using Application.FollowerWork.Queries.Admin.GetCustomerProfile;
+using Application.FollowerWork.Queries.Admin.GetSectionCounts;
+using Application.FollowerWork.Queries.Admin.GetShopCapture;
+using Application.FollowerWork.Queries.Admin.GetShopPhoto;
 using Microsoft.AspNetCore.Authorization;
 
 namespace Api.Controllers.V1.AdminArea;
@@ -199,5 +207,63 @@ public class FollowerWorkController : ApiController
             CancellationToken);
         return result.ToHttpResponse();
     }
-}
 
+    [Authorize]
+    [HttpGet("{followerId:int}/section-counts")]
+    public async Task<ActionResult<FollowerSectionCountsDto>> GetSectionCounts(
+        [FromRoute] int followerId,
+        [FromQuery] int? branchId = null)
+        => (await _mediator.Send(new GetFollowerSectionCountsQuery(followerId, branchId), CancellationToken)).ToHttpResponse();
+
+    [Authorize]
+    [HttpGet("{followerId:int}/customers/{customerId:int}/profile")]
+    public async Task<ActionResult<GetFollowerCustomerProfileResponse>> GetCustomerProfile(
+        [FromRoute] int followerId,
+        [FromRoute] int customerId,
+        [FromQuery] int? branchId = null)
+        => (await _mediator.Send(
+            new GetFollowerCustomerProfileQuery { FollowerId = followerId, CustomerId = customerId, BranchId = branchId },
+            CancellationToken)).ToHttpResponse();
+
+    [HasPermission(Permissions.FollowerWork.LocationRead)]
+    [HttpGet("shop-capture")]
+    public async Task<ActionResult<GetFollowerShopCaptureResponse>> GetShopCapture(
+        [FromQuery] int branchId,
+        [FromQuery] int? followerId = null)
+        => (await _mediator.Send(
+            new GetFollowerShopCaptureQuery { BranchId = branchId, FollowerId = followerId },
+            CancellationToken)).ToHttpResponse();
+
+    [HasPermission(Permissions.FollowerWork.LocationRead)]
+    [HttpGet("shop-capture/photos/{photoId:int}")]
+    public async Task<IActionResult> GetShopPhoto([FromRoute] int photoId, [FromQuery] int branchId, [FromQuery] string? source = null)
+    {
+        var result = await _mediator.Send(new GetFollowerShopPhotoQuery(photoId, branchId, source), CancellationToken);
+        if (result.IsFailed)
+            return result.ToHttpResponse().Result!;
+        return File(result.Data!.Content, result.Data.ContentType);
+    }
+
+    [HasPermission(Permissions.FollowerWork.ManageFollowers)]
+    [HttpGet("followers/assignable-lists")]
+    public async Task<ActionResult<List<FollowerAssignableListDto>>> GetAssignableLists([FromQuery] int branchId)
+        => (await _mediator.Send(new GetFollowerAssignableListsQuery(branchId), CancellationToken)).ToHttpResponse();
+
+    [HasPermission(Permissions.FollowerWork.ManageFollowers)]
+    [HttpPost("followers")]
+    public async Task<ActionResult<int>> CreateFollower([FromBody] CreateFollowerCommand command)
+        => (await _mediator.Send(command, CancellationToken)).ToHttpResponse();
+
+    [HasPermission(Permissions.FollowerWork.ManageFollowers)]
+    [HttpPut("followers/{followerId:int}")]
+    public async Task<ActionResult> UpdateFollower([FromRoute] int followerId, [FromBody] UpdateFollowerCommand command)
+    {
+        command.FollowerId = followerId;
+        return (await _mediator.Send(command, CancellationToken)).ToHttpResponse();
+    }
+
+    [HasPermission(Permissions.FollowerWork.ManageFollowers)]
+    [HttpDelete("followers/{followerId:int}")]
+    public async Task<ActionResult> DeleteFollower([FromRoute] int followerId)
+        => (await _mediator.Send(new DeleteFollowerCommand(followerId), CancellationToken)).ToHttpResponse();
+}

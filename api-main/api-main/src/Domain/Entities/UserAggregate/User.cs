@@ -1,4 +1,4 @@
-using Domain.Common;
+﻿using Domain.Common;
 using Domain.Entities.AttachmentAggregate;
 using Domain.Entities.BranchAggregate;
 using Domain.Entities.OrderAggregate;
@@ -40,7 +40,6 @@ public class User : AuditableEntity
         UserPermissions = new HashSet<UserPermission>();
         UserPermissionDenials = new HashSet<UserPermissionDenial>();
         UserBranches = new HashSet<UserBranch>();
-        SellerCashDeliveryTransactions = new HashSet<SellerCashDeliveryTransaction>();
         PermissionsVersion = 0;
     }
 
@@ -68,7 +67,6 @@ public class User : AuditableEntity
     public ICollection<UserPermission> UserPermissions { get; set; }
     public ICollection<UserPermissionDenial> UserPermissionDenials { get; set; }
     public ICollection<UserBranch> UserBranches { get; set; }
-    public ICollection<SellerCashDeliveryTransaction> SellerCashDeliveryTransactions { get; set; }
 
     public void Update(
         string fullName,

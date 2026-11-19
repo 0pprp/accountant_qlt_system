@@ -339,7 +339,8 @@ public class ManagementRatingsDataService
                 rem,
                 totalAmt,
                 isLegal,
-                isLegal);
+                isLegal,
+                Math.Round(m.Fact.AmountDaySales, 0, MidpointRounding.AwayFromZero));
         })
             .OrderBy(c => c.CustomerName, StringComparer.CurrentCultureIgnoreCase)
             .ToList();
@@ -520,7 +521,7 @@ public class ManagementRatingsDataService
         return await MaterializeFactsAsync(query, ct);
     }
 
-    private static async Task<List<RatingCustomerFact>> MaterializeFactsAsync(
+    private async Task<List<RatingCustomerFact>> MaterializeFactsAsync(
         IQueryable<Domain.Entities.OrderAggregate.Order> query,
         CancellationToken ct)
     {
@@ -540,10 +541,22 @@ public class ManagementRatingsDataService
             })
             .ToListAsync(ct);
 
+        var factCustomerIds = rows.Select(r => r.CustomerId).Distinct().ToList();
+        var unallocated = (await _db.InstallmentPayments.AsNoTracking()
+                .Where(p => p.OrderId == null && p.CustomerId != null && factCustomerIds.Contains(p.CustomerId.Value))
+                .GroupBy(p => p.CustomerId!.Value)
+                .Select(g => new { CustomerId = g.Key, Amount = g.Sum(p => p.Amount), LastDate = g.Max(p => (DateOnly?)p.Date) })
+                .ToListAsync(ct))
+            .ToDictionary(x => x.CustomerId);
+
         return rows
             .GroupBy(r => r.CustomerId)
             .Select(g =>
             {
+                unallocated.TryGetValue(g.Key, out var extra);
+                var lastPayment = g.Max(x => x.LastPaymentDate);
+                if (extra?.LastDate is DateOnly extraDate && (lastPayment is null || extraDate > lastPayment))
+                    lastPayment = extraDate;
                 var saleDates = g.Where(x => x.SaleDate != null).Select(x => x.SaleDate!.Value).ToList();
                 DateOnly? saleDate = saleDates.Count > 0
                     ? saleDates.Min()
@@ -559,10 +572,10 @@ public class ManagementRatingsDataService
                     OrderListId = g.Select(x => x.OrderListId).FirstOrDefault(x => x != null),
                     SellerId = g.Select(x => x.SellerId).FirstOrDefault(x => x != null),
                     AmountTotalSales = g.Sum(x => x.SellAmount),
-                    ReceiptsTotal = g.Sum(x => x.Receipts),
+                    ReceiptsTotal = g.Sum(x => x.Receipts) + (extra?.Amount ?? 0),
                     AmountDaySales = g.Sum(x => x.DailyInstallmentAmount),
                     SaleDate = saleDate,
-                    LastPaymentDate = g.Max(x => x.LastPaymentDate),
+                    LastPaymentDate = lastPayment,
                     IsLegal = g.Any(x => x.IsLegal)
                 };
             })

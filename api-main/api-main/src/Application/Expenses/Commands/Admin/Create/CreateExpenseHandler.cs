@@ -21,14 +21,16 @@ public class CreateExpenseHandler : IRequestHandler<CreateExpenseCommand, Result
     private readonly IFileManager _fileManager;
     private readonly INotificationService _notificationService;
     private readonly IActivityLogService _activityLogService;
+    private readonly ISafeLedger _safeLedger;
 
     public CreateExpenseHandler(IApplicationDbContext dbContext, IFileManager fileManager, INotificationService notificationService,
-        IActivityLogService activityLogService)
+        IActivityLogService activityLogService, ISafeLedger safeLedger)
     {
         _dbContext = dbContext;
         _fileManager = fileManager;
         _notificationService = notificationService;
         _activityLogService = activityLogService;
+        _safeLedger = safeLedger;
     }
 
     public async Task<Result> Handle(CreateExpenseCommand request, CancellationToken cancellationToken)
@@ -38,47 +40,60 @@ public class CreateExpenseHandler : IRequestHandler<CreateExpenseCommand, Result
         if (isFactorNumberAlreadyExist)
             return ExpenseErrors.ExpenseWithThisFactorNumberAlreadyExist;
 
-        var safe = await GetSafeAsync(request.SafeType, request.BranchId);
-        if (safe is null)
-            return SafeErrors.SafeNotFound;
+        if (request.BranchId is null)
+            return SafeErrors.BranchIsRequired;
+
+        var branchId = request.BranchId.Value;
+        var branchSafe = await _safeLedger.GetBranchSafeAsync(branchId, cancellationToken);
+        if (branchSafe.IsFailed)
+            return branchSafe.Error;
 
         var totalAmount = request.ExpenseItems.Sum(x => x.Amount);
-        if (safe.RemainingCashAmount < totalAmount)
-            return SafeErrors.ThereIsNotEnoughMoneyInTheSafe;
-
-        safe.RemainingCashAmount -= totalAmount;
 
         var transaction = new Transaction(totalAmount, TransactionType.Expense, TransactionStatus.Approved, TransactionDirection.Out,
-            safe.Id);
+            branchSafe.Data!.Id);
 
-        var expense = new Expense(request.FactorNumber, totalAmount, request.SafeType, request.BranchId, transaction, request.ExpenseItems
+        var expense = new Expense(request.FactorNumber, totalAmount, request.SafeType, branchId, transaction, request.ExpenseItems
             .Select(x => new ExpenseItem(x.Name, x.Quantity, x.Amount))
             .ToList());
 
         _dbContext.Expenses.Add(expense);
 
-        if (request.SafeType == SafeType.Branch && request.BranchId is not null)
-            _notificationService.AddTransactionCreatedNotification(transaction, request.BranchId.Value);
+        _notificationService.AddTransactionCreatedNotification(transaction, branchId);
+
+        await using var dbTransaction = await _dbContext.Database.BeginTransactionAsync(cancellationToken);
 
         await _dbContext.SaveChangesAsync(cancellationToken);
 
+        var debit = await _safeLedger.RecordAsync(
+            new SafeLedgerEntry
+            {
+                SafeId = branchSafe.Data!.Id,
+                Kind = SafeMovementKind.ExpenseOut,
+                Amount = totalAmount,
+                Note = $"مصروف بفاتورة {request.FactorNumber}",
+                ExpenseId = expense.Id
+            },
+            cancellationToken);
+
+        if (debit.IsFailed)
+        {
+            await dbTransaction.RollbackAsync(cancellationToken);
+            return debit.Error;
+        }
+
         await _activityLogService.AddAsync(
-            request.BranchId ?? safe.BranchId!.Value,
+            branchId,
             ActivityType.ExpenseCreated,
             TargetEntityType.Expense,
             expense.Id);
         await _dbContext.SaveChangesAsync(cancellationToken);
 
+        await dbTransaction.CommitAsync(cancellationToken);
+
         await SaveAttachmentsAsync(request.Attachments, expense.Id);
 
         return Result.Success();
-    }
-
-    private async Task<Safe?> GetSafeAsync(SafeType safeType, int? branchId)
-    {
-        return await _dbContext.Safes
-            .When(safeType == SafeType.Branch, x => x.BranchId == branchId)
-            .FirstOrDefaultAsync();
     }
 
     private async Task SaveAttachmentsAsync(List<IFormFile>? files, int expenseId)

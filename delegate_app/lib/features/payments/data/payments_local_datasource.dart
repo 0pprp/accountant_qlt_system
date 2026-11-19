@@ -2,6 +2,7 @@ import 'package:sqflite/sqflite.dart';
 
 import '../../../core/database/app_database.dart';
 import '../../../core/time/iraq_date.dart';
+import '../domain/entities/paid_collection.dart';
 import '../domain/entities/pending_payment.dart';
 
 class PaymentsLocalDataSource {
@@ -59,17 +60,17 @@ WHERE permanent_failure = 0
     return ids;
   }
 
-  Future<bool> hasUnsyncedForCustomer(int customerId) async {
+  Future<bool> hasUnsyncedForCustomer(int customerId, int delegateId, String day) async {
     final db = await _db.database;
     final rows = await db.query(
       'pending_payments',
       where: '''
-customer_id = ?
+customer_id = ? AND delegate_id = ? AND substr(created_at_utc, 1, 10) = ?
 AND permanent_failure = 0
 AND sync_status IN (?, ?, ?)
 ''',
       whereArgs: [
-        customerId,
+        customerId, delegateId, day,
         PaymentSyncStatuses.pending,
         PaymentSyncStatuses.failed,
         PaymentSyncStatuses.syncing,
@@ -109,6 +110,112 @@ AND sync_status IN (?, ?, ?)
     );
   }
 
+  /// مخزن المسددين — يبقى بعد حذف صف الطابور عند نجاح الإرسال.
+  Future<void> recordPaidCollection(PaidCollection row) async {
+    if (row.customerId <= 0 || row.delegateId <= 0) return;
+    final db = await _db.database;
+    await db.insert(
+      'business_day_collections',
+      {
+        'customer_id': row.customerId,
+        'delegate_id': row.delegateId,
+        'business_day': row.businessDay,
+        'amount': row.amount,
+        'client_payment_id': row.clientPaymentId,
+        'customer_name': row.customerName,
+        'created_at_utc': row.createdAtUtc,
+      },
+      conflictAlgorithm: ConflictAlgorithm.replace,
+    );
+  }
+
+  Future<List<PaidCollection>> listPaidCollectionsToday({
+    int? delegateId,
+  }) async {
+    final day = IraqDate.isoDate();
+    final db = await _db.database;
+    final rows = delegateId != null && delegateId > 0
+        ? await db.query(
+            'business_day_collections',
+            where: 'business_day = ? AND delegate_id = ?',
+            whereArgs: [day, delegateId],
+            orderBy: 'created_at_utc DESC',
+          )
+        : await db.query(
+            'business_day_collections',
+            where: 'business_day = ?',
+            whereArgs: [day],
+            orderBy: 'created_at_utc DESC',
+          );
+    return rows.map(_mapPaid).toList();
+  }
+
+  Future<PaidCollection?> paidCollectionForCustomer({
+    required int customerId,
+    required int delegateId,
+  }) async {
+    final day = IraqDate.isoDate();
+    final db = await _db.database;
+    final rows = await db.query(
+      'business_day_collections',
+      where:
+          'business_day = ? AND customer_id = ? AND delegate_id = ?',
+      whereArgs: [day, customerId, delegateId],
+      limit: 1,
+    );
+    if (rows.isEmpty) return null;
+    return _mapPaid(rows.first);
+  }
+
+  Future<int> purgePaidCollectionsOlderThan({int keepDays = 14}) async {
+    final today = IraqDate.businessDay();
+    final cutoff = today.subtract(Duration(days: keepDays));
+    final key =
+        '${cutoff.year.toString().padLeft(4, '0')}-'
+        '${cutoff.month.toString().padLeft(2, '0')}-'
+        '${cutoff.day.toString().padLeft(2, '0')}';
+    final db = await _db.database;
+    return db.delete(
+      'business_day_collections',
+      where: 'business_day < ?',
+      whereArgs: [key],
+    );
+  }
+
+  /// عند دخول يوم عمل جديد: احذف تسديدات الأيام السابقة من مخزن المسددين.
+  Future<int> clearPaidCollectionsBefore(String businessDay) async {
+    final db = await _db.database;
+    return db.delete(
+      'business_day_collections',
+      where: 'business_day < ?',
+      whereArgs: [businessDay],
+    );
+  }
+
+  Future<int> clearDayLocksBefore(String businessDay) async {
+    final db = await _db.database;
+    return db.delete(
+      'business_day_locks',
+      where: 'business_day < ?',
+      whereArgs: [businessDay],
+    );
+  }
+
+  Future<int> purgeDayLocksOlderThan({int keepDays = 14}) async {
+    final today = IraqDate.businessDay();
+    final cutoff = today.subtract(Duration(days: keepDays));
+    final key =
+        '${cutoff.year.toString().padLeft(4, '0')}-'
+        '${cutoff.month.toString().padLeft(2, '0')}-'
+        '${cutoff.day.toString().padLeft(2, '0')}';
+    final db = await _db.database;
+    return db.delete(
+      'business_day_locks',
+      where: 'business_day < ?',
+      whereArgs: [key],
+    );
+  }
+
   Future<int> insertPending(PendingPayment payment) async {
     final db = await _db.database;
     return db.insert('pending_payments', {
@@ -125,6 +232,83 @@ AND sync_status IN (?, ?, ?)
       'permanent_failure': payment.permanentFailure ? 1 : 0,
       'owner_async_id': payment.ownerAsyncId,
       'sync_error': payment.syncError,
+    });
+  }
+
+  /// إدراج ذرّي: يمنع صفّين محليين لنفس الزبون/اليوم عند ضغط مزدوج.
+  /// يرجع `null` عند النجاح، أو سبب الرفض.
+  Future<String?> insertCollectAtomic({
+    required PendingPayment payment,
+    required String businessDay,
+  }) async {
+    final db = await _db.database;
+    return db.transaction((tx) async {
+      final pending = await tx.query(
+        'pending_payments',
+        columns: ['id'],
+        where: '''
+customer_id = ? AND delegate_id = ?
+AND permanent_failure = 0
+AND sync_status IN (?, ?, ?)
+''',
+        whereArgs: [
+          payment.customerId,
+          payment.delegateId,
+          PaymentSyncStatuses.pending,
+          PaymentSyncStatuses.failed,
+          PaymentSyncStatuses.syncing,
+        ],
+        limit: 1,
+      );
+      if (pending.isNotEmpty) return 'pending';
+
+      final paid = await tx.query(
+        'business_day_collections',
+        columns: ['client_payment_id'],
+        where: 'customer_id = ? AND delegate_id = ? AND business_day = ?',
+        whereArgs: [payment.customerId, payment.delegateId, businessDay],
+        limit: 1,
+      );
+      if (paid.isNotEmpty) return 'collected';
+
+      await tx.insert('pending_payments', {
+        'client_payment_id': payment.clientPaymentId,
+        'customer_id': payment.customerId,
+        'customer_name': payment.customerName,
+        'delegate_id': payment.delegateId,
+        'order_id': payment.orderId,
+        'amount': payment.amount,
+        'location': payment.location,
+        'created_at_utc': payment.createdAtUtc,
+        'receipt_number': payment.receiptNumber,
+        'sync_status': payment.syncStatus,
+        'permanent_failure': payment.permanentFailure ? 1 : 0,
+        'owner_async_id': payment.ownerAsyncId,
+        'sync_error': payment.syncError,
+      });
+      await tx.insert(
+        'business_day_locks',
+        {
+          'customer_id': payment.customerId,
+          'delegate_id': payment.delegateId,
+          'business_day': businessDay,
+        },
+        conflictAlgorithm: ConflictAlgorithm.replace,
+      );
+      await tx.insert(
+        'business_day_collections',
+        {
+          'customer_id': payment.customerId,
+          'delegate_id': payment.delegateId,
+          'business_day': businessDay,
+          'amount': payment.amount,
+          'client_payment_id': payment.clientPaymentId,
+          'customer_name': payment.customerName,
+          'created_at_utc': payment.createdAtUtc,
+        },
+        conflictAlgorithm: ConflictAlgorithm.replace,
+      );
+      return null;
     });
   }
 
@@ -255,6 +439,24 @@ AND (
     );
   }
 
+  Future<void> confirmPayment(PendingPayment payment, String day) async {
+    final db = await _db.database;
+    await db.transaction((tx) async {
+      if (day == IraqDate.isoDate()) {
+        await tx.insert('business_day_collections', {
+          'customer_id': payment.customerId,
+          'delegate_id': payment.delegateId,
+          'business_day': day,
+          'amount': payment.amount,
+          'client_payment_id': payment.clientPaymentId,
+          'customer_name': payment.customerName,
+          'created_at_utc': payment.createdAtUtc,
+        }, conflictAlgorithm: ConflictAlgorithm.ignore);
+      }
+      await tx.delete('pending_payments', where: 'id = ? AND client_payment_id = ?', whereArgs: [payment.id, payment.clientPaymentId]);
+    });
+  }
+
   Future<void> deleteById(int id) async {
     final db = await _db.database;
     await db.delete('pending_payments', where: 'id = ?', whereArgs: [id]);
@@ -282,7 +484,20 @@ AND (
       ownerAsyncId: row['owner_async_id'] as String?,
       syncStatus: '${row['sync_status']}',
       syncError: row['sync_error'] as String?,
+      legacyRetry: _asInt(row['legacy_retry']) == 1,
       permanentFailure: (_asInt(row['permanent_failure']) ?? 0) == 1,
+    );
+  }
+
+  PaidCollection _mapPaid(Map<String, Object?> row) {
+    return PaidCollection(
+      customerId: _asInt(row['customer_id']) ?? 0,
+      delegateId: _asInt(row['delegate_id']) ?? 0,
+      businessDay: '${row['business_day']}',
+      amount: (row['amount'] as num?)?.toDouble() ?? 0,
+      clientPaymentId: '${row['client_payment_id']}',
+      createdAtUtc: '${row['created_at_utc']}',
+      customerName: row['customer_name'] as String?,
     );
   }
 }

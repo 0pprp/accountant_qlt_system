@@ -1,4 +1,5 @@
 ﻿using Application.Common.Interfaces;
+using Application.Safes.Common;
 using Application.Orders.Common;
 using Domain.Entities.ActivityLogAggregate.Enums;
 using Domain.Entities.InstallmentPaymentAggregate;
@@ -18,19 +19,21 @@ public class UpdateOrderHandler : IRequestHandler<UpdateOrderCommand, Result>
     private readonly IDateTimeProvider _dateTimeProvider;
     private readonly INotificationService _notificationService;
     private readonly IActivityLogService _activityLogService;
+    private readonly ISafeLedger _safeLedger;
 
     public UpdateOrderHandler(
         IApplicationDbContext dbContext,
         ICurrentUserService currentUserService,
         IDateTimeProvider dateTimeProvider,
         INotificationService notificationService,
-        IActivityLogService activityLogService)
+        IActivityLogService activityLogService, ISafeLedger safeLedger)
     {
         _dbContext = dbContext;
         _currentUserService = currentUserService;
         _dateTimeProvider = dateTimeProvider;
         _notificationService = notificationService;
         _activityLogService = activityLogService;
+        _safeLedger = safeLedger;
     }
 
     public async Task<Result> Handle(UpdateOrderCommand request, CancellationToken cancellationToken)
@@ -63,10 +66,15 @@ public class UpdateOrderHandler : IRequestHandler<UpdateOrderCommand, Result>
 
         var amounts = ComputeAggregatedItemsAmounts(order);
 
+        // أي خروج مبكر يتراجع تلقائياً عند الـdispose قبل الـcommit
+        await using var dbTransaction = await _dbContext.Database.BeginTransactionAsync(cancellationToken);
+
         int? orderListId = null;
         if (order.ExecutionStatus == OrderExecutionStatus.InProgress)
         {
-            await SynchronizeForeignProductPurchaseAsync(order, cancellationToken);
+            var purchaseSyncResult = await SynchronizeForeignProductPurchaseAsync(order, cancellationToken);
+            if (purchaseSyncResult.IsFailed)
+                return purchaseSyncResult;
 
             var orderListIdResult = await SellerOrderListResolver.ResolveOrderListIdForSellerAsync(
                 _dbContext,
@@ -101,6 +109,7 @@ public class UpdateOrderHandler : IRequestHandler<UpdateOrderCommand, Result>
             TargetEntityType.Order,
             request.Id);
         await _dbContext.SaveChangesAsync(cancellationToken);
+        await dbTransaction.CommitAsync(cancellationToken);
 
         return Result.Success();
     }
@@ -159,7 +168,7 @@ public class UpdateOrderHandler : IRequestHandler<UpdateOrderCommand, Result>
             order.OrderItems.Add(line);
     }
 
-    private async Task SynchronizeForeignProductPurchaseAsync(Order order, CancellationToken cancellationToken)
+    private async Task<Result> SynchronizeForeignProductPurchaseAsync(Order order, CancellationToken cancellationToken)
     {
         var foreignItems = order.OrderItems
             .Where(x => x.ProductType == ProductType.Foreign)
@@ -173,9 +182,13 @@ public class UpdateOrderHandler : IRequestHandler<UpdateOrderCommand, Result>
             .FirstOrDefaultAsync(x => x.OrderId == order.Id, cancellationToken);
 
         if (existingPurchase is null && newTotalAmount == 0)
-            return;
+            return Result.Success();
 
-        var branchSafe = await _dbContext.Safes.FirstAsync(x => x.BranchId == order.BranchId, cancellationToken);
+        var branchSafeResult = await _safeLedger.GetBranchSafeAsync(order.BranchId, cancellationToken);
+        if (branchSafeResult.IsFailed)
+            return branchSafeResult.Error;
+
+        var branchSafe = branchSafeResult.Data!;
 
         if (existingPurchase is null)
         {
@@ -204,17 +217,20 @@ public class UpdateOrderHandler : IRequestHandler<UpdateOrderCommand, Result>
             };
 
             _dbContext.Purchases.Add(purchase);
-            branchSafe.RemainingCashAmount -= newTotalAmount;
 
             _notificationService.AddTransactionCreatedNotification(transaction, order.BranchId);
-            return;
+
+            return await RecordPurchaseMovementAsync(
+                branchSafe.Id, newTotalAmount, SafeMovementKind.PurchaseOut, order.Id, cancellationToken);
         }
 
         if (newTotalAmount == 0)
         {
-            branchSafe.RemainingCashAmount += existingPurchase.TotalAmount;
+            var removedAmount = existingPurchase.TotalAmount;
             _dbContext.Purchases.Remove(existingPurchase);
-            return;
+
+            return await RecordPurchaseMovementAsync(
+                branchSafe.Id, removedAmount, SafeMovementKind.Refund, order.Id, cancellationToken);
         }
 
         var oldTotalAmount = existingPurchase.TotalAmount;
@@ -225,43 +241,43 @@ public class UpdateOrderHandler : IRequestHandler<UpdateOrderCommand, Result>
         existingPurchase.UpdateForOrder(newTotalAmount, updatedPurchaseItems);
 
         if (newTotalAmount == oldTotalAmount)
-            return;
+            return Result.Success();
 
         var safeId = existingPurchase.Transactions.First().SafeId;
+        var isAdditional = newTotalAmount > oldTotalAmount;
+        var delta = Math.Abs(newTotalAmount - oldTotalAmount);
 
-        if (newTotalAmount > oldTotalAmount)
-        {
-            var additionalAmount = newTotalAmount - oldTotalAmount;
+        var deltaTransaction = new Transaction(
+            delta,
+            TransactionType.Purchase,
+            TransactionStatus.Approved,
+            isAdditional ? TransactionDirection.Out : TransactionDirection.In,
+            safeId);
 
-            var transaction = new Transaction(
-                additionalAmount,
-                TransactionType.Purchase,
-                TransactionStatus.Approved,
-                TransactionDirection.Out,
-                safeId);
+        existingPurchase.Transactions.Add(deltaTransaction);
 
-            existingPurchase.Transactions.Add(transaction);
-            branchSafe.RemainingCashAmount -= additionalAmount;
+        _notificationService.AddTransactionCreatedNotification(deltaTransaction, order.BranchId);
 
-            _notificationService.AddTransactionCreatedNotification(transaction, order.BranchId);
-        }
-        else
-        {
-            var refundAmount = oldTotalAmount - newTotalAmount;
-
-            var transaction = new Transaction(
-                refundAmount,
-                TransactionType.Purchase,
-                TransactionStatus.Approved,
-                TransactionDirection.In,
-                safeId);
-
-            existingPurchase.Transactions.Add(transaction);
-            branchSafe.RemainingCashAmount += refundAmount;
-
-            _notificationService.AddTransactionCreatedNotification(transaction, order.BranchId);
-        }
+        return await RecordPurchaseMovementAsync(
+            safeId,
+            delta,
+            isAdditional ? SafeMovementKind.PurchaseOut : SafeMovementKind.Refund,
+            order.Id,
+            cancellationToken);
     }
+
+    private Task<Result<SafeMovement>> RecordPurchaseMovementAsync(
+        int safeId, double amount, SafeMovementKind kind, int orderId, CancellationToken cancellationToken) =>
+        _safeLedger.RecordAsync(
+            new SafeLedgerEntry
+            {
+                SafeId = safeId,
+                Kind = kind,
+                Amount = amount,
+                Note = $"مزامنة شراء منتجات خارجية للمبيع {orderId}",
+                OrderId = orderId
+            },
+            cancellationToken);
 
     private static (double Buy, double Sell, double Prepayment, double Daily) ComputeAggregatedItemsAmounts(Order order)
     {

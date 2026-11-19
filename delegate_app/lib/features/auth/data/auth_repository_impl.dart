@@ -82,6 +82,16 @@ class AuthRepositoryImpl implements AuthRepository {
   }
 
   @override
+  Future<bool> refreshFollowerCollectionEnabled() async {
+    final live = await _remote.fetchFollowerCollectionEnabled();
+    if (live != null) {
+      await _session.setFollowerCollectionEnabled(live);
+      return live;
+    }
+    return _session.followerCollectionEnabled;
+  }
+
+  @override
   Future<void> logout({required bool force}) async {
     if (!force) {
       final pending = await _paymentsLocal.countPending();

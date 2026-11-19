@@ -1,5 +1,6 @@
 # Local / IDE
 .cursor/
+.claude/settings.local.json
 .vs/
 .idea/
 *.user
@@ -26,3 +27,13 @@ Thumbs.db
 .env.*
 **/appsettings.*.local.json
 **/secrets.json
+
+# Local data and heavy artifacts
+.najaf-media/
+_archive/
+.playwright-cli/
+.claude/
+*.apk
+*.aab
+*.dump
+*.bak

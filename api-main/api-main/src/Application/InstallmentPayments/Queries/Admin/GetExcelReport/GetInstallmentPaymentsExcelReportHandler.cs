@@ -33,7 +33,10 @@ public class GetInstallmentPaymentsExcelReportHandler : IRequestHandler<GetInsta
                 Id = x.Id,
                 CustomerFullName = x.Order!.Customer!.FullName,
                 Date = x.Date.ToString("yyyy-MM-dd"),
-                SellerFullName = x.Order.Seller!.FullName,
+                SellerFullName = (x.ClientPaymentId != null || x.CreatedBy == x.Order.OrderList!.MandobId || x.CreatedBy == x.Order.OrderList.MotabaId
+                        ? _dbContext.Users.Where(u => u.Id == x.CreatedBy).Select(u => u.FullName).FirstOrDefault()
+                        : null)
+                    ?? (x.Order.OrderList!.Mandob != null ? x.Order.OrderList.Mandob.FullName : ""),
                 Amount = x.Amount,
                 Description = x.Description
             })

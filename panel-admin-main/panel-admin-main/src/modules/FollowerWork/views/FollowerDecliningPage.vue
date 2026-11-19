@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
+import { computed, ref, watch, inject } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '@/modules/Auth/store'
 import { useFollowerDecliningQuery } from '../requests/queries/useFollowerDecliningQuery'
@@ -94,6 +94,8 @@ function noteText(row: FollowerDecliningRow) {
   return row.hasNote ? 'نعم' : 'لا'
 }
 
+const openInDrawer = inject<((customerId: number) => void) | null>('fwOpenCustomer', null)
+
 function openFullCustomerProfile(customerId: number) {
   const returnTo = buildFollowerReturnTo({
     branchId: String(branchId.value ?? ''),
@@ -159,7 +161,7 @@ function openFullCustomerProfile(customerId: number) {
           class="fdc-row"
           :class="{ 'fdc-row--active': selectedCustomerId === r.customerId }"
           role="listitem"
-          @click="selectedCustomerId = r.customerId"
+          @click="openInDrawer ? openInDrawer(r.customerId) : (selectedCustomerId = r.customerId)"
         >
           <span class="fdc-row__title">{{ r.customerName }}</span>
           <span class="fdc-row__sub">

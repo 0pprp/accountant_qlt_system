@@ -35,6 +35,7 @@ public sealed class SetFollowerCollectionEnabledHandler
             request.ListId,
             request.Enabled,
             request.ExpectedVersion,
+            request.ExpectedFollowerId,
             branches,
             _currentUser.UserId ?? 0,
             cancellationToken);

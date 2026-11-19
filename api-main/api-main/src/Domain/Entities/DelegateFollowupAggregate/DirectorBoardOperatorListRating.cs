@@ -4,6 +4,10 @@ namespace Domain.Entities.DelegateFollowupAggregate;
 
 public class DirectorBoardOperatorListRating : Entity
 {
+    public const string SlotCommittee = "head";
+    public const string SlotChiefAccountant = "accountant";
+    public const int MaxSlotLength = 16;
+
     private DirectorBoardOperatorListRating()
     {
     }
@@ -16,8 +20,10 @@ public class DirectorBoardOperatorListRating : Entity
         string? note,
         int ratedByUserId,
         string? ratedByUserName,
-        DateTimeOffset ratedAtUtc)
+        DateTimeOffset ratedAtUtc,
+        string raterSlot = SlotCommittee)
     {
+        RaterSlot = NormalizeSlot(raterSlot);
         OrderListId = orderListId;
         BranchId = branchId;
         RatingDate = ratingDate;
@@ -31,6 +37,7 @@ public class DirectorBoardOperatorListRating : Entity
     public int OrderListId { get; set; }
     public int BranchId { get; set; }
     public DateOnly RatingDate { get; set; }
+    public string RaterSlot { get; private set; } = SlotCommittee;
     public int Score { get; set; }
     public string? Note { get; set; }
     public int RatedByUserId { get; set; }
@@ -50,4 +57,9 @@ public class DirectorBoardOperatorListRating : Entity
         RatedByUserName = ratedByUserName;
         RatedAtUtc = ratedAtUtc;
     }
+
+    public static string NormalizeSlot(string? slot)
+        => string.Equals(slot?.Trim(), SlotChiefAccountant, StringComparison.OrdinalIgnoreCase)
+            ? SlotChiefAccountant
+            : SlotCommittee;
 }

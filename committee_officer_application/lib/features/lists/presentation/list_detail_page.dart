@@ -1,3 +1,4 @@
+import 'package:committee_officer_application/core/widgets/customer_photo_button.dart';
 import 'package:committee_officer_application/core/location/device_gps.dart';
 import 'package:committee_officer_application/core/time/baghdad_time.dart';
 import 'package:committee_officer_application/core/widgets/centered_dialog.dart';
@@ -38,6 +39,7 @@ class _ListDetailPageState extends State<ListDetailPage>
   bool _loading = true;
   String? _error;
   int? _locatingCustomerId;
+  _CaptureFilter _captureFilter = _CaptureFilter.remaining;
 
   @override
   void initState() {
@@ -130,7 +132,7 @@ class _ListDetailPageState extends State<ListDetailPage>
           labelStyle: const TextStyle(fontWeight: FontWeight.w800),
           unselectedLabelStyle: const TextStyle(fontWeight: FontWeight.w600),
           tabs: [
-            const Tab(text: 'مواقع الزبائن'),
+            const Tab(text: 'مواقع وصور المحلات'),
             Tab(text: 'مسددين (${_paid.length})'),
             Tab(text: 'غير مسددين (${_unpaid.length})'),
             const Tab(text: 'الزبائن'),
@@ -185,16 +187,7 @@ class _ListDetailPageState extends State<ListDetailPage>
                   : TabBarView(
                       controller: _tabs,
                       children: [
-                        Column(children: [
-                          Padding(padding: const EdgeInsets.all(12), child: Text('تم تحديد ${_locations.where((c) => c.hasLocation).length} من أصل ${_locations.length}')),
-                          Expanded(child: ListView(children: [
-                            for (final c in _locations.where((c) => c.name.contains(_search.trim()) || c.phone.contains(_search.trim())))
-                              ListTile(title: Text(c.name), subtitle: Text(c.phone),
-                                trailing: TextButton.icon(icon: Icon(c.hasLocation ? Icons.check_circle : Icons.my_location),
-                                  label: Text(c.hasLocation ? 'تم التحديد' : _locatingCustomerId == c.id ? 'جارٍ التحديد' : 'تحديد الموقع'),
-                                  onPressed: c.hasLocation || _locatingCustomerId != null ? null : () => _setCustomerGps(c))),
-                          ])),
-                        ]),
+                        _captureTab(),
                         Column(
                           children: [
                             SingleChildScrollView(
@@ -434,6 +427,103 @@ class _ListDetailPageState extends State<ListDetailPage>
     }
   }
 
+  void _markPhotographed(int customerId) {
+    setState(() {
+      _locations = [for (final c in _locations) c.id == customerId ? c.copyWith(hasPhoto: true) : c];
+    });
+  }
+
+  Widget _captureTab() {
+    final total = _locations.length;
+    final located = _locations.where((c) => c.hasLocation).length;
+    final photographed = _locations.where((c) => c.hasPhoto).length;
+    final complete = _locations.where((c) => c.isCaptureComplete).length;
+    final query = _search.trim();
+    final visible = _locations.where((c) {
+      final matchesFilter = switch (_captureFilter) {
+        _CaptureFilter.remaining => !c.isCaptureComplete,
+        _CaptureFilter.complete => c.isCaptureComplete,
+        _CaptureFilter.all => true,
+      };
+      return matchesFilter && (query.isEmpty || c.matches(query) || (c.shopName?.contains(query) ?? false));
+    }).toList();
+
+    Widget progress(String label, int done) {
+      final ratio = total == 0 ? 0.0 : done / total;
+      return Padding(
+        padding: const EdgeInsets.only(bottom: 8),
+        child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+          Row(children: [
+            Expanded(child: Text(label, style: const TextStyle(fontWeight: FontWeight.w700))),
+            Text('$done من $total', style: const TextStyle(fontWeight: FontWeight.w800, color: AppColors.primary)),
+          ]),
+          const SizedBox(height: 4),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(6),
+            child: LinearProgressIndicator(value: ratio, minHeight: 7, color: AppColors.primary, backgroundColor: AppColors.primary.withValues(alpha: 0.12)),
+          ),
+        ]),
+      );
+    }
+
+    return Column(children: [
+      Padding(
+        padding: const EdgeInsets.fromLTRB(12, 12, 12, 4),
+        child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+          progress('المواقع', located),
+          progress('الصور', photographed),
+          Text(
+            total == 0 ? 'لا يوجد زبائن عليهم باقي في هذه القائمة' : 'المكتمل (موقع + صورة): $complete من $total · المتبقي ${total - complete}',
+            style: const TextStyle(color: AppColors.textSecondary),
+          ),
+          const SizedBox(height: 8),
+          Wrap(spacing: 8, children: [
+            for (final f in _CaptureFilter.values)
+              ChoiceChip(
+                label: Text(switch (f) {
+                  _CaptureFilter.remaining => 'المتبقي (${total - complete})',
+                  _CaptureFilter.complete => 'مكتمل ($complete)',
+                  _CaptureFilter.all => 'الكل ($total)',
+                }),
+                selected: _captureFilter == f,
+                onSelected: (_) => setState(() => _captureFilter = f),
+              ),
+          ]),
+        ]),
+      ),
+      Expanded(
+        child: visible.isEmpty
+            ? Center(
+                child: Text(
+                  _captureFilter == _CaptureFilter.remaining && total > 0 ? 'أكملت كل زبائن هذه القائمة' : 'لا توجد نتائج',
+                  style: const TextStyle(color: AppColors.textSecondary),
+                ),
+              )
+            : ListView(children: [
+                for (final c in visible)
+                  Column(key: ValueKey(c.id), children: [
+                    ListTile(
+                      title: Text(c.name),
+                      subtitle: Text([if (c.shopName != null) c.shopName!, c.phone].join(' · ')),
+                      trailing: TextButton.icon(
+                        icon: Icon(c.hasLocation ? Icons.check_circle : Icons.my_location),
+                        label: Text(c.hasLocation ? 'تم التحديد' : _locatingCustomerId == c.id ? 'جارٍ التحديد' : 'تحديد الموقع'),
+                        onPressed: c.hasLocation || _locatingCustomerId != null ? null : () => _setCustomerGps(c),
+                      ),
+                    ),
+                    CustomerPhotoButton(
+                      listId: widget.listId,
+                      customerId: c.id,
+                      hasPhoto: c.hasPhoto,
+                      onSaved: () => _markPhotographed(c.id),
+                    ),
+                    const Divider(height: 16),
+                  ]),
+              ]),
+      ),
+    ]);
+  }
+
   void _markLocated(int customerId) {
     Map<String, dynamic> patch(Map<String, dynamic> row) {
       final id =
@@ -630,3 +720,5 @@ class _ListDetailPageState extends State<ListDetailPage>
     );
   }
 }
+
+enum _CaptureFilter { remaining, all, complete }

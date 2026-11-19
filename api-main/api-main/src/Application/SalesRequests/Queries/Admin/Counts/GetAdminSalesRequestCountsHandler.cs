@@ -76,9 +76,9 @@ public class GetAdminSalesRequestCountsHandler
                 Tab = tab,
                 Label = SalesRequestTabMap.ArabicLabel(tab),
                 Count = count.Value,
-                Overlapping = true,
+                Overlapping = false,
                 IncludedInAll = false,
-                Caveat = tab == SalesRequestTabMap.Sent ? SentCaveat : null
+                Caveat = null
             });
         }
 

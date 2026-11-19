@@ -6,6 +6,7 @@ import { axiosInstance } from '@/modules/Core/plugins/axios'
 import { useAuthStore } from '@/modules/Auth/store'
 import { AppButton, AppSelect, AppTextarea, DataState } from '@/modules/Core/components/ui'
 import { formatDateTime, formatNumber } from '@/modules/Core/utils/formatDisplay'
+import DelegateWrongSalesInbox from '../components/DelegateWrongSalesInbox.vue'
 
 const props = withDefaults(
   defineProps<{ audience?: 'delegate' | 'branch' }>(),
@@ -54,7 +55,7 @@ const mailbox = computed(() => String(route.query.mailbox ?? (props.audience ===
 
 const listQuery = useQuery({
   queryKey: computed(() => ['wrong-sales', mailbox.value, props.audience, auth.sessionGeneration]),
-  enabled: computed(() => canRead.value && auth.permissionsReady),
+  enabled: computed(() => props.audience !== 'delegate' && canRead.value && auth.permissionsReady),
   queryFn: async ({ signal }) => {
     const { data } = await axiosInstance.get<ListResponse>('/admin/WrongSales', {
       signal,
@@ -147,7 +148,9 @@ function fmtDate(iso: string) {
 </script>
 
 <template>
+  <DelegateWrongSalesInbox v-if="props.audience === 'delegate'" />
   <div
+    v-else
     class="ws-page"
     dir="rtl"
   >

@@ -9,5 +9,6 @@ Future<void> main() async {
   await SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
   await Injection.init();
   await Injection.paymentSyncService.start();
+  await Injection.businessDateService.start();
   runApp(const DelegateApp());
 }

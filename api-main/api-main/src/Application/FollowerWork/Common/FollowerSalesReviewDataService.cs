@@ -80,8 +80,14 @@ public class FollowerSalesReviewDataService
             .Select(l => new { l.Id, l.Name })
             .ToListAsync(ct);
 
-        var facts = await MaterializeFactsForListsAsync(listIds, ct);
+        var facts = await FollowerFactsQuery.LoadAsync(_db, listIds, null, null, ct);
+        var weekFacts = await FollowerFactsQuery.LoadAsync(_db, listIds, weekAgo, null, ct);
+        var yesterdayFacts = await FollowerFactsQuery.LoadAsync(_db, listIds, yesterday, null, ct);
         var factsByList = facts
+            .Where(f => f.OrderListId is > 0)
+            .GroupBy(f => f.OrderListId!.Value)
+            .ToDictionary(g => g.Key, g => g.ToList());
+        var weekFactsByList = weekFacts
             .Where(f => f.OrderListId is > 0)
             .GroupBy(f => f.OrderListId!.Value)
             .ToDictionary(g => g.Key, g => g.ToList());
@@ -90,9 +96,9 @@ public class FollowerSalesReviewDataService
         foreach (var list in listMeta.OrderBy(l => l.Name, StringComparer.CurrentCultureIgnoreCase))
         {
             factsByList.TryGetValue(list.Id, out var listFacts);
-            listFacts ??= [];
-            var today = ActiveRatingCohort.Aggregate(listFacts, asOf, usePhantomSaleDate: true);
-            var week = ActiveRatingCohort.Aggregate(listFacts, weekAgo, usePhantomSaleDate: true);
+            weekFactsByList.TryGetValue(list.Id, out var listWeekFacts);
+            var today = ActiveRatingCohort.Aggregate(listFacts ?? [], asOf, usePhantomSaleDate: true);
+            var week = ActiveRatingCohort.Aggregate(listWeekFacts ?? [], weekAgo, usePhantomSaleDate: true);
             listCards.Add(new FollowerSalesReviewListCardDto(
                 list.Id,
                 list.Name,
@@ -104,11 +110,11 @@ public class FollowerSalesReviewDataService
         }
 
         var activeToday = ActiveRatingCohort.Build(facts, asOf, usePhantomSaleDate: true);
-        var activeYesterday = ActiveRatingCohort.Build(facts, yesterday, usePhantomSaleDate: true);
+        var activeYesterday = ActiveRatingCohort.Build(yesterdayFacts, yesterday, usePhantomSaleDate: true);
         var buckets = BuildRatingBuckets(activeToday, activeYesterday);
 
         var remToday = facts.Where(f => ActiveCustomerRules.IsActive(f.LastPaymentDate, asOf) && f.HasOpenBalance).ToList();
-        var remY = facts.Where(f => ActiveCustomerRules.IsActive(f.LastPaymentDate, yesterday) && f.HasOpenBalance).ToList();
+        var remY = yesterdayFacts.Where(f => ActiveCustomerRules.IsActive(f.LastPaymentDate, yesterday) && f.HasOpenBalance).ToList();
         var le100 = remToday.Count(f => f.AmountRemaining > 0 && f.AmountRemaining < FollowerSaleAuthRules.RemainingBand100k);
         var lt200 = remToday.Count(f => f.AmountRemaining >= FollowerSaleAuthRules.RemainingBand100k
                                         && f.AmountRemaining < FollowerSaleAuthRules.RemainingBand200k);
@@ -154,7 +160,7 @@ public class FollowerSalesReviewDataService
 
         var (_, _, listIds, _) = scope.Data!;
         var asOf = TodayBaghdad();
-        var facts = await MaterializeFactsForListsAsync(listIds, ct);
+        var facts = await FollowerFactsQuery.LoadAsync(_db, listIds, null, null, ct);
         var listNames = await _db.OrderLists.AsNoTracking()
             .Where(l => listIds.Contains(l.Id))
             .ToDictionaryAsync(l => l.Id, l => l.Name, ct);
@@ -276,7 +282,7 @@ public class FollowerSalesReviewDataService
             .Concat(pendingOrders.Select(o => o.CustomerId))
             .Distinct()
             .ToList();
-        var facts = await MaterializeFactsForCustomersAsync(allCustomerIds, listIds, ct);
+        var facts = await FollowerFactsQuery.LoadAsync(_db, listIds, null, allCustomerIds, ct);
         var factByCustomer = facts.GroupBy(f => f.CustomerId)
             .ToDictionary(g => g.Key, g => g.First());
 
@@ -379,102 +385,5 @@ public class FollowerSalesReviewDataService
             return new FollowerSalesReviewRatingBucketDto(
                 d.Key, d.Label, c, y, FollowerWorkRules.ComputeCountTrend(c, y));
         }).ToList();
-    }
-
-    private async Task<List<RatingCustomerFact>> MaterializeFactsForListsAsync(
-        IReadOnlyList<int> listIds,
-        CancellationToken ct)
-    {
-        if (listIds.Count == 0)
-            return [];
-
-        var rows = await _db.Orders.AsNoTracking()
-            .Where(o => o.ApprovalStatus == OrderApprovalStatus.Approved
-                        && o.OrderListId != null
-                        && listIds.Contains(o.OrderListId.Value))
-            .Select(o => new
-            {
-                o.CustomerId,
-                o.OrderListId,
-                o.SellerId,
-                o.SellAmount,
-                o.DailyInstallmentAmount,
-                o.SaleDate,
-                o.CreatedAt,
-                Receipts = o.InstallmentPayments.Sum(ip => ip.Amount),
-                LastPaymentDate = o.InstallmentPayments.Max(ip => (DateOnly?)ip.Date),
-                IsLegal = o.Customer != null && o.Customer.IsLegal
-            })
-            .ToListAsync(ct);
-
-        return GroupFacts(rows.Select(r => (
-            r.CustomerId, r.OrderListId, r.SellerId, r.SellAmount, r.DailyInstallmentAmount,
-            r.SaleDate, r.CreatedAt, r.Receipts, r.LastPaymentDate, r.IsLegal)));
-    }
-
-    private async Task<List<RatingCustomerFact>> MaterializeFactsForCustomersAsync(
-        IReadOnlyList<int> customerIds,
-        IReadOnlyList<int> listIds,
-        CancellationToken ct)
-    {
-        if (customerIds.Count == 0)
-            return [];
-
-        var rows = await _db.Orders.AsNoTracking()
-            .Where(o => o.ApprovalStatus == OrderApprovalStatus.Approved
-                        && customerIds.Contains(o.CustomerId)
-                        && o.OrderListId != null
-                        && listIds.Contains(o.OrderListId.Value))
-            .Select(o => new
-            {
-                o.CustomerId,
-                o.OrderListId,
-                o.SellerId,
-                o.SellAmount,
-                o.DailyInstallmentAmount,
-                o.SaleDate,
-                o.CreatedAt,
-                Receipts = o.InstallmentPayments.Sum(ip => ip.Amount),
-                LastPaymentDate = o.InstallmentPayments.Max(ip => (DateOnly?)ip.Date),
-                IsLegal = o.Customer != null && o.Customer.IsLegal
-            })
-            .ToListAsync(ct);
-
-        return GroupFacts(rows.Select(r => (
-            r.CustomerId, r.OrderListId, r.SellerId, r.SellAmount, r.DailyInstallmentAmount,
-            r.SaleDate, r.CreatedAt, r.Receipts, r.LastPaymentDate, r.IsLegal)));
-    }
-
-    private static List<RatingCustomerFact> GroupFacts(
-        IEnumerable<(int CustomerId, int? OrderListId, int? SellerId, double SellAmount, double Daily,
-            DateOnly? SaleDate, DateTimeOffset? CreatedAt, double Receipts, DateOnly? LastPayment, bool IsLegal)> rows)
-    {
-        return rows
-            .GroupBy(r => new { r.CustomerId, r.OrderListId })
-            .Select(g =>
-            {
-                var saleDates = g.Where(x => x.SaleDate != null).Select(x => x.SaleDate!.Value).ToList();
-                DateOnly? saleDate = saleDates.Count > 0
-                    ? saleDates.Min()
-                    : g.Where(x => x.CreatedAt != null)
-                        .Select(x => IraqCalendar.ToLocalDate(x.CreatedAt!.Value))
-                        .OrderBy(d => d)
-                        .Cast<DateOnly?>()
-                        .FirstOrDefault();
-
-                return new RatingCustomerFact
-                {
-                    CustomerId = g.Key.CustomerId,
-                    OrderListId = g.Key.OrderListId,
-                    SellerId = g.Select(x => x.SellerId).FirstOrDefault(x => x != null),
-                    AmountTotalSales = g.Sum(x => x.SellAmount),
-                    ReceiptsTotal = g.Sum(x => x.Receipts),
-                    AmountDaySales = g.Sum(x => x.Daily),
-                    SaleDate = saleDate,
-                    LastPaymentDate = g.Max(x => x.LastPayment),
-                    IsLegal = g.Any(x => x.IsLegal)
-                };
-            })
-            .ToList();
     }
 }

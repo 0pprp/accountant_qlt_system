@@ -4,6 +4,7 @@ export const ManagementTaskEndpoints = {
   fanout: '/admin/ManagementTasks/fanout',
   audiencePreview: '/admin/ManagementTasks/audience-preview',
   assigneeOptions: '/admin/ManagementTasks/assignee-options',
+  transferTargets: '/admin/ManagementTasks/transfer-targets',
   accept: (id: number) => `/admin/ManagementTasks/${id}/accept`,
   reject: (id: number) => `/admin/ManagementTasks/${id}/reject`,
   transfer: (id: number) => `/admin/ManagementTasks/${id}/transfer`,

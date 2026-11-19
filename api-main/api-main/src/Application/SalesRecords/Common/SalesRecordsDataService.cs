@@ -1,3 +1,4 @@
+using Application.Common.Balances;
 using Application.Common.Interfaces;
 using Domain.Entities.OrderAggregate.Enums;
 using Microsoft.EntityFrameworkCore;
@@ -65,6 +66,7 @@ public class SalesRecordsDataService
         var totalsRaw = await query
             .Select(o => new
             {
+                o.CustomerId,
                 o.SellAmount,
                 o.PrepaymentAmount,
                 Receipts = o.InstallmentPayments.Sum(ip => ip.Amount),
@@ -73,8 +75,35 @@ public class SalesRecordsDataService
 
         var totalSell = totalsRaw.Sum(x => x.SellAmount);
         var totalPrepay = totalsRaw.Sum(x => x.PrepaymentAmount);
-        var totalReceipts = totalsRaw.Sum(x => x.Receipts);
-        var totalRemaining = Math.Round(totalSell - totalReceipts, MidpointRounding.AwayFromZero);
+        double totalReceipts;
+        double totalRemaining;
+        var unfiltered = sellerId is null or <= 0
+                         && saleDateFrom is null
+                         && saleDateTo is null
+                         && string.IsNullOrWhiteSpace(search);
+        if (unfiltered)
+        {
+            var balances = await CustomerBalanceQuery.ForBranchesAsync(_db, branchScope, ct);
+            totalReceipts = balances.Sum(b => b.PaidTotal);
+            totalRemaining = CustomerBalanceRules.SumRounded(balances);
+        }
+        else
+        {
+            var customerIds = totalsRaw.Select(x => x.CustomerId).Distinct().ToList();
+            var unallocated = sellerId is > 0
+                ? new Dictionary<int, double>()
+                : await CustomerBalanceQuery.UnallocatedByCustomerAsync(_db, customerIds, saleDateTo, ct);
+            var balances = totalsRaw
+                .GroupBy(x => x.CustomerId)
+                .Select(g => CustomerBalanceRules.Combine(
+                    g.Key,
+                    g.Sum(x => x.SellAmount),
+                    g.Sum(x => x.Receipts),
+                    unallocated.GetValueOrDefault(g.Key)))
+                .ToList();
+            totalReceipts = balances.Sum(b => b.PaidTotal);
+            totalRemaining = CustomerBalanceRules.SumRounded(balances);
+        }
 
         IOrderedQueryable<Domain.Entities.OrderAggregate.Order> ordered = sort.ToLowerInvariant() switch
         {

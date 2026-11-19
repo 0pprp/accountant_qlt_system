@@ -211,6 +211,50 @@ public class SalesRequestEligibilityAndDraftRaceTests
         Assert.True(ok.IsSucceeded);
     }
 
+    [Fact]
+    public async Task Matching_includes_unpaid_normalized_customers_and_counts_agree()
+    {
+        await using var db = Db();
+        var branch = new Branch("اختبار", 1) { Id = 1 };
+        db.Branches.Add(branch);
+        var customer = MakeCustomer();
+        customer.FullName = "أَحمد حسن كاظم";
+        customer.PhoneNumber = "٠٧٨٠١١١٢٢٣٣";
+        db.Customers.Add(customer);
+        var request = new SalesRequest("احمد حسن كاظم", "07801112233", SalesRequestSourceType.Manual, 1, null, null, null);
+        db.SalesRequests.Add(request);
+        await db.SaveChangesAsync();
+        var actor = Actor(9);
+        var summary = await new Application.SalesRequests.Queries.Admin.GetMatchSummaryBatch.GetSalesRequestMatchSummaryBatchHandler(db, actor, new ClockStub(T0))
+            .Handle(new([request.Id]), default);
+        Assert.True(summary.IsSucceeded);
+        Assert.Equal(1, summary.Data!.Items.Single().Cards.Single(x => x.Key == Domain.Services.SalesMatching.SalesMatchCriteria.TripleName).Count);
+        var candidates = await SalesMatchCandidateSelector.LoadCustomerCandidatesAsync(db, [1], Domain.Services.SalesMatching.SalesMatchCriteria.Phone, request.CustomerName, request.CustomerPhone, default);
+        Assert.Equal(customer.Id, Assert.Single(candidates).Id);
+        var hits = await new Application.SalesRequests.Queries.Admin.GetMatchHits.GetSalesRequestMatchHitsHandler(db, actor, new ClockStub(T0))
+            .Handle(new() { RequestId = request.Id, Criterion = Domain.Services.SalesMatching.SalesMatchCriteria.TripleName, Pagination = new Application.Common.Models.Pagination { PageIndex = 1, PageSize = 10 } }, default);
+        Assert.True(hits.IsSucceeded);
+        Assert.Equal(customer.Id, Assert.Single(hits.Data!.Items).CustomerId);
+        Assert.Null(hits.Data.Items.Single().SellTotal);
+    }
+
+    [Fact]
+    public async Task Detail_edit_does_not_reassign_or_require_current_employee_eligibility()
+    {
+        await using var db = Db();
+        db.Branches.Add(new Branch("اختبار", 1) { Id = 1 });
+        var request = new SalesRequest("قديم", "07801112233", SalesRequestSourceType.Manual, 1, null, null, null);
+        request.Assign(55, T0);
+        db.SalesRequests.Add(request);
+        await db.SaveChangesAsync();
+        var result = await new Application.SalesRequests.Commands.Admin.Update.UpdateSalesRequestHandler(db, Actor(9), new ClockStub(T0))
+            .Handle(new() { RequestId = request.Id, CustomerName = "اسم مصحح", CustomerPhone = "07801112233", BranchId = 1, EmployeeId = 55 }, default);
+        Assert.True(result.IsSucceeded, result.Error?.Message);
+        Assert.Equal("اسم مصحح", request.CustomerName);
+        Assert.Equal(55, request.TargetEmployeeId);
+        Assert.Equal(SalesRequestStatus.Assigned, request.Status);
+    }
+
     private static TestApplicationDbContext Db() => new(
         new DbContextOptionsBuilder<TestApplicationDbContext>()
             .UseInMemoryDatabase(Guid.NewGuid().ToString()).Options);

@@ -1,6 +1,7 @@
 ﻿using Application.Common.Interfaces;
 using Application.InstallmentPayments.Common;
 using Application.Orders.Common;
+using Application.Safes.Common;
 using Domain.Entities.ActivityLogAggregate.Enums;
 using Domain.Entities.InstallmentPaymentAggregate;
 using Domain.Entities.OrderAggregate.Enums;
@@ -14,14 +15,17 @@ public class UpdateInstallmentPaymentHandler : IRequestHandler<UpdateInstallment
     private readonly ICurrentUserService _currentUserService;
     private readonly IDateTimeProvider _dateTimeProvider;
     private readonly IActivityLogService _activityLogService;
+    private readonly PaymentSafePosting _safePosting;
 
     public UpdateInstallmentPaymentHandler(IApplicationDbContext dbContext, ICurrentUserService currentUserService,
-        IDateTimeProvider dateTimeProvider, IActivityLogService activityLogService)
+        IDateTimeProvider dateTimeProvider, IActivityLogService activityLogService,
+        PaymentSafePosting safePosting)
     {
         _dbContext = dbContext;
         _currentUserService = currentUserService;
         _dateTimeProvider = dateTimeProvider;
         _activityLogService = activityLogService;
+        _safePosting = safePosting;
     }
 
     public async Task<Result> Handle(UpdateInstallmentPaymentCommand request, CancellationToken cancellationToken)
@@ -56,12 +60,23 @@ public class UpdateInstallmentPaymentHandler : IRequestHandler<UpdateInstallment
         cashHolderResult.Data!.UndeliveredCashAmount -= previousInstallmentAmount;
         cashHolderResult.Data.UndeliveredCashAmount += request.Amount;
 
+        await using var transaction = await _dbContext.Database.BeginTransactionAsync(cancellationToken);
+
+        var adjusted = await _safePosting.AdjustAsync(
+            installmentPayment.Id, request.Amount, _currentUserService.UserId, cancellationToken);
+        if (adjusted.IsFailed)
+        {
+            await transaction.RollbackAsync(cancellationToken);
+            return adjusted.Error!;
+        }
+
         await _activityLogService.AddAsync(
             order!.OrderList!.BranchId,
             ActivityType.InstallmentPaymentUpdated,
             TargetEntityType.InstallmentPayment,
             request.Id);
         await _dbContext.SaveChangesAsync(cancellationToken);
+        await transaction.CommitAsync(cancellationToken);
 
         return Result.Success();
     }

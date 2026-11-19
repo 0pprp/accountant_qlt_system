@@ -1,4 +1,4 @@
-using Application.BranchVisits.Common;
+﻿using Application.BranchVisits.Common;
 using Application.Common.Interfaces;
 using Application.CustomerDecisions.Common;
 using Application.SalesRequests.Common;
@@ -136,14 +136,13 @@ public sealed class PostBranchDecisionHandler
         var weekStart = today.AddDays(-7);
         var now = _clock.UtcNowOffset;
         var orders = await _db.Orders.AsNoTracking()
-            .Where(o => o.CustomerId == customerId)
+            .Where(o => o.CustomerId == customerId && o.ApprovalStatus == Domain.Entities.OrderAggregate.Enums.OrderApprovalStatus.Approved)
             .Select(o => new { o.Id, o.SellAmount }).ToListAsync(ct);
         var oids = orders.Select(o => o.Id).ToList();
-        var pays = oids.Count == 0
-            ? []
-            : await _db.InstallmentPayments.AsNoTracking()
-                .Where(p => oids.Contains(p.OrderId))
-                .Select(p => new { p.Amount, p.Date }).ToListAsync(ct);
+        var pays = await _db.InstallmentPayments.AsNoTracking()
+            .Where(p => (p.OrderId != null && oids.Contains(p.OrderId.Value))
+                        || (p.OrderId == null && p.CustomerId == customerId))
+            .Select(p => new { p.Amount, p.Date }).ToListAsync(ct);
         var sale = orders.Sum(o => o.SellAmount);
         var paid = pays.Sum(p => p.Amount);
         var week = pays.Where(p => p.Date >= weekStart).Sum(p => p.Amount);

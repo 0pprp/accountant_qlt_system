@@ -1,5 +1,6 @@
 using Application.Common.Interfaces;
 using Application.Expenses.Common;
+using Application.Safes.Common;
 using Domain.Entities.ActivityLogAggregate.Enums;
 using Domain.Entities.ExpenseAggregate;
 using Domain.Entities.SafeAggregate;
@@ -13,13 +14,15 @@ public class UpdateExpenseHandler : IRequestHandler<UpdateExpenseCommand, Result
     private readonly IApplicationDbContext _dbContext;
     private readonly INotificationService _notificationService;
     private readonly IActivityLogService _activityLogService;
+    private readonly ISafeLedger _safeLedger;
 
     public UpdateExpenseHandler(IApplicationDbContext dbContext, INotificationService notificationService,
-        IActivityLogService activityLogService)
+        IActivityLogService activityLogService, ISafeLedger safeLedger)
     {
         _dbContext = dbContext;
         _notificationService = notificationService;
         _activityLogService = activityLogService;
+        _safeLedger = safeLedger;
     }
 
     public async Task<Result> Handle(UpdateExpenseCommand request, CancellationToken cancellationToken)
@@ -33,17 +36,25 @@ public class UpdateExpenseHandler : IRequestHandler<UpdateExpenseCommand, Result
 
         UpdateExpenseItems(expense, request);
 
-        await HandleSafeTransactionsAsync(expense, cancellationToken);
+        await using var dbTransaction = await _dbContext.Database.BeginTransactionAsync(cancellationToken);
+
+        var safeResult = await HandleSafeTransactionsAsync(expense, cancellationToken);
+        if (safeResult.IsFailed)
+        {
+            await dbTransaction.RollbackAsync(cancellationToken);
+            return safeResult;
+        }
 
         var safe = await _dbContext.Safes.FirstAsync(x => x.Id == expense.Transactions.First().SafeId, cancellationToken);
 
         await _activityLogService.AddAsync(
-            expense.BranchId ?? safe.BranchId!.Value,
+            expense.BranchId ?? safe.BranchId,
             ActivityType.ExpenseUpdated,
             TargetEntityType.Expense,
             expense.Id);
 
         await _dbContext.SaveChangesAsync(cancellationToken);
+        await dbTransaction.CommitAsync(cancellationToken);
         return Result.Success();
     }
     
@@ -78,7 +89,7 @@ public class UpdateExpenseHandler : IRequestHandler<UpdateExpenseCommand, Result
         }
     }
 
-    private async Task HandleSafeTransactionsAsync(Expense expense, CancellationToken cancellationToken)
+    private async Task<Result> HandleSafeTransactionsAsync(Expense expense, CancellationToken cancellationToken)
     {
         var safeId = expense.Transactions.First().SafeId;
         var safe = await _dbContext.Safes.FirstAsync(x => x.Id == safeId, cancellationToken);
@@ -87,43 +98,36 @@ public class UpdateExpenseHandler : IRequestHandler<UpdateExpenseCommand, Result
         var oldTotalAmount = expense.TotalAmount;
 
         if (newTotalAmount == oldTotalAmount)
-            return;
+            return Result.Success();
 
-        if (newTotalAmount > oldTotalAmount)
-        {
-            var additionalAmount = newTotalAmount - oldTotalAmount;
+        var isAdditional = newTotalAmount > oldTotalAmount;
+        var delta = Math.Abs(newTotalAmount - oldTotalAmount);
 
-            var transaction = new Transaction(
-                additionalAmount,
-                TransactionType.Expense,
-                TransactionStatus.Approved,
-                TransactionDirection.Out,
-                safeId);
+        var transaction = new Transaction(
+            delta,
+            TransactionType.Expense,
+            TransactionStatus.Approved,
+            isAdditional ? TransactionDirection.Out : TransactionDirection.In,
+            safeId);
 
-            expense.Transactions.Add(transaction);
-            safe.RemainingCashAmount -= additionalAmount;
+        expense.Transactions.Add(transaction);
+        _notificationService.AddTransactionCreatedNotification(transaction, safe.BranchId);
 
-            if (safe.BranchId is not null)
-                _notificationService.AddTransactionCreatedNotification(transaction, safe.BranchId.Value);
-        }
-        else
-        {
-            var refundAmount = oldTotalAmount - newTotalAmount;
+        var movement = await _safeLedger.RecordAsync(
+            new SafeLedgerEntry
+            {
+                SafeId = safeId,
+                Kind = isAdditional ? SafeMovementKind.ExpenseOut : SafeMovementKind.Refund,
+                Amount = delta,
+                Note = $"تعديل مصروف بفاتورة {expense.FactorNumber}",
+                ExpenseId = expense.Id
+            },
+            cancellationToken);
 
-            var transaction = new Transaction(
-                refundAmount,
-                TransactionType.Expense,
-                TransactionStatus.Approved,
-                TransactionDirection.In,
-                safeId);
-
-            expense.Transactions.Add(transaction);
-            safe.RemainingCashAmount += refundAmount;
-
-            if (safe.BranchId is not null)
-                _notificationService.AddTransactionCreatedNotification(transaction, safe.BranchId.Value);
-        }
+        if (movement.IsFailed)
+            return movement.Error;
 
         expense.TotalAmount = newTotalAmount;
+        return Result.Success();
     }
 }

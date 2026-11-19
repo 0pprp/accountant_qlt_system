@@ -24,8 +24,12 @@ public class GetCommitteeDailyHandler : IRequestHandler<GetCommitteeDailyQuery, 
             .Select(x => new { x.Id, x.Name })
             .FirstAsync(cancellationToken);
 
+        // يشمل الجاري + المكتمل الذي ما زال عليه متبقٍ حتى تعمل بيانات الاستيراد التاريخي
         var rows = await _db.Orders.AsNoTracking()
-            .Where(o => o.OrderListId == request.ListId && o.ExecutionStatus == OrderExecutionStatus.InProgress)
+            .Where(o => o.OrderListId == request.ListId
+                        && (o.ExecutionStatus == OrderExecutionStatus.InProgress
+                            || (o.ExecutionStatus == OrderExecutionStatus.Completed
+                                && o.SellAmount > o.InstallmentPayments.Sum(ip => ip.Amount))))
             .Select(o => new
             {
                 o.Id,
@@ -103,7 +107,10 @@ public class GetCommitteeDailyHandler : IRequestHandler<GetCommitteeDailyQuery, 
                 Phone = kv.Value.Phone,
                 DailyInstallment = kv.Value.DailyInstallment,
                 PaidToday = kv.Value.PaidToday,
-                IsPaid = kv.Value.PaidToday >= kv.Value.DailyInstallment && kv.Value.DailyInstallment > 0,
+                // إن لم يُضبط القسط اليومي (استيراد) يكفي وجود تسديد اليوم
+                IsPaid = kv.Value.DailyInstallment > 0
+                    ? kv.Value.PaidToday >= kv.Value.DailyInstallment
+                    : kv.Value.PaidToday > 0,
                 HasNote = notedIds.Contains(kv.Key),
                 LatestFieldFollowupNote = latestNotes.GetValueOrDefault(kv.Key),
                 HasLocation = kv.Value.HasLocation,

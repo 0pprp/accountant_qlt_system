@@ -2,6 +2,7 @@ using Application.Common.Interfaces;
 using Application.Common.SeedData;
 using Application.SalesRequests.Common;
 using Domain.Entities.OrderAggregate.Enums;
+using Domain.Entities.SafeAggregate.Enums;
 using Microsoft.EntityFrameworkCore;
 
 namespace Application.ManagementSummary.Common;
@@ -450,21 +451,15 @@ public class ManagementSummaryDataService
         }
 
         var safes = await _db.Safes.AsNoTracking()
-            .Where(s => s.BranchId != null && branchIds.Contains(s.BranchId.Value))
-            .Select(s => new { BranchId = s.BranchId!.Value, s.Name, s.RemainingCashAmount })
+            .Where(s => branchIds.Contains(s.BranchId))
+            .Select(s => new { s.BranchId, s.Kind, s.Balance })
             .ToListAsync(ct);
 
-        var boxTotal = ToDecimal(safes.Sum(s => s.RemainingCashAmount));
+        // المبلغ الكلي = كل خزائن الفرع (قاصة + صرفيات + قوائم + موظفون)
+        var boxTotal = ToDecimal(safes.Sum(s => s.Balance));
 
-        // تكييف موثّق: «الخزينة» ≈ أكبر رصيد أو اسم يحتوي خزين/قاصة لكل فرع ثم المجموع
-        var treasury = 0m;
-        foreach (var group in safes.GroupBy(s => s.BranchId))
-        {
-            var named = group.FirstOrDefault(s =>
-                s.Name.Contains("خزين", StringComparison.OrdinalIgnoreCase)
-                || s.Name.Contains("قاص", StringComparison.OrdinalIgnoreCase));
-            treasury += ToDecimal((named ?? group.OrderByDescending(s => s.RemainingCashAmount).First()).RemainingCashAmount);
-        }
+        // المبلغ الفعلي = قاصة الفرع وحدها — محدَّدة بـ Kind لا بتخمين الاسم
+        var treasury = ToDecimal(safes.Where(s => s.Kind == SafeKind.Branch).Sum(s => s.Balance));
 
         return
         [

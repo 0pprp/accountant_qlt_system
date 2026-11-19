@@ -240,6 +240,8 @@ const customerForm = ref<CustomerForm>({
     nearestKnownLocation: '',
   },
   branchId: 0,
+  sellAmountDiscount: '0',
+  dailyInstallmentDiscount: '0',
 })
 
 const { isPending: isCreatingCustomer, mutateAsync: createCustomer } =
@@ -313,7 +315,12 @@ async function onSubmit() {
       customerForm.value.business =
         customerDataFormRef.value!.formValues.business
 
-      const result = await createCustomer(customerForm.value)
+      const result = await createCustomer({
+        ...customerForm.value,
+        sellAmountDiscount: Number(customerForm.value.sellAmountDiscount) || 0,
+        dailyInstallmentDiscount:
+          Number(customerForm.value.dailyInstallmentDiscount) || 0,
+      })
       customerId.value = result.data.id
     }
   } else if (activeStep.value === CreateSaleSteps.installmentDetails) {

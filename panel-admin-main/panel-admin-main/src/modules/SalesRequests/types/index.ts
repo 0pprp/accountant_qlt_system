@@ -34,6 +34,7 @@ export interface SalesRequestListItem {
   targetEmployeeId?: number | null
   targetEmployeeName?: string | null
   linkedOrderId?: number | null
+  legalCaseStatus?: string | null
   existingCustomerId?: number | null
   createdAt?: string | null
   statusChangedAtUtc?: string | null

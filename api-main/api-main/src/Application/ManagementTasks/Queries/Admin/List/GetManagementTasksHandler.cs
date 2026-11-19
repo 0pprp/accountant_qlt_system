@@ -48,7 +48,16 @@ public class GetManagementTasksHandler
             .AsNoTracking()
             .Where(x => branches.Contains(x.BranchId));
 
-        if (request.InboxForMe)
+        if (request.InboxForMe && request.IncludeTransferredByMe)
+        {
+            query = query.Where(x =>
+                x.CurrentHolderUserId == userId
+                || (x.AssigneeUserId == userId
+                    && (x.TransferredAtUtc != null
+                        || x.Status == Domain.Entities.ManagementTaskAggregate.Enums.ManagementTaskStatus.Returned
+                        || x.Status == Domain.Entities.ManagementTaskAggregate.Enums.ManagementTaskStatus.AwaitingDelegatedConfirm)));
+        }
+        else if (request.InboxForMe)
         {
             query = query.Where(x =>
                 x.CurrentHolderUserId == userId

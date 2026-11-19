@@ -34,4 +34,15 @@ abstract final class JsonMap {
     if (v is num) return v.toDouble();
     return double.tryParse('$v'.trim().replaceAll(',', ''));
   }
+
+  static bool asBool(Map map, List<String> keys, {bool fallback = false}) {
+    final v = pick(map, keys);
+    if (v == null) return fallback;
+    if (v is bool) return v;
+    if (v is num) return v != 0;
+    final s = '$v'.trim().toLowerCase();
+    if (s == 'true' || s == '1' || s == 'yes') return true;
+    if (s == 'false' || s == '0' || s == 'no') return false;
+    return fallback;
+  }
 }

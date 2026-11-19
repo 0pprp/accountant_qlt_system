@@ -18,6 +18,7 @@ public static class Roles
         All.Add(Director);
         All.Add(Monitor);
         All.Add(SalesManager);
+        All.Add(ArchiveOfficer);
     }
     
     public static readonly RoleName Admin = new(nameof(Admin), "المدیر");
@@ -37,6 +38,9 @@ public static class Roles
 
     /// <summary>قالب افتراضي — مصدر: FE_Company UserType «مدير مبيعات». لا يمنح ManagePermissions.</summary>
     public static readonly RoleName SalesManager = new(nameof(SalesManager), "مدير مبيعات");
+
+    /// <summary>نهاية سلسلة عهدة الورق — يستلم ويؤرشف ويسترجع الناقص.</summary>
+    public static readonly RoleName ArchiveOfficer = new(nameof(ArchiveOfficer), "مسؤول الأرشيف");
 }
 
 public record RoleName(string Name, string DisplayName);

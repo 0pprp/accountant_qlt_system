@@ -1,4 +1,4 @@
-using Application.Common.Interfaces;
+﻿using Application.Common.Interfaces;
 using Application.Common.Models;
 using Application.Users.Commands.Admin.PatchPermissionOverrides;
 using Application.Users.Commands.Admin.UpdatePermissions;
@@ -57,7 +57,7 @@ public class PermissionOverridesHandlerTests
         await db.SaveChangesAsync();
 
         var branch = new Branch("فرع1", province.Id);
-        branch.Safe = null;
+        branch.Safes = [];
         db.Branches.Add(branch);
 
         var adminRole = new Role("Admin", "المدير");

@@ -21,14 +21,16 @@ public class CreatePurchaseHandler : IRequestHandler<CreatePurchaseCommand, Resu
     private readonly IFileManager _fileManager;
     private readonly INotificationService _notificationService;
     private readonly IActivityLogService _activityLogService;
+    private readonly ISafeLedger _safeLedger;
 
     public CreatePurchaseHandler(IApplicationDbContext dbContext, IFileManager fileManager, INotificationService notificationService,
-        IActivityLogService activityLogService)
+        IActivityLogService activityLogService, ISafeLedger safeLedger)
     {
         _dbContext = dbContext;
         _fileManager = fileManager;
         _notificationService = notificationService;
         _activityLogService = activityLogService;
+        _safeLedger = safeLedger;
     }
 
     public async Task<Result> Handle(CreatePurchaseCommand request, CancellationToken cancellationToken)
@@ -38,51 +40,64 @@ public class CreatePurchaseHandler : IRequestHandler<CreatePurchaseCommand, Resu
         if (isFactorNumberAlreadyExist)
             return PurchaseErrors.PurchaseWithThisFactorNumberAlreadyExist;
 
-        var safe = await GetSafeAsync(request.SafeType, request.BranchId);
-        if (safe is null)
-            return SafeErrors.SafeNotFound;
+        if (request.BranchId is null)
+            return SafeErrors.BranchIsRequired;
+
+        var branchId = request.BranchId.Value;
+        var branchSafe = await _safeLedger.GetBranchSafeAsync(branchId, cancellationToken);
+        if (branchSafe.IsFailed)
+            return branchSafe.Error;
 
         var totalAmount = request.PurchaseItems.Sum(x => x.Amount);
-        if (safe.RemainingCashAmount < totalAmount)
-            return SafeErrors.ThereIsNotEnoughMoneyInTheSafe;
-
-        safe.RemainingCashAmount -= totalAmount;
 
         var transaction = new Transaction(totalAmount, TransactionType.Purchase, TransactionStatus.Approved, TransactionDirection.Out,
-            safe.Id);
+            branchSafe.Data!.Id);
 
-        var purchase = new Purchase(request.FactorNumber, totalAmount, request.SafeType, request.BranchId, transaction,
+        var purchase = new Purchase(request.FactorNumber, totalAmount, request.SafeType, branchId, transaction,
             request.PurchaseItems
                 .Select(x => new PurchaseItem(x.Quantity, x.Amount, x.ProductId))
                 .ToList());
         _dbContext.Purchases.Add(purchase);
 
-        if (request.SafeType == SafeType.Branch && request.BranchId is not null)
-            _notificationService.AddTransactionCreatedNotification(transaction, request.BranchId.Value);
+        _notificationService.AddTransactionCreatedNotification(transaction, branchId);
 
         var updateInventoryResult = await UpdateProductInventoryAsync(request.PurchaseItems, cancellationToken);
         if (updateInventoryResult.IsFailed)
             return updateInventoryResult;
 
+        await using var dbTransaction = await _dbContext.Database.BeginTransactionAsync(cancellationToken);
+
         await _dbContext.SaveChangesAsync(cancellationToken);
 
+        var debit = await _safeLedger.RecordAsync(
+            new SafeLedgerEntry
+            {
+                SafeId = branchSafe.Data!.Id,
+                Kind = SafeMovementKind.PurchaseOut,
+                Amount = totalAmount,
+                Note = $"مشترى بفاتورة {request.FactorNumber}",
+                PurchaseId = purchase.Id
+            },
+            cancellationToken);
+
+        if (debit.IsFailed)
+        {
+            await dbTransaction.RollbackAsync(cancellationToken);
+            return debit.Error;
+        }
+
         await _activityLogService.AddAsync(
-            request.BranchId ?? safe.BranchId!.Value,
+            branchId,
             ActivityType.PurchaseCreated,
             TargetEntityType.Purchase,
             purchase.Id);
         await _dbContext.SaveChangesAsync(cancellationToken);
 
+        await dbTransaction.CommitAsync(cancellationToken);
+
         await SaveAttachmentsAsync(request.Attachments, purchase.Id);
 
         return Result.Success();
-    }
-
-    private async Task<Safe?> GetSafeAsync(SafeType safeType, int? branchId)
-    {
-        return await _dbContext.Safes
-            .When(safeType == SafeType.Branch, x => x.BranchId == branchId)
-            .FirstOrDefaultAsync();
     }
 
     private async Task<Result> UpdateProductInventoryAsync(List<PurchaseItemDto> purchaseItems, CancellationToken cancellationToken)

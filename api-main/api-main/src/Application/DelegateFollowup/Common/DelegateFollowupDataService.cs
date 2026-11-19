@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Application.DelegateFollowup.Common;
 
-public class DelegateFollowupDataService
+public partial class DelegateFollowupDataService
 {
     private readonly IApplicationDbContext _db;
     private readonly IDateTimeProvider _clock;
@@ -74,7 +74,14 @@ public class DelegateFollowupDataService
             .GroupBy(r => r.OrderListId)
             .ToDictionary(
                 g => g.Key,
-                g => BuildFacts(g).Where(f => f.Remaining > 0).ToList());
+                g => BuildFacts(g).Where(f => DelegateFollowupRules.IsOpenBalance(f.Remaining)).ToList());
+
+        var cardCustomerIds = factsByList.Values.SelectMany(f => f.Select(x => x.CustomerId)).Distinct().ToList();
+        var legalIds = (await _db.Customers.AsNoTracking()
+                .Where(c => cardCustomerIds.Contains(c.Id) && c.IsLegal)
+                .Select(c => c.Id)
+                .ToListAsync(ct))
+            .ToHashSet();
 
         var cards = new List<DelegateFollowupListCardDto>(lists.Count);
         foreach (var list in lists)
@@ -92,7 +99,7 @@ public class DelegateFollowupDataService
                 FollowerName = list.FollowerName,
                 RealRating = snapshot.AverageScore,
                 RealRatingLabel = snapshot.Label,
-                NonZeroedCustomerCount = facts.Count,
+                NonZeroedCustomerCount = facts.Count(f => legalIds.Contains(f.CustomerId) == false),
                 LastPaymentDate = lastPaymentByList.GetValueOrDefault(list.Id)
             });
         }
@@ -114,7 +121,7 @@ public class DelegateFollowupDataService
 
         var asOf = _clock.Today;
         var weekAgo = DelegateFollowupRules.WeekAgoDate(asOf);
-        var yesterday = asOf.AddDays(-1);
+        var yesterday = DelegateFollowupRules.ReportedYesterday(asOf);
         var lastFriday = DelegateFollowupRules.LastFridayBefore(asOf);
         var historyDays = DelegateFollowupRules.LastNCalendarDaysEndingYesterday(
             asOf,
@@ -123,16 +130,21 @@ public class DelegateFollowupDataService
 
         var orderRows = await LoadOrderRowsAsync(ListOrders(listId, branchId), false, ct);
         var allFacts = BuildFacts(orderRows);
-        var facts = allFacts.Where(f => f.Remaining > 0).ToList();
+        var facts = allFacts.Where(f => DelegateFollowupRules.IsOpenBalance(f.Remaining)).ToList();
+        var tierCohort = allFacts
+            .Where(f => DelegateFollowupRules.IsOpenBalance(f.Remaining)
+                        || DelegateFollowupRules.KeepSettledCustomer(f.Remaining, f.Total, f.LastPaymentDate, asOf))
+            .ToList();
 
-        var customerNames = await LoadCustomerNamesAsync(facts.Select(f => f.CustomerId).ToList(), ct);
-        ApplyLegalFlags(facts, customerNames);
+        var customerNames = await LoadCustomerNamesAsync(tierCohort.Select(f => f.CustomerId).ToList(), ct);
+        ApplyLegalFlags(tierCohort, customerNames);
 
         var nonLegalFacts = facts.Where(f => f.IsLegal == false).ToList();
         var snapshot = TakeSnapshot(facts, asOf);
         var weekSnapshot = TakeSnapshot(facts, weekAgo);
         var tierSnapshot = TakeSnapshot(nonLegalFacts, asOf);
-        var remainingBands = DelegateFollowupRules.CountRemainingBands(facts.Select(f => f.Remaining));
+        var remainingBands = DelegateFollowupRules.CountRemainingBands(nonLegalFacts.Select(f => f.Remaining));
+        var legalTierIds = tierCohort.Where(f => f.IsLegal).Select(f => f.CustomerId).ToHashSet();
 
         var requiredDue = DelegateFollowupRules.SumRequiredDueInstallment(
             facts.Select(f => (f.AmountDaySales, f.Remaining, f.IsLegal)));
@@ -140,7 +152,9 @@ public class DelegateFollowupDataService
         var historyFrom = historyDays[^1];
         var fridayFrom = fridayHistory[^1];
         var rangeFrom = fridayFrom < historyFrom ? fridayFrom : historyFrom;
-        var paymentRows = await LoadCollectedPaymentRowsAsync(listId, branchId, rangeFrom, yesterday, ct);
+        var paymentRows = (await LoadCollectedPaymentRowsAsync(listId, branchId, rangeFrom, yesterday, ct))
+            .Where(p => legalTierIds.Contains(p.CustomerId) == false)
+            .ToList();
 
         var paymentsByDay = paymentRows
             .GroupBy(p => p.Date)
@@ -259,11 +273,18 @@ public class DelegateFollowupDataService
             Targets = conversionTargetDtos
         };
 
-        var todayLabels = LabelsOn(asOf);
+        var tierLabels = tierCohort
+            .Where(f => f.IsLegal == false)
+            .Select(f => (Fact: f, Score: ScoreAt(f, asOf)))
+            .Where(x => x.Score is not null)
+            .ToDictionary(x => x.Fact.CustomerId, x => CustomerRatingCalculator.LevelName(x.Score!.Value));
+        var paymentTuples = paymentRows.Select(p => (p.CustomerId, p.Date, p.Amount)).ToList();
         var tierMoney = new List<DelegateFollowupTierMoneyDto>(DelegateFollowupRules.TierLabels.Count);
         foreach (var label in DelegateFollowupRules.TierLabels)
         {
-            var tierFacts = facts.Where(f => f.IsLegal == false && todayLabels[f.CustomerId] == label).ToList();
+            var tierFacts = tierCohort
+                .Where(f => f.IsLegal == false && tierLabels.GetValueOrDefault(f.CustomerId) == label)
+                .ToList();
             var tierDue = DelegateFollowupRules.SumRequiredDueInstallment(
                 tierFacts.Select(f => (f.AmountDaySales, f.Remaining, f.IsLegal)));
 
@@ -281,13 +302,18 @@ public class DelegateFollowupDataService
                 RequiredDueAvailable = true,
                 RequiredDue = tierDue,
                 CollectedYesterday = TierDay(yesterday),
+                CustomerCount = tierFacts.Count,
+                PayersYesterday = DelegateFollowupRules.CountDistinctPayers(paymentTuples, tierIds, yesterday),
                 CollectedLast30Days = historyDays
                     .Select(d => new DelegateFollowupDayAmountDto { Date = d, Amount = TierDay(d) })
                     .ToList()
             });
         }
 
-        var boardByDay = await LoadBoardRatingsRangeAsync(listId, historyFrom, asOf, ct);
+        var boardByDay = await LoadBoardRatingsRangeAsync(
+            listId, historyFrom, asOf, DirectorBoardOperatorListRating.SlotCommittee, ct);
+        var accountantByDay = await LoadBoardRatingsRangeAsync(
+            listId, historyFrom, asOf, DirectorBoardOperatorListRating.SlotChiefAccountant, ct);
         var followerCommittee = await LoadFollowerCommitteeAsync(listId, historyFrom, asOf, ct);
         var supervisionCommittee = await LoadSupervisionCommitteeAsync(listId, historyFrom, asOf, ct);
         var salesDelegate = await LoadSalesDelegateCommitteeAsync(listId, historyFrom, asOf, ct);
@@ -297,20 +323,27 @@ public class DelegateFollowupDataService
             return new DelegateFollowupDayRatingDto { Date = d, Score = snap.AverageScore, Label = snap.Label };
         }).ToList();
 
-        var boardLast30 = historyDays.Select(d =>
-        {
-            boardByDay.TryGetValue(d, out var row);
-            return new DelegateFollowupDayRatingDto
+        var boardHistoryDays = historyDays.Prepend(asOf).ToList();
+        List<DelegateFollowupDayRatingDto> SlotHistory(Dictionary<DateOnly, DirectorBoardOperatorListRating> byDay)
+            => boardHistoryDays.Select(d =>
             {
-                Date = d,
-                Score = row?.Score ?? 0,
-                Label = row is null ? "" : $"{row.Score}/10",
-                BoardOperatorScore = row?.Score,
-                BoardOperatorNote = row?.Note
-            };
-        }).ToList();
+                byDay.TryGetValue(d, out var row);
+                return new DelegateFollowupDayRatingDto
+                {
+                    Date = d,
+                    Score = row?.Score ?? 0,
+                    Label = row is null ? "" : $"{row.Score}/10",
+                    BoardOperatorScore = row?.Score,
+                    BoardOperatorNote = row?.Note,
+                    RatedByUserName = row?.RatedByUserName
+                };
+            }).ToList();
 
+        var boardRatingDate = DelegateFollowupRules.ReportedYesterday(asOf);
+        boardByDay.TryGetValue(boardRatingDate, out var cardBoard);
         boardByDay.TryGetValue(asOf, out var todayBoard);
+        accountantByDay.TryGetValue(boardRatingDate, out var cardAccountant);
+        accountantByDay.TryGetValue(asOf, out var todayAccountant);
 
         return new DelegateFollowupSummaryDto
         {
@@ -322,7 +355,7 @@ public class DelegateFollowupDataService
             RealRatingLabel = snapshot.Label,
             RealRatingWeekAgo = weekSnapshot.AverageScore,
             RatingTrend = DelegateFollowupRules.ComputeScoreTrend(snapshot.AverageScore, weekSnapshot.AverageScore),
-            NonZeroedCustomerCount = facts.Count,
+            NonZeroedCustomerCount = nonLegalFacts.Count,
             LegalAvailable = true,
             LegalCustomerCount = facts.Count(f => f.IsLegal),
             ExcellentCount = tierSnapshot.ExcellentCount,
@@ -348,12 +381,17 @@ public class DelegateFollowupDataService
                 .ToList(),
             TierMoney = tierMoney,
             RealRatingLast30Days = realRatingLast30,
-            BoardOperatorLast30Days = boardLast30,
+            BoardOperatorLast30Days = SlotHistory(boardByDay),
+            AccountantRatingLast30Days = SlotHistory(accountantByDay),
+            ReportedYesterday = yesterday,
             FollowerCommittee = followerCommittee,
             SupervisionCommittee = supervisionCommittee,
             SalesDelegate = salesDelegate,
             Conversion = conversion,
-            BoardOperatorRating = MapBoardRating(listId, asOf, todayBoard),
+            BoardOperatorRating = MapBoardRating(listId, boardRatingDate, cardBoard),
+            BoardOperatorRatingToday = MapBoardRating(listId, asOf, todayBoard),
+            AccountantRating = MapBoardRating(listId, boardRatingDate, cardAccountant),
+            AccountantRatingToday = MapBoardRating(listId, asOf, todayAccountant),
             UnresolvedNotes =
             [
                 new()
@@ -376,7 +414,7 @@ public class DelegateFollowupDataService
 
         var asOf = _clock.Today;
         var orderRows = await LoadOrderRowsAsync(ListOrders(listId, branchId), true, ct);
-        var facts = BuildFacts(orderRows).Where(f => f.Remaining > 0).ToList();
+        var facts = BuildFacts(orderRows).Where(f => DelegateFollowupRules.IsOpenBalance(f.Remaining)).ToList();
 
         var names = await LoadCustomerNamesAsync(facts.Select(f => f.CustomerId).ToList(), ct);
         ApplyLegalFlags(facts, names);
@@ -388,9 +426,7 @@ public class DelegateFollowupDataService
             names.TryGetValue(f.CustomerId, out var info);
             var rows = orderRowsByCustomer[f.CustomerId].ToList();
             var score = ScoreAt(f, asOf);
-            var days = f.SaleDate is null
-                ? 0
-                : CustomerRatingCalculator.DiffDaysInclusive(f.SaleDate.Value, f.LastPaymentDate ?? asOf);
+            var days = DelegateFollowupRules.DeviceDays(f.SaleDate, f.Remaining, f.LastPaymentDate, asOf);
             var rate = f.Total <= 0 || days <= 0 ? 0 : f.Receipts * 1000.0 / (f.Total * days);
             var itemNames = rows
                 .SelectMany(r => r.ItemNames)
@@ -430,6 +466,7 @@ public class DelegateFollowupDataService
                 RealRatingLabel = label,
                 IsLegal = f.IsLegal,
                 IsNewSaleUnpaid3Days = IsNewSaleUnpaid(f, asOf),
+                IsActive = DelegateFollowupRules.IsActiveCustomer(f.LastPaymentDate, asOf),
                 Notes = null,
                 ReceiptName = list.FollowerName
             });
@@ -507,10 +544,14 @@ public class DelegateFollowupDataService
     public async Task<DelegateFollowupBoardRatingDto> GetBoardRatingAsync(
         int listId,
         DateOnly ratingDate,
-        CancellationToken ct)
+        CancellationToken ct,
+        string slot = DirectorBoardOperatorListRating.SlotCommittee)
     {
+        var normalized = DirectorBoardOperatorListRating.NormalizeSlot(slot);
         var row = await _db.DirectorBoardOperatorListRatings.AsNoTracking()
-            .FirstOrDefaultAsync(x => x.OrderListId == listId && x.RatingDate == ratingDate, ct);
+            .FirstOrDefaultAsync(
+                x => x.OrderListId == listId && x.RatingDate == ratingDate && x.RaterSlot == normalized,
+                ct);
         return MapBoardRating(listId, ratingDate, row);
     }
 
@@ -555,7 +596,53 @@ public class DelegateFollowupDataService
         return list;
     }
 
-    private static async Task<List<OrderRow>> LoadOrderRowsAsync(
+    private async Task<List<OrderRow>> LoadOrderRowsAsync(
+        IQueryable<Domain.Entities.OrderAggregate.Order> source,
+        bool includeItems,
+        CancellationToken ct)
+    {
+        var rows = await LoadRawOrderRowsAsync(source, includeItems, ct);
+        var customerIds = rows.Select(r => r.CustomerId).Distinct().ToList();
+        if (customerIds.Count == 0)
+            return rows;
+
+        var unallocated = await _db.InstallmentPayments.AsNoTracking()
+            .Where(p => p.OrderId == null && p.CustomerId != null && customerIds.Contains(p.CustomerId.Value))
+            .GroupBy(p => p.CustomerId!.Value)
+            .Select(g => new
+            {
+                CustomerId = g.Key,
+                Amount = g.Sum(p => p.Amount),
+                Count = g.Count(),
+                LastDate = g.Max(p => (DateOnly?)p.Date),
+                LastAmount = g.OrderByDescending(p => p.Date).ThenByDescending(p => p.Id).Select(p => (double?)p.Amount).FirstOrDefault()
+            })
+            .ToListAsync(ct);
+
+        foreach (var extra in unallocated)
+        {
+            var anchor = rows
+                .Where(r => r.CustomerId == extra.CustomerId)
+                .OrderByDescending(r => r.SaleDate ?? DateOnly.MinValue)
+                .First();
+            rows.Add(new OrderRow
+            {
+                OrderListId = anchor.OrderListId,
+                CustomerId = extra.CustomerId,
+                SellAmount = 0,
+                DailyInstallmentAmount = 0,
+                SaleDate = anchor.SaleDate,
+                Receipts = extra.Amount,
+                PaymentCount = extra.Count,
+                LastPaymentDate = extra.LastDate,
+                LastPaymentAmount = extra.LastAmount
+            });
+        }
+
+        return rows;
+    }
+
+    private static async Task<List<OrderRow>> LoadRawOrderRowsAsync(
         IQueryable<Domain.Entities.OrderAggregate.Order> source,
         bool includeItems,
         CancellationToken ct)
@@ -668,10 +755,11 @@ public class DelegateFollowupDataService
         int listId,
         DateOnly from,
         DateOnly to,
+        string slot,
         CancellationToken ct)
     {
         var rows = await _db.DirectorBoardOperatorListRatings.AsNoTracking()
-            .Where(x => x.OrderListId == listId && x.RatingDate >= from && x.RatingDate <= to)
+            .Where(x => x.OrderListId == listId && x.RaterSlot == slot && x.RatingDate >= from && x.RatingDate <= to)
             .ToListAsync(ct);
 
         return rows.ToDictionary(x => x.RatingDate);

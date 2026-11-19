@@ -124,7 +124,8 @@ public class OrderListsController : ApiController
             {
                 ListId = id,
                 Enabled = body.Enabled,
-                ExpectedVersion = body.ExpectedVersion
+                ExpectedVersion = body.ExpectedVersion,
+                ExpectedFollowerId = body.ExpectedFollowerId
             },
             CancellationToken);
         return result.ToHttpResponse();

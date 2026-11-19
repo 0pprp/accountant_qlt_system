@@ -1,4 +1,4 @@
-namespace Application.Expenses.Queries.Admin.GetExcelReport;
+﻿namespace Application.Expenses.Queries.Admin.GetExcelReport;
 
 public record GetExpensesExcelReportResponse
 {
@@ -12,7 +12,7 @@ public record GetExpenseExcelReportItem
     public int Id { get; set; }
     public int FactorNumber { get; set; }
     public double TotalAmount { get; set; }
-    public required string SafeName { get; set; }
+    public string? SafeName { get; set; }
     public int ExpenseItemsCount { get; set; }
     public DateTimeOffset CreatedAt { get; set; }
 }

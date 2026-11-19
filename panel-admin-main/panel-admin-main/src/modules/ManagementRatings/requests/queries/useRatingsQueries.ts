@@ -1,5 +1,5 @@
 import { computed, type Ref } from 'vue'
-import { useQuery } from '@tanstack/vue-query'
+import { useQueries, useQuery } from '@tanstack/vue-query'
 import { ManagementRatingsEndpoints } from '../../domain/endpoints'
 import {
   branchesKey,
@@ -161,5 +161,50 @@ export function useRatingsCustomersQuery(params: {
       )
       return data
     },
+  })
+}
+
+export function useRatingsListCardsQueries(params: {
+  branchId: Ref<number | null>
+  listIds: Ref<number[]>
+  from: Ref<string>
+  to: Ref<string>
+  enabled: Ref<boolean>
+}) {
+  const auth = useAuthStore()
+  return useQueries({
+    queries: computed(() =>
+      params.listIds.value.map((listId) => ({
+        queryKey: trendKey({
+          branchId: params.branchId.value ?? 0,
+          scope: 'list' as RatingsScope,
+          resourceId: listId,
+          from: params.from.value,
+          to: params.to.value,
+          branchGeneration: auth.branchGeneration,
+          sessionGeneration: auth.sessionGeneration,
+        }),
+        enabled:
+          params.enabled.value &&
+          auth.permissionsReady &&
+          params.branchId.value != null,
+        queryFn: async ({ signal }: { signal: AbortSignal }) => {
+          const { data } = await axiosInstance.get<RatingsTrendResponse>(
+            ManagementRatingsEndpoints.trend,
+            {
+              signal,
+              params: {
+                branchId: params.branchId.value,
+                scope: 'list',
+                resourceId: listId,
+                fromDate: params.from.value,
+                toDate: params.to.value,
+              },
+            }
+          )
+          return data
+        },
+      }))
+    ),
   })
 }

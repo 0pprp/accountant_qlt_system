@@ -51,6 +51,33 @@ public class Customer : AuditableEntity
     /// <summary>بيع وهمي — مصدر: Customers.IsFakeSale عند قرار «وهمي».</summary>
     public bool IsFakeSale { get; set; }
 
+    /// <summary>
+    /// خصم سعر البيع لهذا الزبون — يقبل السالب والموجب. الموجب خصم والسالب إضافة على السعر.
+    /// صفر يعني لا خصم. قيمة مُدخَلة يدوياً لا تُحتسب من الطلبات.
+    /// </summary>
+    public double SellAmountDiscount { get; set; }
+
+    /// <summary>
+    /// خصم القسط اليومي لهذا الزبون — يقبل السالب والموجب بنفس قاعدة خصم سعر البيع.
+    /// </summary>
+    public double DailyInstallmentDiscount { get; set; }
+
+    /// <summary>اسم المختار — يُملأ من استمارة البيع حين تتوفر.</summary>
+    public string? MukhtarName { get; set; }
+
+    /// <summary>رقم مركز التموين.</summary>
+    public string? RationCenterNumber { get; set; }
+
+    /// <summary>مفتاح استيراد ثابت — مثال: najaf|Customers|{id}. لا يُستخدم للدمج بالاسم/الهاتف.</summary>
+    public string? ImportKey { get; set; }
+
+    /// <summary>الخصومات تُضبط من لوحة الإدارة وحدها — مسار التطبيق لا يمسّها.</summary>
+    public void SetDiscounts(double sellAmountDiscount, double dailyInstallmentDiscount)
+    {
+        SellAmountDiscount = sellAmountDiscount;
+        DailyInstallmentDiscount = dailyInstallmentDiscount;
+    }
+
     public void MarkLegal() => IsLegal = true;
 
     public void MarkFakeSale() => IsFakeSale = true;

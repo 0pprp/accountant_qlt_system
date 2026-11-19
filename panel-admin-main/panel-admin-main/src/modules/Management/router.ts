@@ -1,5 +1,5 @@
 import type { Router, RouteRecordRaw } from 'vue-router'
-import { requirementForManagementTabId } from '@/modules/Core/navigation/panelTabAccess'
+import { DELEGATE_FOLLOWUP_ACCESS, FOLLOWER_WORK_ACCESS, requirementForManagementTabId } from '@/modules/Core/navigation/panelTabAccess'
 import { getReadyManagementTabs } from './domain/sections'
 import { appRequirement } from './domain/workspaceNavigation'
 
@@ -85,6 +85,8 @@ function reuseLoader(reuse: string | null) {
     case 'BranchNewSalesPage':
       return () =>
         import('@/modules/BranchNewSales/views/BranchNewSalesPage.vue')
+    case 'ArchiveWorkspace':
+      return () => import('@/modules/Archive/views/ArchiveWorkspace.vue')
     case 'BranchDecliningPage':
       return () =>
         import('@/modules/BranchDeclining/views/BranchDecliningPage.vue')
@@ -115,11 +117,48 @@ function reuseLoader(reuse: string | null) {
   }
 }
 
-const readyChildren: RouteRecordRaw[] = getReadyManagementTabs().map((tab) => ({
+const FOLLOWER_TAB_TO_BOARD: Readonly<Record<string, string | null>> = {
+  followerWork: null,
+  followerSales: 'sales',
+  followerDeclining: 'declining',
+  followerNotes: 'notes',
+  followerOldCustomers: 'old-customers',
+  followerDelegateNotes: 'delegate-notes',
+  followerCollection: 'collection',
+  followerLiveMap: 'live-map',
+  followerRoutes: 'routes',
+}
+
+const followerRedirects: RouteRecordRaw[] = getReadyManagementTabs()
+  .filter(tab => tab.id in FOLLOWER_TAB_TO_BOARD)
+  .map(tab => ({
+    path: `${tab.sectionId}/${tab.tabPath}`,
+    name: tab.routeName,
+    redirect: to => {
+      const boardTab = FOLLOWER_TAB_TO_BOARD[tab.id]
+      return {
+        name: 'FollowerWorkBoardRoute',
+        query: { ...to.query, ...to.params, ...(boardTab ? { tab: boardTab } : {}) },
+      }
+    },
+  }))
+
+export const FollowerWorkRoutes: RouteRecordRaw[] = [
+  {
+    path: '/follower-work',
+    name: 'FollowerWorkBoardRoute',
+    component: () => import('@/modules/FollowerWork/views/FollowerWorkBoard.vue'),
+    meta: { layout: 'Default', requiresAuth: true, accessRequirement: FOLLOWER_WORK_ACCESS },
+  },
+]
+
+const readyChildren: RouteRecordRaw[] = getReadyManagementTabs().filter(tab => tab.id !== 'delegateFollowup' && (tab.id in FOLLOWER_TAB_TO_BOARD) === false).map((tab) => ({
   path: `${tab.sectionId}/${tab.tabPath}`,
   name: tab.routeName,
-  component: reuseLoader(tab.reuse),
-  props:
+  component: tab.sectionId === 'delegate' && tab.id === 'exceptions'
+    ? () => import('@/modules/DelegateManager/views/DelegateExceptionsPage.vue')
+    : reuseLoader(tab.reuse),
+  props: tab.sectionId === 'delegate' && tab.id === 'exceptions' ? undefined :
     tab.reuse === 'ManagementTasksPage' && ['branch', 'delegate'].includes(tab.sectionId)
       ? { inboxOnly: true }
       : tab.reuse === 'SalesRequestsWorkspace'
@@ -140,23 +179,22 @@ const readyChildren: RouteRecordRaw[] = getReadyManagementTabs().map((tab) => ({
 }))
 
 /** صفحة تفاصيل الزبائن — ليست تبويب سايدبار؛ تُفتح من اللوحة مع return context */
-const detailRoutes: RouteRecordRaw[] = [
+const detailRoutes: RouteRecordRaw[] = []
+
+export const DelegateFollowupRoutes: RouteRecordRaw[] = [
   {
-    path: 'director/delegate-followup/customers',
+    path: '/delegate-followup',
+    alias: ['/management/director/delegate-followup'],
+    name: 'ManagementDirectorDelegateFollowupRoute',
+    component: () => import('@/modules/DelegateFollowup/views/DelegateFollowupPage.vue'),
+    meta: { layout: 'Default', requiresAuth: true, accessRequirement: DELEGATE_FOLLOWUP_ACCESS },
+  },
+  {
+    path: '/delegate-followup/customers',
+    alias: ['/management/director/delegate-followup/customers'],
     name: 'ManagementDirectorDelegateFollowupCustomersRoute',
-    component: () =>
-      import(
-        '@/modules/DelegateFollowup/views/DelegateFollowupCustomersPage.vue'
-      ),
-    meta: {
-      requiresAuth: true,
-      accessRequirement: {
-        type: 'single',
-        permission: { module: 'DelegateFollowup', action: 'Read' },
-      },
-      managementSectionId: 'director',
-      managementTabId: 'delegateFollowup',
-    },
+    component: () => import('@/modules/DelegateFollowup/views/DelegateFollowupCustomersPage.vue'),
+    meta: { layout: 'Default', requiresAuth: true, accessRequirement: DELEGATE_FOLLOWUP_ACCESS },
   },
 ]
 
@@ -424,6 +462,7 @@ export const ManagementRoutes: RouteRecordRaw = {
       },
     },
     ...readyChildren,
+    ...followerRedirects,
     ...detailRoutes,
     ...aliases,
   ],
@@ -431,4 +470,6 @@ export const ManagementRoutes: RouteRecordRaw = {
 
 export default (router: Router) => {
   router.addRoute(ManagementRoutes)
+  DelegateFollowupRoutes.forEach(route => router.addRoute(route))
+  FollowerWorkRoutes.forEach(route => router.addRoute(route))
 }

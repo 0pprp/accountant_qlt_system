@@ -1,9 +1,10 @@
 <script setup lang="ts">
 import { computed, reactive, ref } from 'vue'
+import { isAxiosError } from 'axios'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/vue-query'
 import { axiosInstance } from '@/modules/Core/plugins/axios'
 import { useAuthStore } from '@/modules/Auth/store'
-import { AppButton, AppInput } from '@/modules/Core/components/ui'
+import NeuDialog from '@/modules/Core/components/neumorphic/NeuDialog.vue'
 
 interface Account {
   id: number
@@ -28,14 +29,17 @@ const auth = useAuthStore()
 const qc = useQueryClient()
 const canRead = computed(() => auth.hasPermission('BranchManagerAccount', 'Read') === true)
 const canWrite = computed(() => auth.hasPermission('BranchManagerAccount', 'Write') === true)
-const draftError = ref<string | null>(null)
+
+const formOpen = ref(false)
 const editing = ref<Account | null>(null)
-const creating = ref(false)
+const formError = ref<string | null>(null)
+const notice = ref<string | null>(null)
+const actionError = ref<string | null>(null)
+const toggleTarget = ref<Account | null>(null)
 const form = reactive({
   username: '',
   password: '',
   fullName: '',
-  isActive: true,
   branchIds: [] as number[],
 })
 
@@ -43,9 +47,7 @@ const listQuery = useQuery({
   queryKey: computed(() => ['bm-accounts', auth.sessionGeneration]),
   enabled: computed(() => canRead.value && auth.permissionsReady),
   queryFn: async ({ signal }) => {
-    const { data } = await axiosInstance.get<ListResponse>('/admin/BranchManagerAccounts', {
-      signal,
-    })
+    const { data } = await axiosInstance.get<ListResponse>('/admin/BranchManagerAccounts', { signal })
     return data
   },
 })
@@ -54,326 +56,386 @@ const citiesQuery = useQuery({
   queryKey: computed(() => ['bm-account-cities', auth.sessionGeneration]),
   enabled: computed(() => canRead.value && auth.permissionsReady),
   queryFn: async ({ signal }) => {
-    const { data } = await axiosInstance.get<City[]>('/admin/BranchManagerAccounts/cities', {
-      signal,
-    })
+    const { data } = await axiosInstance.get<City[]>('/admin/BranchManagerAccounts/cities', { signal })
     return data
   },
 })
 
-function openCreate() {
-  creating.value = true
-  editing.value = null
-  draftError.value = null
+const items = computed(() => listQuery.data.value?.items ?? [])
+
+function serverMessage(error: unknown, fallback: string): string {
+  if (!isAxiosError(error)) return fallback
+  const errors = (error.response?.data as { errors?: { message?: string }[] } | undefined)?.errors
+  return (Array.isArray(errors) ? errors[0]?.message : undefined) || fallback
+}
+
+function resetForm() {
   form.username = ''
   form.password = ''
   form.fullName = ''
-  form.isActive = true
   form.branchIds = []
+  formError.value = null
+}
+
+function openCreate() {
+  editing.value = null
+  resetForm()
+  notice.value = null
+  formOpen.value = true
 }
 
 function openEdit(row: Account) {
-  creating.value = false
   editing.value = row
-  draftError.value = null
+  resetForm()
   form.username = row.username
-  form.password = ''
   form.fullName = row.fullName
-  form.isActive = row.isActive
   form.branchIds = [...row.branchIds]
+  notice.value = null
+  formOpen.value = true
 }
 
 function closeForm() {
-  creating.value = false
+  if (saveMut.isPending.value) return
+  formOpen.value = false
   editing.value = null
-  draftError.value = null
+  resetForm()
+}
+
+function toggleBranch(id: number) {
+  form.branchIds = form.branchIds.includes(id)
+    ? form.branchIds.filter((x) => x !== id)
+    : [...form.branchIds, id]
+}
+
+function validate(): string | null {
+  if (form.fullName.trim().length < 2) return 'الاسم الظاهر مطلوب (حرفان على الأقل)'
+  if (form.username.trim().length < 3) return 'اسم الدخول 3 أحرف على الأقل'
+  if (!editing.value && form.password.length < 4) return 'كلمة المرور 4 أحرف على الأقل'
+  if (editing.value && form.password.length > 0 && form.password.length < 4) return 'كلمة المرور الجديدة 4 أحرف على الأقل'
+  if (form.branchIds.length === 0) return 'اختر فرعاً واحداً على الأقل'
+  return null
 }
 
 const saveMut = useMutation({
   mutationFn: async () => {
-    if (editing.value) {
-      const { data } = await axiosInstance.put<Account>(
-        `/admin/BranchManagerAccounts/${editing.value.id}`,
-        {
-          username: form.username,
-          password: form.password || undefined,
-          fullName: form.fullName,
-          isActive: form.isActive,
-          branchIds: form.branchIds,
-        }
-      )
-      return data
-    }
-    const { data } = await axiosInstance.post<Account>('/admin/BranchManagerAccounts', {
-      username: form.username,
-      password: form.password,
-      fullName: form.fullName,
+    const payload = {
+      username: form.username.trim(),
+      fullName: form.fullName.trim(),
       branchIds: form.branchIds,
-    })
-    return data
+    }
+    if (editing.value) {
+      await axiosInstance.put(`/admin/BranchManagerAccounts/${editing.value.id}`, {
+        ...payload,
+        isActive: editing.value.isActive,
+        password: form.password || undefined,
+      })
+      return 'edit' as const
+    }
+    await axiosInstance.post('/admin/BranchManagerAccounts', { ...payload, password: form.password })
+    return 'create' as const
   },
-  onSuccess: async () => {
-    closeForm()
+  onSuccess: async (kind) => {
+    formOpen.value = false
+    editing.value = null
+    resetForm()
+    notice.value = kind === 'create' ? 'تم إنشاء الحساب' : 'تم حفظ التعديلات'
     await qc.invalidateQueries({ queryKey: ['bm-accounts'] })
   },
-  onError: () => {
-    draftError.value =
-      'فشل الحفظ — أبقينا المسودة. تحقق من النطاق والدور وكلمة المرور.'
+  onError: (error) => {
+    form.password = ''
+    formError.value = serverMessage(error, 'تعذر حفظ الحساب. حاول مرة أخرى.')
   },
 })
 
-function toggleBranch(id: number) {
-  if (form.branchIds.includes(id)) {
-    form.branchIds = form.branchIds.filter((x) => x !== id)
-  } else {
-    form.branchIds = [...form.branchIds, id]
-  }
+function submit() {
+  formError.value = validate()
+  if (formError.value) return
+  saveMut.mutate()
 }
+
+const toggleMut = useMutation({
+  mutationFn: async (row: Account) => {
+    await axiosInstance.put(`/admin/BranchManagerAccounts/${row.id}`, {
+      username: row.username,
+      fullName: row.fullName,
+      branchIds: row.branchIds,
+      isActive: !row.isActive,
+    })
+    return !row.isActive
+  },
+  onSuccess: async (active) => {
+    toggleTarget.value = null
+    actionError.value = null
+    notice.value = active ? 'تم تفعيل الحساب' : 'تم إيقاف الحساب'
+    await qc.invalidateQueries({ queryKey: ['bm-accounts'] })
+  },
+  onError: (error) => {
+    toggleTarget.value = null
+    actionError.value = serverMessage(error, 'تعذر تغيير حالة الحساب.')
+  },
+})
+
+const toggleText = computed(() => {
+  const row = toggleTarget.value
+  if (!row) return ''
+  return row.isActive
+    ? `سيتم إيقاف حساب «${row.fullName}»، ولن يستطيع دخول تطبيق إدارة الفرع حتى تعيد تفعيله.`
+    : `سيتم تفعيل حساب «${row.fullName}» ليتمكن من دخول تطبيق إدارة الفرع.`
+})
 </script>
 
 <template>
-  <div
-    class="ba-page"
-    dir="rtl"
-  >
-    <header>
-      <h1 class="ba-title">حسابات إدارة الفرع</h1>
-      <p class="ba-sub">
-        إنشاء/تعطيل مديري الفرع ضمن نطاقك فقط — بلا ManagePermissions العامة.
-      </p>
+  <section class="bma" dir="rtl">
+    <header class="bma-head">
+      <div>
+        <h2 class="dfb-title">حسابات إدارة الفرع</h2>
+        <p class="dfb-subtitle">أسماء دخول مدراء الفروع ضمن نطاقك.</p>
+      </div>
+      <button v-if="canRead && canWrite" type="button" class="dfb-button is-primary" @click="openCreate">
+        إنشاء حساب
+      </button>
     </header>
 
-    <div
-      v-if="!canRead"
-      class="ba-state"
-      role="alert"
-    >
-      ليس لديك صلاحية قراءة حسابات إدارة الفرع.
-    </div>
+    <p class="bma-info">
+      حسابات تطبيق إدارة الفرع: من هنا فقط تُنشأ أسماء الدخول وكلمات المرور والفروع؛ بدون حساب هنا لن يفتح التطبيق.
+    </p>
+
+    <p v-if="!canRead" class="dfb-state" role="alert">ليس لديك صلاحية قراءة حسابات إدارة الفرع.</p>
+
     <template v-else>
-      <div class="ba-toolbar">
-        <AppButton v-if="canWrite" @click="openCreate">
-          إنشاء حساب
-        </AppButton>
-        <AppButton
-          v-if="listQuery.isError.value"
-          variant="ghost"
-          @click="listQuery.refetch()"
-        >
-          إعادة المحاولة
-        </AppButton>
+      <p v-if="notice" class="bma-notice" role="status">{{ notice }}</p>
+      <p v-if="actionError" class="dfb-error" role="alert">{{ actionError }}</p>
+
+      <div v-if="listQuery.isError.value" class="dfb-error" role="alert">
+        تعذر تحميل الحسابات.
+        <button type="button" class="dfb-button is-small" @click="listQuery.refetch()">إعادة المحاولة</button>
       </div>
-      <p
-        v-if="listQuery.isError.value"
-        class="ba-err"
-        role="alert"
-      >
-        تعذر التحميل.
-      </p>
-      <div
-        v-else-if="listQuery.isPending.value"
-        class="ba-state"
-      >
-        جاري التحميل…
-      </div>
-      <div
-        v-else-if="(listQuery.data.value?.totalCount ?? 0) === 0"
-        class="ba-state"
-      >
-        لا حسابات مدير فرع ضمن نطاقك.
-      </div>
-      <ul
-        v-else
-        class="ba-list"
-      >
-        <li
-          v-for="row in listQuery.data.value?.items ?? []"
-          :key="row.id"
-          class="ba-row"
-        >
-          <div>
-            <strong>{{ row.fullName }}</strong>
-            <span> · {{ row.username }} · {{ row.isActive ? 'نشط' : 'معطّل' }}</span>
-            <div class="ba-meta">{{ row.branchNames.join('، ') }}</div>
+      <p v-else-if="listQuery.isPending.value" class="dfb-state">جاري التحميل…</p>
+      <p v-else-if="items.length === 0" class="dfb-state">لا يوجد مستخدمون بعد — أنشئ أول حساب لمدير فرع</p>
+      <ul v-else class="bma-grid">
+        <li v-for="row in items" :key="row.id" class="bma-card" :class="{ 'is-off': !row.isActive }">
+          <div class="bma-card-head">
+            <strong class="bma-name">{{ row.fullName }}</strong>
+            <span v-if="!row.isActive" class="dfb-status is-rejected">الحساب موقوف</span>
           </div>
-          <AppButton v-if="canWrite" variant="ghost" size="sm" @click="openEdit(row)">
-            تعديل
-          </AppButton>
+          <p class="bma-meta">اسم الدخول: <span class="dfb-num">{{ row.username }}</span></p>
+          <ul class="bma-branches" aria-label="الفروع">
+            <li v-for="name in row.branchNames" :key="name">{{ name }}</li>
+            <li v-if="row.branchNames.length === 0" class="is-empty">بدون فروع</li>
+          </ul>
+          <div v-if="canWrite" class="bma-actions">
+            <button type="button" class="dfb-button is-small" @click="openEdit(row)">تعديل</button>
+            <button
+              type="button"
+              class="dfb-button is-small"
+              :class="{ 'bma-danger': row.isActive }"
+              :disabled="toggleMut.isPending.value"
+              @click="toggleTarget = row; actionError = null"
+            >
+              {{ row.isActive ? 'إيقاف الحساب' : 'تفعيل الحساب' }}
+            </button>
+          </div>
         </li>
       </ul>
     </template>
 
-    <div
-      v-if="creating || editing"
-      class="ba-modal"
-      role="dialog"
-      aria-modal="true"
+    <NeuDialog
+      :visible="formOpen"
+      :title="editing ? 'تعديل حساب مدير فرع' : 'إنشاء حساب مدير فرع'"
+      size="sm"
+      :busy="saveMut.isPending.value"
+      @close="closeForm"
     >
-      <div class="ba-dialog">
-        <h2>{{ editing ? 'تعديل حساب' : 'إنشاء حساب' }}</h2>
-        <AppInput v-model="form.fullName" label="الاسم الظاهر" />
-        <AppInput
-          v-model="form.username"
-          label="اسم المستخدم"
-          autocomplete="off"
-        />
-        <AppInput
-          v-model="form.password"
-          :label="editing ? 'كلمة المرور (اختياري)' : 'كلمة المرور'"
-          type="password"
-          autocomplete="new-password"
-        />
-        <label
-          v-if="editing"
-          class="ba-check"
-        >
-          <input
-            v-model="form.isActive"
-            type="checkbox"
-          >
-          نشط
+      <form class="bma-form" autocomplete="off" @submit.prevent="submit">
+        <label class="dfb-field">
+          <span>الاسم الظاهر</span>
+          <input v-model="form.fullName" type="text" class="dfb-input" maxlength="200">
         </label>
-        <fieldset>
-          <legend>الفروع ضمن نطاقك</legend>
-          <label
-            v-for="c in citiesQuery.data.value ?? []"
-            :key="c.id"
-            class="ba-check"
-          >
-            <input
-              type="checkbox"
-              :checked="form.branchIds.includes(c.id)"
-              @change="toggleBranch(c.id)"
+        <label class="dfb-field">
+          <span>اسم الدخول</span>
+          <input v-model="form.username" type="text" class="dfb-input" dir="ltr" maxlength="100" autocomplete="off">
+        </label>
+        <label class="dfb-field">
+          <span>{{ editing ? 'كلمة مرور جديدة (اختياري)' : 'كلمة المرور' }}</span>
+          <input v-model="form.password" type="password" class="dfb-input" dir="ltr" autocomplete="new-password">
+        </label>
+        <fieldset class="bma-fieldset">
+          <legend>الفروع</legend>
+          <p v-if="citiesQuery.isPending.value" class="dfb-state">جاري تحميل الفروع…</p>
+          <p v-else-if="citiesQuery.isError.value" class="dfb-error">تعذر تحميل الفروع.</p>
+          <div v-else class="dfb-filter-chips">
+            <button
+              v-for="c in citiesQuery.data.value ?? []"
+              :key="c.id"
+              type="button"
+              class="dfb-chip"
+              :aria-pressed="form.branchIds.includes(c.id)"
+              @click="toggleBranch(c.id)"
             >
-            {{ c.name }}
-          </label>
+              {{ c.name }}
+            </button>
+          </div>
         </fieldset>
-        <p
-          v-if="draftError"
-          class="ba-err"
-          role="alert"
+        <p v-if="formError" class="dfb-form-error" role="alert">{{ formError }}</p>
+        <button type="submit" hidden />
+      </form>
+      <template #footer>
+        <button type="button" class="dfb-button" :disabled="saveMut.isPending.value" @click="closeForm">إلغاء</button>
+        <button type="button" class="dfb-button is-primary" :disabled="saveMut.isPending.value" @click="submit">
+          {{ saveMut.isPending.value ? 'جاري الحفظ…' : 'حفظ' }}
+        </button>
+      </template>
+    </NeuDialog>
+
+    <NeuDialog
+      :visible="toggleTarget != null"
+      :title="toggleTarget?.isActive ? 'إيقاف الحساب' : 'تفعيل الحساب'"
+      size="sm"
+      :busy="toggleMut.isPending.value"
+      @close="toggleTarget = null"
+    >
+      <p class="bma-confirm">{{ toggleText }}</p>
+      <template #footer>
+        <button type="button" class="dfb-button" :disabled="toggleMut.isPending.value" @click="toggleTarget = null">إلغاء</button>
+        <button
+          type="button"
+          class="dfb-button is-primary"
+          :disabled="toggleMut.isPending.value"
+          @click="toggleTarget && toggleMut.mutate(toggleTarget)"
         >
-          {{ draftError }}
-        </p>
-        <div class="ba-actions">
-          <AppButton
-            :disabled="saveMut.isPending.value"
-            :loading="saveMut.isPending.value"
-            @click="saveMut.mutate()"
-          >
-            حفظ
-          </AppButton>
-          <AppButton variant="ghost" @click="closeForm">
-            إلغاء
-          </AppButton>
-        </div>
-      </div>
-    </div>
-  </div>
+          {{ toggleMut.isPending.value ? 'جاري الحفظ…' : toggleTarget?.isActive ? 'إيقاف' : 'تفعيل' }}
+        </button>
+      </template>
+    </NeuDialog>
+  </section>
 </template>
 
 <style scoped>
-.ba-page {
-  max-width: 960px;
-  margin: 0 auto;
-  padding: 1rem 1.25rem 2rem;
-  font-family: inherit;
-  color: #00201e;
-}
-.ba-title {
-  margin: 0;
-  color: #006a64;
-  font-size: 1.35rem;
-}
-.ba-sub {
-  margin: 0.35rem 0 1rem;
-  font-size: 0.9rem;
-}
-.ba-toolbar {
+.bma {
   display: flex;
-  gap: 0.5rem;
-  margin-bottom: 0.75rem;
+  flex-direction: column;
+  gap: 18px;
+  min-width: 0;
 }
-.ba-state,
-.ba-err {
-  padding: 1rem;
-  background: #f8f8f8;
-  border-radius: 8px;
+
+.bma-head {
+  align-items: flex-start;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  justify-content: space-between;
 }
-.ba-err {
-  color: #8b1a1a;
+
+.bma-info {
+  background: var(--dfb-primary-soft);
+  border-radius: 14px;
+  box-shadow: var(--dfb-well-shadow);
+  line-height: 1.8;
+  margin: 0;
+  padding: 12px 16px;
 }
-.ba-btn {
-  background: #006a64;
-  color: #fff;
-  border: 0;
-  padding: 0.45rem 0.9rem;
-  border-radius: 6px;
-  cursor: pointer;
+
+.bma-notice {
+  background: var(--dfb-primary-soft);
+  border-radius: 12px;
+  color: var(--dfb-primary);
+  font-weight: 600;
+  margin: 0;
+  padding: 10px 14px;
 }
-.ba-btn.ghost {
-  background: #f8f8f8;
-  color: #00201e;
-}
-.ba-list {
+
+.bma-grid {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 280px), 1fr));
   list-style: none;
   margin: 0;
   padding: 0;
-  display: grid;
-  gap: 0.5rem;
 }
-.ba-row {
+
+.bma-card {
+  background: var(--dfb-raised);
+  border-radius: 18px;
+  box-shadow: var(--dfb-up);
   display: flex;
-  justify-content: space-between;
-  gap: 0.75rem;
-  background: #f8f8f8;
-  padding: 0.75rem 1rem;
-  border-radius: 8px;
+  flex-direction: column;
+  gap: 10px;
+  padding: 16px 18px;
 }
-.ba-meta {
-  font-size: 0.85rem;
-  opacity: 0.85;
-  margin-top: 0.2rem;
-}
-.ba-modal {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 32, 30, 0.45);
-  display: grid;
-  place-items: center;
-  padding: 1rem;
-  z-index: 40;
-}
-.ba-dialog {
-  background: #fff;
-  border-radius: 10px;
-  padding: 1.25rem;
-  width: min(520px, 100%);
-  display: grid;
-  gap: 0.65rem;
-  max-height: 90vh;
-  overflow: auto;
-}
-.ba-dialog label,
-.ba-dialog fieldset {
-  display: grid;
-  gap: 0.3rem;
-}
-.ba-dialog input[type='text'],
-.ba-dialog input[type='password'] {
-  background: #f8f8f8;
-  border: 1px solid #cfd8d7;
-  border-radius: 6px;
-  padding: 0.4rem 0.55rem;
-  font: inherit;
-}
-.ba-check {
-  display: flex !important;
+
+.bma-card.is-off { background: var(--dfb-well); }
+
+.bma-card-head {
   align-items: center;
-  gap: 0.4rem;
-}
-.ba-actions {
   display: flex;
-  gap: 0.5rem;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: space-between;
+}
+
+.bma-name {
+  font-size: 16px;
+  overflow-wrap: anywhere;
+}
+
+.bma-meta {
+  color: var(--dfb-muted);
+  font-size: 13px;
+  margin: 0;
+}
+
+.bma-branches {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.bma-branches li {
+  background: var(--dfb-well);
+  border-radius: 10px;
+  font-size: 13px;
+  padding: 3px 10px;
+}
+
+.bma-branches li.is-empty { color: var(--dfb-muted); }
+
+.bma-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: auto;
+}
+
+.bma-danger { color: var(--dfb-tier-bad); }
+
+.bma-form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.bma-form .dfb-input { width: 100%; }
+
+.bma-fieldset {
+  border: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+}
+
+.bma-fieldset legend {
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+.bma-confirm {
+  line-height: 1.8;
+  margin: 0;
 }
 </style>

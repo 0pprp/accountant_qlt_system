@@ -17,15 +17,10 @@ public class TransactionConfiguration : IEntityTypeConfiguration<Transaction>
         builder.Property(x => x.Direction).IsRequired();
 
         builder.HasOne(x => x.Safe)
-            .WithMany(x => x.Transactions)
+            .WithMany()
             .HasForeignKey(x => x.SafeId)
             .OnDelete(DeleteBehavior.Restrict);
-        
-        builder.HasOne(x => x.SellerCashDeliveryTransaction)
-            .WithOne(x => x.Transaction)
-            .HasForeignKey<SellerCashDeliveryTransaction>(x => x.TransactionId)
-            .OnDelete(DeleteBehavior.Cascade);
-        
+
         builder.HasOne(x => x.Expense)
             .WithMany(x => x.Transactions)
             .HasForeignKey(x => x.ExpenseId)
@@ -34,11 +29,6 @@ public class TransactionConfiguration : IEntityTypeConfiguration<Transaction>
         builder.HasOne(x => x.Purchase)
             .WithMany(x => x.Transactions)
             .HasForeignKey(x => x.PurchaseId)
-            .OnDelete(DeleteBehavior.Cascade);
-
-        builder.HasOne(x => x.SafeTransferTransaction)
-            .WithOne(x => x.Transaction)
-            .HasForeignKey<SafeTransferTransaction>(x => x.TransactionId)
             .OnDelete(DeleteBehavior.Cascade);
     }
 }

@@ -18,6 +18,7 @@ import SalesRecordsModule from '@/modules/SalesRecords'
 import SalesSummaryModule from '@/modules/SalesSummary'
 import SalesLegalModule from '@/modules/SalesLegal'
 import SalesExcelSearchModule from '@/modules/SalesExcelSearch'
+import SalesManagerModule from '@/modules/SalesManager'
 import ManagementModule from '@/modules/Management'
 import ManagementTasksModule from '@/modules/ManagementTasks'
 import DelegateFollowupModule from '@/modules/DelegateFollowup'
@@ -29,6 +30,7 @@ import PaymentModule from '@/modules/Payment'
 import CustomerModule from '@/modules/Customer'
 import PurchasesModule from '@/modules/Purchases'
 import ExpensesModule from '@/modules/Expenses'
+import ArchiveModule from '@/modules/Archive'
 import SafeModule from '@/modules/Safe'
 import ActivityLogModule from '@/modules/ActivityLog'
 import NotificationModule from '@/modules/Notification'
@@ -91,6 +93,7 @@ registerModules({
   salesSummary: SalesSummaryModule,
   salesLegal: SalesLegalModule,
   salesExcelSearch: SalesExcelSearchModule,
+  salesManager: SalesManagerModule,
   management: ManagementModule,
   managementTasks: ManagementTasksModule,
   delegateFollowup: DelegateFollowupModule,
@@ -103,6 +106,7 @@ registerModules({
   purchases: PurchasesModule,
   expenses: ExpensesModule,
   safe: SafeModule,
+  archive: ArchiveModule,
   activityLog: ActivityLogModule,
   notification: NotificationModule,
 })

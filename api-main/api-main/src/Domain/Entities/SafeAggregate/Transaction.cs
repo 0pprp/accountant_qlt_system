@@ -1,10 +1,14 @@
-﻿using Domain.Common;
+using Domain.Common;
 using Domain.Entities.ExpenseAggregate;
 using Domain.Entities.PurchaseAggregate;
 using Domain.Entities.SafeAggregate.Enums;
 
 namespace Domain.Entities.SafeAggregate;
 
+/// <summary>
+/// سطر مستند المصروف أو المشترى. لا يمسّ رصيد الخزينة إطلاقاً —
+/// الأثر النقدي يُسجَّل في <see cref="SafeMovement"/> عبر الـledger.
+/// </summary>
 public class Transaction : AuditableEntity
 {
     public Transaction(
@@ -33,15 +37,4 @@ public class Transaction : AuditableEntity
     public Safe? Safe { get; set; }
     public Purchase? Purchase { get; set; }
     public Expense? Expense { get; set; }
-    public SellerCashDeliveryTransaction? SellerCashDeliveryTransaction { get; set; }
-    public SafeTransferTransaction? SafeTransferTransaction { get; set; }
-
-    public void Approve()
-    {
-        if (Type == TransactionType.SellerPayment)
-        {
-            SellerCashDeliveryTransaction!.Seller!.UndeliveredCashAmount -= Amount;
-            Safe!.RemainingCashAmount += Amount;
-        }
-    }
 }

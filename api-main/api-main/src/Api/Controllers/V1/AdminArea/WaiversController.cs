@@ -1,3 +1,5 @@
+using Api.Models;
+using Application.Common;
 using Application.Waivers.Commands.Create;
 using Application.Waivers.Commands.Decide;
 using Application.Waivers.Common;
@@ -50,32 +52,39 @@ public class WaiversController : ApiController
     [HasPermission(Permissions.Waiver.Decide)]
     [HttpPost("{id:int}/approve")]
     public async Task<ActionResult<WaiverDetailDto>> Approve([FromRoute] int id, [FromBody] ApproveBody body)
-        => (await _mediator.Send(new ApproveWaiverByDelegateCommand
+        => ToDecisionResponse(await _mediator.Send(new ApproveWaiverByDelegateCommand
         {
             Id = id,
             ExpectedVersion = body.ExpectedVersion,
             ApprovedAmount = body.ApprovedAmount,
             Note = body.Note
-        }, CancellationToken)).ToHttpResponse();
+        }, CancellationToken));
 
     [HasPermission(Permissions.Waiver.Decide)]
     [HttpPost("{id:int}/reject")]
     public async Task<ActionResult<WaiverDetailDto>> Reject([FromRoute] int id, [FromBody] RejectBody body)
-        => (await _mediator.Send(new RejectWaiverCommand
+        => ToDecisionResponse(await _mediator.Send(new RejectWaiverCommand
         {
             Id = id,
             ExpectedVersion = body.ExpectedVersion,
             Note = body.Note
-        }, CancellationToken)).ToHttpResponse();
+        }, CancellationToken));
 
     [HasPermission(Permissions.Waiver.Apply)]
     [HttpPost("{id:int}/apply")]
     public async Task<ActionResult<WaiverDetailDto>> Apply([FromRoute] int id, [FromBody] ApplyBody body)
-        => (await _mediator.Send(new ApplyWaiverByAccountantCommand
+        => ToDecisionResponse(await _mediator.Send(new ApplyWaiverByAccountantCommand
         {
             Id = id,
             ExpectedVersion = body.ExpectedVersion
-        }, CancellationToken)).ToHttpResponse();
+        }, CancellationToken));
+
+    private static ActionResult<WaiverDetailDto> ToDecisionResponse(Result<WaiverDetailDto> result)
+        => result.IsFailed
+           && (result.Error?.Code == WaiverErrors.Concurrency.Code
+               || result.Error?.Code == WaiverErrors.InvalidTransition.Code)
+            ? new ConflictObjectResult(new BadRequestBody(result.Error))
+            : result.ToHttpResponse();
 
     public sealed class CreateBody
     {

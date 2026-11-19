@@ -324,9 +324,15 @@ class _HomeTabState extends State<HomeTab> {
                 requiredField: true,
               ),
               DataField(
-                label: 'محدد مواقع المستمرين',
+                label: 'مواقع المحلات',
                 value:
-                    '${c.locatedCustomers} من أصل ${c.locationCustomersTotal}',
+                    '${c.locatedCustomers} من ${c.locationCustomersTotal}',
+                requiredField: true,
+              ),
+              DataField(
+                label: 'صور المحلات',
+                value:
+                    '${c.photographedCustomers} من ${c.locationCustomersTotal}',
                 requiredField: true,
               ),
               DataField(

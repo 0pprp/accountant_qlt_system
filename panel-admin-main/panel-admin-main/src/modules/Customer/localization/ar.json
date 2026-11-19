@@ -8,8 +8,9 @@
     "end": "اخر تسديد",
     "rating": "التقييم",
     "businessAddress": "عنوان العميل",
-    "details": "تفاصيل"
+    "details": "الإجراءات"
   },
+  "openProfile": "البروفايل",
   "createCustomer": "إضافة العميل",
   "tabs": {
     "form": "بيانات العميل",
@@ -45,6 +46,15 @@
   "form": {
     "personalInfoTitle": "المعلومات الشخصية",
     "businessInfoTitle": "المعلومات التجارية",
+    "discountsTitle": "الخصومات",
+    "discountHint": "يقبل السالب والموجب — اتركه صفراً إن لم يكن هناك خصم",
+    "discountInvalid": "أدخل رقماً صحيحاً، ويجوز أن يكون سالباً",
+    "sellAmountDiscount": {
+      "label": "خصم سعر البيع"
+    },
+    "dailyInstallmentDiscount": {
+      "label": "خصم القسط"
+    },
     "required": "هذه الخانة مطلوبه.",
     "fullName": {
       "label": "الأسم الثلاثي"

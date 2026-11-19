@@ -290,7 +290,7 @@ watch(
     if (toModel.value) q.saleDateTo = toModel.value
     if (sortModel.value && sortModel.value !== 'saleDate') q.sort = String(sortModel.value)
     if (page.value > 1) q.page = String(page.value)
-    void router.replace({ name: route.name ?? 'SaleCompletedRoute', query: q })
+    void router.replace({ name: route.name ?? 'SaleCompletedRoute', params: route.params, query: q })
   },
 )
 

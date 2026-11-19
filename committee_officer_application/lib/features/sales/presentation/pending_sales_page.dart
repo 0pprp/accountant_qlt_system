@@ -1,3 +1,4 @@
+import 'package:committee_officer_application/core/widgets/customer_photo_button.dart';
 import 'package:committee_officer_application/core/location/device_gps.dart';
 import 'package:committee_officer_application/core/network/dio_client.dart';
 import 'package:committee_officer_application/core/theme/app_colors.dart';
@@ -52,6 +53,9 @@ class _PendingSalesPageState extends State<PendingSalesPage> {
     String? localError;
     double? capturedLat;
     double? capturedLng;
+    final customerId = int.tryParse('${row['customerId'] ?? row['CustomerId']}') ?? 0;
+    final listId = int.tryParse('${row['listId'] ?? row['ListId']}') ?? 0;
+    var photoBusy = false;
     var gpsBusy = false;
     var gpsCaptured = false;
 
@@ -126,6 +130,8 @@ class _PendingSalesPageState extends State<PendingSalesPage> {
                     ),
                   ),
                 ),
+                if (customerId > 0 && listId > 0)
+                  CustomerPhotoButton(customerId: customerId, listId: listId, onBusy: (busy) => setLocal(() => photoBusy = busy)),
                 if (localError != null)
                   Padding(
                     padding: const EdgeInsets.only(top: 8),
@@ -137,7 +143,7 @@ class _PendingSalesPageState extends State<PendingSalesPage> {
           actions: [
             TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('إلغاء')),
             TextButton(
-              onPressed: () {
+              onPressed: photoBusy ? null : () {
                 final rating = int.tryParse(ratingCtrl.text.trim()) ?? 0;
                 final stock = double.tryParse(stockCtrl.text.trim().replaceAll(',', '')) ?? 0;
                 final daily = double.tryParse(dailyCtrl.text.trim().replaceAll(',', '')) ?? 0;

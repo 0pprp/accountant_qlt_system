@@ -1,0 +1,59 @@
+.smb .smb-all {
+  grid-template-columns: 1fr;
+}
+
+.smb-dot {
+  block-size: 8px;
+  border-radius: 50%;
+  display: inline-block;
+  inline-size: 8px;
+  margin-inline-end: 4px;
+  vertical-align: middle;
+}
+
+.smb-dot.is-live { background: var(--dfb-tier-excellent); }
+.smb-dot.is-stale { background: var(--dfb-tier-weak); }
+.smb-dot.is-off { background: var(--dfb-muted); }
+
+.smb-kpis {
+  display: grid;
+  gap: 14px;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 180px), 1fr));
+  margin-bottom: 16px;
+}
+
+.smb-buckets {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 120px), 1fr));
+  margin-bottom: 18px;
+}
+
+.smb-bucket {
+  align-items: center;
+  background: var(--dfb-raised);
+  border: 2px solid transparent;
+  border-radius: 16px;
+  box-shadow: var(--dfb-up);
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  font: inherit;
+  gap: 4px;
+  padding: 12px;
+}
+
+.smb-bucket strong { font-size: 22px; }
+
+.smb-bucket.is-active {
+  border-color: var(--dfb-primary);
+  box-shadow: var(--dfb-down);
+}
+
+.smb-section :is(.sr-workspace, .sr-page, .ss-page, .sl-page, .sc-page) {
+  background: transparent;
+  box-shadow: none;
+  margin: 0;
+  max-inline-size: none;
+  padding: 0;
+}

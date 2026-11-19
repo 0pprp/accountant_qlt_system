@@ -1,5 +1,10 @@
 <template>
-  <section class="mgmt-workspace" dir="rtl">
+  <DelegateManagerBoard v-if="appSection === 'delegate'">
+    <div :key="`dmb-${auth.branchGeneration}-${activeTabId}`" class="mgmt-body dmb-body" data-testid="mgmt-ops-body">
+      <RouterView />
+    </div>
+  </DelegateManagerBoard>
+  <section v-else class="mgmt-workspace" dir="rtl">
     <header class="mgmt-header">
       <div class="mgmt-heading-icon" aria-hidden="true"><i :class="['pi', appSection === 'branch' ? 'pi-building' : appSection === 'delegate' ? 'pi-briefcase' : 'pi-th-large']" /></div>
       <div>
@@ -65,6 +70,7 @@ import { useManagementAccess } from '../composables/useManagementAccess'
 import { useBranchVisitGate } from '../composables/useBranchVisitGate'
 import { getTabByIds, getReadyTabsForSection, type ManagementTabDefinition } from '../domain/sections'
 import { APP_TABS } from '../domain/workspaceNavigation'
+import DelegateManagerBoard from '@/modules/DelegateManager/components/DelegateManagerBoard.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -87,7 +93,7 @@ const workspaceDescription = computed(() => appSection.value === 'branch'
 const appItems = computed(() => appSection.value ? APP_TABS[appSection.value].map(item => ({
   ...item, tab: item.tabId ? getTabByIds(appSection.value!, item.tabId) : undefined,
 })) : [])
-const oversightTabs = getReadyTabsForSection('oversight')
+const oversightTabs = getReadyTabsForSection('oversight').filter(tab => tab.id !== 'delegateFollowup' && tab.id.startsWith('follower') === false)
 const primaryTabs = oversightTabs.filter(tab => !tab.id.startsWith('follower') || tab.id === 'followerWork')
 const followerTabs = oversightTabs.filter(tab => tab.id.startsWith('follower') && tab.id !== 'followerWork')
 const inFollowerWork = computed(() => activeTabId.value.startsWith('follower'))

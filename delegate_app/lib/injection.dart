@@ -19,6 +19,7 @@ import 'features/home/data/home_repository_impl.dart';
 import 'features/home/domain/entities/delegate_home_snapshot.dart';
 import 'features/home/domain/repositories/home_repository.dart';
 import 'features/home/domain/usecases/get_home_snapshot_usecase.dart';
+import 'features/payments/data/delegate_business_date_service.dart';
 import 'features/payments/data/first_collection_eval_remote.dart';
 import 'features/payments/data/payment_sync_service.dart';
 import 'features/payments/data/payments_local_datasource.dart';
@@ -52,6 +53,7 @@ abstract final class Injection {
   static late final CollectPaymentUseCase collectPaymentUseCase;
   static late final SyncPendingPaymentsUseCase syncPendingPaymentsUseCase;
   static late final PaymentSyncService paymentSyncService;
+  static late final DelegateBusinessDateService businessDateService;
   static late final FirstCollectionEvalRemote firstCollectionEvalRemote;
 
   static late final HomeRepository homeRepository;
@@ -100,9 +102,20 @@ abstract final class Injection {
     syncPendingPaymentsUseCase =
         SyncPendingPaymentsUseCase(paymentsRepository);
     paymentSyncService = PaymentSyncService(syncPendingPaymentsUseCase);
+    businessDateService = DelegateBusinessDateService(
+      local: paymentsLocal,
+      syncService: paymentSyncService,
+      onRollover: () async {
+        // حدّث كاش الزبائن + أسبوع التسديدات عند دخول يوم جديد.
+        try {
+          await refreshCustomersUseCase(force: true);
+        } catch (_) {}
+      },
+    );
     firstCollectionEvalRemote = FirstCollectionEvalRemote(dioClient);
 
     homeRepository = HomeRepositoryImpl(
+      customersRemote: customersRemote,
       customersLocal: customersLocal,
       paymentsLocal: paymentsLocal,
       session: sessionStore,
@@ -125,11 +138,13 @@ abstract final class Injection {
   static Future<bool> collectPayment({
     required int customerId,
     required String customerName,
+    int? saleOrderId,
     required double amount,
   }) =>
       collectPaymentUseCase(
         customerId: customerId,
         customerName: customerName,
+        saleOrderId: saleOrderId,
         amount: amount,
       );
 }

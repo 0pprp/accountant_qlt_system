@@ -7,4 +7,10 @@ export const DelegateFollowupEndpoints = {
     `/admin/DelegateFollowup/lists/${listId}/customers/${customerId}/payments`,
   boardRating: (listId: number) =>
     `/admin/DelegateFollowup/lists/${listId}/board-operator-rating`,
+  accountantRating: (listId: number) =>
+    `/admin/DelegateFollowup/lists/${listId}/accountant-rating`,
+  salesOrders: (listId: number) =>
+    `/admin/DelegateFollowup/lists/${listId}/sales-orders`,
+  locations: (listId: number) =>
+    `/admin/DelegateFollowup/lists/${listId}/locations`,
 } as const

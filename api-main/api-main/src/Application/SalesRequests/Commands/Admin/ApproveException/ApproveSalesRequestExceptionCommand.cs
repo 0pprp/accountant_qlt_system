@@ -11,6 +11,6 @@ public class ApproveSalesRequestExceptionCommandValidator : AbstractValidator<Ap
     public ApproveSalesRequestExceptionCommandValidator()
     {
         RuleFor(x => x.RequestId).GreaterThan(0);
-        RuleFor(x => x.Reason).NotEmpty().MaximumLength(500);
+        RuleFor(x => x.Reason).MaximumLength(500);
     }
 }

@@ -44,6 +44,15 @@ public class UpdateCustomerCommandValidator : AbstractValidator<UpdateCustomerCo
             .Length(11)
             .WithMessage("رقم الهاتف (وتساب) غير صحيح.");
 
+        // الخصم يقبل السالب والموجب — الحارس الوحيد أن يكون عدداً حقيقياً.
+        RuleFor(x => x.SellAmountDiscount)
+            .Must(double.IsFinite)
+            .WithMessage("قيمة خصم سعر البيع غير صحيحة.");
+
+        RuleFor(x => x.DailyInstallmentDiscount)
+            .Must(double.IsFinite)
+            .WithMessage("قيمة خصم القسط غير صحيحة.");
+
         RuleFor(x => x.Business.Name)
             .NotEmpty()
             .WithMessage("لا يمكن أن يكون أسم المتجر فارغين.")

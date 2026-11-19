@@ -40,7 +40,7 @@ describe('useSalesRequestTabAccess', () => {
   it('legal جاهز ويُقفل بدون TabLegal', () => {
     grant('ReadUnassigned')
     const { isLocked, canReadTab } = useSalesRequestTabAccess()
-    const legal = EXTRA_VIEWS.find((t) => t.key === 'legal')!
+    const legal = WORKFLOW_TABS.find((t) => t.key === 'legal')!
     expect(legal.implementationStatus).toBe('ready')
     expect(isLocked(legal)).toBe(true)
     expect(canReadTab('legal')).toBe(false)
@@ -49,18 +49,19 @@ describe('useSalesRequestTabAccess', () => {
   it('TabLegal يفتح تبويب القانونية', () => {
     grant('TabLegal')
     const { canReadTab, isLocked } = useSalesRequestTabAccess()
-    const legal = EXTRA_VIEWS.find((t) => t.key === 'legal')!
+    const legal = WORKFLOW_TABS.find((t) => t.key === 'legal')!
     expect(canReadTab('legal')).toBe(true)
     expect(isLocked(legal)).toBe(false)
   })
 
-  it('sent/exceptions/deleted جاهزة ومقفلة بدون صلاحيتها', () => {
+  it('exceptions/deleted جاهزة ومقفلة بدون صلاحيتها و«المرسلة» أُلغيت', () => {
     const { isLocked } = useSalesRequestTabAccess()
-    for (const key of ['sent', 'exceptions', 'deleted']) {
-      const def = EXTRA_VIEWS.find((t) => t.key === key)!
+    for (const key of ['exceptions', 'deleted']) {
+      const def = [...WORKFLOW_TABS, ...EXTRA_VIEWS].find((t) => t.key === key)!
       expect(def.implementationStatus).toBe('ready')
       expect(isLocked(def)).toBe(true)
     }
+    expect([...WORKFLOW_TABS, ...EXTRA_VIEWS].some((t) => t.key === 'sent')).toBe(false)
   })
 
   it('صلاحية تبويب إضافي تفتح هذا التبويب فقط', () => {
@@ -74,14 +75,13 @@ describe('useSalesRequestTabAccess', () => {
     expect(resolveInitialTab(null)).toBe('exceptions')
   })
 
-  it('«الكل» لا يُفتح بصلاحيات العروض الإضافية وحدها', () => {
-    grant('TabSent', 'TabDeleted')
+  it('«الكل» لا يُفتح بصلاحية «المحذوفة» وحدها', () => {
+    grant('TabDeleted')
     const { canReadTab, visibleExtraViews, canReadAnyWorkflowTab } =
       useSalesRequestTabAccess()
     expect(canReadAnyWorkflowTab.value).toBe(false)
     expect(canReadTab('all')).toBe(false)
     expect(visibleExtraViews.value.map((t) => t.key)).not.toContain('all')
-    expect(canReadTab('sent')).toBe(true)
     expect(canReadTab('deleted')).toBe(true)
   })
 
@@ -91,12 +91,9 @@ describe('useSalesRequestTabAccess', () => {
       ...WORKFLOW_PERMISSION_ACTIONS,
       ...EXTRA_VIEW_PERMISSION_ACTIONS,
     ])
-    expect(EXTRA_VIEW_PERMISSION_ACTIONS).toEqual([
-      'TabSent',
-      'TabExceptions',
-      'TabDeleted',
-      'TabLegal',
-    ])
+    expect(EXTRA_VIEW_PERMISSION_ACTIONS).toEqual(['TabDeleted'])
+    expect(WORKFLOW_PERMISSION_ACTIONS).toContain('TabExceptions')
+    expect(WORKFLOW_PERMISSION_ACTIONS).toContain('TabLegal')
     expect(TAB_PERMISSION_ACTIONS).not.toContain('ExceptionDecide')
     expect(WORKFLOW_TABS.every((t) => t.group === 'workflow')).toBe(true)
   })

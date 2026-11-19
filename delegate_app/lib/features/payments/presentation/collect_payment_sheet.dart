@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
+import 'package:intl/intl.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/app_text_styles.dart';
@@ -9,6 +9,7 @@ import '../../customers/domain/entities/customer.dart';
 import '../domain/new_sale_list_logic.dart';
 import '../domain/payment_collection_rules.dart';
 import 'shop_evaluation_dialog.dart';
+import 'thousands_separator_input_formatter.dart';
 
 class CollectPaymentResult {
   const CollectPaymentResult({required this.amount});
@@ -19,10 +20,13 @@ class CollectPaymentResult {
 /// للمبيعات الجديدة: تقييم المحل أولاً (مصدر WrongSale عند ≤6) ثم مبلغ التسديد.
 Future<CollectPaymentResult?> showCollectPaymentSheet(
   BuildContext context,
-  Customer customer,
-) async {
-  final session = await Injection.authRepository.currentSession();
-  if (session?.followerCollectionEnabled == true) {
+  Customer customer, {
+  Future<void> Function(ShopEvaluationResult)? submitSaleRating,
+}) async {
+  // Always re-check from API — login cache can stay stale after panel toggle.
+  final locked =
+      await Injection.authRepository.refreshFollowerCollectionEnabled();
+  if (locked) {
     await AppDialog.message(
       context,
       title: 'الجباية مقفلة على هذه القائمة',
@@ -33,10 +37,11 @@ Future<CollectPaymentResult?> showCollectPaymentSheet(
   }
 
   final localIds = await Injection.paymentsLocal.collectedCustomerIds();
-  final needsShopEval = NewSaleListLogic.isNewSaleAwaitingFirstCollection(
-    customer,
-    locallyCollectedCustomerIds: localIds,
-  );
+  final needsShopEval = submitSaleRating != null ||
+      NewSaleListLogic.isNewSaleAwaitingFirstCollection(
+        customer,
+        locallyCollectedCustomerIds: localIds,
+      );
 
   ShopEvaluationResult? pendingShopEval;
   if (needsShopEval) {
@@ -44,13 +49,19 @@ Future<CollectPaymentResult?> showCollectPaymentSheet(
     if (pendingShopEval == null || !context.mounted) return null;
   }
 
+  final money = NumberFormat('#,###', 'en');
+  final initialAmount =
+      customer.dailyInstallment != null && customer.dailyInstallment! > 0
+          ? customer.dailyInstallment!
+          : null;
   final amountCtrl = TextEditingController(
-    text: customer.dailyInstallment != null && customer.dailyInstallment! > 0
-        ? customer.dailyInstallment!.toStringAsFixed(0)
-        : '',
+    text: initialAmount == null
+        ? ''
+        : ThousandsSeparatorInputFormatter.format(initialAmount),
   );
   var busy = false;
   String? error;
+  final remaining = customer.remaining;
 
   final result = await AppDialog.show<CollectPaymentResult>(
     context: context,
@@ -64,19 +75,27 @@ Future<CollectPaymentResult?> showCollectPaymentSheet(
           children: [
             Text(
               pendingShopEval != null
-                  ? 'بعد تقييم المحل — المبلغ من مضاعفات 1000. يُحفظ محلياً ثم يُرسل تلقائياً.'
-                  : 'المبلغ من مضاعفات 1000. يُحفظ محلياً ثم يُرسل تلقائياً.',
+                  ? 'بعد تقييم المحل — الحد الأدنى 2000 ومن مضاعفات 1000، ولا يتجاوز المتبقي.'
+                  : 'الحد الأدنى 2000 ومن مضاعفات 1000، ولا يتجاوز المتبقي.',
               style: AppTextStyles.muted,
               textAlign: TextAlign.center,
             ),
+            if (remaining != null) ...[
+              const SizedBox(height: 8),
+              Text(
+                'المتبقي: ${money.format(remaining)}',
+                style: AppTextStyles.body.copyWith(fontWeight: FontWeight.w700),
+                textAlign: TextAlign.center,
+              ),
+            ],
             const SizedBox(height: 14),
             TextField(
               controller: amountCtrl,
               style: AppTextStyles.body,
               enabled: !busy,
-              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+              keyboardType: TextInputType.number,
               inputFormatters: [
-                FilteringTextInputFormatter.allow(RegExp(r'[0-9.]')),
+                ThousandsSeparatorInputFormatter(),
               ],
               decoration: const InputDecoration(labelText: 'المبلغ'),
               textAlign: TextAlign.center,
@@ -94,19 +113,26 @@ Future<CollectPaymentResult?> showCollectPaymentSheet(
               onPressed: busy
                   ? null
                   : () async {
-                      final amount = double.tryParse(amountCtrl.text.trim());
-                      final amountError =
-                          PaymentCollectionRules.validateAmount(amount ?? 0);
+                      // قفل متزامن قبل أي await — يمنع ضغطتين = تسديدين.
+                      if (busy) return;
+                      busy = true;
+                      final amount =
+                          ThousandsSeparatorInputFormatter.parse(amountCtrl.text);
+                      final amountError = PaymentCollectionRules.validateAmount(
+                        amount ?? 0,
+                        remaining: remaining,
+                      );
                       if (amountError != null) {
+                        busy = false;
                         setModal(() => error = amountError);
                         return;
                       }
-                      setModal(() {
-                        busy = true;
-                        error = null;
-                      });
+                      setModal(() => error = null);
                       try {
-                        if (pendingShopEval != null) {
+                        if (pendingShopEval != null &&
+                            submitSaleRating != null) {
+                          await submitSaleRating(pendingShopEval!);
+                        } else if (pendingShopEval != null) {
                           final session =
                               await Injection.authRepository.currentSession();
                           final listId = session?.orderListId ?? 0;
@@ -129,6 +155,9 @@ Future<CollectPaymentResult?> showCollectPaymentSheet(
                         final saved = await Injection.collectPayment(
                           customerId: customer.customerId,
                           customerName: customer.name,
+                          saleOrderId: submitSaleRating == null
+                              ? null
+                              : customer.activeOrderId,
                           amount: amount!,
                         );
                         if (!saved) {

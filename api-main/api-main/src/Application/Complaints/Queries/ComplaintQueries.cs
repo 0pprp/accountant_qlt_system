@@ -10,8 +10,10 @@ namespace Application.Complaints.Queries;
 public sealed class ListComplaintsQuery : IRequest<Result<ComplaintListResponse>>
 {
     public int Page { get; init; } = 1;
-    public int PageSize { get; init; } = 50;
+    public int PageSize { get; init; } = 20;
     public bool UnreadOnly { get; init; }
+    public string? Search { get; init; }
+    public int? BranchId { get; init; }
 }
 
 public sealed class ListComplaintsHandler : IRequestHandler<ListComplaintsQuery, Result<ComplaintListResponse>>
@@ -34,18 +36,23 @@ public sealed class ListComplaintsHandler : IRequestHandler<ListComplaintsQuery,
         var pageSize = Math.Clamp(request.PageSize, 1, 100);
         var scope = _current.BranchIds ?? [];
 
-        var q = _db.ComplaintMessages.AsNoTracking().AsQueryable();
-        if (scope.Count > 0)
-            q = q.Where(c => c.BranchId == null || scope.Contains(c.BranchId.Value));
-        else if (scope.Count == 0 && _current.HasPermission(SeedPermissions.Complaint.Read))
-        {
-            // مفوض/مدير بلا فروع: لا بيانات (مطابقة نمط النطاق)
+        if (scope.Count == 0)
             return new ComplaintListResponse([], 0, 0, page, pageSize);
-        }
+
+        var q = ComplaintScope.Apply(_db.ComplaintMessages.AsNoTracking(), scope, request.BranchId);
 
         var unread = await q.CountAsync(c => c.Status == ComplaintStatus.Unread, ct);
         if (request.UnreadOnly)
             q = q.Where(c => c.Status == ComplaintStatus.Unread);
+
+        var term = (request.Search ?? "").Trim().ToLower();
+        if (term.Length > ComplaintScope.MaxSearchLength)
+            term = term[..ComplaintScope.MaxSearchLength];
+        if (term.Length > 0)
+            q = q.Where(c =>
+                c.Subject.ToLower().Contains(term)
+                || c.Body.ToLower().Contains(term)
+                || c.SenderDisplayName.ToLower().Contains(term));
 
         var total = await q.CountAsync(ct);
         var items = await q

@@ -41,7 +41,7 @@ function patchQuery(next: Record<string, string | null | undefined>) {
     if (v == null || v === '') delete q[k]
     else q[k] = v
   }
-  void router.replace({ name: 'SaleLegalFollowupRoute', query: q })
+  void router.replace({ name: route.name ?? 'SaleLegalFollowupRoute', params: route.params, query: q })
 }
 
 const searchModel = ref(search.value)

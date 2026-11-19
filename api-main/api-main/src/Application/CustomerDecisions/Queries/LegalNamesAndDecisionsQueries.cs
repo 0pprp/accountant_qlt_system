@@ -1,4 +1,4 @@
-using Application.BranchVisits.Common;
+﻿using Application.BranchVisits.Common;
 using Application.Common.Interfaces;
 using Application.CustomerDecisions.Common;
 using Application.SalesRequests.Common;
@@ -70,15 +70,16 @@ public sealed class ListLegalNamesHandler : IRequestHandler<ListLegalNamesQuery,
 
         var custIds = customers.Select(c => c.Id).ToList();
         var orders = await _db.Orders.AsNoTracking()
-            .Where(o => custIds.Contains(o.CustomerId))
+            .Where(o => custIds.Contains(o.CustomerId) && o.ApprovalStatus == Domain.Entities.OrderAggregate.Enums.OrderApprovalStatus.Approved)
             .Select(o => new { o.Id, o.CustomerId, o.SellAmount, o.OrderListId })
             .ToListAsync(ct);
         var orderIds = orders.Select(o => o.Id).ToList();
-        var payments = orderIds.Count == 0
+        var payments = custIds.Count == 0
             ? []
             : await _db.InstallmentPayments.AsNoTracking()
-                .Where(p => orderIds.Contains(p.OrderId))
-                .Select(p => new { p.OrderId, p.Amount, p.Date })
+                .Where(p => (p.OrderId != null && orderIds.Contains(p.OrderId.Value))
+                            || (p.OrderId == null && p.CustomerId != null && custIds.Contains(p.CustomerId.Value)))
+                .Select(p => new { p.OrderId, p.CustomerId, p.Amount, p.Date })
                 .ToListAsync(ct);
 
         var pendingLegal = await _db.LegalConversionRequests.AsNoTracking()
@@ -111,10 +112,13 @@ public sealed class ListLegalNamesHandler : IRequestHandler<ListLegalNamesQuery,
         {
             var custOrders = orders.Where(o => o.CustomerId == c.Id).ToList();
             var custOrderIds = custOrders.Select(o => o.Id).ToHashSet();
-            var custPays = payments.Where(p => custOrderIds.Contains(p.OrderId)).ToList();
+            var custPays = payments
+                .Where(p => (p.OrderId != null && custOrderIds.Contains(p.OrderId.Value))
+                            || (p.OrderId == null && p.CustomerId == c.Id))
+                .ToList();
             var saleTotal = custOrders.Sum(o => o.SellAmount);
             var paidTotal = custPays.Sum(p => p.Amount);
-            var remaining = saleTotal - paidTotal;
+            var remaining = Application.Common.Balances.CustomerBalanceRules.RoundToUnit(saleTotal - paidTotal);
             var weekPaid = custPays
                 .Where(p => p.Date >= weekStart)
                 .Sum(p => p.Amount);

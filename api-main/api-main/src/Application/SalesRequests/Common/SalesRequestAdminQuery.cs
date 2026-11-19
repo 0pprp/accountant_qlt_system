@@ -50,17 +50,43 @@ public static class SalesRequestAdminQuery
         if (!SalesRequestTabPermissions.CanReadTab(user, key))
             return SalesRequestErrors.TabForbidden;
 
+        var scoped = TabQuery(db, branches, key);
+        if (scoped is null)
+            return SalesRequestErrors.InvalidTab;
+
+        return new TabScope(scoped, [key]);
+    }
+
+    public static IQueryable<SalesRequest>? TabQuery(
+        IApplicationDbContext db,
+        IReadOnlyCollection<int> branches,
+        string tab)
+    {
+        var key = SalesRequestTabMap.Normalize(tab);
         if (SalesRequestTabMap.IsUnassignedTab(key))
-            return new TabScope(
-                SalesRequestAccess.UnassignedInScope(db, branches),
-                [SalesRequestTabMap.Unassigned]);
+            return SalesRequestAccess.UnassignedInScope(db, branches);
+
+        var live = BaseInBranches(db, branches);
+        if (key == SalesRequestTabMap.Exceptions)
+            return live.Where(x => x.ExceptionHoldStatus != null
+                                   && (x.ExceptionHoldStatus != SalesRequestExceptionHoldStatus.Approved
+                                       || x.ExceptionConsumedAtUtc == null)
+                                   && x.Status != SalesRequestStatus.Rejected
+                                   && x.Status != SalesRequestStatus.Completed
+                                   && x.Status != SalesRequestStatus.LegalFollowup);
 
         var statuses = SalesRequestTabMap.StatusesForTab(key);
         if (statuses.Count == 0)
-            return SalesRequestErrors.InvalidTab;
+            return null;
 
-        var q = BaseInBranches(db, branches).Where(x => statuses.Contains(x.Status));
-        return new TabScope(q, [key]);
+        var q = live.Where(x => statuses.Contains(x.Status));
+        if (SalesRequestTabMap.IsActiveWorkTab(key))
+            q = q.Where(x => x.TargetEmployeeId != null
+                             && x.TargetEmployeeId > 0
+                             && (x.ExceptionHoldStatus == null
+                                 || (x.ExceptionHoldStatus == SalesRequestExceptionHoldStatus.Approved
+                                     && x.ExceptionConsumedAtUtc != null)));
+        return q;
     }
 
     public static IQueryable<SalesRequest> ExtraViewQuery(
@@ -72,28 +98,11 @@ public static class SalesRequestAdminQuery
 
         if (key == SalesRequestTabMap.Deleted)
             return db.SalesRequests.AsNoTracking()
-                .Where(x => x.IsDeleted && branches.Contains(x.BranchId));
+                .Where(x => x.IsDeleted
+                            && x.Status != SalesRequestStatus.Completed
+                            && branches.Contains(x.BranchId));
 
-        var live = BaseInBranches(db, branches);
-
-        if (key == SalesRequestTabMap.Sent)
-        {
-            var sentSources = SalesRequestTabMap.SentSourceTypes;
-            return live.Where(x => sentSources.Contains(x.SourceType));
-        }
-
-        if (key == SalesRequestTabMap.Exceptions)
-            return live.Where(x => x.ExceptionHoldStatus != null
-                                   && (x.ExceptionHoldStatus != SalesRequestExceptionHoldStatus.Approved
-                                       || x.ExceptionConsumedAtUtc == null)
-                                   && x.Status != SalesRequestStatus.Rejected
-                                   && x.Status != SalesRequestStatus.Completed
-                                   && x.Status != SalesRequestStatus.LegalFollowup);
-
-        if (key == SalesRequestTabMap.Legal)
-            return live.Where(x => x.Status == SalesRequestStatus.LegalFollowup);
-
-        return live.Where(_ => false);
+        return BaseInBranches(db, branches).Where(_ => false);
     }
 
     public sealed record TabScope(IQueryable<SalesRequest> Query, IReadOnlyList<string> AppliedTabs);
@@ -106,16 +115,8 @@ public static class SalesRequestAdminQuery
         IQueryable<SalesRequest>? combined = null;
         foreach (var t in tabs)
         {
-            IQueryable<SalesRequest> part;
-            if (SalesRequestTabMap.IsUnassignedTab(t))
-                part = SalesRequestAccess.UnassignedInScope(db, branches);
-            else
-            {
-                var statuses = SalesRequestTabMap.StatusesForTab(t);
-                if (statuses.Count == 0) continue;
-                part = BaseInBranches(db, branches).Where(x => statuses.Contains(x.Status));
-            }
-
+            var part = TabQuery(db, branches, t);
+            if (part is null) continue;
             combined = combined == null ? part : combined.Union(part);
         }
 
@@ -211,24 +212,7 @@ public static class SalesRequestAdminQuery
             return SalesRequestTabPermissions.CanReadTab(user, SalesRequestTabMap.Deleted);
 
         var tab = TabKeyFor(status, targetEmployeeId, hold, exceptionConsumedAtUtc);
-
-        if (SalesRequestTabPermissions.CanReadTab(user, tab))
-            return true;
-
-        var liveHold = hold switch
-        {
-            null => false,
-            SalesRequestExceptionHoldStatus.Approved => exceptionConsumedAtUtc is null,
-            _ => true
-        };
-
-        if (liveHold
-            && SalesRequestExtraViewRules.IsTerminal(status) == false
-            && SalesRequestTabPermissions.CanReadTab(user, SalesRequestTabMap.Exceptions))
-            return true;
-
-        return SalesRequestTabMap.SentSourceTypes.Contains(sourceType)
-               && SalesRequestTabPermissions.CanReadTab(user, SalesRequestTabMap.Sent);
+        return SalesRequestTabPermissions.CanReadTab(user, tab);
     }
 
     public static string TabKeyFor(
@@ -237,19 +221,21 @@ public static class SalesRequestAdminQuery
         SalesRequestExceptionHoldStatus? hold,
         DateTimeOffset? exceptionConsumedAtUtc)
     {
-        var terminal = SalesRequestExtraViewRules.IsTerminal(status);
+        if (SalesRequestExtraViewRules.IsTerminal(status))
+            return SalesRequestTabMap.DisplayTabForStatus(status);
+
         var liveHold = hold switch
         {
             null => false,
             SalesRequestExceptionHoldStatus.Approved => exceptionConsumedAtUtc is null,
             _ => true
         };
+        if (liveHold)
+            return SalesRequestTabMap.Exceptions;
+
         var noTarget = targetEmployeeId is null or <= 0;
-
-        var unassigned = terminal == false
-                         && (liveHold == false || noTarget == false)
-                         && (status == SalesRequestStatus.New || noTarget);
-
-        return unassigned ? SalesRequestTabMap.Unassigned : SalesRequestTabMap.DisplayTabForStatus(status);
+        return status == SalesRequestStatus.New || noTarget
+            ? SalesRequestTabMap.Unassigned
+            : SalesRequestTabMap.DisplayTabForStatus(status);
     }
 }

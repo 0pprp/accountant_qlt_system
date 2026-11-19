@@ -24,4 +24,7 @@ public enum SalesRequestTimelineEventType : byte
     SoftDeleted = 16,
     Restored = 17,
     DetailsUpdated = 19,
+    CancelledToUnassigned = 20,
+    BranchTransferred = 21,
+    SoldSaleDeleted = 22,
 }

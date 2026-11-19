@@ -7,7 +7,7 @@ import type { OrderListReport, Payment } from '@/modules/Payment/types/model'
 import type { Sale } from '@/modules/Sale/types/model'
 import type { User, UserDailyReport } from '@/modules/User/types/model'
 import type { Customer } from '@/modules/Customer/types/model'
-import type { SafeSellers, SafeTransactions } from '@/modules/Safe/types/model'
+import type { SafeMovement } from '@/modules/Safe/types/model'
 import type { Product } from '@/modules/Warehouse/types/model'
 import type { DashboardFinancialRow } from '@/modules/Core/types/model/dashboard'
 import type { ActivityLogListItem } from '@/modules/ActivityLog/types/model'
@@ -21,8 +21,7 @@ export type AllowedTypes =
   | User
   | Payment
   | Customer
-  | SafeSellers
-  | SafeTransactions
+  | SafeMovement
   | OrderListReport
   | Product
   | OrderInstallmentPayment

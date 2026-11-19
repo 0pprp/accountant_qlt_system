@@ -69,7 +69,9 @@ public class CustomersController : ApiController
             PhoneNumber = dto.PhoneNumber,
             WhatsAppPhoneNumber = dto.WhatsAppPhoneNumber,
             Business = dto.Business,
-            BranchId = dto.BranchId
+            BranchId = dto.BranchId,
+            SellAmountDiscount = dto.SellAmountDiscount,
+            DailyInstallmentDiscount = dto.DailyInstallmentDiscount
         };
         var result = await _mediator.Send(command, CancellationToken);
 

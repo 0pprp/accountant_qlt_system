@@ -55,6 +55,6 @@ public static class SalesPhoneNormalizer
             }
         }
 
-        return new string(trimmed.Where(char.IsDigit).ToArray());
+        return new string(trimmed.Where(char.IsDigit).Select(c => (char)('0' + (int)char.GetNumericValue(c))).ToArray());
     }
 }

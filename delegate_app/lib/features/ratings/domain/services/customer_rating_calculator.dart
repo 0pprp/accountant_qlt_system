@@ -84,16 +84,13 @@ abstract final class CustomerRatingCalculator {
     return classifyActiveRate(rate);
   }
 
-  /// Cohort: remaining > 0 and last payment within 30 days.
+  /// Cohort: remaining > 0 (matches panel RealRating / Remaining>0).
   static bool inOverallCohort({
     required double remaining,
-    required DateTime? lastPayment,
-    required DateTime asOf,
+    DateTime? lastPayment,
+    DateTime? asOf,
   }) {
-    if (remaining <= 0) return false;
-    if (lastPayment == null) return false;
-    final cutoff = asOf.subtract(const Duration(days: 30));
-    return !lastPayment.isBefore(cutoff);
+    return remaining > 0;
   }
 
   static double averageScore(Iterable<int> scores) {

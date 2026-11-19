@@ -340,58 +340,8 @@ public class FollowerDecliningDataService
             .ToList();
     }
 
-    private async Task<List<RatingCustomerFact>> MaterializeFactsForListsAsync(
+    private Task<List<RatingCustomerFact>> MaterializeFactsForListsAsync(
         IReadOnlyList<int> listIds,
         CancellationToken ct)
-    {
-        if (listIds.Count == 0)
-            return [];
-
-        var rows = await _db.Orders.AsNoTracking()
-            .Where(o => o.ApprovalStatus == OrderApprovalStatus.Approved
-                        && o.OrderListId != null
-                        && listIds.Contains(o.OrderListId.Value))
-            .Select(o => new
-            {
-                o.CustomerId,
-                o.OrderListId,
-                o.SellerId,
-                o.SellAmount,
-                o.DailyInstallmentAmount,
-                o.SaleDate,
-                o.CreatedAt,
-                Receipts = o.InstallmentPayments.Sum(ip => ip.Amount),
-                LastPaymentDate = o.InstallmentPayments.Max(ip => (DateOnly?)ip.Date),
-                IsLegal = o.Customer != null && o.Customer.IsLegal
-            })
-            .ToListAsync(ct);
-
-        return rows
-            .GroupBy(r => new { r.CustomerId, r.OrderListId })
-            .Select(g =>
-            {
-                var saleDates = g.Where(x => x.SaleDate != null).Select(x => x.SaleDate!.Value).ToList();
-                DateOnly? saleDate = saleDates.Count > 0
-                    ? saleDates.Min()
-                    : g.Where(x => x.CreatedAt != null)
-                        .Select(x => IraqCalendar.ToLocalDate(x.CreatedAt!.Value))
-                        .OrderBy(d => d)
-                        .Cast<DateOnly?>()
-                        .FirstOrDefault();
-
-                return new RatingCustomerFact
-                {
-                    CustomerId = g.Key.CustomerId,
-                    OrderListId = g.Key.OrderListId,
-                    SellerId = g.Select(x => x.SellerId).FirstOrDefault(x => x != null),
-                    AmountTotalSales = g.Sum(x => x.SellAmount),
-                    ReceiptsTotal = g.Sum(x => x.Receipts),
-                    AmountDaySales = g.Sum(x => x.DailyInstallmentAmount),
-                    SaleDate = saleDate,
-                    LastPaymentDate = g.Max(x => x.LastPaymentDate),
-                    IsLegal = g.Any(x => x.IsLegal)
-                };
-            })
-            .ToList();
-    }
+        => FollowerFactsQuery.LoadAsync(_db, listIds, null, null, ct);
 }

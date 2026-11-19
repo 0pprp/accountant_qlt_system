@@ -155,7 +155,7 @@ const canAssign = can('SalesRequest', 'Assign')
 const canReject = can('SalesRequest', 'Reject')
 const canException = can('SalesRequest', 'RequestException')
 const canEdit =
-  can('SalesRequest', 'UpdateRequest') || can('SalesRequest', 'Assign')
+  can('SalesRequest', 'UpdateRequest')
 const canEditRequest = computed(
   () =>
     !props.request.isDeleted &&

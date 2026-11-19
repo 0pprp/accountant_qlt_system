@@ -104,7 +104,9 @@ public sealed class SearchSalesCustomersByNamesHandler
         var orderFacts = matchedIds.Count == 0
             ? new List<OrderFact>()
             : await _db.Orders.AsNoTracking()
-                .Where(o => matchedIds.Contains(o.CustomerId) && scope.Contains(o.BranchId))
+                .Where(o => matchedIds.Contains(o.CustomerId)
+                            && scope.Contains(o.BranchId)
+                            && o.ApprovalStatus == Domain.Entities.OrderAggregate.Enums.OrderApprovalStatus.Approved)
                 .Select(o => new OrderFact(
                     o.Id,
                     o.CustomerId,
@@ -118,6 +120,8 @@ public sealed class SearchSalesCustomersByNamesHandler
                         : null))
                 .ToListAsync(ct);
 
+        var unallocated = await Application.Common.Balances.CustomerBalanceQuery.UnallocatedDetailsAsync(
+            _db, matchedIds.ToList(), ct);
         var salesByCustomer = orderFacts
             .GroupBy(o => o.CustomerId)
             .ToDictionary(
@@ -151,8 +155,8 @@ public sealed class SearchSalesCustomersByNamesHandler
                 mandobByCustomer.TryGetValue(c.Id, out var mandob);
                 var sales = salesByCustomer.GetValueOrDefault(c.Id) ?? [];
                 var sell = sales.Sum(s => s.SellAmount);
-                var paid = sales.Sum(s => s.Paid);
-                var remaining = Math.Max(0, sell - paid);
+                var paid = sales.Sum(s => s.Paid) + (unallocated.GetValueOrDefault(c.Id)?.Amount ?? 0);
+                var remaining = Application.Common.Balances.CustomerBalanceRules.RoundToUnit(sell - paid);
                 matches.Add(new SalesExcelSearchMatchDto(
                     $"{c.BranchId}:{c.Id}",
                     c.BranchId,

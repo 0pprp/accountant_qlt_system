@@ -9,6 +9,19 @@ public class CustomerConfiguration : IEntityTypeConfiguration<Domain.Entities.Cu
     {
         builder.HasKey(x => x.Id);
 
+        builder.Property(x => x.ImportKey).HasMaxLength(120);
+        builder.HasIndex(x => x.ImportKey)
+            .IsUnique()
+            .HasFilter("\"ImportKey\" IS NOT NULL")
+            .HasDatabaseName("UX_Customers_ImportKey");
+
+        // الصفوف القائمة تبدأ بصفر — القيمة الافتراضية تُولَّد في الهجرة فلا تبقى أعمدة فارغة.
+        builder.Property(x => x.SellAmountDiscount).HasDefaultValue(0d);
+        builder.Property(x => x.DailyInstallmentDiscount).HasDefaultValue(0d);
+
+        builder.Property(x => x.MukhtarName).HasMaxLength(100);
+        builder.Property(x => x.RationCenterNumber).HasMaxLength(50);
+
         builder.Property(x => x.FullName).HasMaxLength(50).IsRequired();
         builder.Property(x => x.MotherName).HasMaxLength(50).IsRequired();
         builder.Property(x => x.NationalCode).HasMaxLength(50).IsRequired();

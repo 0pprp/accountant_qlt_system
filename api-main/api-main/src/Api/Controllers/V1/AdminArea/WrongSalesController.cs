@@ -27,6 +27,11 @@ public class WrongSalesController : ApiController
             Mailbox = mailbox
         }, CancellationToken)).ToHttpResponse();
 
+    [HasPermission(Permissions.WrongSale.Read)]
+    [HttpGet("{id:int}")]
+    public async Task<ActionResult<WrongSaleDetailDto>> Detail([FromRoute] int id)
+        => (await _mediator.Send(new GetWrongSaleDetailQuery { Id = id }, CancellationToken)).ToHttpResponse();
+
     [HasPermission(Permissions.WrongSale.MarkDelegateRead)]
     [HttpPost("{id:int}/mark-delegate-read")]
     public async Task<ActionResult<WrongSaleNoticeDto>> MarkDelegateRead(

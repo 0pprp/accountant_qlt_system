@@ -6,21 +6,21 @@ namespace Application.Tests.SalesRequests;
 public class SalesRequestTabMap04BTests
 {
     [Fact]
-    public void Workflow_tabs_cover_matrix_without_legal_or_deleted()
+    public void Workflow_tabs_are_exclusive_and_include_legal_and_exceptions_but_not_deleted_or_sent()
     {
         Assert.Contains(SalesRequestTabMap.Unassigned, SalesRequestTabMap.WorkflowTabs);
         Assert.Contains(SalesRequestTabMap.Incoming, SalesRequestTabMap.WorkflowTabs);
         Assert.Contains(SalesRequestTabMap.Sold, SalesRequestTabMap.WorkflowTabs);
-        Assert.DoesNotContain("legal", SalesRequestTabMap.WorkflowTabs);
+        Assert.Contains("legal", SalesRequestTabMap.WorkflowTabs);
+        Assert.Contains("exceptions", SalesRequestTabMap.WorkflowTabs);
         Assert.DoesNotContain("deleted", SalesRequestTabMap.WorkflowTabs);
+        Assert.DoesNotContain("sent", SalesRequestTabMap.WorkflowTabs);
     }
 
     [Fact]
     public void Extra_views_split_between_implemented_and_not_implemented_in_04E()
     {
-        Assert.Equal(
-            ["sent", "exceptions", "deleted", "legal"],
-            SalesRequestTabMap.ExtraViewsImplemented);
+        Assert.Equal(["deleted"], SalesRequestTabMap.ExtraViewsImplemented);
         Assert.Empty(SalesRequestTabMap.ExtraViewsNotImplemented);
         Assert.DoesNotContain("all", SalesRequestTabMap.ExtraViewsNotImplemented);
         Assert.DoesNotContain("all", SalesRequestTabMap.ExtraViewsImplemented);

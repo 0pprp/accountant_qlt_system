@@ -32,6 +32,10 @@ public static class SalesRequestErrors
     public static Error IllegalTransition = new(
         "انتقال حالة غير مسموح",
         "SalesRequest_Illegal_Transition");
+    public static Error DecisionNoteTooLong = new(
+        "ملاحظة القرار لا تتجاوز 500 حرف",
+        "SalesRequest_Decision_Note_Too_Long");
+
     public static Error NoteRequired = new(
         "السبب/الملاحظة مطلوبة",
         "SalesRequest_Note_Required");
@@ -101,4 +105,25 @@ public static class SalesRequestErrors
     public static Error AssigneeRequiredForBranchMove = new(
         "تغيير المحافظة/الفرع يتطلب اختيار موظف مؤهل في الفرع الجديد",
         "SalesRequest_Assignee_Required_For_Branch_Move");
+    public static Error ReturnRequiresEmployee = new(
+        "لا يوجد موظف سابق لإرجاع الطلب إليه — أسنده من جديد",
+        "SalesRequest_Return_Requires_Employee");
+    public static Error CancelNotAllowed = new(
+        "لا يمكن إلغاء هذا الطلب: المباع يُحذف من «حذوفات المبيعات»، والمرتبط بمسودة بيع يُلغى من المسودة",
+        "SalesRequest_Cancel_Not_Allowed");
+    public static Error TransferNotAllowed = new(
+        "لا يُنقل طلب مباع أو مرتبط بمسودة أو في القانونية أو محجوز باستثناء",
+        "SalesRequest_Transfer_Not_Allowed");
+    public static Error TransferSameBranch = new(
+        "الطلب في هذا الفرع أصلاً",
+        "SalesRequest_Transfer_Same_Branch");
+    public static Error DeleteSoldSalePaymentsNotConfirmed = new(
+        "لهذا المبيع تسديدات ستُمسح نهائياً — أكّد ذلك قبل الحذف",
+        "SalesRequest_Delete_Sold_Sale_Payments_Not_Confirmed");
+    public static Error SoldSaleWiped = new(
+        "هذا مبيع محذوف نهائياً ولا يمكن استرجاعه",
+        "SalesRequest_Sold_Sale_Wiped");
+    public static Error SoldSaleRequired = new(
+        "الحذف من هنا للطلبات المباعة فقط",
+        "SalesRequest_Sold_Sale_Required");
 }

@@ -17,6 +17,8 @@ public record OrderInfoDto
     public double SellAmount { get; set; }
     public double PrepaymentAmount { get; set; }
     public double DailyInstallmentAmount { get; set; }
+    public double SellAmountDiscountApplied { get; set; }
+    public double DailyInstallmentDiscountApplied { get; set; }
     public required List<GetAttachmentDto> Attachments { get; set; }
 }
 

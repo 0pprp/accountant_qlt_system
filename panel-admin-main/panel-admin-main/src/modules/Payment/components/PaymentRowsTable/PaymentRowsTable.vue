@@ -4,7 +4,7 @@
       <AppSelect
         v-model="selectedListId"
         label="القائمة"
-        placeholder="اختر القائمة"
+        :placeholder="t('payment.selectList')"
         :options="listOptions"
         :filterable="listOptions.length > 6"
         :disabled="listsLoading"
@@ -20,63 +20,60 @@
       />
     </div>
 
-    <DataState
-      v-if="selectedListId == null || selectedListId <= 0"
-      kind="empty"
-      title="اختر قائمة"
-      message="اختر القائمة ثم حدد الفترة لعرض تسديدات الزبائن."
-    />
-    <template v-else>
-      <CustomDataTable
-        :data="rows"
-        :columns="columns"
-        :rows="pageSize"
-        :pageSize="pageSize"
-        paginatorEnabled
-        :totalRecords="totalCount"
-        tableStyle="min-width: 100%"
-        class="custom-table custom-border mt-4"
-        :loading="isLoading"
-        @page-change="onPageChange"
-        @sort-change="handleSortChange"
-      >
-        <template #paginator>
-          <div class="inline rounded-xl bg-white border-line border py-2 px-4">
-            <span class="text-gray-700">{{ $t('payment.payments') }}: </span>
-            <span>{{ totalCount }}</span>
-          </div>
-          <div class="inline rounded-xl bg-white border-line border py-2 px-4 mx-2">
-            <span class="text-gray-700">{{ $t('payment.table.amount') }}: </span>
-            <span>{{ pageTotalFormatted }}</span>
-            <span class="text-gray-700 text-sm pr-1">{{ $t('words.dinar') }}</span>
-          </div>
-        </template>
+    <div class="pay-rows__cards" aria-live="polite">
+      <div class="pay-rows__card">
+        <span class="pay-rows__card-label">{{ $t('payment.table.amount') }}</span>
+        <span class="pay-rows__card-value">
+          {{ totalAmountFormatted }}
+          <small>{{ $t('words.dinar') }}</small>
+        </span>
+      </div>
+      <div class="pay-rows__card">
+        <span class="pay-rows__card-label">{{ $t('payment.payments') }}</span>
+        <span class="pay-rows__card-value">{{ totalCount }}</span>
+      </div>
+    </div>
 
-        <template #body-customerFullName="{ data }">
-          <RouterLink
-            v-if="data.customerId"
-            class="pay-rows__customer"
-            :to="{ name: 'CustomerAuditProfileRoute', params: { id: data.customerId } }"
-          >
-            {{ data.customerFullName || '—' }}
-          </RouterLink>
-          <span v-else>{{ data.customerFullName || '—' }}</span>
-        </template>
+    <CustomDataTable
+      :data="rows"
+      :columns="columns"
+      :rows="pageSize"
+      :pageSize="pageSize"
+      :paginatorEnabled="false"
+      :totalRecords="totalCount"
+      tableStyle="min-width: 100%"
+      class="custom-table custom-border mt-4"
+      :loading="isLoading"
+      @sort-change="handleSortChange"
+    >
+      <template #body-customerFullName="{ data }">
+        <RouterLink
+          v-if="data.customerId"
+          class="pay-rows__customer"
+          :to="{ name: 'CustomerAuditProfileRoute', params: { id: data.customerId } }"
+        >
+          {{ data.customerFullName || '—' }}
+        </RouterLink>
+        <span v-else>{{ data.customerFullName || '—' }}</span>
+      </template>
 
-        <template #body-amount="{ data }">
-          <span>{{ formatAmount(data.amount) }}</span>
-          <span class="text-gray-700 px-1">{{ $t('words.dinar') }}</span>
-        </template>
+      <template #body-orderListName="{ data }">
+        {{ data.orderListName || '—' }}
+      </template>
 
-        <template #body-date="{ data }">
-          {{ data.date ? formattedDate(data.date) : '—' }}
-        </template>
+      <template #body-amount="{ data }">
+        <span>{{ formatAmount(data.amount) }}</span>
+        <span class="text-gray-700 px-1">{{ $t('words.dinar') }}</span>
+      </template>
 
-        <template #body-sellerFullName="{ data }">
-          {{ data.sellerFullName || '—' }}
-        </template>
-      </CustomDataTable>
-    </template>
+      <template #body-date="{ data }">
+        {{ data.date ? formattedDate(data.date) : '—' }}
+      </template>
+
+      <template #body-sellerFullName="{ data }">
+        {{ data.sellerFullName || '—' }}
+      </template>
+    </CustomDataTable>
   </div>
 </template>
 
@@ -84,7 +81,7 @@
 import { computed, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'
-import { AppDateField, AppSelect, DataState } from '@/modules/Core/components/ui'
+import { AppDateField, AppSelect } from '@/modules/Core/components/ui'
 import CustomDataTable from '@/modules/Core/components/shared/CustomDataTable/CustomDataTable.vue'
 import type {
   AllowedTypes,
@@ -102,7 +99,8 @@ const route = useRoute()
 const router = useRouter()
 const authStore = useAuthStore()
 
-const pageSize = ref(10)
+/** عرض كل التسديدات دفعة واحدة بدون ترقيم صفحات */
+const pageSize = ref(5000)
 const pageIndex = ref(1)
 const sortCriteria = ref<Array<{ property: string; direction: number }> | null>(null)
 
@@ -115,15 +113,18 @@ const { data: listsData, isLoading: listsLoading } = useOrderDataQuery(
   branchId,
 )
 
+const ALL_LISTS_ID = 0
+
 const listOptions = computed(() => {
   const rows = listsData.value?.items ?? []
-  return rows.map((l) => {
+  const options = rows.map((l) => {
     const row = l as { id: number; name?: string; orderListName?: string }
     return {
       label: row.name ?? row.orderListName ?? `#${row.id}`,
       value: row.id,
     }
   })
+  return [{ label: t('payment.allLists'), value: ALL_LISTS_ID }, ...options]
 })
 
 function asDate(value: unknown): string {
@@ -138,15 +139,16 @@ function todayIso() {
 }
 
 const selectedListId = computed({
-  get(): number | null {
+  get(): number {
     const raw = route.query.orderListId
+    if (raw == null || raw === '') return ALL_LISTS_ID
     const n = Number(Array.isArray(raw) ? raw[0] : raw)
-    return Number.isFinite(n) && n > 0 ? n : null
+    return Number.isFinite(n) && n >= 0 ? n : ALL_LISTS_ID
   },
   set(v: string | number | null | boolean) {
-    const id = typeof v === 'number' && Number.isFinite(v) ? v : null
+    const id = typeof v === 'number' && Number.isFinite(v) ? v : ALL_LISTS_ID
     const query = { ...route.query }
-    if (id == null || id <= 0) delete query.orderListId
+    if (id <= 0) delete query.orderListId
     else query.orderListId = String(id)
     pageIndex.value = 1
     void router.push({ query })
@@ -176,7 +178,7 @@ const toDate = computed({
 })
 
 watch(
-  [listOptions, () => route.query.orderListId, () => route.query.startDate, () => route.query.endDate],
+  [() => route.query.startDate, () => route.query.endDate],
   () => {
     const query = { ...route.query }
     let changed = false
@@ -191,11 +193,6 @@ watch(
         changed = true
       }
     }
-    const currentList = Number(Array.isArray(query.orderListId) ? query.orderListId[0] : query.orderListId)
-    if ((!Number.isFinite(currentList) || currentList <= 0) && listOptions.value[0]) {
-      query.orderListId = String(listOptions.value[0].value)
-      changed = true
-    }
     if (changed) void router.replace({ query })
   },
   { immediate: true },
@@ -209,7 +206,8 @@ const searchTerm = computed(() => {
 
 const startDateRef = computed(() => fromDate.value || null)
 const endDateRef = computed(() => toDate.value || null)
-const orderListIdRef = computed(() => selectedListId.value ?? 0)
+const orderListIdRef = computed(() => selectedListId.value)
+const showAllLists = computed(() => selectedListId.value <= 0)
 
 watch(searchTerm, () => {
   pageIndex.value = 1
@@ -233,42 +231,50 @@ const rows = computed<Payment[]>(() => {
 
 const totalCount = computed(() => data.value?.totalCount ?? rows.value.length)
 
-const pageTotalFormatted = computed(() =>
+const totalAmountFormatted = computed(() =>
   formatMoney(
     rows.value.reduce((sum, row) => sum + (Number(row.amount) || 0), 0),
   ),
 )
 
-const columns = computed<Column<AllowedTypes>[]>(() => [
-  {
-    field: 'customerFullName',
-    header: t('payment.table.customerFullName'),
-    sortable: true,
-  },
-  {
-    field: 'amount',
-    header: t('payment.table.amount'),
-    sortable: true,
-  },
-  {
-    field: 'date',
-    header: t('payment.table.date'),
-    sortable: true,
-  },
-  {
-    field: 'sellerFullName',
-    header: t('payment.table.sellerFullName'),
-    sortable: false,
-  },
-])
+const columns = computed<Column<AllowedTypes>[]>(() => {
+  const cols: Column<AllowedTypes>[] = [
+    {
+      field: 'customerFullName',
+      header: t('payment.table.customerFullName'),
+      sortable: true,
+    },
+  ]
+  if (showAllLists.value) {
+    cols.push({
+      field: 'orderListName',
+      header: t('payment.table.orderListName'),
+      sortable: false,
+    })
+  }
+  cols.push(
+    {
+      field: 'amount',
+      header: t('payment.table.amount'),
+      sortable: true,
+    },
+    {
+      field: 'date',
+      header: t('payment.table.date'),
+      sortable: true,
+    },
+    {
+      field: 'sellerFullName',
+      header: t('payment.table.sellerFullName'),
+      sortable: false,
+    },
+  )
+  return cols
+})
 
 function formatAmount(value: string | number | null | undefined) {
   const n = Number(value)
   return Number.isFinite(n) ? formatMoney(n) : String(value ?? '—')
-}
-
-function onPageChange(event: { first: number }) {
-  pageIndex.value = Math.floor(event.first / pageSize.value) + 1
 }
 
 function handleSortChange(event: { sortField: string | null; sortOrder: 1 | -1 | 0 }) {
@@ -288,6 +294,43 @@ function handleSortChange(event: { sortField: string | null; sortOrder: 1 | -1 |
 <style scoped>
 .pay-rows__filters {
   margin-top: 1rem;
+}
+.pay-rows__cards {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+.pay-rows__card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  padding: 1rem 1.1rem;
+  border-radius: 1rem;
+  border: 1px solid #e5e7eb;
+  background: #fff;
+}
+.pay-rows__card-label {
+  color: #4b5563;
+  font-size: 0.9rem;
+}
+.pay-rows__card-value {
+  color: #111827;
+  font-size: 1.35rem;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.35rem;
+}
+.pay-rows__card-value small {
+  color: #4b5563;
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+@media (max-width: 640px) {
+  .pay-rows__cards {
+    grid-template-columns: 1fr;
+  }
 }
 .pay-rows__customer {
   color: #006a64;

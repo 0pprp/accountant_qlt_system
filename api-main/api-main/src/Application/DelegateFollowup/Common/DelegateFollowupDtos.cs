@@ -32,10 +32,13 @@ public class DelegateFollowupDayRatingDto
     public string Label { get; set; } = "";
     public int? BoardOperatorScore { get; set; }
     public string? BoardOperatorNote { get; set; }
+    public string? RatedByUserName { get; set; }
 }
 
 public class DelegateFollowupTierMoneyDto
 {
+    public int CustomerCount { get; set; }
+    public int PayersYesterday { get; set; }
     public required string Label { get; set; }
     public bool RequiredDueAvailable { get; set; }
     public double? RequiredDue { get; set; }
@@ -151,6 +154,11 @@ public class DelegateFollowupSummaryDto
 
     public required DelegateFollowupConversionDto Conversion { get; set; }
     public required DelegateFollowupBoardRatingDto BoardOperatorRating { get; set; }
+    public required DelegateFollowupBoardRatingDto BoardOperatorRatingToday { get; set; }
+    public required DelegateFollowupBoardRatingDto AccountantRating { get; set; }
+    public required DelegateFollowupBoardRatingDto AccountantRatingToday { get; set; }
+    public List<DelegateFollowupDayRatingDto> AccountantRatingLast30Days { get; set; } = [];
+    public DateOnly ReportedYesterday { get; set; }
 
     public List<DelegateFollowupUnresolvedFieldDto> UnresolvedNotes { get; set; } = [];
 }
@@ -181,6 +189,7 @@ public class DelegateFollowupCustomerDto
     public string RealRatingLabel { get; set; } = "";
     public bool IsLegal { get; set; }
     public bool IsNewSaleUnpaid3Days { get; set; }
+    public bool IsActive { get; set; }
     public string? Notes { get; set; }
     public string? ReceiptName { get; set; }
 }
@@ -188,7 +197,7 @@ public class DelegateFollowupCustomerDto
 public class DelegateFollowupPaymentDto
 {
     public int PaymentId { get; set; }
-    public int OrderId { get; set; }
+    public int? OrderId { get; set; }
     public int CustomerId { get; set; }
     public DateOnly Date { get; set; }
     public double Amount { get; set; }

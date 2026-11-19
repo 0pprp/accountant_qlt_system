@@ -1,5 +1,7 @@
 <template>
+  <DelegateTasksBoard v-if="isDelegateBoard" />
   <div
+    v-else
     class="mt-page"
     dir="rtl"
   >
@@ -16,7 +18,7 @@
         </p>
       </div>
       <button
-        v-if="canCreate"
+        v-if="canCreate && !props.inboxOnly"
         type="button"
         class="mt-btn primary"
         :disabled="branchId == null"
@@ -172,6 +174,7 @@
 
 <script setup lang="ts">
 import { computed, onBeforeUnmount, ref, watch } from 'vue'
+import { useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useAuthStore } from '@/modules/Auth/store'
 import { useToastStore } from '@/modules/Core/store'
@@ -198,6 +201,7 @@ import {
 } from '../requests/mutations/useUploadManagementTaskAttachmentMutation'
 import { downloadManagementTaskAttachment } from '../requests/mutations/downloadManagementTaskAttachment'
 import TaskCard from '../components/TaskCard.vue'
+import DelegateTasksBoard from '../components/DelegateTasksBoard.vue'
 import TaskStatusStrip from '../components/TaskStatusStrip.vue'
 import TaskDetailDialog, {
   type TaskDetailAction,
@@ -217,8 +221,14 @@ const toast = useToastStore()
 const { canRead, canCreate, canUseInbox, currentUserId } = useManagementTaskAccess()
 
 const props = withDefaults(defineProps<{ inboxOnly?: boolean }>(), { inboxOnly: false })
+const route = useRoute()
+const isDelegateBoard = computed(
+  () => props.inboxOnly && route.meta.managementSectionId === 'delegate'
+)
 const canEnter = computed(() => canRead.value || (props.inboxOnly && canUseInbox.value))
-const branchId = computed(() => auth.selectedBranch?.id ?? null)
+const branchId = computed(() =>
+  isDelegateBoard.value ? null : (auth.selectedBranch?.id ?? null)
+)
 
 // —— فلاتر ——
 const status = ref<ManagementTaskStatusValue | null>(null)

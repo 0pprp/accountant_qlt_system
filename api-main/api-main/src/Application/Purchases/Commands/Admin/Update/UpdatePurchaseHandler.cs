@@ -1,4 +1,5 @@
 ﻿using Application.Common.Interfaces;
+using Application.Safes.Common;
 using Application.Purchases.Common;
 using Domain.Entities.ActivityLogAggregate.Enums;
 using Domain.Entities.ProductAggregate;
@@ -14,13 +15,15 @@ public class UpdatePurchaseHandler : IRequestHandler<UpdatePurchaseCommand, Resu
     private readonly IApplicationDbContext _dbContext;
     private readonly INotificationService _notificationService;
     private readonly IActivityLogService _activityLogService;
+    private readonly ISafeLedger _safeLedger;
 
     public UpdatePurchaseHandler(IApplicationDbContext dbContext, INotificationService notificationService,
-        IActivityLogService activityLogService)
+        IActivityLogService activityLogService, ISafeLedger safeLedger)
     {
         _dbContext = dbContext;
         _notificationService = notificationService;
         _activityLogService = activityLogService;
+        _safeLedger = safeLedger;
     }
 
     public async Task<Result> Handle(UpdatePurchaseCommand request, CancellationToken cancellationToken)
@@ -43,17 +46,25 @@ public class UpdatePurchaseHandler : IRequestHandler<UpdatePurchaseCommand, Resu
 
         UpdatePurchaseItems(purchase, request);
 
-        await HandleSafeTransactionsAsync(purchase, cancellationToken);
+        await using var dbTransaction = await _dbContext.Database.BeginTransactionAsync(cancellationToken);
+
+        var safeResult = await HandleSafeTransactionsAsync(purchase, cancellationToken);
+        if (safeResult.IsFailed)
+        {
+            await dbTransaction.RollbackAsync(cancellationToken);
+            return safeResult;
+        }
 
         var safe = await _dbContext.Safes.FirstAsync(x => x.Id == purchase.Transactions.First().SafeId, cancellationToken);
 
         await _activityLogService.AddAsync(
-            purchase.BranchId ?? safe.BranchId!.Value,
+            purchase.BranchId ?? safe.BranchId,
             ActivityType.PurchaseUpdated,
             TargetEntityType.Purchase,
             purchase.Id);
 
         await _dbContext.SaveChangesAsync(cancellationToken);
+        await dbTransaction.CommitAsync(cancellationToken);
         return Result.Success();
     }
 
@@ -169,7 +180,7 @@ public class UpdatePurchaseHandler : IRequestHandler<UpdatePurchaseCommand, Resu
         }
     }
 
-    private async Task HandleSafeTransactionsAsync(Purchase purchase, CancellationToken cancellationToken)
+    private async Task<Result> HandleSafeTransactionsAsync(Purchase purchase, CancellationToken cancellationToken)
     {
         var safeId = purchase.Transactions.First().SafeId;
         var safe = await _dbContext.Safes.FirstAsync(x => x.Id == safeId, cancellationToken);
@@ -178,43 +189,36 @@ public class UpdatePurchaseHandler : IRequestHandler<UpdatePurchaseCommand, Resu
         var oldTotalAmount = purchase.TotalAmount;
 
         if (newTotalAmount == oldTotalAmount)
-            return;
+            return Result.Success();
 
-        if (newTotalAmount > oldTotalAmount)
-        {
-            var additionalAmount = newTotalAmount - oldTotalAmount;
+        var isAdditional = newTotalAmount > oldTotalAmount;
+        var delta = Math.Abs(newTotalAmount - oldTotalAmount);
 
-            var transaction = new Transaction(
-                additionalAmount,
-                TransactionType.Purchase,
-                TransactionStatus.Approved,
-                TransactionDirection.Out,
-                safeId);
+        var transaction = new Transaction(
+            delta,
+            TransactionType.Purchase,
+            TransactionStatus.Approved,
+            isAdditional ? TransactionDirection.Out : TransactionDirection.In,
+            safeId);
 
-            purchase.Transactions.Add(transaction);
-            safe.RemainingCashAmount -= additionalAmount;
+        purchase.Transactions.Add(transaction);
+        _notificationService.AddTransactionCreatedNotification(transaction, safe.BranchId);
 
-            if (safe.BranchId is not null)
-                _notificationService.AddTransactionCreatedNotification(transaction, safe.BranchId.Value);
-        }
-        else
-        {
-            var refundAmount = oldTotalAmount - newTotalAmount;
+        var movement = await _safeLedger.RecordAsync(
+            new SafeLedgerEntry
+            {
+                SafeId = safeId,
+                Kind = isAdditional ? SafeMovementKind.PurchaseOut : SafeMovementKind.Refund,
+                Amount = delta,
+                Note = $"تعديل مشترى بفاتورة {purchase.FactorNumber}",
+                PurchaseId = purchase.Id
+            },
+            cancellationToken);
 
-            var transaction = new Transaction(
-                refundAmount,
-                TransactionType.Purchase,
-                TransactionStatus.Approved,
-                TransactionDirection.In,
-                safeId);
-
-            purchase.Transactions.Add(transaction);
-            safe.RemainingCashAmount += refundAmount;
-
-            if (safe.BranchId is not null)
-                _notificationService.AddTransactionCreatedNotification(transaction, safe.BranchId.Value);
-        }
+        if (movement.IsFailed)
+            return movement.Error;
 
         purchase.TotalAmount = newTotalAmount;
+        return Result.Success();
     }
 }

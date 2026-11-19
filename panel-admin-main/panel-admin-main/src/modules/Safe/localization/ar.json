@@ -1,136 +1,110 @@
 {
-  "paginatorLabel": "العمليات",
-  "safeCards": {
-    "remainingCashAmount": {
-      "title": "النقد",
-      "description": "الموجود الفعلي في القاصة الرئيسية"
-    },
-    "netBalance": {
-      "title": "القاصه الرئیسیه",
-      "description": "المطلوب تحويله للقاصات"
-    },
-    "totalAmount": {
-      "title": "القاصه الکلیه",
-      "description": "المطلوب أستلامه من القاصات"
-    },
-    "netCreditAmount": {
-      "title": "طلب سالب",
-      "description": "المطلوب تحويله للقاصة الرئيسية"
-    },
-    "netDebitAmount": {
-      "title": "طلب موجب",
-      "description": "المطلوب استلامه للقاصة الرئيسية"
-    },
-    "totalBranchesRemainingCashAmount": {
-      "title": "نقد الفروع",
-      "description": "مجموع أرصدة الفروع"
-    },
-    "totalUndeliveredCashAmount": {
-      "title": "الواردات",
-      "description": "الواردات غير المسلمة"
-    }
+  "title": "القاصة",
+  "subtitle": "خزائن الفرع وحركاتها — كل دينار له خزينة وسجل يفسّره",
+  "totalLabel": "إجمالي خزائن الفرع",
+  "subSafesTitle": "الخزائن الفرعية",
+  "inactive": "موقوفة",
+  "kinds": {
+    "branch": "قاصة الفرع",
+    "expenses": "سجل الصرفيات",
+    "orderList": "القوائم",
+    "employee": "الموظفون",
+    "misc": "متفرقة"
   },
-  "transactionType": {
-    "sellerPayment": "تسدید",
-    "purchase": "مشتریات",
-    "expense": "الصرفیات",
-    "safeTransfer": "تحويل قاصة",
-    "foreignProductOrder": "مبیع الخارجی"
+  "movementKinds": {
+    "opening": "رصيد افتتاحي",
+    "deposit": "إضافة",
+    "withdrawal": "سحب",
+    "transferIn": "نقل داخل",
+    "transferOut": "نقل خارج",
+    "collection": "تحصيل",
+    "prepayment": "مقدمة",
+    "expenseOut": "مصروف",
+    "purchaseOut": "مشترى",
+    "refund": "إرجاع"
   },
-  "tableColumns": {
-    "fullName": "الأسم الثلاثي",
-    "roleName": "النوع",
-    "orderListName": "القائمة",
-    "undeliveredCashAmount": "الواردات",
-    "deliveredCashAmount": "التسديدات",
-    "remaining": "المتبقي",
-    "lastCashDeliveryDescription": "اخر تسديد",
-    "description": "ملاحظات",
-    "businessAddress": "عنوان العميل",
-    "details": "تفاصيل",
-    "report": "تقرير يومي"
-  },
-
-  "tableTransactionColumns": {
-    "source": "من",
-    "destination": "الى",
-    "type": "النوع",
+  "fields": {
     "amount": "المبلغ",
-    "createdAt": "التاريخ",
-    "status": "الحالة",
-    "statusDescription": "ملاحظات",
-    "actions": "الأجراء"
+    "note": "ملاحظة",
+    "notePlaceholder": "اكتب سبب العملية",
+    "balance": "الرصيد",
+    "binding": "الربط",
+    "bindingType": "نوع الربط",
+    "bindingOrderList": "قائمة تحصيل",
+    "bindingUser": "موظف",
+    "orderList": "القائمة",
+    "orderListPlaceholder": "اختر القائمة",
+    "employee": "الموظف",
+    "employeePlaceholder": "اختر الموظف",
+    "from": "من خزينة",
+    "to": "إلى خزينة",
+    "toPlaceholder": "اختر الخزينة الهدف",
+    "movementsCount": "عدد الحركات",
+    "movementKind": "نوع الحركة",
+    "allKinds": "كل الأنواع",
+    "startDate": "من تاريخ",
+    "endDate": "إلى تاريخ",
+    "search": "بحث",
+    "searchPlaceholder": "اسم الخزينة أو القائمة أو الموظف"
   },
-
-  "status": {
-    "pending": "قيد الانتظار",
-    "approved": "مقبول",
-    "rejected": "مرفوض"
+  "operations": {
+    "deposit": "إضافة",
+    "withdraw": "سحب",
+    "transfer": "نقل",
+    "create": "خزينة جديدة",
+    "createHint": "الربط إلزامي وواحد: قائمة تحصيل أو موظف. قاصة الفرع وسجل الصرفيات يُنشآن تلقائياً.",
+    "delete": "حذف الخزينة",
+    "deleteConfirm": "هل تريد حذف «{name}»؟ لا يُسمح بالحذف إلا لخزينة فارغة بلا حركات.",
+    "deleteFailed": "تعذّر حذف الخزينة",
+    "withdrawHint": "السحب يُنقص رصيد هذه الخزينة ويُسجَّل في سجلها. للتحويل إلى خزينة أخرى استخدم «نقل».",
+    "depositSuccess": "تمت إضافة المبلغ",
+    "withdrawSuccess": "تم السحب وسُجِّل في سجل الخزينة",
+    "transferSuccess": "تم النقل بين الخزينتين",
+    "createSuccess": "تم إنشاء الخزينة",
+    "deleteSuccess": "تم حذف الخزينة"
   },
-
-  "changeStatusForm": {
-    "statusDescription": {
-      "placeholder": "ادخل ملاحظات",
-      "label": "ملاحظات"
-    },
-    "status": {
-      "placeholder": "ادخل الحالة",
-      "label": "الحالة"
+  "actions": {
+    "confirm": "تأكيد",
+    "cancel": "إلغاء",
+    "submitting": "جارٍ التنفيذ…",
+    "movements": "السجل",
+    "delete": "حذف",
+    "back": "رجوع"
+  },
+  "validation": {
+    "amount": "أدخل مبلغاً صحيحاً من مضاعفات الألف",
+    "exceedsBalance": "المبلغ أكبر من رصيد الخزينة",
+    "noteRequired": "الملاحظة إلزامية عند السحب",
+    "selectDestination": "اختر الخزينة الهدف",
+    "sourceUnavailable": "خزينة المصدر غير متاحة",
+    "sameSafe": "لا يمكن النقل إلى نفس الخزينة",
+    "bindingRequired": "اختر القائمة أو الموظف"
+  },
+  "movements": {
+    "title": "سجل الحركات",
+    "paginatorLabel": "الحركات",
+    "balanced": "الرصيد مطابق للسجل",
+    "unbalanced": "تحذير: الرصيد لا يطابق مجموع السجل",
+    "storedBalance": "الرصيد المخزون",
+    "ledgerBalance": "مجموع السجل",
+    "difference": "الفرق",
+    "columns": {
+      "kind": "نوع الحركة",
+      "amount": "المبلغ",
+      "balanceAfter": "الرصيد بعدها",
+      "counterparty": "الخزينة المقابلة",
+      "note": "ملاحظات",
+      "performedBy": "المنفّذ",
+      "createdAt": "التاريخ"
     }
   },
-  "sellerCashDeliveriesForm": {
-    "date": {
-      "label": "تاريخ",
-      "placeholder": "أدخل تاريخ",
-      "required": " تاريخ مطلوبة"
-    },
-    "amount": {
-      "label": "المبلغ",
-      "placeholder": "أدخل المبلغ المراد تسديده",
-      "validation": {
-        "valid": "يرجى إدخال مبلغ صحيح",
-        "required": "المبلغ مطلوب"
-      }
-    },
-    "description": {
-      "label": "ملاحظات",
-      "placeholder": "ملاحظات"
-    }
-  },
-
-  "transferForm": {
-    "sourceSafeId": {
-      "label": "من",
-      "placeholder": "أختر القاصة المستقطعة منها الأموال",
-      "required": "مطلوبة"
-    },
-    "destinationSafeId": {
-      "label": "إلى",
-      "placeholder": "أختر القاصة المحول لها الأموال",
-      "required": "مطلوبة"
-    },
-    "amount": {
-      "label": "المبلغ",
-      "placeholder": "أدخل المبلغ المراد تسديده",
-      "validation": {
-        "valid": "يرجى إدخال مبلغ صحيح",
-        "required": "المبلغ مطلوب"
-      }
-    },
-    "description": {
-      "label": "ملاحظات",
-      "placeholder": "ملاحظات"
-    }
-  },
-  "foreignSafe": "مصدر خارجي",
-  "changeStatusTitle": "تعدیل الحالة",
-  "createSafe": "إضافة عملية",
-  "createSellerCashDeliveries": "إضافة تسديد",
-  "someSellerCashDeliveriesBtn": "تسديد الكل",
-  "someSellerCashDeliveriesDescription": "هل أنت متأكد من تسديد القوائم",
-  "allAmount": "المبلغ الكلي",
-  "requests": "الطلبات",
-  "sellers": "الرئيسة",
-  "updateTitleSuccess": "تم التحديث بنجاح",
-  "updateDescriptionSuccess": "تم تأكيد استلام المبلغ النقدي بنجاح."
+  "states": {
+    "loading": "جارٍ تحميل الخزائن…",
+    "errorTitle": "تعذّر تحميل الخزائن",
+    "errorMessage": "أعد المحاولة أو تحقّق من الاتصال.",
+    "emptyTitle": "لا توجد خزائن",
+    "emptyMessage": "لا توجد خزائن في هذا التصنيف بعد.",
+    "noBranchTitle": "اختر فرعاً",
+    "noBranchMessage": "اختر الفرع من الأعلى لعرض خزائنه."
+  }
 }

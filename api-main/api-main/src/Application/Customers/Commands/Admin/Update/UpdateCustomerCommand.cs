@@ -13,6 +13,12 @@ public record UpdateCustomerCommand : IRequest<Result>
     public required string WhatsAppPhoneNumber { get; set; }
     public required Business Business { get; set; }
     public int BranchId { get; set; }
+
+    /// <summary>خصم سعر البيع — يقبل السالب والموجب، وصفر يعني لا خصم.</summary>
+    public double SellAmountDiscount { get; set; }
+
+    /// <summary>خصم القسط اليومي — يقبل السالب والموجب، وصفر يعني لا خصم.</summary>
+    public double DailyInstallmentDiscount { get; set; }
 }
 
 public record UpdateCustomerDto
@@ -25,4 +31,6 @@ public record UpdateCustomerDto
     public required string WhatsAppPhoneNumber { get; set; }
     public required Business Business { get; set; }
     public int BranchId { get; set; }
+    public double SellAmountDiscount { get; set; }
+    public double DailyInstallmentDiscount { get; set; }
 }

@@ -7,6 +7,8 @@ import {
   NAVIGATION_REGISTRY,
 } from '../navigation.registry'
 import { evaluateAccess } from '@/modules/Core/access/evaluateAccess'
+import type { AccessRequirement } from '@/modules/Core/access/access.types'
+import { requirementForNavSectionId } from '@/modules/Core/navigation/panelTabAccess'
 import type { PermissionAction, PermissionModule } from '@/modules/Auth/types/model'
 
 function hasOnly(
@@ -194,49 +196,35 @@ describe('navigation.registry — توحيد الإدارة والمبيعات',
     ).toBe('allowed')
   })
 
-  it('حساب يملك Read لابن واحد يفتح الأب ويبقي بقية الجاهز مقفولًا', () => {
+  it('متابعة المندوبين تبويب رئيسي مستقل — تبويبه يفتحه دون فتح لوحة الإدارة', () => {
+    const sections = getReadyNavigationSections()
+    const management = sections.find((s) => s.id === 'management')!
+    const followup = sections.find((s) => s.id === 'managementDelegateFollowup')!
+    const tabOnly = hasOnly([['PanelTab' as PermissionModule, 'managementDelegateFollowup' as PermissionAction]])
+    const accountantOnly = hasOnly([['DelegateFollowup', 'UpsertAccountantRating']])
+    const evalWith = (has: ReturnType<typeof hasOnly>, requirement: AccessRequirement) =>
+      evaluateAccess({ permissionsReady: true, isAuthenticated: true, hasPermission: has, requirement })
+
+    expect(followup.parentId ?? null).toBeNull()
+    expect(management.children!.some((c) => c.id === 'managementDelegateFollowup')).toBe(false)
+    const navRequirement = requirementForNavSectionId(followup.id, followup.requirement)
+    expect(evalWith(tabOnly, navRequirement)).toBe('allowed')
+    expect(evalWith(accountantOnly, navRequirement)).toBe('allowed')
+    expect(evalWith(hasOnly([['DelegateFollowup', 'UpsertBoardRating']]), navRequirement)).toBe('denied')
+    expect(evalWith(tabOnly, management.requirement)).toBe('denied')
+  })
+
+  it('حساب يملك تبويب ابن واحد يفتح الأب ويبقي بقية الجاهز مقفولًا', () => {
     const management = getReadyNavigationSections().find((s) => s.id === 'management')!
-    const has = hasOnly([['DelegateFollowup', 'Read']])
+    const has = hasOnly([['PanelTab' as PermissionModule, 'managementRatings' as PermissionAction]])
+    const evalWith = (requirement: AccessRequirement) =>
+      evaluateAccess({ permissionsReady: true, isAuthenticated: true, hasPermission: has, requirement })
+    const ratings = management.children!.find((c) => c.id === 'managementRatings')!
+    const summary = management.children!.find((c) => c.id === 'managementSummary')!
 
-    expect(
-      evaluateAccess({
-        permissionsReady: true,
-        isAuthenticated: true,
-        hasPermission: has,
-        requirement: management.requirement,
-      })
-    ).toBe('allowed')
-
-    const followup = management.children!.find(
-      (c) => c.id === 'managementDelegateFollowup'
-    )!
-    const tasks = management.children!.find((c) => c.id === 'managementRatings')!
-    const branch = getReadyNavigationSections().find((c) => c.id === 'managementBranch')!
-
-    expect(
-      evaluateAccess({
-        permissionsReady: true,
-        isAuthenticated: true,
-        hasPermission: has,
-        requirement: followup.requirement,
-      })
-    ).toBe('allowed')
-    expect(
-      evaluateAccess({
-        permissionsReady: true,
-        isAuthenticated: true,
-        hasPermission: has,
-        requirement: tasks.requirement,
-      })
-    ).toBe('denied')
-    expect(
-      evaluateAccess({
-        permissionsReady: true,
-        isAuthenticated: true,
-        hasPermission: has,
-        requirement: branch.requirement,
-      })
-    ).toBe('denied')
+    expect(evalWith(management.requirement)).toBe('allowed')
+    expect(evalWith(requirementForNavSectionId(ratings.id, ratings.requirement))).toBe('allowed')
+    expect(evalWith(requirementForNavSectionId(summary.id, summary.requirement))).toBe('denied')
   })
 
   it('يبحث عن المسار في الأبناء المتداخلين', () => {

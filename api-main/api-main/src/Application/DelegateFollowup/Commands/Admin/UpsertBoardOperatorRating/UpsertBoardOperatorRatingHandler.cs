@@ -33,6 +33,10 @@ public class UpsertBoardOperatorRatingHandler
         if (DelegateFollowupRules.IsValidBoardOperatorScore(request.Score) == false)
             return DelegateFollowupErrors.InvalidBoardScore;
 
+        if (DelegateFollowupRules.BoardOperatorNoteIsRequired(request.Score)
+            && DelegateFollowupRules.NormalizeNote(request.Note) is null)
+            return DelegateFollowupErrors.NoteRequired;
+
         var actorId = _currentUser.UserId ?? 0;
         if (actorId <= 0)
             return DelegateFollowupErrors.ActorRequired;
@@ -48,12 +52,13 @@ public class UpsertBoardOperatorRatingHandler
             .FirstOrDefaultAsync(cancellationToken);
         var actorNameClean = string.IsNullOrWhiteSpace(actorName) ? null : actorName.Trim();
 
+        var slot = DirectorBoardOperatorListRating.NormalizeSlot(request.RaterSlot);
         var ratingDate = _clock.Today;
         var note = DelegateFollowupRules.NormalizeNote(request.Note);
         var at = _clock.UtcNowOffset;
 
         var existing = await _db.DirectorBoardOperatorListRatings
-            .FirstOrDefaultAsync(x => x.OrderListId == request.ListId && x.RatingDate == ratingDate, cancellationToken);
+            .FirstOrDefaultAsync(x => x.OrderListId == request.ListId && x.RatingDate == ratingDate && x.RaterSlot == slot, cancellationToken);
 
         var created = existing is null;
         DirectorBoardOperatorListRating row;
@@ -67,7 +72,8 @@ public class UpsertBoardOperatorRatingHandler
                 note,
                 actorId,
                 actorNameClean,
-                at);
+                at,
+                slot);
             _db.DirectorBoardOperatorListRatings.Add(row);
         }
         else
@@ -86,7 +92,7 @@ public class UpsertBoardOperatorRatingHandler
 
             var concurrent = await _db.DirectorBoardOperatorListRatings
                 .FirstOrDefaultAsync(
-                    x => x.OrderListId == request.ListId && x.RatingDate == ratingDate,
+                    x => x.OrderListId == request.ListId && x.RatingDate == ratingDate && x.RaterSlot == slot,
                     cancellationToken);
             if (concurrent is null)
                 throw;

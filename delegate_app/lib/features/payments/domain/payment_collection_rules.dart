@@ -2,12 +2,28 @@
 class PaymentCollectionRules {
   PaymentCollectionRules._();
 
-  static String? validateAmount(double amount) {
+  static const double minAmount = 2000;
+
+  static String? validateAmount(double amount, {double? remaining}) {
     if (!amount.isFinite || amount <= 0) {
       return 'أدخل مبلغ تسديد صالحاً';
     }
+
+    final rem = remaining;
+    final settlesRemaining =
+        rem != null && rem > 0 && (amount - rem).abs() < 0.01;
+
+    if (rem != null && rem > 0 && amount > rem + 0.001) {
+      return 'المبلغ أكبر من المتبقي';
+    }
+
+    if (amount < minAmount && !settlesRemaining) {
+      return 'أقل مبلغ للتسديد هو 2000';
+    }
+
     // Same rule as central API (MustBeDivisibleBy1000).
-    if ((amount % 1000).abs() >= 0.01) {
+    // يُعفى عند تسديد المتبقي بالكامل حتى لو لم يكن من مضاعفات 1000.
+    if (!settlesRemaining && (amount % 1000).abs() >= 0.01) {
       return 'يجب أن يكون المبلغ قابلاً للقسمة على 1000';
     }
     return null;

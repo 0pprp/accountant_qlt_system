@@ -1,29 +1,29 @@
-import type {
-  ChangeStatusForm,
-  SellerCashDeliveriesForm,
-  SomeSellersCashDeliveriesForm,
-  Safe,
-  SafeSellers,
-  SafeTransactions,
-  TransferForm,
-  SafeCurrent,
-} from '../model'
+import type { Safe, SafeMovement, SafeVerification } from '../model'
 
-export type SafeSellersListServerSuccessResponse =
-  ServerSuccessPaginatedResponse<Array<SafeSellers>>
+export type SafesServerSuccessResponse = Array<Safe>
+export type SafeMovementsServerSuccessResponse = SafeMovement
+export type SafeVerificationServerSuccessResponse = SafeVerification
 
-export type SafeServerSuccessResponse = Array<Safe>
+export interface SafeAmountPayload {
+  amount: number
+  note: string | null
+  operationKey: string
+}
 
-export type SafeCurrentServerSuccessResponse = SafeCurrent
+export interface SafeTransferPayload {
+  sourceSafeId: number
+  destinationSafeId: number
+  amount: number
+  note: string | null
+  operationKey: string
+}
 
-export type SafeTransactionsListServerSuccessResponse =
-  ServerSuccessPaginatedResponse<Array<SafeTransactions>>
+export interface CreateSafePayload {
+  branchId: number
+  orderListId: number | null
+  userId: number | null
+}
 
-export type ChangeStatusPayload = ChangeStatusForm
-
-export type CreateSomeSellersCashDeliveriesPayload =
-  SomeSellersCashDeliveriesForm
-
-export type CreateSellerCashDeliveriesPayload = SellerCashDeliveriesForm
-
-export type CreateTransferFormPayload = TransferForm
+export interface CreateSafeResponse {
+  id: number
+}

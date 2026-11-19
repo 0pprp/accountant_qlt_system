@@ -63,6 +63,21 @@ public class GetAdminSalesRequestsHandler
         var page = await projected.ToPaginatedListAsync(request.Pagination, cancellationToken);
 
         var items = page.Items.Select(AdminSalesRequestRowMapper.ToItem).ToList();
+        var legalIds = page.Items
+            .Where(x => x.Status == Domain.Entities.SalesRequestAggregate.Enums.SalesRequestStatus.LegalFollowup)
+            .Select(x => x.Id)
+            .ToList();
+        if (legalIds.Count > 0)
+        {
+            var legalStatus = await _db.LegalFollowupCases.AsNoTracking()
+                .Where(c => c.SalesRequestId != null && legalIds.Contains(c.SalesRequestId.Value))
+                .GroupBy(c => c.SalesRequestId!.Value)
+                .Select(g => g.OrderByDescending(c => c.Id).Select(c => new { RequestId = g.Key, c.Status }).First())
+                .ToDictionaryAsync(x => x.RequestId, x => x.Status.ToString(), cancellationToken);
+            items = items
+                .Select(i => legalStatus.TryGetValue(i.Id, out var st) ? i with { LegalCaseStatus = st } : i)
+                .ToList();
+        }
 
         return new PaginatedList<AdminSalesRequestListItem>(
             items, page.TotalCount, page.PageIndex, page.PageSize);

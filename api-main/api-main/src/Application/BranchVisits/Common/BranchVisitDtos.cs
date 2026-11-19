@@ -34,7 +34,8 @@ public sealed record BranchVisitDto(
     IReadOnlyList<BranchVisitRatingDto> Ratings,
     IReadOnlyList<BranchVisitMemberDto> Members,
     IReadOnlyList<BranchVisitAssignedTaskDto> AssignedTasks,
-    IReadOnlyList<BranchVisitAttachmentDto> Attachments);
+    IReadOnlyList<BranchVisitAttachmentDto> Attachments,
+    string? BranchName = null);
 
 public sealed record BranchVisitListResponse(
     IReadOnlyList<BranchVisitDto> Items,
@@ -58,12 +59,14 @@ public static class BranchVisitMapper
 {
     public static BranchVisitDto ToDto(
         BranchVisit v,
-        IReadOnlyList<BranchVisitAssignedTaskDto>? assignedTasks = null) =>
+        IReadOnlyList<BranchVisitAssignedTaskDto>? assignedTasks = null,
+        string? branchName = null) =>
         new(v.Id, v.BranchId, v.OpenedByUserId, v.OpenedByName, v.Status.ToString(),
             v.ArrivedAtUtc, v.DepartedAtUtc, v.DepartNote, v.ConcurrencyStamp,
             v.Ratings.Select(r => new BranchVisitRatingDto(r.OrderListId, r.ListName, r.Score, r.RatedAtUtc)).ToList(),
             v.Members.Select(m => new BranchVisitMemberDto(m.UserId, m.DisplayName)).ToList(),
             assignedTasks ?? [],
             v.Attachments.Select(a => new BranchVisitAttachmentDto(
-                a.Id, a.OriginalFileName, a.ContentType, a.SizeBytes, a.UploadedAtUtc)).ToList());
+                a.Id, a.OriginalFileName, a.ContentType, a.SizeBytes, a.UploadedAtUtc)).ToList(),
+            branchName);
 }

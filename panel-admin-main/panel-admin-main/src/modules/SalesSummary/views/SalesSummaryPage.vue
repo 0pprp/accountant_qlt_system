@@ -51,7 +51,7 @@ function patchQuery(next: Record<string, string | null | undefined>) {
     if (v == null || v === '') delete q[k]
     else q[k] = v
   }
-  void router.replace({ name: 'SaleSummaryRoute', query: q })
+  void router.replace({ name: route.name ?? 'SaleSummaryRoute', params: route.params, query: q })
 }
 
 const matrixQuery = useSalesSummaryMatrixQuery(year, month, branchId, canRead)

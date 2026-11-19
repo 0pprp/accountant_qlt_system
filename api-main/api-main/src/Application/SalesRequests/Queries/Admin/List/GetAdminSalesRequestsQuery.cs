@@ -52,4 +52,5 @@ public record AdminSalesRequestListItem
     public DateTimeOffset? ExceptionDecidedAtUtc { get; init; }
     public DateTimeOffset? ExceptionConsumedAtUtc { get; init; }
     public bool IsSentSource { get; init; }
+    public string? LegalCaseStatus { get; init; }
 }

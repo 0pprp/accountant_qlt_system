@@ -4,6 +4,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/vue-query'
 import { axiosInstance } from '@/modules/Core/plugins/axios'
 import { useAuthStore } from '@/modules/Auth/store'
 import { AppButton, AppInput, AppSelect, AppTextarea } from '@/modules/Core/components/ui'
+import BranchVisitHistory from '../components/BranchVisitHistory.vue'
 
 interface Rating {
   orderListId: number
@@ -112,7 +113,7 @@ const activeQuery = useQuery({
 
 const listQuery = useQuery({
   queryKey: computed(() => ['branch-visits', auth.sessionGeneration]),
-  enabled: computed(() => canRead.value && auth.permissionsReady),
+  enabled: computed(() => props.mode === 'workspace' && canRead.value && auth.permissionsReady),
   queryFn: async ({ signal }) => {
     const { data } = await axiosInstance.get<ListResponse>('/admin/BranchVisits', {
       signal,
@@ -158,7 +159,10 @@ const rateMut = useMutation({
   },
   onSuccess: async () => {
     formError.value = null
-    await qc.invalidateQueries({ queryKey: ['branch-visit-active'] })
+    await Promise.all([
+      qc.invalidateQueries({ queryKey: ['branch-visit-active'] }),
+      qc.invalidateQueries({ queryKey: ['branch-visits'] }),
+    ])
   },
   onError: () => {
     formError.value = 'تعذر حفظ التقييم (حدود/نسخة/ملكية).'
@@ -205,7 +209,9 @@ function onPickFiles(e: Event) {
 </script>
 
 <template>
+  <BranchVisitHistory v-if="mode === 'history'" />
   <div
+    v-else
     class="bv-page"
     dir="rtl"
   >

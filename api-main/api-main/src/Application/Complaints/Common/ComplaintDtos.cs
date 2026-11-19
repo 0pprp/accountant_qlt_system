@@ -31,7 +31,35 @@ public static class ComplaintErrors
     public static readonly Error NotFound = new("الشكوى غير موجودة.", "Complaint.NotFound");
     public static readonly Error Validation = new("بيانات الشكوى غير صالحة.", "Complaint.Validation");
     public static readonly Error Concurrency = new("تم تعديل السجل من جهة أخرى.", "Complaint.Concurrency");
+    public static readonly Error InvalidBranch = new("رقم الفرع غير صالح.", "Complaint.InvalidBranch");
     public static readonly Error BranchScope = new("خارج نطاق فرعك.", "Complaint.BranchScope");
+}
+
+public sealed record MarkAllComplaintsReadResponse(int Updated);
+
+public static class ComplaintScope
+{
+    public const int MaxSearchLength = 100;
+
+    public static IQueryable<ComplaintMessage> Apply(
+        IQueryable<ComplaintMessage> source,
+        IReadOnlyCollection<int> scope,
+        int? branchId)
+    {
+        var ids = scope.ToList();
+        if (ids.Count == 0)
+            return source.Where(_ => false);
+        if (branchId is int bid)
+        {
+            if (ids.Contains(bid) == false)
+                return source.Where(_ => false);
+            return source.Where(c => c.BranchId == bid);
+        }
+        return source.Where(c => c.BranchId == null || ids.Contains(c.BranchId.Value));
+    }
+
+    public static bool Contains(IReadOnlyCollection<int> scope, int? branchId) =>
+        scope.Count > 0 && (branchId is not int bid || scope.Contains(bid));
 }
 
 public static class ComplaintMapper

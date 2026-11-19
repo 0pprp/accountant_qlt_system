@@ -23,12 +23,33 @@ public record CustomerAuditRatingsAndLocationDto
 {
     public CustomerAuditStaffRatingDto? DelegateRating { get; init; }
     public CustomerAuditStaffRatingDto? CommitteeFieldRating { get; init; }
-    public CustomerAuditStaffRatingDto? SalesEmployeeRating { get; init; }
+    public CustomerAuditShopSurveyDto? ShopSurvey { get; init; }
     public double? GpsLatitude { get; init; }
     public double? GpsLongitude { get; init; }
     public bool HasGps { get; init; }
     public double? LatestOrderLatitude { get; init; }
     public double? LatestOrderLongitude { get; init; }
+    public List<CustomerAuditRatingSnapshotDto> Snapshots { get; init; } = [];
+    public List<CustomerAuditLocationDto> Locations { get; init; } = [];
+    public List<CustomerAuditPhotoDto> Photos { get; init; } = [];
+}
+
+public record CustomerAuditLocationDto
+{
+    public required string Source { get; init; }
+    public required string SourceLabel { get; init; }
+    public double Latitude { get; init; }
+    public double Longitude { get; init; }
+    public double? AccuracyMeters { get; init; }
+    public double? Confidence { get; init; }
+    public DateTimeOffset? CapturedAtUtc { get; init; }
+}
+
+public record CustomerAuditPhotoDto
+{
+    public int Id { get; init; }
+    public string? ContentType { get; init; }
+    public DateTimeOffset? CapturedAtUtc { get; init; }
 }
 
 public record CustomerAuditStaffRatingDto
@@ -40,6 +61,28 @@ public record CustomerAuditStaffRatingDto
     public string? RatedByName { get; init; }
     public DateTimeOffset? RatedAtUtc { get; init; }
     public int? OrderId { get; init; }
+    public double? ShopStockEstimatedValue { get; init; }
+    public double? EstimatedDailyRevenue { get; init; }
+    public double? ContextAmount { get; init; }
+    public string? Occasion { get; init; }
+    public string? OccasionLabel { get; init; }
+    public bool IsWrongSale { get; init; }
+}
+
+public record CustomerAuditShopSurveyDto
+{
+    public required string Title { get; init; }
+    public string? ShopName { get; init; }
+    public string? BusinessType { get; init; }
+    public double? StockEstimatedValue { get; init; }
+    public double? EstimatedDailyRevenue { get; init; }
+    public double? ShopLength { get; init; }
+    public double? ShopWidth { get; init; }
+    public double? ShopArea { get; init; }
+    public double? Latitude { get; init; }
+    public double? Longitude { get; init; }
+    public int? PhotoId { get; init; }
+    public DateTimeOffset? CreatedAtUtc { get; init; }
 }
 
 public record CustomerAuditHeaderDto
@@ -119,6 +162,24 @@ public record CustomerAuditShopDto
     public string? Address { get; init; }
     public string? Location { get; init; }
     public string ImplementationStatus { get; init; } = "schema_required";
+    public string? ShopName { get; init; }
+    public string? BusinessType { get; init; }
+    public double? StockEstimatedValue { get; init; }
+    public double? EstimatedDailyRevenue { get; init; }
+    public double? ShopLength { get; init; }
+    public double? ShopWidth { get; init; }
+    public double? ShopArea { get; init; }
+    public string? ShopImageKey { get; init; }
+    public int? ShopPhotoId { get; init; }
+    public string? LocationSource { get; init; }
+}
+
+public record CustomerAuditRatingSnapshotDto
+{
+    public required string Origin { get; init; }
+    public string? RatingLabel { get; init; }
+    public double? Score { get; init; }
+    public DateOnly CaptureDate { get; init; }
 }
 
 public record CustomerAuditNotesDto

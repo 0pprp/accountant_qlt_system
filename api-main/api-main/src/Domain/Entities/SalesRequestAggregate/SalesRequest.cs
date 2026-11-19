@@ -113,6 +113,7 @@ public class SalesRequest : AuditableEntity
     public int? ExceptionDecidedByUserId { get; set; }
     public DateTimeOffset? ExceptionDecidedAtUtc { get; set; }
     public DateTimeOffset? ExceptionConsumedAtUtc { get; set; }
+    public DateTimeOffset? ExceptionReadAtUtc { get; set; }
 
     public DateTimeOffset? DeletedAtUtc { get; set; }
     public int? DeletedByUserId { get; set; }
@@ -220,6 +221,7 @@ public class SalesRequest : AuditableEntity
             ExceptionHoldStatus = SalesRequestExceptionHoldStatus.Pending;
             ExceptionDecidedByUserId = null;
             ExceptionDecidedAtUtc = null;
+            ExceptionReadAtUtc = null;
             holdDowngraded = true;
         }
 
@@ -373,8 +375,17 @@ public class SalesRequest : AuditableEntity
         ExceptionDecidedByUserId = null;
         ExceptionDecidedAtUtc = null;
         ExceptionConsumedAtUtc = null;
+        ExceptionReadAtUtc = null;
         TargetEmployeeId = null;
         ConcurrencyStamp++;
+    }
+
+    public bool MarkExceptionRead(DateTimeOffset atUtc)
+    {
+        if (ExceptionHoldStatus is null || ExceptionReadAtUtc is not null)
+            return false;
+        ExceptionReadAtUtc = atUtc;
+        return true;
     }
 
     /// <summary>
@@ -421,6 +432,60 @@ public class SalesRequest : AuditableEntity
         StatusChangedAtUtc = atUtc;
         ConcurrencyStamp++;
         return true;
+    }
+
+    public static bool CanCancelToUnassigned(SalesRequest row)
+        => row.IsDeleted == false
+           && row.LinkedOrderId is null
+           && row.Status is not (SalesRequestStatus.Completed
+               or SalesRequestStatus.ConvertedToSale
+               or SalesRequestStatus.Rejected
+               or SalesRequestStatus.New);
+
+    public void CancelToUnassigned(string reason, DateTimeOffset atUtc)
+    {
+        if (CanCancelToUnassigned(this) == false)
+            throw new InvalidOperationException("Request cannot be cancelled to unassigned");
+        if (string.IsNullOrWhiteSpace(reason))
+            throw new InvalidOperationException("Cancel reason required");
+
+        Status = SalesRequestStatus.New;
+        TargetEmployeeId = null;
+        ViewedAtUtc = null;
+        LastStatusNote = reason.Trim();
+        ExceptionHoldStatus = null;
+        ExceptionDecidedByUserId = null;
+        ExceptionDecidedAtUtc = null;
+        ExceptionConsumedAtUtc = null;
+        StatusChangedAtUtc = atUtc;
+        ConcurrencyStamp++;
+    }
+
+    public static bool CanMoveToBranch(SalesRequest row)
+        => row.IsDeleted == false
+           && row.LinkedOrderId is null
+           && row.HasLiveExceptionHold == false
+           && row.Status is not (SalesRequestStatus.Completed
+               or SalesRequestStatus.ConvertedToSale
+               or SalesRequestStatus.LegalFollowup);
+
+    public void MoveToBranch(int branchId, int? provinceId, string reason, DateTimeOffset atUtc)
+    {
+        if (CanMoveToBranch(this) == false)
+            throw new InvalidOperationException("Request cannot be moved to another branch");
+        if (branchId <= 0 || branchId == BranchId)
+            throw new InvalidOperationException("Target branch must differ");
+        if (string.IsNullOrWhiteSpace(reason))
+            throw new InvalidOperationException("Transfer reason required");
+
+        BranchId = branchId;
+        ProvinceId = provinceId;
+        Status = SalesRequestStatus.New;
+        TargetEmployeeId = null;
+        ViewedAtUtc = null;
+        LastStatusNote = reason.Trim();
+        StatusChangedAtUtc = atUtc;
+        ConcurrencyStamp++;
     }
 
     private void EnsureEmployeeTransitionAllowed()

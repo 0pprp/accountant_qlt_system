@@ -53,14 +53,17 @@ public static class SalesMatchCandidateSelector
         if (branchIds.Count == 0)
             return [];
 
-        var query = db.Customers.AsNoTracking()
-            .Where(x => branchIds.Contains(x.BranchId));
+        var candidates = await LoadCustomerScopeAsync(db, branchIds, cancellationToken);
+        return SalesRequestMatchEvaluator.FilterHits(criterion, queryName, queryPhone, candidates).ToList();
+    }
 
-        query = ApplyCustomerNarrowing(query, criterion, queryName, queryPhone);
-
-        return await query
+    public static Task<List<SalesMatchCandidate>> LoadCustomerScopeAsync(
+        IApplicationDbContext db,
+        IReadOnlyCollection<int> branchIds,
+        CancellationToken cancellationToken)
+        => db.Customers.AsNoTracking()
+            .Where(x => branchIds.Contains(x.BranchId))
             .OrderBy(x => x.Id)
-            .Take(MaxCandidateFetch)
             .Select(x => new SalesMatchCandidate
             {
                 Id = x.Id,
@@ -69,7 +72,6 @@ public static class SalesMatchCandidateSelector
                 BranchId = x.BranchId
             })
             .ToListAsync(cancellationToken);
-    }
 
     public static async Task<List<SalesMatchCandidate>> LoadPeerRequestCandidatesAsync(
         IApplicationDbContext db,
@@ -109,36 +111,6 @@ public static class SalesMatchCandidateSelector
                 BranchId = x.BranchId
             })
             .ToListAsync(cancellationToken);
-    }
-
-    private static IQueryable<Domain.Entities.CustomerAggregate.Customer> ApplyCustomerNarrowing(
-        IQueryable<Domain.Entities.CustomerAggregate.Customer> query,
-        string criterion,
-        string? queryName,
-        string? queryPhone)
-    {
-        if (criterion == SalesMatchCriteria.Phone)
-        {
-            var phoneNeedle = SalesPhoneNormalizer.ForMatch(queryPhone);
-            if (string.IsNullOrEmpty(phoneNeedle) || phoneNeedle.Length < 7)
-                return query.Where(_ => false);
-
-            var suffix = phoneNeedle[^7..];
-            return query.Where(x => x.PhoneNumber != null && x.PhoneNumber.Contains(suffix));
-        }
-
-        var token = criterion switch
-        {
-            SalesMatchCriteria.TripleName => SalesRequestNameSimilarity.MatchingTokens(queryName).ElementAtOrDefault(0),
-            SalesMatchCriteria.FatherGrandfather => SalesRequestNameSimilarity.MatchingTokens(queryName).ElementAtOrDefault(1),
-            SalesMatchCriteria.SonFather => SalesRequestNameSimilarity.MatchingTokens(queryName).ElementAtOrDefault(0),
-            _ => FirstUsefulToken(queryName)
-        };
-
-        if (string.IsNullOrEmpty(token) || token.Length < 2)
-            return query.Where(_ => false);
-
-        return query.Where(x => x.FullName.Contains(token));
     }
 
     private static string? FirstUsefulToken(string? queryName)

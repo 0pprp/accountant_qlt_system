@@ -1,4 +1,4 @@
-using Application.Common.AdminPanel;
+﻿using Application.Common.AdminPanel;
 
 namespace Application.Common.SeedData;
 
@@ -107,7 +107,6 @@ public static class RoleDefaultMatrix
         T("customer"),
         T("payment"),
         T("order"),
-        T("safeMain"),
         T("managementSummary"),
         T("managementRatings"),
         T("managementDelegateFollowup"),
@@ -125,6 +124,8 @@ public static class RoleDefaultMatrix
         T("followerCollection"),
         T("followerLiveMap"),
         T("followerRoutes"),
+        T("followerShopCapture"),
+        T("followerManage"),
         T("saleFollowup"),
         T("saleSummary"),
         T("saleOrders"),
@@ -177,6 +178,8 @@ public static class RoleDefaultMatrix
         T("followerCollection"),
         T("followerLiveMap"),
         T("followerRoutes"),
+        T("followerShopCapture"),
+        T("followerManage"),
         T("saleOverview"),
         T("saleEmployees"),
         T("saleFollowup"),

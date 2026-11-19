@@ -1,5 +1,6 @@
 ﻿using Application.Common.Extensions;
 using Application.Common.Interfaces;
+using Domain.Entities.SafeAggregate.Enums;
 using Application.Common.Utilities;
 using Microsoft.EntityFrameworkCore;
 
@@ -26,7 +27,7 @@ public class GetPurchasesExcelReportHandler : IRequestHandler<GetPurchasesExcelR
                 Id = x.Id,
                 FactorNumber = x.FactorNumber,
                 TotalAmount = x.TotalAmount,
-                SafeName = x.Branch!.Safe!.Name,
+                SafeName = x.Branch!.Safes.Where(s => s.Kind == SafeKind.Branch).Select(s => s.Name).FirstOrDefault(),
                 PurchaseItemsCount = x.PurchaseItems.Count,
                 CreatedAt = x.CreatedAt!.Value
             })

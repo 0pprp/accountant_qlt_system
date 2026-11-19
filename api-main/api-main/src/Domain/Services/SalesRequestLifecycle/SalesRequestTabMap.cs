@@ -23,7 +23,7 @@ public static class SalesRequestTabMap
     public const string Deleted = "deleted";
 
     /// <summary>عروض إضافية متداخلة مع تبويبات سير العمل — لا تدخل في «الكل» ولا في مجموع العدادات.</summary>
-    public static readonly string[] ExtraViewsImplemented = [Sent, Exceptions, Deleted, Legal];
+    public static readonly string[] ExtraViewsImplemented = [Deleted];
 
     /// <summary>لا عروض إضافية معلّقة بعد تفعيل القانونية (دفعة 21).</summary>
     public static readonly string[] ExtraViewsNotImplemented = [];
@@ -44,8 +44,11 @@ public static class SalesRequestTabMap
 
     public static readonly string[] WorkflowTabs =
     [
-        Unassigned, Incoming, Prepared, Inspected, Pending, Rejected, Sold
+        Unassigned, Incoming, Prepared, Inspected, Pending, Rejected, Sold, Legal, Exceptions
     ];
+
+    public static bool IsActiveWorkTab(string tab) =>
+        Normalize(tab) is Incoming or Prepared or Inspected or Pending;
 
     public static IReadOnlyList<SalesRequestStatus> StatusesForTab(string tab) =>
         Normalize(tab) switch
@@ -66,6 +69,7 @@ public static class SalesRequestTabMap
             Pending => [SalesRequestStatus.Pending],
             Rejected => [SalesRequestStatus.Rejected],
             Sold => [SalesRequestStatus.Completed],
+            Legal => [SalesRequestStatus.LegalFollowup],
             _ => []
         };
 

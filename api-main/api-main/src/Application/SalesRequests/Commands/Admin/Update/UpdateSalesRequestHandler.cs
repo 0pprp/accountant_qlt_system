@@ -73,7 +73,7 @@ public class UpdateSalesRequestHandler : IRequestHandler<UpdateSalesRequestComma
         var targetEmployeeId = request.EmployeeId;
         var branchMoved = prevBranch != entity.BranchId;
 
-        if (targetEmployeeId is int empId && empId > 0)
+        if (targetEmployeeId is int empId && empId > 0 && (prevEmployee != empId || branchMoved))
         {
             var gate = SalesRequestExtraViewRules.AssignGate(entity);
             if (gate == AssignExceptionGate.BlockedPending)

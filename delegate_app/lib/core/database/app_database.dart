@@ -11,7 +11,7 @@ class AppDatabase {
     final path = p.join(dir.path, 'delegate_app.db');
     _db = await openDatabase(
       path,
-      version: 4,
+      version: 8,
       onCreate: (db, version) async {
         await db.execute('''
 CREATE TABLE customers (
@@ -29,6 +29,14 @@ CREATE TABLE customers (
   receipt_total REAL,
   count_receipt INTEGER,
   active_order_id INTEGER,
+  is_legal INTEGER NOT NULL DEFAULT 0,
+  amount1 REAL NOT NULL DEFAULT 0,
+  amount2 REAL NOT NULL DEFAULT 0,
+  amount3 REAL NOT NULL DEFAULT 0,
+  amount4 REAL NOT NULL DEFAULT 0,
+  amount5 REAL NOT NULL DEFAULT 0,
+  amount6 REAL NOT NULL DEFAULT 0,
+  amount7 REAL NOT NULL DEFAULT 0,
   payload_json TEXT
 )''');
         await db.execute('''
@@ -46,6 +54,7 @@ CREATE TABLE pending_payments (
   sync_status TEXT NOT NULL,
   permanent_failure INTEGER NOT NULL DEFAULT 0,
   owner_async_id TEXT,
+  legacy_retry INTEGER NOT NULL DEFAULT 0,
   sync_error TEXT
 )''');
         await db.execute('''
@@ -53,6 +62,17 @@ CREATE TABLE business_day_locks (
   customer_id INTEGER NOT NULL,
   delegate_id INTEGER NOT NULL,
   business_day TEXT NOT NULL,
+  PRIMARY KEY (customer_id, delegate_id, business_day)
+)''');
+        await db.execute('''
+CREATE TABLE business_day_collections (
+  customer_id INTEGER NOT NULL,
+  delegate_id INTEGER NOT NULL,
+  business_day TEXT NOT NULL,
+  amount REAL NOT NULL,
+  client_payment_id TEXT NOT NULL,
+  customer_name TEXT,
+  created_at_utc TEXT NOT NULL,
   PRIMARY KEY (customer_id, delegate_id, business_day)
 )''');
       },
@@ -74,6 +94,35 @@ CREATE TABLE business_day_locks (
           await db.execute(
             'ALTER TABLE pending_payments ADD COLUMN sync_error TEXT',
           );
+        }
+        if (oldVersion < 5) {
+          await db.execute(
+            'ALTER TABLE customers ADD COLUMN is_legal INTEGER NOT NULL DEFAULT 0',
+          );
+        }
+        if (oldVersion < 6) {
+          await db.execute('''
+CREATE TABLE IF NOT EXISTS business_day_collections (
+  customer_id INTEGER NOT NULL,
+  delegate_id INTEGER NOT NULL,
+  business_day TEXT NOT NULL,
+  amount REAL NOT NULL,
+  client_payment_id TEXT NOT NULL,
+  customer_name TEXT,
+  created_at_utc TEXT NOT NULL,
+  PRIMARY KEY (customer_id, delegate_id, business_day)
+)''');
+        }
+        if (oldVersion < 8) {
+          await db.execute('ALTER TABLE pending_payments ADD COLUMN legacy_retry INTEGER NOT NULL DEFAULT 0');
+          await db.execute("UPDATE pending_payments SET legacy_retry = 1 WHERE sync_status <> 'pending' OR sync_error IS NOT NULL");
+        }
+        if (oldVersion < 7) {
+          for (var i = 1; i <= 7; i++) {
+            await db.execute(
+              'ALTER TABLE customers ADD COLUMN amount$i REAL NOT NULL DEFAULT 0',
+            );
+          }
         }
       },
     );

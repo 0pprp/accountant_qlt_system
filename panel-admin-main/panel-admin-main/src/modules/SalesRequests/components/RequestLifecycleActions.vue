@@ -23,6 +23,56 @@
     </template>
 
     <button
+      v-if="showReturn"
+      type="button"
+      class="sr-neu-btn primary"
+      :disabled="busy"
+      @click="openDialog('return')"
+    >
+      إرجاع للموظف
+    </button>
+
+    <button
+      v-if="showPrepare"
+      type="button"
+      class="sr-neu-btn primary"
+      :disabled="busy"
+      @click="openDialog('prepare')"
+    >
+      تجهيز للبيع
+    </button>
+
+    <button
+      v-if="showPend"
+      type="button"
+      class="sr-neu-btn warn"
+      :disabled="busy"
+      @click="openDialog('pend')"
+    >
+      تعليق
+    </button>
+
+    <button
+      v-if="showTransfer"
+      type="button"
+      class="sr-neu-btn primary"
+      :disabled="busy"
+      @click="openDialog('transfer')"
+    >
+      نقل لفرع آخر
+    </button>
+
+    <button
+      v-if="showCancel"
+      type="button"
+      class="sr-neu-btn warn"
+      :disabled="busy"
+      @click="openDialog('cancel')"
+    >
+      إلغاء وإعادة لغير المسند
+    </button>
+
+    <button
       v-if="showSoftDelete"
       type="button"
       class="sr-neu-btn danger"
@@ -50,6 +100,16 @@
       @click="openDialog('legal')"
     >
       قانونية
+    </button>
+
+    <button
+      v-if="showDeleteSold"
+      type="button"
+      class="sr-neu-btn danger sr-far"
+      :disabled="busy"
+      @click="openDialog('deleteSold')"
+    >
+      حذف المبيع نهائياً
     </button>
 
     <Dialog
@@ -89,6 +149,57 @@
           {{ dialogHint }}
         </p>
 
+        <template v-if="dialogMode === 'transfer'">
+          <AppSelect
+            v-model="targetBranchId"
+            label="الفرع الجديد"
+            placeholder="اختر الفرع"
+            :options="branchOptions"
+            :disabled="busy"
+            required
+          />
+          <AppSelect
+            v-model="targetEmployeeId"
+            label="موظف في الفرع الجديد (اختياري)"
+            placeholder="بدون إسناد — يدخل غير المسند"
+            :options="targetEmployeeOptions"
+            :disabled="busy || targetBranchId == null"
+          />
+        </template>
+
+        <div
+          v-if="dialogMode === 'deleteSold'"
+          class="sr-impact"
+          role="status"
+        >
+          <p v-if="impactLoading">
+            جاري حساب أثر الحذف…
+          </p>
+          <template v-else-if="impact">
+            <p class="sr-impact__warn">
+              سيُمسح المبيع نهائياً ولا يمكن استرجاعه. يظهر بعدها في «حذوفات المبيعات» للأدمن فقط.
+            </p>
+            <dl>
+              <div><dt>سعر البيع</dt><dd>{{ money(impact.sellAmount) }}</dd></div>
+              <div><dt>المقدمة</dt><dd>{{ money(impact.prepaymentAmount) }}</dd></div>
+              <div><dt>التسديدات التي ستُمسح</dt><dd>{{ impact.paymentsCount }} · {{ money(impact.paidTotal) }}</dd></div>
+              <div v-if="impact.foreignPurchaseRefund > 0"><dt>إرجاع شراء خارجي للقاصة</dt><dd>{{ money(impact.foreignPurchaseRefund) }}</dd></div>
+              <div v-if="impact.archiveRecords > 0"><dt>سجلات أرشيف تُمسح</dt><dd>{{ impact.archiveRecords }}</dd></div>
+              <div class="is-wide"><dt>المواد</dt><dd>{{ itemsText }}</dd></div>
+            </dl>
+            <label
+              v-if="impact.paymentsCount > 0"
+              class="sr-confirm"
+            >
+              <input
+                v-model="confirmPayments"
+                type="checkbox"
+              >
+              أفهم أن {{ impact.paymentsCount }} تسديداً ستُمسح نهائياً
+            </label>
+          </template>
+        </div>
+
         <AppSelect
           v-if="dialogMode === 'legal'"
           v-model="followerId"
@@ -106,7 +217,7 @@
           :maxlength="1000"
           :rows="4"
           :disabled="busy"
-          :required="dialogMode !== 'legal' && dialogMode !== 'restore'"
+          :required="dialogMode !== 'legal' && dialogMode !== 'restore' && dialogMode !== 'prepare'"
         />
 
         <p
@@ -142,7 +253,7 @@
 
 <script setup lang="ts">
 import { Dialog } from 'primevue'
-import { computed, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { usePermission } from '@/modules/Core/composable/usePermission'
 import { AppSelect, AppTextarea } from '@/modules/Core/components/ui'
 import type { SalesRequestListItem } from '../types'
@@ -154,8 +265,45 @@ import { useCreateLegalFollowupMutation } from '@/modules/SalesLegal/requests/mu
 import { axiosInstance } from '@/modules/Core/plugins/axios'
 import { SalesLegalEndpoints } from '@/modules/SalesLegal/domain/endpoints'
 import type { LegalFollowupFollowerOption } from '@/modules/SalesLegal/domain/types'
+import { useAuthStore } from '@/modules/Auth/store'
+import { SalesRequestEndpoints } from '../domain/endpoints'
+import { fetchAssignableEmployees } from '../requests/queries/useAssignableEmployeesQuery'
+import { useSalesManagerActionMutation } from '../requests/mutations/useSalesManagerActionMutation'
+import type { AssignableEmployee } from '../types'
 
-type DialogMode = 'approve' | 'rejectEx' | 'delete' | 'restore' | 'legal'
+type DialogMode =
+  | 'approve'
+  | 'rejectEx'
+  | 'delete'
+  | 'restore'
+  | 'legal'
+  | 'return'
+  | 'prepare'
+  | 'pend'
+  | 'cancel'
+  | 'transfer'
+  | 'deleteSold'
+
+interface DeleteSoldImpact {
+  sellAmount: number
+  prepaymentAmount: number
+  paidTotal: number
+  paymentsCount: number
+  foreignPurchaseRefund: number
+  archiveRecords: number
+  items: { name: string; quantity: number; returnsToStock: boolean }[]
+}
+
+const STATUS = {
+  New: 0,
+  Rejected: 8,
+  PreparedForSale: 4,
+  Inspected: 6,
+  Pending: 7,
+  Completed: 9,
+  LegalFollowup: 10,
+  ConvertedToSale: 11,
+} as const
 
 const props = defineProps<{
   request: SalesRequestListItem
@@ -171,6 +319,21 @@ const canDecide = can('SalesRequest', 'ExceptionDecide')
 const canSoftDelete = can('SalesRequest', 'SoftDelete')
 const canRestore = can('SalesRequest', 'Restore')
 const canCreateLegal = can('LegalFollowup', 'Create')
+const canReturn = can('SalesRequest', 'ReturnRequest')
+const canPrepare = can('SalesRequest', 'ManagerPrepare')
+const canPend = can('SalesRequest', 'ManagerPend')
+const canCancel = can('SalesRequest', 'CancelToUnassigned')
+const canTransfer = can('SalesRequest', 'TransferBranch')
+const canDeleteSold = can('SalesRequest', 'DeleteSoldSale')
+const auth = useAuthStore()
+
+const targetBranchId = ref<number | null>(null)
+const targetEmployeeId = ref<number | null>(null)
+const targetEmployees = ref<AssignableEmployee[]>([])
+const impact = ref<DeleteSoldImpact | null>(null)
+const impactLoading = ref(false)
+const confirmPayments = ref(false)
+const actionMut = useSalesManagerActionMutation()
 
 const dialogMode = ref<DialogMode | null>(null)
 const reasonText = ref('')
@@ -191,8 +354,95 @@ const busy = computed(
     rejectExMut.isPending.value ||
     softDeleteMut.isPending.value ||
     restoreMut.isPending.value ||
-    createLegalMut.isPending.value
+    createLegalMut.isPending.value ||
+    actionMut.isPending.value
 )
+
+const status = computed(() => Number(props.request.status))
+const hasEmployee = computed(
+  () => props.request.targetEmployeeId != null && props.request.targetEmployeeId > 0
+)
+const liveHold = computed(
+  () =>
+    props.request.exceptionState === 'pending' ||
+    props.request.exceptionState === 'approved' ||
+    props.request.exceptionState === 'rejected'
+)
+const alive = computed(() => !props.request.isDeleted)
+const notCancellable: number[] = [STATUS.Completed, STATUS.ConvertedToSale, STATUS.Rejected, STATUS.New]
+const notTransferable: number[] = [STATUS.Completed, STATUS.ConvertedToSale, STATUS.LegalFollowup]
+
+const branchOptions = computed(() =>
+  (auth.branches ?? [])
+    .filter((b) => b.id !== props.request.branchId)
+    .map((b) => ({ label: b.name, value: b.id }))
+)
+const targetEmployeeOptions = computed(() =>
+  targetEmployees.value.map((e) => ({ label: e.fullName, value: e.id }))
+)
+
+const showReturn = computed(
+  () => canReturn && alive.value && status.value === STATUS.Rejected && hasEmployee.value
+)
+const showPrepare = computed(
+  () =>
+    canPrepare && alive.value && hasEmployee.value && !liveHold.value &&
+    (status.value === STATUS.Inspected || status.value === STATUS.Pending)
+)
+const showPend = computed(
+  () =>
+    canPend && alive.value && hasEmployee.value && !liveHold.value &&
+    (status.value === STATUS.Inspected || status.value === STATUS.PreparedForSale)
+)
+const showCancel = computed(
+  () => canCancel && alive.value && !props.request.linkedOrderId && !notCancellable.includes(status.value)
+)
+const showTransfer = computed(
+  () =>
+    canTransfer && alive.value && !props.request.linkedOrderId && !liveHold.value &&
+    !notTransferable.includes(status.value) && branchOptions.value.length > 0
+)
+const showDeleteSold = computed(
+  () => canDeleteSold && alive.value && status.value === STATUS.Completed && !!props.request.linkedOrderId
+)
+
+const itemsText = computed(() =>
+  (impact.value?.items ?? [])
+    .map((i) => `${i.name} × ${i.quantity}${i.returnsToStock ? ' (ترجع للمخزن)' : ''}`)
+    .join('، ') || '—'
+)
+
+watch(targetBranchId, async (id) => {
+  targetEmployeeId.value = null
+  targetEmployees.value = []
+  if (id == null) return
+  try {
+    targetEmployees.value = await fetchAssignableEmployees(id)
+  } catch {
+    targetEmployees.value = []
+  }
+})
+
+function money(n: number | null | undefined) {
+  return n == null || n === 0
+    ? '—'
+    : new Intl.NumberFormat('en-US', { maximumFractionDigits: 0 }).format(n)
+}
+
+async function loadImpact() {
+  impactLoading.value = true
+  impact.value = null
+  try {
+    const { data } = await axiosInstance.get<DeleteSoldImpact>(
+      SalesRequestEndpoints.deleteSoldImpact(props.request.id)
+    )
+    impact.value = data
+  } catch (e) {
+    errorMsg.value = mapError(e)
+  } finally {
+    impactLoading.value = false
+  }
+}
 
 const followerOptions = computed(() =>
   followers.value.map((f) => ({
@@ -246,7 +496,13 @@ const visible = computed(
       props.request.exceptionState === 'pending') ||
     showSoftDelete.value ||
     showRestore.value ||
-    showSendLegal.value
+    showSendLegal.value ||
+    showReturn.value ||
+    showPrepare.value ||
+    showPend.value ||
+    showCancel.value ||
+    showTransfer.value ||
+    showDeleteSold.value
 )
 
 const dialogTitle = computed(() => {
@@ -261,6 +517,18 @@ const dialogTitle = computed(() => {
       return 'استعادة الطلب'
     case 'legal':
       return 'إرسال للمتابعة القانونية'
+    case 'return':
+      return 'إرجاع الطلب للموظف'
+    case 'prepare':
+      return 'تجهيز الطلب للبيع'
+    case 'pend':
+      return 'تعليق الطلب'
+    case 'cancel':
+      return 'إلغاء وإعادة لغير المسند'
+    case 'transfer':
+      return 'نقل الطلب لفرع آخر'
+    case 'deleteSold':
+      return 'حذف المبيع نهائياً'
     default:
       return ''
   }
@@ -276,6 +544,14 @@ const dialogHint = computed(() => {
       return 'لغير المسند أو المرفوض فقط — ينشئ قضية ويصفّر تكليف الموظف.'
     case 'approve':
       return 'لا يمكن لطالب الاستثناء الموافقة على طلبه.'
+    case 'rejectEx':
+      return 'رفض الاستثناء ينقل الطلب إلى «مرفوض».'
+    case 'return':
+      return 'يرجع لنفس الموظف ويظهر عنده كطلب جديد.'
+    case 'cancel':
+      return 'يُفك الموظف والاستثناء، وتُلغى القضية القانونية المفتوحة إن وجدت.'
+    case 'transfer':
+      return 'يُنقل بنفس السجل والتاريخ. بدون موظف يدخل «غير المسند» في الفرع الجديد.'
     default:
       return ''
   }
@@ -285,20 +561,32 @@ const dialogReasonLabel = computed(() => {
   switch (dialogMode.value) {
     case 'approve':
     case 'rejectEx':
-      return 'سبب القرار'
+      return 'ملاحظة القرار (اختياري)'
     case 'delete':
       return 'سبب الحذف'
     case 'restore':
       return 'ملاحظة الاستعادة (اختياري)'
     case 'legal':
       return 'ملاحظة (اختياري)'
+    case 'return':
+      return 'ملاحظة الإرجاع'
+    case 'prepare':
+      return 'ملاحظة (اختياري)'
+    case 'pend':
+      return 'سبب التعليق'
+    case 'cancel':
+      return 'سبب الإلغاء'
+    case 'transfer':
+      return 'سبب النقل'
+    case 'deleteSold':
+      return 'سبب الحذف (يُحفظ في السجل)'
     default:
       return 'السبب'
   }
 })
 
 const dialogSubmitClass = computed(() => {
-  if (dialogMode.value === 'delete' || dialogMode.value === 'rejectEx')
+  if (dialogMode.value === 'delete' || dialogMode.value === 'rejectEx' || dialogMode.value === 'deleteSold')
     return 'danger'
   if (dialogMode.value === 'legal') return 'warn'
   return 'primary'
@@ -306,7 +594,17 @@ const dialogSubmitClass = computed(() => {
 
 const canSubmitDialog = computed(() => {
   if (dialogMode.value === 'legal') return followerId.value != null
-  if (dialogMode.value === 'restore') return true
+  if (dialogMode.value === 'restore' || dialogMode.value === 'prepare') return true
+  if (dialogMode.value === 'transfer')
+    return targetBranchId.value != null && reasonText.value.trim().length > 0
+  if (dialogMode.value === 'deleteSold')
+    return (
+      impact.value != null &&
+      reasonText.value.trim().length >= 5 &&
+      (impact.value.paymentsCount === 0 || confirmPayments.value)
+    )
+  if (dialogMode.value === 'approve' || dialogMode.value === 'rejectEx')
+    return reasonText.value.trim().length <= 500
   return reasonText.value.trim().length > 0
 })
 
@@ -330,7 +628,12 @@ function openDialog(mode: DialogMode) {
   reasonText.value = ''
   followerId.value = null
   errorMsg.value = null
+  targetBranchId.value = null
+  targetEmployeeId.value = null
+  confirmPayments.value = false
+  impact.value = null
   if (mode === 'legal') void loadFollowers()
+  if (mode === 'deleteSold') void loadImpact()
 }
 
 function closeDialog() {
@@ -392,6 +695,42 @@ async function submitDialog() {
       await restoreMut.mutateAsync({
         requestId: props.request.id,
         reason: reason || undefined,
+      })
+    } else if (mode === 'return') {
+      await actionMut.mutateAsync({
+        url: SalesRequestEndpoints.returnToEmployee(props.request.id),
+        body: { note: reason },
+        requestIds: [props.request.id],
+      })
+    } else if (mode === 'prepare') {
+      await actionMut.mutateAsync({
+        url: SalesRequestEndpoints.managerPrepare(props.request.id),
+        body: { note: reason || null },
+        requestIds: [props.request.id],
+      })
+    } else if (mode === 'pend') {
+      await actionMut.mutateAsync({
+        url: SalesRequestEndpoints.managerPend(props.request.id),
+        body: { note: reason },
+        requestIds: [props.request.id],
+      })
+    } else if (mode === 'cancel') {
+      await actionMut.mutateAsync({
+        url: SalesRequestEndpoints.cancelToUnassigned(props.request.id),
+        body: { reason },
+        requestIds: [props.request.id],
+      })
+    } else if (mode === 'transfer') {
+      await actionMut.mutateAsync({
+        url: SalesRequestEndpoints.transferBranch(props.request.id),
+        body: { targetBranchId: targetBranchId.value, employeeId: targetEmployeeId.value, reason },
+        requestIds: [props.request.id],
+      })
+    } else if (mode === 'deleteSold') {
+      await actionMut.mutateAsync({
+        url: SalesRequestEndpoints.deleteSold(props.request.id),
+        body: { reason, confirmPayments: confirmPayments.value },
+        requestIds: [props.request.id],
       })
     } else if (mode === 'legal') {
       await createLegalMut.mutateAsync({
@@ -472,6 +811,44 @@ async function submitDialog() {
 }
 .sr-neu-btn.warn {
   color: #8a4b00;
+}
+.sr-far {
+  margin-inline-start: auto;
+}
+.sr-impact {
+  background: #fff5f4;
+  border-radius: 14px;
+  padding: 0.75rem 0.9rem;
+  font-size: 0.85rem;
+}
+.sr-impact__warn {
+  color: #9b1c1c;
+  font-weight: 700;
+  margin: 0 0 0.5rem;
+}
+.sr-impact dl {
+  display: grid;
+  gap: 0.35rem 1rem;
+  grid-template-columns: 1fr 1fr;
+  margin: 0;
+}
+.sr-impact dl > div.is-wide {
+  grid-column: 1 / -1;
+}
+.sr-impact dt {
+  color: #6b5b5a;
+  font-size: 0.75rem;
+}
+.sr-impact dd {
+  margin: 0;
+  font-weight: 700;
+}
+.sr-confirm {
+  align-items: center;
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 0.6rem;
+  font-weight: 700;
 }
 .sr-err {
   color: #9b1c1c;

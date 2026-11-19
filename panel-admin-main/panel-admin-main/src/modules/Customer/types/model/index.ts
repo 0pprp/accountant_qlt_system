@@ -28,6 +28,10 @@ export interface CustomerForm {
   phoneNumber: string
   whatsAppPhoneNumber: string
   branchId: number
+  /** خصم سعر البيع — نص في النموذج لأن حقل الإدخال يُصدر نصاً، ويُحوَّل عند الإرسال */
+  sellAmountDiscount: string
+  /** خصم القسط اليومي — نفس القاعدة */
+  dailyInstallmentDiscount: string
   business: {
     name: string
     address: string
@@ -50,6 +54,8 @@ export interface SingleCustomer {
   phoneNumber: string
   whatsAppPhoneNumber: string
   rating: string | null
+  sellAmountDiscount: number
+  dailyInstallmentDiscount: number
   branch: Warehouse
   business: Business
   attachments: Array<Attachment>

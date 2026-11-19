@@ -6,6 +6,7 @@ public static class WaiverErrors
     public static readonly Error NotFound = new("طلب التنازل غير موجود.", "Waiver.NotFound");
     public static readonly Error NoteRequired = new("ملاحظة الطلب إلزامية.", "Waiver.NoteRequired");
     public static readonly Error NoteTooLong = new("الحد الأقصى للملاحظة 2000 حرف.", "Waiver.NoteTooLong");
+    public static readonly Error DecisionNoteTooLong = new("الحد الأقصى لملاحظة القرار 500 حرف.", "Waiver.DecisionNoteTooLong");
     public static readonly Error AmountRequired = new("مبلغ التنازل يجب أن يكون أكبر من صفر.", "Waiver.AmountRequired");
     public static readonly Error Concurrency = new("تم تعديل الطلب من جهة أخرى. أعد التحميل.", "Waiver.Concurrency");
     public static readonly Error InvalidTransition = new("انتقال غير مسموح من الحالة الحالية.", "Waiver.InvalidTransition");

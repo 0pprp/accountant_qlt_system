@@ -1,3 +1,6 @@
+using Application.DelegateFollowup.Queries.Admin.GetSalesOrders;
+using Domain.Entities.DelegateFollowupAggregate;
+using Application.DelegateFollowup.Queries.Admin.GetLocations;
 using Application.DelegateFollowup.Commands.Admin.UpsertBoardOperatorRating;
 using Application.DelegateFollowup.Common;
 using Application.DelegateFollowup.Queries.Admin.GetBoardRating;
@@ -102,6 +105,36 @@ public class DelegateFollowupController : ApiController
                 BranchId = branchId,
                 Score = body.Score,
                 Note = body.Note
+            },
+            CancellationToken);
+        return result.ToHttpResponse();
+    }
+
+    [HasPermission(Permissions.DelegateFollowup.Read)]
+    [HttpGet("lists/{listId:int}/locations")]
+    public async Task<ActionResult<DelegateFollowupLocationsDto>> GetLocations(int listId, [FromQuery] int branchId)
+        => (await _mediator.Send(new GetDelegateFollowupLocationsQuery(listId, branchId), CancellationToken)).ToHttpResponse();
+
+    [HasPermission(Permissions.DelegateFollowup.Read)]
+    [HttpGet("lists/{listId:int}/sales-orders")]
+    public async Task<ActionResult<DelegateSalesOrdersDto>> GetSalesOrders(int listId, [FromQuery] int branchId)
+        => (await _mediator.Send(new GetDelegateFollowupSalesOrdersQuery(listId, branchId), CancellationToken)).ToHttpResponse();
+
+    [HasPermission(Permissions.DelegateFollowup.UpsertAccountantRating)]
+    [HttpPost("lists/{listId:int}/accountant-rating")]
+    public async Task<ActionResult<DelegateFollowupActionResultDto>> UpsertAccountantRating(
+        [FromRoute] int listId,
+        [FromQuery] int branchId,
+        [FromBody] UpsertBoardOperatorRatingBody body)
+    {
+        var result = await _mediator.Send(
+            new UpsertBoardOperatorRatingCommand
+            {
+                ListId = listId,
+                BranchId = branchId,
+                Score = body.Score,
+                Note = body.Note,
+                RaterSlot = DirectorBoardOperatorListRating.SlotChiefAccountant
             },
             CancellationToken);
         return result.ToHttpResponse();

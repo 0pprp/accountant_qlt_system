@@ -87,7 +87,9 @@ public sealed class SearchBranchCustomersHandler
 
         var ids = customers.Select(c => c.Id).ToList();
         var orderFacts = await _db.Orders.AsNoTracking()
-            .Where(o => ids.Contains(o.CustomerId) && o.BranchId == visitBranchId)
+            .Where(o => ids.Contains(o.CustomerId)
+                        && o.BranchId == visitBranchId
+                        && o.ApprovalStatus == Domain.Entities.OrderAggregate.Enums.OrderApprovalStatus.Approved)
             .Select(o => new
             {
                 o.CustomerId,
@@ -103,12 +105,14 @@ public sealed class SearchBranchCustomersHandler
             .ToListAsync(ct);
 
         var asOf = DateOnly.FromDateTime(_clock.UtcNowOffset.UtcDateTime);
+        var unallocated = await Application.Common.Balances.CustomerBalanceQuery.UnallocatedDetailsAsync(_db, ids, ct);
         var rows = customers.Select(c =>
         {
             var orders = orderFacts.Where(o => o.CustomerId == c.Id).ToList();
+            unallocated.TryGetValue(c.Id, out var extra);
             var sell = orders.Sum(o => o.SellAmount);
-            var paid = orders.Sum(o => o.Paid);
-            var remaining = Math.Max(0, sell - paid);
+            var paid = orders.Sum(o => o.Paid) + (extra?.Amount ?? 0);
+            var remaining = Application.Common.Balances.CustomerBalanceRules.RoundToUnit(sell - paid);
             var mandob = orders
                 .OrderByDescending(o => o.CreatedAt)
                 .Select(o => o.MandobName)
@@ -119,7 +123,8 @@ public sealed class SearchBranchCustomersHandler
                 .ToList();
             DateOnly? saleOnly = saleDates.Count == 0 ? null : saleDates.Min();
             var lastPays = orders.Where(o => o.LastPay != null).Select(o => o.LastPay!.Value).ToList();
-            DateOnly? lastPay = lastPays.Count == 0 ? null : lastPays.Max();
+            DateOnly? lastPay = Application.Common.Balances.CustomerBalanceQuery.LatestDate(
+                lastPays.Count == 0 ? null : lastPays.Max(), extra?.LastDate);
             var score = CustomerRatingCalculator.ScoreFor(sell, paid, remaining, saleOnly, lastPay, asOf);
             var label = score is int s ? CustomerRatingCalculator.LevelName(s) : null;
             return new BranchCustomerSearchRowDto(

@@ -6,6 +6,7 @@ import { AppButton, AppDateField, DataState } from '@/modules/Core/components/ui
 import { formatDate, formatMoney, formatNumber } from '@/modules/Core/utils/formatDisplay'
 import { useFollowerCollectionQuery } from '../requests/queries/useFollowerCollectionQuery'
 import { useSetFollowerCollectionEnabledMutation } from '../requests/mutations/useSetFollowerCollectionEnabledMutation'
+import { useFollowersQuery } from '../requests/queries/useFollowersQuery'
 import type { FollowerCollectionListRow } from '../domain/collectionTypes'
 import '../components/follower-work.css'
 import '../components/declining/declining.css'
@@ -31,6 +32,23 @@ const branchName = computed(() => {
   const b = (auth.branches ?? []).find((x) => x.id === branchId.value)
   return b?.name ?? ''
 })
+const branches = computed(() => auth.branches ?? [])
+const allowedBranch = computed(() => branches.value.some(b => b.id === branchId.value))
+const directoryPage = ref(1)
+watch(branchId, () => { directoryPage.value = 1 }, { flush: 'sync' })
+const directory = useFollowersQuery({
+  branchId, search: ref(''), page: directoryPage, pageSize: ref(30), sort: ref('name'),
+  enabled: computed(() => canRead.value && allowedBranch.value && followerId.value == null),
+})
+function choose(branch: number | null, follower?: { followerId: number; followerName: string }) {
+  void router.push({
+    name: 'ManagementFollowerCollectionRoute',
+    query: {
+      ...(branch ? { branchId: String(branch) } : {}),
+      ...(follower ? { followerId: String(follower.followerId), followerName: follower.followerName } : {}),
+    },
+  })
+}
 const paymentsPage = computed(() => {
   const n = Number(route.query.paymentsPage)
   return Number.isInteger(n) && n > 0 ? n : 1
@@ -55,7 +73,7 @@ const collectionQuery = useFollowerCollectionQuery({
   toDate,
   paymentsPage,
   paymentsPageSize,
-  enabled: canRead,
+  enabled: computed(() => canRead.value && allowedBranch.value),
 })
 const toggleMutation = useSetFollowerCollectionEnabledMutation()
 
@@ -103,6 +121,7 @@ async function onToggle(list: FollowerCollectionListRow, next: boolean) {
       listId: list.listId,
       enabled: next,
       expectedVersion: list.collectionToggleVersion,
+      expectedFollowerId: followerId.value,
     })
     await collectionQuery.refetch()
   } catch (e: unknown) {
@@ -129,14 +148,13 @@ async function onToggle(list: FollowerCollectionListRow, next: boolean) {
   <div class="fw-page" dir="rtl">
     <header class="fw-page__header">
       <h1 class="fw-page__title">الجباية</h1>
-      <p class="fw-page__sub">
-        {{ followerName || data?.followerName || `متابع ${followerId ?? '—'}` }}
-        ·
-        {{ branchName || `فرع ${branchId ?? '—'}` }}
-      </p>
-      <p class="fw-page__sub">
-        تمكين جباية المتابع على القائمة يمنع جباية المندوب. لا إنشاء دفعات من هذه اللوحة.
-      </p>
+      <nav v-if="canRead && branchId" class="collection-path" aria-label="مسار الجباية">
+        <button @click="choose(null)">المحافظات</button>
+        <span aria-hidden="true">‹</span>
+        <button v-if="followerId" @click="choose(branchId)">{{ branchName }}</button>
+        <span v-else>{{ branchName }}</span>
+        <template v-if="followerId"><span aria-hidden="true">‹</span>{{ data?.followerName || followerName }}</template>
+      </nav>
     </header>
 
     <DataState
@@ -145,12 +163,36 @@ async function onToggle(list: FollowerCollectionListRow, next: boolean) {
       title="غير مصرّح"
       message="ليس لديك صلاحية قراءة الجباية."
     />
-    <DataState
-      v-else-if="followerId == null || branchId == null"
-      kind="empty"
-      title="يلزم اختيار"
-      message="يلزم اختيار متابع ومحافظة من دليل عمل المتابعين."
-    />
+    <section v-else-if="!allowedBranch" aria-label="المحافظات">
+      <h2 class="fw-selected__title">المحافظات المسموحة</h2>
+      <div v-if="branches.length" class="collection-grid">
+        <button v-for="b in branches" :key="b.id" class="collection-card" @click="choose(b.id)">
+          <span>{{ b.name }}</span><span aria-hidden="true">‹</span>
+        </button>
+      </div>
+      <DataState v-else kind="empty" title="لا توجد محافظات متاحة لهذا الحساب" />
+    </section>
+    <section v-else-if="!followerId" aria-label="متابعو المحافظة">
+      <h2 class="fw-selected__title">متابعو {{ branchName }}</h2>
+      <DataState v-if="directory.isPending.value" kind="loading" title="جاري تحميل المتابعين" />
+      <DataState v-else-if="directory.isError.value" kind="error" title="تعذر تحميل المتابعين">
+        <template #actions><AppButton @click="directory.refetch()">إعادة المحاولة</AppButton></template>
+      </DataState>
+      <template v-else-if="directory.data.value?.items.length">
+        <div class="collection-grid">
+          <button v-for="f in directory.data.value.items" :key="f.followerId" class="collection-card" @click="choose(branchId, f)">
+            <span>{{ f.followerName }}<small>عدد القوائم: {{ formatNumber(f.assignedListCount) }}</small></span>
+            <span aria-hidden="true">‹</span>
+          </button>
+        </div>
+        <div v-if="directory.data.value.totalPages > 1" class="fdc-pager">
+          <AppButton :disabled="directoryPage === 1" @click="directoryPage--">السابق</AppButton>
+          <span>{{ directoryPage }} / {{ directory.data.value.totalPages }}</span>
+          <AppButton :disabled="directoryPage >= directory.data.value.totalPages" @click="directoryPage++">التالي</AppButton>
+        </div>
+      </template>
+      <DataState v-else kind="empty" title="لا يوجد متابعون مكلّفون بقوائم في هذه المحافظة" />
+    </section>
     <DataState
       v-else-if="collectionQuery.isPending.value"
       kind="loading"
@@ -175,7 +217,8 @@ async function onToggle(list: FollowerCollectionListRow, next: boolean) {
       </div>
 
       <section class="fdc-details" aria-label="قوائم الجباية" style="margin-bottom: 1rem">
-        <h2 class="fw-selected__title">القوائم</h2>
+        <h2 class="fw-selected__title">قوائم المتابع</h2>
+        <p>عند تفعيل جباية المتابع تتوقف جباية المندوب لهذه القائمة.</p>
         <DataState v-if="!data.lists.length" kind="empty" title="لا قوائم" message="لا قوائم مكلّفة" />
         <div v-else class="fdc-list" role="list">
           <div v-for="l in data.lists" :key="l.listId" class="fdc-row" role="listitem">
@@ -277,3 +320,13 @@ async function onToggle(list: FollowerCollectionListRow, next: boolean) {
     </template>
   </div>
 </template>
+
+<style scoped>
+.collection-path,.collection-card{display:flex;align-items:center;gap:.75rem}
+.collection-path{flex-wrap:wrap;margin-block:.6rem;color:#385550}
+.collection-path button{color:#006a64;text-decoration:underline}
+.collection-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,215px),1fr));gap:.8rem;margin-block:1rem}
+.collection-card{justify-content:space-between;text-align:start;border:1px solid #cadbd8;border-radius:14px;background:white;padding:1rem 1.2rem;color:#064c47;font:inherit;font-weight:700;min-height:76px;cursor:pointer}
+.collection-card:hover,.collection-card:focus-visible{border-color:#006a64;background:#eff7f5}
+.collection-card small{display:block;color:#4c625e;font-weight:400}
+</style>

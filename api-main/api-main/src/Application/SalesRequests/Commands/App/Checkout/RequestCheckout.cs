@@ -1,4 +1,6 @@
-using System.Data;
+﻿using System.Data;
+using Application.Archive.Common;
+using Application.Customers.Common;
 using Application.Common.Interfaces;
 using Application.Orders.Commands.Admin.ChangeApprovalStatus;
 using Application.Orders.Common;
@@ -56,8 +58,10 @@ public class RequestCheckout(IApplicationDbContext db, ICurrentUserService user,
         {
             var sameLines = b.Products != null && order.OrderItems.Count == b.Products.Count &&
                 order.OrderItems.All(i => b.Products.Any(l => l.Id == i.ProductId && l.Qty == i.Quantity));
-            if (!sameLines || order.OrderListId != b.OrderListId || order.SellAmount != (double)b.Total ||
-                order.PrepaymentAmount != (double)b.Prepayment || order.DailyInstallmentAmount != (double)b.DailyInstallment)
+            if (!sameLines || order.OrderListId != b.OrderListId ||
+                Math.Abs(order.GrossSell() - (double)b.Total) > 0.005 ||
+                Math.Abs(order.PrepaymentAmount - (double)b.Prepayment) > 0.005 ||
+                Math.Abs(order.GrossDaily() - (double)b.DailyInstallment) > 0.005)
                 return SalesRequestErrors.ConcurrencyConflict;
             return order.Id;
         }
@@ -93,9 +97,12 @@ public class RequestCheckout(IApplicationDbContext db, ICurrentUserService user,
             sold = sell; paid = pre; daily = rate;
         }
         order.BuyAmount = order.OrderItems.Sum(i => i.BuyAmount);
-        order.SellAmount = (double)b.Total;
-        order.PrepaymentAmount = (double)b.Prepayment;
-        order.DailyInstallmentAmount = (double)b.DailyInstallment;
+        var buyer = await db.Customers.SingleOrDefaultAsync(c => c.Id == order.CustomerId, ct);
+        if (buyer == null) return CustomerErrors.CustomerNotFound;
+        order.SetSaleAmounts((double)b.Total, (double)b.Prepayment, (double)b.DailyInstallment,
+            buyer.SellAmountDiscount, buyer.DailyInstallmentDiscount);
+        var discounted = CustomerDiscountApplier.Plan([order], buyer.SellAmountDiscount, buyer.DailyInstallmentDiscount);
+        if (discounted.IsFailed) return discounted.Error!;
         var now = clock.UtcNowOffset;
         var baghdad = now.ToOffset(TimeSpan.FromHours(3)).DateTime;
         order.SetSeller(actor, b.OrderListId, new Location(b.Lat,b.Lng), b.Address.Trim(),
@@ -111,6 +118,25 @@ public class RequestCheckout(IApplicationDbContext db, ICurrentUserService user,
         SalesRequestChangeOutboxWriter.Append(db, request, SalesRequestChangeType.Completed, now);
         await db.SaveChangesAsync(ct);
         await tx.CommitAsync(ct);
+
+        // خارج معاملة الـSerializable عمداً: تسابق حزمتين على نفس الصفّ كان سيُرجِع
+        // البيع كلّه. الأرشيف تفصيل محاسبي، والمُصالِح الدوري يلتقط ما يفوت هنا.
+        await TryEnterArchiveAsync(order, ct);
+
         return order.Id;
+    }
+
+    private async Task TryEnterArchiveAsync(Order order, CancellationToken ct)
+    {
+        try
+        {
+            var transaction = await ArchiveIntake.EnsureAsync(db, order, ct);
+            if (transaction is not null)
+                await db.SaveChangesAsync(ct);
+        }
+        catch (Exception)
+        {
+            // صامت بقصد — البيع تمّ، والمُصالِح سيُدخِله لاحقاً.
+        }
     }
 }

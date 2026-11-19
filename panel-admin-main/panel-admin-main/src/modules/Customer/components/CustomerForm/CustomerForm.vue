@@ -81,6 +81,29 @@
       />
     </div>
 
+    <h2 class="customer-form__section">
+      {{ $t('customer.form.discountsTitle') }}
+    </h2>
+
+    <div class="customer-form__grid">
+      <AppInput
+        v-model="sellAmountDiscount"
+        :label="$t('customer.form.sellAmountDiscount.label')"
+        :hint="$t('customer.form.discountHint')"
+        :error="errors['sellAmountDiscount']"
+        type="number"
+        dir="ltr"
+      />
+      <AppInput
+        v-model="dailyInstallmentDiscount"
+        :label="$t('customer.form.dailyInstallmentDiscount.label')"
+        :hint="$t('customer.form.discountHint')"
+        :error="errors['dailyInstallmentDiscount']"
+        type="number"
+        dir="ltr"
+      />
+    </div>
+
     <div class="customer-form__actions">
       <AppButton
         type="submit"
@@ -118,6 +141,9 @@ const props = defineProps<Props>()
 const emit = defineEmits<Emits>()
 
 const { t } = useI18n()
+
+/** عدد عشري بإشارة اختيارية، أو فراغ — الفراغ يعني صفراً */
+const SIGNED_NUMBER = /^$|^-?\d+(\.\d+)?$/
 const isEditMode = computed(() => props.isEditMode)
 const rating = computed(() => props.rating ?? null)
 const validationSchema = object().shape({
@@ -136,6 +162,13 @@ const validationSchema = object().shape({
       REGEX.PHONE_11_DIGIT_REGEX,
       t('customer.form.whatsAppPhoneNumber.match'),
     ),
+  // الخصم اختياري ويقبل السالب — الشرط الوحيد أن يكون رقماً
+  sellAmountDiscount: string()
+    .nullable()
+    .matches(SIGNED_NUMBER, t('customer.form.discountInvalid')),
+  dailyInstallmentDiscount: string()
+    .nullable()
+    .matches(SIGNED_NUMBER, t('customer.form.discountInvalid')),
   business: object().shape({
     name: string().required(t('customer.form.required')),
     address: string().required(t('customer.form.required')),
@@ -156,6 +189,16 @@ const [whatsAppPhoneNumber] = defineField('whatsAppPhoneNumber')
 const [businessName] = defineField('business.name')
 const [address] = defineField('business.address')
 const [nearestKnownLocation] = defineField('business.nearestKnownLocation')
+const [sellAmountDiscount] = defineField('sellAmountDiscount')
+const [dailyInstallmentDiscount] = defineField('dailyInstallmentDiscount')
+
+/** الفراغ خصمٌ صفري لا قيمة ناقصة */
+function toAmount(value: string | null | undefined): number {
+  const trimmed = (value ?? '').trim()
+  if (trimmed.length === 0) return 0
+  const parsed = Number(trimmed)
+  return Number.isFinite(parsed) ? parsed : 0
+}
 
 function toDateInput(value: string | null | undefined): string | null {
   if (!value) return value ?? null
@@ -184,6 +227,8 @@ const submit = handleSubmit((values: CustomerForm) => {
     whatsAppPhoneNumber: values.whatsAppPhoneNumber,
     phoneNumber: values.phoneNumber,
     branchId: authStore.selectedBranch?.id ?? 0,
+    sellAmountDiscount: toAmount(values.sellAmountDiscount),
+    dailyInstallmentDiscount: toAmount(values.dailyInstallmentDiscount),
   }
 
   emit('submit', options)
@@ -200,6 +245,8 @@ watch(
         birthDate: toDateInput(props.initialValues.birthDate),
         phoneNumber: props.initialValues.phoneNumber,
         whatsAppPhoneNumber: props.initialValues.whatsAppPhoneNumber,
+        sellAmountDiscount: props.initialValues.sellAmountDiscount,
+        dailyInstallmentDiscount: props.initialValues.dailyInstallmentDiscount,
         business: {
           name: props.initialValues.business.name,
           address: props.initialValues.business.address,

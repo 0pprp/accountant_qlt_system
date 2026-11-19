@@ -72,6 +72,12 @@ export interface AuditReturnContext {
   criterion?: MatchCriterion | string | null
   searchSource?: SearchSource | string | null
   scrollY?: string | null
+  scope?: string | null
+  resourceId?: string | null
+  drill?: string | null
+  level?: string | null
+  from?: string | null
+  to?: string | null
 }
 
 /** وجهات رجوع داخلية معروفة فقط — اسم مسار Vue أو مسار نسبي آمن. */
@@ -122,6 +128,12 @@ export function parseAuditReturnQuery(
     criterion: str(query.criterion),
     searchSource: str(query.searchSource),
     scrollY: str(query.scrollY),
+    scope: str(query.scope),
+    resourceId: str(query.resourceId),
+    drill: str(query.drill),
+    level: str(query.level),
+    from: str(query.from),
+    to: str(query.to),
   }
 }
 

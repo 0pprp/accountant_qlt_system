@@ -54,7 +54,7 @@ const listQuery = useQuery({
 })
 
 function fmt(n: number) {
-  return new Intl.NumberFormat('en-US').format(n)
+  return new Intl.NumberFormat('en-US', { maximumFractionDigits: 0 }).format(n)
 }
 
 function openCustomer(id: number) {

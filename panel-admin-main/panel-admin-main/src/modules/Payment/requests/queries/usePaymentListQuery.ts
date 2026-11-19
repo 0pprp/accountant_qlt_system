@@ -63,7 +63,8 @@ export function usePaymentListDataQuery(
       endDate,
       sortCriteria,
     ],
-    enabled: computed(() => id.value > 0 && branchId.value > 0),
+    // orderListId = 0 → كل القوائم في الفرع
+    enabled: computed(() => id.value >= 0 && branchId.value > 0),
     queryFn: () =>
       fetchPaymentList(
         id.value,

@@ -32,6 +32,8 @@ public static class OrderColumns
         new("BuyAmount", "مبلغ الشراء", "number", x => x.BuyAmount),
         new("PrepaymentAmount", "مبلغ الدفعة المقدمة", "number", x => x.PrepaymentAmount),
         new("DailyInstallmentAmount", "مبلغ القسط اليومي", "number", x => x.DailyInstallmentAmount),
+        new("CustomerSellDiscount", "خصم العميل على البيع", "number", x => x.SellAmountDiscountApplied),
+        new("CustomerDailyInstallmentDiscount", "خصم العميل على القسط", "number", x => x.DailyInstallmentDiscountApplied),
         new("ExecutionStatus", "حالة التنفيذ", "string", x => x.ExecutionStatus.ToArabicString()),
         new("ApprovalStatus", "حالة الموافقة", "string", x => x.ApprovalStatus.ToArabicString()),
         new("CustomerNationalCode", "الرقم الوطني للعميل", "string", x => x.Customer!.NationalCode)

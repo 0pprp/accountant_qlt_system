@@ -4,7 +4,6 @@ import 'package:flutter/material.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/widgets/loading_view.dart';
 import '../../../injection.dart';
-import '../../sync/presentation/sync_status_banner.dart';
 import '../domain/entities/delegate_home_snapshot.dart';
 import 'tutorial_videos_page.dart';
 import 'widgets/home_announcements_carousel.dart';
@@ -92,7 +91,6 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
             alignment: Alignment.center,
             child: const CircularProgressIndicator(color: Colors.white),
           ),
-        const SyncStatusBanner(),
         Expanded(
           child: _loading && snap == null
               ? const LoadingView()
@@ -100,7 +98,6 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
                   color: AppColors.primary,
                   onRefresh: () async {
                     await Injection.refreshCustomers(force: true);
-                    await Injection.paymentSyncService.syncNow();
                     await _reload();
                   },
                   child: ListView(

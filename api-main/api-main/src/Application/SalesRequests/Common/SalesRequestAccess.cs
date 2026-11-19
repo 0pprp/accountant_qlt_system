@@ -19,8 +19,7 @@ public static class SalesRequestAccess
                         && x.Status != SalesRequestStatus.LegalFollowup)
             .Where(x => x.ExceptionHoldStatus == null
                         || (x.ExceptionHoldStatus == SalesRequestExceptionHoldStatus.Approved
-                            && x.ExceptionConsumedAtUtc != null)
-                        || (x.TargetEmployeeId != null && x.TargetEmployeeId > 0))
+                            && x.ExceptionConsumedAtUtc != null))
             .Where(x => x.Status == SalesRequestStatus.New
                         || x.TargetEmployeeId == null
                         || x.TargetEmployeeId <= 0);

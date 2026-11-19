@@ -246,13 +246,20 @@ public class SalesFollowupDataService
             })
             .ToListAsync(ct);
 
+        var factCustomerIds = orderRows.Select(r => r.CustomerId).Distinct().ToList();
+        var unallocatedPayments = (await _db.InstallmentPayments.AsNoTracking()
+                .Where(p => p.OrderId == null && p.CustomerId != null && factCustomerIds.Contains(p.CustomerId.Value))
+                .Select(p => new { CustomerId = p.CustomerId!.Value, p.Amount, p.Date })
+                .ToListAsync(ct))
+            .ToLookup(p => p.CustomerId, p => new { p.Amount, p.Date });
+
         var merged = orderRows
             .GroupBy(r => r.CustomerId)
             .Select(g =>
             {
                 var first = g.First();
                 var totalSales = g.Sum(x => x.SellAmount);
-                var payments = g.SelectMany(x => x.Payments).ToList();
+                var payments = g.SelectMany(x => x.Payments).Concat(unallocatedPayments[g.Key]).ToList();
                 var receipts = payments.Sum(p => p.Amount);
                 var remaining = totalSales - receipts;
                 var saleDate = g.Min(x => x.SaleDate);
@@ -385,7 +392,7 @@ public class SalesFollowupDataService
                 ListName = g.Key.Name,
                 CustomerCount = g.Count(),
                 TotalSales = g.Sum(x => x.AmountTotalSales),
-                TotalRemaining = g.Sum(x => x.AmountRemaining),
+                TotalRemaining = g.Sum(x => Application.Common.Balances.CustomerBalanceRules.RoundToUnit(x.AmountRemaining)),
             })
             .OrderByDescending(x => x.TotalSales)
             .ToList();

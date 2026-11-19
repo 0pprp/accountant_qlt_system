@@ -56,16 +56,16 @@
       }
     },
     "warehouseId": {
-      "label": " الخزينة",
-      "placeholder": "أختر الخزينه المستقطعة منها الأموال",
+      "label": "المخزن",
+      "placeholder": "اختر المخزن",
       "validation": {
-        "required": "أسم الخزينة مطلوب"
+        "required": "المخزن مطلوب"
       }
     }
   },
   "table": {
     "name": "العنصر",
-    "productsCount": "الخزينة",
+    "productsCount": "المخزن",
     "remainingCount": "عدد العناصر",
     "dailyInstallmentAmount": "القسط",
     "buyAmount": "سعر الشراء",
@@ -74,20 +74,20 @@
     "description": "ملاحظات",
     "createdAt": "تاريخ الأضافة",
     "categoryName": "الفئة",
-    "warehouseName": "الخزينة"
+    "warehouseName": "المخزن"
   },
   "category": "الفئة",
   "selectCategory": "اختر الفئة",
   "allCategories": "جميع الفئات",
-  "products": "المنتجات",
+  "products": "العناصر",
   "totalRemainingCount": "إجمالي عدد العناصر",
-  "warehouses": "العناصر",
-  "warehouse": "عنصر",
-  "updateProductCategory": "التعدیل العنصر",
+  "warehouses": "المخزن",
+  "warehouse": "مخزن",
+  "updateProductCategory": "تعديل العنصر",
   "createProductCategory": "إضافة فئة جديدة",
-  "createProduct": "الأضافة العنصر",
+  "createProduct": "إضافة عنصر",
   "deleteProduct": {
-    "title": "الحذف العنصر",
+    "title": "حذف العنصر",
     "description": "هل أنت متأكد من حذف العنصر:"
   },
   "productCategory": {

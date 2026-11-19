@@ -1,4 +1,4 @@
-using Application.Common.AdminPanel;
+﻿using Application.Common.AdminPanel;
 using Application.Users.Common;
 using Domain.Entities.BranchAggregate;
 using Domain.Entities.RoleAggregate;
@@ -25,7 +25,7 @@ public class PanelTabMigrationTests
         var province = new Domain.Entities.ProvinceAggregate.Province("بغداد");
         db.Provinces.Add(province);
         await db.SaveChangesAsync();
-        var branch = new Branch("فرع", province.Id) { Safe = null };
+        var branch = new Branch("فرع", province.Id) { Safes = [] };
         db.Branches.Add(branch);
 
         var role = new Role("Mandob", "مندوب");

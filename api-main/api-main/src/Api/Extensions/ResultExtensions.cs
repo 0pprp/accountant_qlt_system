@@ -1,3 +1,4 @@
+﻿using Application.Archive.Common;
 using Api.Models;
 using Application.Common;
 using Application.DelegateFollowup.Common;
@@ -47,10 +48,14 @@ public static class ResultExtensions
         || error?.Code == ManagementTaskErrors.ConcurrencyConflict.Code
         || error?.Code == FollowerWorkErrors.CollectionConcurrencyConflict.Code
         || error?.Code == OrderErrors.LegacyPaymentNeedsReview.Code
-        || error?.Code == OrderErrors.ClientPaymentPayloadConflict.Code;
+        || error?.Code == OrderErrors.ClientPaymentPayloadConflict.Code
+        || error?.Code == ArchiveErrors.ConcurrencyConflict.Code
+        || error?.Code == Application.Complaints.Common.ComplaintErrors.Concurrency.Code
+        || error?.Code == Application.WrongSales.Common.WrongSaleErrors.Concurrency.Code;
 
     private static bool IsForbidden(Error? error) =>
         error?.Code == SalesRequestErrors.TabForbidden.Code
+        || error?.Code == SalesRequestErrors.ActionForbidden.Code
         || error?.Code == SalesRequestErrors.BranchForbidden.Code
         || error?.Code == SalesRequestErrors.ProfileForbidden.Code
         || error?.Code == SalesRequestErrors.DocumentsForbidden.Code
@@ -63,5 +68,9 @@ public static class ResultExtensions
         || error?.Code == FollowerWorkErrors.CollectionListOutOfScope.Code
         || error?.Code == FollowerWorkErrors.MandobCollectionLocked.Code
         || error?.Code == FollowerWorkErrors.DelegateNotesWriteDenied.Code
-        || error?.Code == FollowerWorkErrors.DelegateNotesListOutOfScope.Code;
+        || error?.Code == FollowerWorkErrors.DelegateNotesListOutOfScope.Code
+        || error?.Code == ArchiveErrors.ActionForbidden.Code
+        || error?.Code == ArchiveErrors.BranchForbidden.Code
+        || error?.Code == ArchiveErrors.StageForbidden.Code
+        || error?.Code == ArchiveErrors.NotBundleOwner.Code;
 }

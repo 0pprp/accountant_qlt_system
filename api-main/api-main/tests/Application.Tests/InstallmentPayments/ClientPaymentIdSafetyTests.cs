@@ -1,3 +1,5 @@
+﻿using Domain.Entities.SafeAggregate.Enums;
+using Application.Safes.Common;
 using Application.InstallmentPayments.Common;
 using Application.Orders.Commands.Admin.SetSellerInfo;
 using Application.Orders.Common;
@@ -136,7 +138,8 @@ public class ClientPaymentIdSafetyTests
     }
 
     private static AppInstallmentPaymentWriter Writer(TestApplicationDbContext db) =>
-        new(db, new DateTimeProviderStub(), new ActivityLogServiceStub());
+        new(db, new DateTimeProviderStub(), new ActivityLogServiceStub(),
+            new PaymentSafePosting(db, new SafeLedger(db, new CurrentUserServiceStub())));
 
     private static TestApplicationDbContext CreateDb()
     {
@@ -197,7 +200,8 @@ public class ClientPaymentIdSafetyTests
             new CurrentUserServiceStub { Role = SeedRoles.BranchAccountant.Name, BranchIds = [branch.Id] },
             new DateTimeProviderStub(),
             new NotificationServiceStub(),
-            new ActivityLogServiceStub());
+            new ActivityLogServiceStub(),
+            new SafeLedger(db, new CurrentUserServiceStub()));
         var ok = await setSeller.Handle(new SetOrderSellerInfoCommand
         {
             OrderId = order.Id,

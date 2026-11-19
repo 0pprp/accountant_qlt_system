@@ -1,4 +1,4 @@
-using Domain.Entities.UserAggregate;
+﻿using Domain.Entities.UserAggregate;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 
@@ -32,7 +32,6 @@ public class PermissionsVersionConcurrencyTests
                 entity.Ignore(x => x.UserPermissions);
                 entity.Ignore(x => x.UserPermissionDenials);
                 entity.Ignore(x => x.UserBranches);
-                entity.Ignore(x => x.SellerCashDeliveryTransactions);
                 entity.Property(x => x.PermissionsVersion).IsConcurrencyToken();
             });
         }

@@ -1,6 +1,7 @@
 ﻿using Application.Common.Interfaces;
 using Application.InstallmentPayments.Common;
 using Application.Orders.Common;
+using Application.Safes.Common;
 using Domain.Entities.ActivityLogAggregate.Enums;
 using Domain.Entities.InstallmentPaymentAggregate;
 using Domain.Entities.OrderAggregate.Enums;
@@ -14,14 +15,17 @@ public class CreateInstallmentPaymentHandler : IRequestHandler<CreateInstallment
     private readonly ICurrentUserService _currentUserService;
     private readonly IDateTimeProvider _dateTimeProvider;
     private readonly IActivityLogService _activityLogService;
+    private readonly PaymentSafePosting _safePosting;
 
     public CreateInstallmentPaymentHandler(IApplicationDbContext dbContext, ICurrentUserService currentUserService,
-        IDateTimeProvider dateTimeProvider, IActivityLogService activityLogService)
+        IDateTimeProvider dateTimeProvider, IActivityLogService activityLogService,
+        PaymentSafePosting safePosting)
     {
         _dbContext = dbContext;
         _currentUserService = currentUserService;
         _dateTimeProvider = dateTimeProvider;
         _activityLogService = activityLogService;
+        _safePosting = safePosting;
     }
 
     public async Task<Result> Handle(CreateInstallmentPaymentCommand request, CancellationToken cancellationToken)
@@ -45,6 +49,8 @@ public class CreateInstallmentPaymentHandler : IRequestHandler<CreateInstallment
         if (cashHolderResult.IsFailed)
             return cashHolderResult.Error!;
 
+        await using var transaction = await _dbContext.Database.BeginTransactionAsync(cancellationToken);
+
         var installmentPayment = new InstallmentPayment(request.Amount, request.Date, request.Description);
         order.InstallmentPayments.Add(installmentPayment);
 
@@ -55,12 +61,24 @@ public class CreateInstallmentPaymentHandler : IRequestHandler<CreateInstallment
 
         await _dbContext.SaveChangesAsync(cancellationToken);
 
+        var posted = order.OrderListId is int orderListId
+            ? await _safePosting.PostAsync(
+                installmentPayment.Id, order.Id, orderListId, installmentPayment.Amount,
+                _currentUserService.UserId ?? 0, cancellationToken)
+            : Result.Success();
+        if (posted.IsFailed)
+        {
+            await transaction.RollbackAsync(cancellationToken);
+            return posted.Error!;
+        }
+
         await _activityLogService.AddAsync(
             order.OrderList.BranchId,
             ActivityType.InstallmentPaymentCreated,
             TargetEntityType.InstallmentPayment,
             installmentPayment.Id);
         await _dbContext.SaveChangesAsync(cancellationToken);
+        await transaction.CommitAsync(cancellationToken);
 
         return Result.Success();
     }

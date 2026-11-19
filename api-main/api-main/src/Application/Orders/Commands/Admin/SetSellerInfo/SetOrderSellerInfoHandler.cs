@@ -1,4 +1,5 @@
 ﻿using Application.Common.Interfaces;
+using Application.Safes.Common;
 using Application.Orders.Common;
 using Domain.Entities.ActivityLogAggregate.Enums;
 using Domain.Entities.InstallmentPaymentAggregate;
@@ -18,19 +19,21 @@ public class SetOrderSellerInfoHandler : IRequestHandler<SetOrderSellerInfoComma
     private readonly IDateTimeProvider _dateTimeProvider;
     private readonly INotificationService _notificationService;
     private readonly IActivityLogService _activityLogService;
+    private readonly ISafeLedger _safeLedger;
 
     public SetOrderSellerInfoHandler(
         IApplicationDbContext dbContext,
         ICurrentUserService currentUserService,
         IDateTimeProvider dateTimeProvider,
         INotificationService notificationService,
-        IActivityLogService activityLogService)
+        IActivityLogService activityLogService, ISafeLedger safeLedger)
     {
         _dbContext = dbContext;
         _currentUserService = currentUserService;
         _dateTimeProvider = dateTimeProvider;
         _notificationService = notificationService;
         _activityLogService = activityLogService;
+        _safeLedger = safeLedger;
     }
 
     public async Task<Result> Handle(SetOrderSellerInfoCommand request, CancellationToken cancellationToken)
@@ -62,7 +65,12 @@ public class SetOrderSellerInfoHandler : IRequestHandler<SetOrderSellerInfoComma
             }
         }
 
-        await RegisterForeignProductsPurchaseAsync(order, cancellationToken);
+        // أي خروج مبكر يتراجع تلقائياً عند الـdispose قبل الـcommit
+        await using var dbTransaction = await _dbContext.Database.BeginTransactionAsync(cancellationToken);
+
+        var registerPurchaseResult = await RegisterForeignProductsPurchaseAsync(order, cancellationToken);
+        if (registerPurchaseResult.IsFailed)
+            return registerPurchaseResult;
 
         InstallmentPayment? firstInstallmentPayment = null;
         if (order.PrepaymentAmount > 0)
@@ -90,32 +98,34 @@ public class SetOrderSellerInfoHandler : IRequestHandler<SetOrderSellerInfoComma
             TargetEntityType.Order,
             request.OrderId);
         await _dbContext.SaveChangesAsync(cancellationToken);
+        await dbTransaction.CommitAsync(cancellationToken);
 
         return Result.Success();
     }
 
-    private async Task RegisterForeignProductsPurchaseAsync(Order order, CancellationToken cancellationToken)
+    private async Task<Result> RegisterForeignProductsPurchaseAsync(Order order, CancellationToken cancellationToken)
     {
         var foreignProducts = order.OrderItems
             .Where(x => x.ProductType == ProductType.Foreign)
             .ToList();
         if (foreignProducts.Count == 0)
-            return;
+            return Result.Success();
 
         var foreignProductsBuyAmount = foreignProducts.Sum(x => x.BuyAmount);
         var lastFactorNumber = await _dbContext.Purchases
             .Select(x => (int?)x.FactorNumber)
             .MaxAsync(cancellationToken) ?? 0;
 
-        var branchSafe = await _dbContext.Safes.FirstAsync(x => x.BranchId == order.BranchId, cancellationToken);
-        branchSafe.RemainingCashAmount -= foreignProductsBuyAmount;
+        var branchSafe = await _safeLedger.GetBranchSafeAsync(order.BranchId, cancellationToken);
+        if (branchSafe.IsFailed)
+            return branchSafe.Error;
 
         var transaction = new Transaction(
             foreignProductsBuyAmount,
             TransactionType.Purchase,
             TransactionStatus.Approved,
             TransactionDirection.Out,
-            branchSafe.Id);
+            branchSafe.Data!.Id);
 
         var purchase = new Purchase(
             lastFactorNumber + 1,
@@ -133,5 +143,16 @@ public class SetOrderSellerInfoHandler : IRequestHandler<SetOrderSellerInfoComma
         _dbContext.Purchases.Add(purchase);
 
         _notificationService.AddTransactionCreatedNotification(transaction, order.BranchId);
+
+        return await _safeLedger.RecordAsync(
+            new SafeLedgerEntry
+            {
+                SafeId = branchSafe.Data!.Id,
+                Kind = SafeMovementKind.PurchaseOut,
+                Amount = foreignProductsBuyAmount,
+                Note = $"شراء منتجات خارجية للمبيع {order.Id}",
+                OrderId = order.Id
+            },
+            cancellationToken);
     }
 }

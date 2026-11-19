@@ -50,6 +50,11 @@
     font-family: var(--q-font, 'ElMessiri', 'Rubik', sans-serif);
     max-width: 1400px;
   }
+  /* الحدّ أعلاه لراحة قراءة النصّ، وصفحات الشبكات لا نصّ فيها تقرؤه سطراً
+     فتأخذ عرض الشاشة كلّه. */
+  .q-page--wide {
+    max-width: none;
+  }
   .q-shell,
   .q-shell__main,
   .q-page,

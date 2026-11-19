@@ -16,13 +16,25 @@ public class ComplaintsController : ApiController
     [HttpGet]
     public async Task<ActionResult<ComplaintListResponse>> List(
         [FromQuery] int page = 1,
-        [FromQuery] int pageSize = 50,
-        [FromQuery] bool unreadOnly = false)
+        [FromQuery] int pageSize = 20,
+        [FromQuery] bool unreadOnly = false,
+        [FromQuery] string? search = null,
+        [FromQuery] int? branchId = null)
         => (await _mediator.Send(new ListComplaintsQuery
         {
             Page = page,
             PageSize = pageSize,
-            UnreadOnly = unreadOnly
+            UnreadOnly = unreadOnly,
+            Search = search,
+            BranchId = branchId
+        }, CancellationToken)).ToHttpResponse();
+
+    [HasPermission(Permissions.Complaint.MarkRead)]
+    [HttpPost("mark-all-read")]
+    public async Task<ActionResult<MarkAllComplaintsReadResponse>> MarkAllRead([FromQuery] int? branchId = null)
+        => (await _mediator.Send(new MarkAllComplaintsReadCommand
+        {
+            BranchId = branchId
         }, CancellationToken)).ToHttpResponse();
 
     [HasPermission(Permissions.Complaint.MarkRead)]

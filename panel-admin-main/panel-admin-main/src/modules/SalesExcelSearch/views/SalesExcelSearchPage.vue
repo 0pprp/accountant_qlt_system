@@ -170,7 +170,7 @@ async function runSearch() {
 
 function fmt(n: number | null | undefined) {
   if (n == null || Number.isNaN(n)) return '—'
-  return new Intl.NumberFormat('en-US').format(n)
+  return new Intl.NumberFormat('en-US', { maximumFractionDigits: 0 }).format(n)
 }
 </script>
 

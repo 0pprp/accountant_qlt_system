@@ -1,3 +1,6 @@
+using Application.Attachments.Commands.Common.Create;
+using Domain.Entities.AttachmentAggregate.Enums;
+using Microsoft.EntityFrameworkCore;
 using Application.AppNotes.Common;
 using Application.Committee.Commands.App.AddCustomerNote;
 using Application.Committee.Commands.App.AddDelegateNote;
@@ -130,6 +133,36 @@ public class CommitteeController : ApiController
                 body.Latitude ?? body.Lat,
                 body.Longitude ?? body.Lng),
             CancellationToken);
+        return result.ToHttpResponse();
+    }
+
+    [HasPermission(Permissions.OrderList.Read)]
+    [HttpPost("lists/{listId:int}/customers/{customerId:int}/photo")]
+    [RequestSizeLimit(3 * 1024 * 1024)]
+    public async Task<ActionResult<CreateAttachmentResponse>> CustomerPhoto(
+        int listId, int customerId, [FromForm] IFormFile file,
+        [FromServices] IApplicationDbContext db)
+    {
+        if (!await db.Orders.AsNoTracking().AnyAsync(o =>
+            o.CustomerId == customerId && o.OrderListId == listId &&
+            o.OrderList != null && o.OrderList.MotabaId == _current.UserId, CancellationToken))
+            return Forbid();
+        if (file.Length < 8 || file.Length > 2_000_000)
+            return BadRequest("حجم الصورة غير صالح");
+        await using var stream = file.OpenReadStream();
+        var header = new byte[8];
+        await stream.ReadExactlyAsync(header, CancellationToken);
+        var jpeg = header[0] == 255 && header[1] == 216 && header[2] == 255;
+        if (!jpeg && !header.SequenceEqual(new byte[] {137,80,78,71,13,10,26,10}))
+            return BadRequest("اختر صورة JPEG أو PNG");
+        stream.Position = 0;
+        var image = new FormFile(stream, 0, file.Length, "file", jpeg ? "shop.jpg" : "shop.png")
+        {
+            Headers = new HeaderDictionary(), ContentType = jpeg ? "image/jpeg" : "image/png"
+        };
+        var result = await _mediator.Send(new CreateAttachmentCommand {
+            File = image, CustomerId = customerId, Type = AttachmentType.CustomerShopPhoto
+        }, CancellationToken);
         return result.ToHttpResponse();
     }
 

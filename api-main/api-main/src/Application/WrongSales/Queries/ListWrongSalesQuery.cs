@@ -11,7 +11,7 @@ public sealed class ListWrongSalesQuery : IRequest<Result<WrongSaleListResponse>
     public int Page { get; init; } = 1;
     public int PageSize { get; init; } = 30;
     public int? BranchId { get; init; }
-    /// <summary>unread | read | unreviewed | reviewed | all</summary>
+    /// <summary>unread | read | seen | unreviewed | reviewed | all</summary>
     public string? Mailbox { get; init; }
 }
 
@@ -52,6 +52,7 @@ public sealed class ListWrongSalesHandler : IRequestHandler<ListWrongSalesQuery,
         {
             "unread" => q.Where(x => x.DelegateReadAtUtc == null),
             "read" => q.Where(x => x.DelegateReadAtUtc != null),
+            "seen" => q.Where(x => x.DelegateReadAtUtc != null && x.BranchManagerReviewedAtUtc == null),
             "unreviewed" => q.Where(x => x.BranchManagerReviewedAtUtc == null),
             "reviewed" => q.Where(x => x.BranchManagerReviewedAtUtc != null),
             _ => q
@@ -64,6 +65,9 @@ public sealed class ListWrongSalesHandler : IRequestHandler<ListWrongSalesQuery,
 
         var unread = await baseForCounts.CountAsync(x => x.DelegateReadAtUtc == null, ct);
         var unreviewed = await baseForCounts.CountAsync(x => x.BranchManagerReviewedAtUtc == null, ct);
+        var seen = await baseForCounts.CountAsync(
+            x => x.DelegateReadAtUtc != null && x.BranchManagerReviewedAtUtc == null, ct);
+        var reviewed = await baseForCounts.CountAsync(x => x.BranchManagerReviewedAtUtc != null, ct);
         var total = await q.CountAsync(ct);
         var items = await q
             .OrderByDescending(x => x.CreatedAtUtc)
@@ -74,6 +78,6 @@ public sealed class ListWrongSalesHandler : IRequestHandler<ListWrongSalesQuery,
 
         return new WrongSaleListResponse(
             items.Select(WrongSaleMapper.ToDto).ToList(),
-            total, unread, unreviewed, page, pageSize);
+            total, unread, unreviewed, page, pageSize, seen, reviewed);
     }
 }

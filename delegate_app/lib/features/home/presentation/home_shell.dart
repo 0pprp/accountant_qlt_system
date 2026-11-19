@@ -1,5 +1,7 @@
 import 'dart:io';
 
+import 'package:package_info_plus/package_info_plus.dart';
+
 import 'package:curved_navigation_bar/curved_navigation_bar.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -33,6 +35,7 @@ class _HomeShellState extends State<HomeShell> {
   final _scaffoldKey = GlobalKey<ScaffoldState>();
   late final List<Widget> _pages;
 
+  String _installedVersion = '—';
   int _index = _homeIndex;
   String _delegateName = 'مندوب';
   String _listName = 'قائمة التحصيل';
@@ -45,11 +48,26 @@ class _HomeShellState extends State<HomeShell> {
       HomePage(onOpenMenu: () => _scaffoldKey.currentState?.openDrawer()),
       const TodayPaymentsPage(),
     ];
+    _loadInstalledVersion();
     _loadSessionLabels();
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       if (!mounted) return;
       await AppUpdateGate.checkAndPrompt(context, Injection.dioClient);
     });
+  }
+
+  Future<void> _loadInstalledVersion() async {
+    try {
+      final info = await PackageInfo.fromPlatform();
+      if (!mounted || info.version.isEmpty) return;
+      setState(() {
+        _installedVersion = info.buildNumber.isEmpty
+            ? info.version
+            : '${info.version}+${info.buildNumber}';
+      });
+    } on PlatformException {
+      // The drawer can still open if package metadata is unavailable.
+    }
   }
 
   Future<void> _loadSessionLabels() async {
@@ -149,7 +167,7 @@ class _HomeShellState extends State<HomeShell> {
           onRating: _openRating,
           onAccount: _openAccount,
           onLogout: () => _logout(),
-          appVersion: '1.0.0',
+          appVersion: _installedVersion,
         ),
         // IndexedStack keeps tab state — no reload when switching.
         body: IndexedStack(index: _index, children: _pages),

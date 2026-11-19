@@ -1,11 +1,13 @@
+import '../../../sales/presentation/new_sales_for_rating_page.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/theme/app_text_styles.dart';
+import '../../../management_tasks/presentation/my_tasks_page.dart';
+import '../../../notes/presentation/send_manager_note_page.dart';
 import '../../../sales/presentation/submitted_sales_requests_page.dart';
 import '../tutorial_videos_page.dart';
-import '../../../notes/presentation/send_manager_note_page.dart';
 
 class HomeDrawer extends StatelessWidget {
   const HomeDrawer({
@@ -15,7 +17,7 @@ class HomeDrawer extends StatelessWidget {
     required this.onRating,
     required this.onAccount,
     required this.onLogout,
-    this.appVersion = '1.0.0',
+    required this.appVersion,
   });
 
   final String delegateName;
@@ -64,6 +66,25 @@ class HomeDrawer extends StatelessWidget {
               child: ListView(
                 padding: EdgeInsets.zero,
                 children: [
+                  ListTile(
+                    leading: const Icon(Icons.task_alt_outlined, color: AppColors.primary),
+                    title: Text('مهامي', style: AppTextStyles.body),
+                    onTap: () {
+                      Navigator.pop(context);
+                      Navigator.of(context).push(
+                        MaterialPageRoute(builder: (_) => const MyTasksPage()),
+                      );
+                    },
+                  ),
+                  ListTile(
+                    leading: const Icon(Icons.assignment_turned_in_outlined, color: AppColors.primary),
+                    title: Text('المبيعات الجديدة', style: AppTextStyles.body),
+                    onTap: () {
+                      final navigator = Navigator.of(context);
+                      navigator.pop();
+                      navigator.push(MaterialPageRoute(builder: (_) => const NewSalesForRatingPage()));
+                    },
+                  ),
                   ListTile(
                     leading: const Icon(
                       Icons.star_outline,

@@ -21,4 +21,13 @@ export const SalesRequestEndpoints = {
   matchHits: (id: number) => `/admin/SalesRequests/${id}/match-hits`,
   duplicateRequests: (id: number) =>
     `/admin/SalesRequests/${id}/duplicate-requests`,
+  assignBatch: '/admin/SalesRequests/assign-batch',
+  returnToEmployee: (id: number) => `/admin/SalesRequests/${id}/return`,
+  managerPrepare: (id: number) => `/admin/SalesRequests/${id}/prepare`,
+  managerPend: (id: number) => `/admin/SalesRequests/${id}/pend`,
+  cancelToUnassigned: (id: number) => `/admin/SalesRequests/${id}/cancel-to-unassigned`,
+  transferBranch: (id: number) => `/admin/SalesRequests/${id}/transfer-branch`,
+  deleteSoldImpact: (id: number) => `/admin/SalesRequests/${id}/delete-sold-impact`,
+  deleteSold: (id: number) => `/admin/SalesRequests/${id}/delete-sold`,
+  deletedSales: '/admin/SalesRequests/deleted-sales',
 } as const

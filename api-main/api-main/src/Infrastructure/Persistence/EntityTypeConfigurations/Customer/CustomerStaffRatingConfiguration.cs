@@ -16,6 +16,7 @@ public class CustomerStaffRatingConfiguration : IEntityTypeConfiguration<Custome
         builder.Property(x => x.RatedByName).HasMaxLength(CustomerStaffRating.MaxNameLength);
 
         builder.HasIndex(x => new { x.CustomerId, x.Role }).IsUnique();
+        builder.Property(x => x.Occasion).HasMaxLength(40);
         builder.HasIndex(x => x.RatedAtUtc);
     }
 }

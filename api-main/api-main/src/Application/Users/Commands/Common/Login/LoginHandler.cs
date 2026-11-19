@@ -49,6 +49,11 @@ public class LoginHandler : IRequestHandler<LoginCommand, Result<LoginResponse>>
                 .AnyAsync(x => x.EmployeeUserId == user.Id && x.IsBlocked, cancellationToken);
             if (blocked)
                 return UserErrors.AppBlocked;
+
+            var collectionLocked = await _dbContext.OrderLists.AsNoTracking()
+                .AnyAsync(l => l.MandobId == user.Id && l.FollowerCollectionEnabled, cancellationToken);
+            if (collectionLocked)
+                return UserErrors.DelegateCollectionLocked;
         }
 
         var userDetails = await _dbContext.Users.AsNoTracking()

@@ -9,6 +9,8 @@ namespace Application.SalesRequests.Common;
 
 public static class SalesRequestExceptionDecider
 {
+    public const int MaxNoteLength = 500;
+
     public static async Task<Result> DecideAsync(
         IApplicationDbContext db,
         ICurrentUserService currentUser,
@@ -25,8 +27,9 @@ public static class SalesRequestExceptionDecider
         if (actorId <= 0)
             return SalesRequestErrors.ActionForbidden;
 
-        if (string.IsNullOrWhiteSpace(reason))
-            return SalesRequestErrors.NoteRequired;
+        var trimmed = (reason ?? string.Empty).Trim();
+        if (trimmed.Length > MaxNoteLength)
+            return SalesRequestErrors.DecisionNoteTooLong;
 
         var branches = SalesRequestAccess.AuthorizedBranches(currentUser);
         var entity = await db.SalesRequests
@@ -57,19 +60,24 @@ public static class SalesRequestExceptionDecider
         }
 
         var at = clock.UtcNowOffset;
-        var trimmed = reason.Trim();
 
+        var prevStatus = entity.Status;
         if (approve)
             entity.ApproveException(actorId, at);
         else
+        {
             entity.RejectException(actorId, at);
+            entity.Reject(trimmed.Length == 0 ? "رفض الاستثناء" : $"رفض الاستثناء: {trimmed}", at, clearAssignee: true);
+        }
+
+        entity.ExceptionReadAtUtc ??= at;
 
         SalesRequestTimelineWriter.Append(
             db, entity.Id,
             approve ? SalesRequestTimelineEventType.ExceptionApproved : SalesRequestTimelineEventType.ExceptionRejected,
             actorId, at,
-            entity.Status, entity.Status, entity.TargetEmployeeId, entity.TargetEmployeeId,
-            trimmed, Guid.NewGuid());
+            prevStatus, entity.Status, entity.TargetEmployeeId, entity.TargetEmployeeId,
+            trimmed.Length == 0 ? null : trimmed, Guid.NewGuid());
         SalesRequestChangeOutboxWriter.Append(
             db, entity, SalesRequestChangeType.Invalidation, at, entity.TargetEmployeeId);
 

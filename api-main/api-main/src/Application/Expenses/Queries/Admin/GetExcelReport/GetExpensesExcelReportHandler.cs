@@ -1,5 +1,6 @@
-using Application.Common.Extensions;
+﻿using Application.Common.Extensions;
 using Application.Common.Interfaces;
+using Domain.Entities.SafeAggregate.Enums;
 using Application.Common.Utilities;
 using Microsoft.EntityFrameworkCore;
 
@@ -26,7 +27,7 @@ public class GetExpensesExcelReportHandler : IRequestHandler<GetExpensesExcelRep
                 Id = x.Id,
                 FactorNumber = x.FactorNumber,
                 TotalAmount = x.TotalAmount,
-                SafeName = x.Branch!.Safe!.Name,
+                SafeName = x.Branch!.Safes.Where(s => s.Kind == SafeKind.Branch).Select(s => s.Name).FirstOrDefault(),
                 ExpenseItemsCount = x.ExpenseItems.Count,
                 CreatedAt = x.CreatedAt!.Value
             })

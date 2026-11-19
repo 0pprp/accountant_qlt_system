@@ -13,6 +13,7 @@
     "delegate": "المدير المفوض"
   },
   "tabs": {
+    "branchArchive": "الأرشيف",
     "customers": "العملاء",
     "payments": "التسديدات",
     "sales": "المبيعات",
@@ -56,6 +57,7 @@
   "appTabs": {
     "branch": {
       "tasks": "مهامي",
+      "archive": "الأرشيف",
       "legal": "أسماء قانونية",
       "declining": "الزبائن المتدنية",
       "customers": "الزبائن",

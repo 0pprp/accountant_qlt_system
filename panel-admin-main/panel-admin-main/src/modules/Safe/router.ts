@@ -1,5 +1,5 @@
 import type { Router, RouteRecordRaw } from 'vue-router'
-import type { PermissionAction, PermissionModule } from '../Auth/types/model'
+import { panelTabRequirement } from '@/modules/Core/navigation/panelTabAccess'
 
 export const SafeRoutes: RouteRecordRaw = {
   path: '/safe',
@@ -8,46 +8,25 @@ export const SafeRoutes: RouteRecordRaw = {
     {
       path: '',
       name: 'SafeMainRoute',
-      component: () => import('./views/SafeView.vue'),
+      component: () => import('./views/SafeWorkspace.vue'),
       meta: {
         layout: 'Default',
         requiresAuth: true,
-        permission: {
-          module: 'Safe' as PermissionModule,
-          action: 'Read' as PermissionAction,
-        },
+        accessRequirement: panelTabRequirement('safe'),
       },
     },
     {
-      path: 'main',
-      name: 'SafeMainMainRoute',
-      component: () => import('./views/SafeView.vue'),
+      path: ':id/movements',
+      name: 'SafeMovementsRoute',
+      component: () => import('./views/SafeMovementsPage.vue'),
       meta: {
         layout: 'Default',
         requiresAuth: true,
-        permission: {
-          module: 'Safe' as PermissionModule,
-          action: 'Read' as PermissionAction,
-        },
-      },
-    },
-    {
-      path: 'transactions',
-      name: 'SafeTransactionsRoute',
-      component: () => import('./views/SafeTransactionView.vue'),
-      meta: {
-        layout: 'Default',
-        requiresAuth: true,
-        permission: {
-          module: 'Transaction' as PermissionModule,
-          action: 'Read' as PermissionAction,
-        },
+        accessRequirement: panelTabRequirement('safe'),
       },
     },
   ],
-  meta: {
-    layout: 'Default',
-  },
+  meta: { layout: 'Default' },
 }
 
 export default (router: Router) => {

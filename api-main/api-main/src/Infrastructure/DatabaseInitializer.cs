@@ -1,7 +1,8 @@
-using Application.Common.Interfaces;
+﻿using Application.Common.Interfaces;
 using Application.Common.SeedData;
 using Application.Common.Settings;
 using Application.Common.Utilities;
+using Application.Safes.Common;
 using Domain.Entities.MobileAppReleaseAggregate;
 using Domain.Entities.RoleAggregate;
 using Domain.Entities.SafeAggregate;
@@ -17,14 +18,16 @@ public class DatabaseInitializer
     private readonly ILogger<DatabaseInitializer> _logger;
     private readonly AdminData _adminData;
     private readonly IDateTimeProvider _dateTimeProvider;
+    private readonly SafeProvisioner _safeProvisioner;
 
     public DatabaseInitializer(IApplicationDbContext dbContext, ILogger<DatabaseInitializer> logger, AdminData adminData,
-        IDateTimeProvider dateTimeProvider)
+        IDateTimeProvider dateTimeProvider, SafeProvisioner safeProvisioner)
     {
         _dbContext = dbContext;
         _logger = logger;
         _adminData = adminData;
         _dateTimeProvider = dateTimeProvider;
+        _safeProvisioner = safeProvisioner;
     }
 
     public virtual async Task CreateDatabaseAsync()
@@ -52,7 +55,7 @@ public class DatabaseInitializer
 
             await SeedSuperAdminAsync();
 
-            await SeedMainSafeAsync();
+            await RepairSafesAsync();
 
             await SeedMobileAppReleasesAsync();
         }
@@ -98,6 +101,7 @@ public class DatabaseInitializer
             .Concat(Permissions.BranchVisit.OutsideAll)
             .Concat(Permissions.BranchManagerAccount.OutsideAll)
             .Concat(Permissions.DelegateHome.OutsideAll)
+            .Concat(Permissions.Archive.OutsideAll)
             .Concat(Application.Common.AdminPanel.AdminPanelTabs.OutsideAll)
             .ToList();
 
@@ -173,16 +177,13 @@ public class DatabaseInitializer
         await _dbContext.SaveChangesAsync();
     }
 
-    private async Task SeedMainSafeAsync()
+    /// <summary>
+    /// ترميم خزائن كل فرع وقائمة وموظف — idempotent. القاصة الرئيسية أُلغيت:
+    /// كل خزينة تابعة لفرع، وكل فرع له قاصته وسجل صرفياته.
+    /// </summary>
+    private async Task RepairSafesAsync()
     {
-        const string safeName = "القاصة الرئيسية";
-        var isSafeExist = await _dbContext.Safes.AnyAsync(x => x.Name == safeName);
-        if (isSafeExist)
-            return;
-        
-        var safe = new Safe(safeName);
-        _dbContext.Safes.Add(safe);
-        await _dbContext.SaveChangesAsync();
+        await _safeProvisioner.RepairAllAsync(CancellationToken.None);
     }
 
     private async Task SeedMobileAppReleasesAsync()

@@ -32,10 +32,14 @@ public static class ConfigureServices
         services.AddSingleton<PdfReportGenerator>();
         services.AddScoped<INotificationService, NotificationService>();
         services.AddScoped<IActivityLogService, ActivityLogService>();
+        services.AddScoped<Application.Safes.Common.ISafeLedger, Application.Safes.Common.SafeLedger>();
+        services.AddScoped<Application.Safes.Common.SafeProvisioner>();
+        services.AddScoped<Application.Safes.Common.PaymentSafePosting>();
         services.AddScoped<ISalesRequestChangeNotifier, SalesRequestChangeNotifier>();
         services.AddScoped<SalesRequestHubIdentityResolver>();
         services.AddScoped<SalesRequestOutboxProcessor>();
         services.AddScoped<ManagementTaskOutboxProcessor>();
+        services.AddScoped<Archive.Common.ArchiveReconciler>();
         services.AddScoped<Application.SalesFollowup.Common.SalesFollowupDataService>();
         services.AddScoped<Application.SalesOverview.Common.SalesOverviewDataService>();
         services.AddScoped<Application.SalesEmployees.Common.SalesEmployeesDataService>();

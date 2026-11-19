@@ -1,3 +1,4 @@
-﻿namespace Application.Safes.Queries.Admin.GetAll;
+namespace Application.Safes.Queries.Admin.GetAll;
 
-public record GetAllSafesQuery : IRequest<Result<List<GetAllSafesResponse>>>;
+/// <summary>خزائن فرع واحد. يُقيَّد بنطاق فروع الجلسة.</summary>
+public record GetAllSafesQuery(int BranchId) : IRequest<Result<List<GetAllSafesResponse>>>;

@@ -1,4 +1,4 @@
-using Application.Common.Interfaces;
+﻿using Application.Common.Interfaces;
 using Application.Common.Settings;
 using Application.Common.Utilities;
 using Infrastructure.Persistence;
@@ -60,6 +60,7 @@ public static class ConfigureServices
 
         services.AddHostedService<SalesRequestOutboxDispatcher>();
         services.AddHostedService<ManagementTaskOutboxDispatcher>();
+        services.AddHostedService<ArchiveReconcileWorker>();
 
         services.AddMemoryCache();
 

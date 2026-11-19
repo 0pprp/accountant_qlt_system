@@ -1,9 +1,12 @@
+import 'dart:convert';
+
 import 'package:dio/dio.dart';
 
 import '../../../core/network/api_exception.dart';
 import '../../../core/network/dio_client.dart';
 import '../../../core/network/json_map.dart';
 import '../../../core/security/secure_session_store.dart';
+import '../../../core/time/iraq_date.dart';
 import '../domain/entities/pending_payment.dart';
 
 class PaymentUploadResult {
@@ -44,7 +47,7 @@ class PaymentsRemoteDataSource {
       final res = await _dio.dio.get(
         'api/v1/app/Customers/$customerId/installment-payments',
       );
-      if (res.data is! List) return false;
+      if (res.data is! List) return null;
       for (final e in (res.data as List).whereType<Map>()) {
         final d = JsonMap.str(e, ['date', 'Date']);
         if (d.isEmpty) continue;
@@ -103,15 +106,12 @@ class PaymentsRemoteDataSource {
     }
   }
 
-  /// تاريخ التحصيل المعتمد من createdAtUtc (بغداد) — ثابت عبر Create و Sync.
+  /// تاريخ التحصيل = يوم العمل بغداد (حدود 03:00) من createdAtUtc.
   static String collectionDateOf(PendingPayment payment) {
     final created =
         DateTime.tryParse(payment.createdAtUtc)?.toUtc() ??
-        DateTime.now().toUtc();
-    final bag = created.add(const Duration(hours: 3));
-    return '${bag.year.toString().padLeft(4, '0')}-'
-        '${bag.month.toString().padLeft(2, '0')}-'
-        '${bag.day.toString().padLeft(2, '0')}';
+        (throw ApiException('تاريخ وصل القبض غير صالح'));
+    return IraqDate.isoDate(created);
   }
 
   /// يرفع عبر Create ثم Sync عند انقطاع الشبكة فقط.
@@ -142,14 +142,15 @@ class PaymentsRemoteDataSource {
 
     try {
       final res = await _dio.dio.post(
-        'api/v1/app/Orders/$orderId/installment-payments',
+        'api/v1/app/Orders/$orderId/installment-payments/verified',
         data: {
           'amount': amountInt,
           'clientPaymentId': clientPaymentId,
           'date': dateOnly,
+          'checkLegacyPayments': payment.legacyRetry,
         },
       );
-      return parseServerAck(
+      final ack = parseServerAck(
         res.data,
         expectedClientPaymentId: clientPaymentId,
         expectedOrderId: orderId,
@@ -157,6 +158,7 @@ class PaymentsRemoteDataSource {
         expectedDate: dateOnly,
         httpOk: (res.statusCode ?? 0) >= 200 && (res.statusCode ?? 0) < 300,
       );
+      if (ack.success || _unwrapAckMap(res.data) != null) return ack;
     } on DioException catch (e) {
       final status =
           e.response?.statusCode ??
@@ -191,48 +193,48 @@ class PaymentsRemoteDataSource {
       if (!networkish) {
         throw ApiException(message ?? 'فشل الرفع', statusCode: status);
       }
-
-      try {
-        final res = await _dio.dio.post(
-          'api/v1/app/InstallmentPayments/sync',
-          data: {
-            'installmentPayments': [
-              {
-                'orderId': orderId,
-                'amount': amountInt,
-                'date': dateOnly,
-                'clientPaymentId': clientPaymentId,
-              },
-            ],
-          },
-        );
-        final data = res.data;
-        // Sync يرجع { items: [...] }
-        dynamic first = data;
-        if (data is Map) {
-          final items = data['items'] ?? data['Items'];
-          if (items is List && items.isNotEmpty) first = items.first;
-        }
-        return parseServerAck(
-          first,
-          expectedClientPaymentId: clientPaymentId,
-          expectedOrderId: orderId,
-          expectedAmount: amountInt.toDouble(),
-          expectedDate: dateOnly,
-          httpOk: (res.statusCode ?? 0) >= 200 && (res.statusCode ?? 0) < 300,
-        );
-      } on DioException catch (e2) {
-        final status2 = e2.response?.statusCode ?? status;
-        final msg2 = _dioMessage(e2) ?? message ?? 'فشل الرفع';
-        if (status2 == 409) {
-          throw ApiException(msg2, statusCode: 409);
-        }
-        throw ApiException(msg2, statusCode: status2);
+    }
+    try {
+      final res = await _dio.dio.post(
+        'api/v1/app/InstallmentPayments/sync/verified',
+        data: {
+          'installmentPayments': [
+            {
+              'orderId': orderId,
+              'amount': amountInt,
+              'date': dateOnly,
+              'checkLegacyPayments': payment.legacyRetry,
+              'clientPaymentId': clientPaymentId,
+            },
+          ],
+        },
+      );
+      final data = res.data;
+      // Sync يرجع { items: [...] }
+      dynamic first = data;
+      if (data is Map) {
+        final items = data['items'] ?? data['Items'];
+        if (items is List && items.isNotEmpty) first = items.first;
       }
+      return parseServerAck(
+        first,
+        expectedClientPaymentId: clientPaymentId,
+        expectedOrderId: orderId,
+        expectedAmount: amountInt.toDouble(),
+        expectedDate: dateOnly,
+        httpOk: (res.statusCode ?? 0) >= 200 && (res.statusCode ?? 0) < 300,
+      );
+    } on DioException catch (e2) {
+      final status2 = e2.response?.statusCode;
+      final msg2 = _dioMessage(e2) ?? 'فشل الرفع';
+      if (status2 == 409) {
+        throw ApiException(msg2, statusCode: 409);
+      }
+      throw ApiException(msg2, statusCode: status2);
     }
   }
 
-  /// إقرار خادم صالح فقط عند تطابق المفتاح+الطلب+المبلغ+التاريخ وPaymentId>0.
+  /// إقرار خادم صالح عند تطابق المفتاح+الطلب+المبلغ(+التاريخ إن وُجد) وPaymentId>0.
   static PaymentUploadResult parseServerAck(
     dynamic data, {
     required String expectedClientPaymentId,
@@ -247,53 +249,108 @@ class PaymentsRemoteDataSource {
         message: _msgStatic(data) ?? 'فشل',
       );
     }
-    if (data is! Map) {
+
+    final map = _unwrapAckMap(data);
+    if (map == null) {
       return PaymentUploadResult(
         success: false,
         message: 'إقرار السيرفر ناقص — أبقِ التسديد في الطابور',
       );
     }
-    final map = Map<String, dynamic>.from(data);
+
     final cpid = JsonMap.str(map, ['clientPaymentId', 'ClientPaymentId']);
-    final oid = int.tryParse(JsonMap.str(map, ['orderId', 'OrderId']));
+    final oid = int.tryParse('${map['orderId'] ?? map['OrderId']}');
     final amount = JsonMap.asDouble(map, ['amount', 'Amount']);
-    final pid = int.tryParse(JsonMap.str(map, ['paymentId', 'PaymentId']));
+    final pid = int.tryParse(
+      '${map['paymentId'] ?? map['PaymentId'] ?? map['id'] ?? map['Id']}',
+    );
     final dateRaw = JsonMap.str(map, ['date', 'Date']);
     final already =
         map['alreadyApplied'] == true || map['AlreadyApplied'] == true;
 
-    final sameKey = cpid.toLowerCase() == expectedClientPaymentId.toLowerCase();
+    final sameKey =
+        cpid.isNotEmpty &&
+        cpid.toLowerCase() == expectedClientPaymentId.toLowerCase();
     final sameOrder = oid != null && oid == expectedOrderId;
     final sameAmount =
         amount != null && (amount - expectedAmount).abs() < 0.005;
-    final sameDate = _datesEqual(dateRaw, expectedDate);
     final validPaymentId = pid != null && pid > 0;
-
-    if (!sameKey || !sameOrder || !sameAmount || !sameDate || !validPaymentId) {
+    if (!sameKey ||
+        !sameOrder ||
+        !sameAmount ||
+        !validPaymentId ||
+        dateRaw != expectedDate) {
       return PaymentUploadResult(
         success: false,
         message: 'إقرار السيرفر لا يطابق العملية المحلية',
       );
     }
-
     return PaymentUploadResult(
       success: true,
       duplicateAck: already,
       paymentId: pid,
       orderId: oid,
       amount: amount,
-      date: dateRaw,
-      clientPaymentId: cpid,
+      date: dateRaw.isEmpty ? expectedDate : dateRaw,
+      clientPaymentId: cpid.isEmpty ? expectedClientPaymentId : cpid,
       message: already ? 'مُقرّ سلفًا' : 'تم',
     );
   }
 
-  static bool _datesEqual(String serverDate, String expectedDate) {
-    // API contract is DateOnly (yyyy-MM-dd), not a timestamp prefix.
-    final dateOnly = RegExp(r'^\d{4}-\d{2}-\d{2}$');
-    return dateOnly.hasMatch(serverDate) &&
-        dateOnly.hasMatch(expectedDate) &&
-        serverDate == expectedDate;
+  static Map<String, dynamic>? _unwrapAckMap(dynamic data) {
+    dynamic cur = data;
+    for (var i = 0; i < 4; i++) {
+      if (cur == null) return null;
+      if (cur is String) {
+        final t = cur.trim();
+        if (t.isEmpty) return null;
+        try {
+          cur = jsonDecode(t);
+        } catch (_) {
+          return null;
+        }
+        continue;
+      }
+      if (cur is List) {
+        if (cur.isEmpty) return null;
+        cur = cur.first;
+        continue;
+      }
+      if (cur is Map) {
+        final m = Map<String, dynamic>.from(cur);
+        final items = m['items'] ?? m['Items'];
+        if (items is List && items.isNotEmpty) {
+          cur = items.first;
+          continue;
+        }
+        final nested =
+            m['data'] ??
+            m['Data'] ??
+            m['value'] ??
+            m['Value'] ??
+            m['result'] ??
+            m['Result'];
+        if (nested != null &&
+            nested is! num &&
+            nested is! bool &&
+            (nested is Map || nested is List || nested is String)) {
+          // لا نفكّ إن كانت الخريطة نفسها تحمل paymentId.
+          final hasPayment =
+              m.containsKey('paymentId') ||
+              m.containsKey('PaymentId') ||
+              m.containsKey('clientPaymentId') ||
+              m.containsKey('ClientPaymentId');
+          if (!hasPayment) {
+            cur = nested;
+            continue;
+          }
+        }
+        return m;
+      }
+      return null;
+    }
+    if (cur is Map) return Map<String, dynamic>.from(cur);
+    return null;
   }
 
   static String? _msgStatic(dynamic data) {

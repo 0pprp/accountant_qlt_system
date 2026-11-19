@@ -1,3 +1,6 @@
+import { MATCH_SUMMARY_KEY } from '../queries/useMatchSummaryQuery'
+import { MATCH_HITS_KEY } from '../queries/useMatchHitsQuery'
+import { DUPLICATES_KEY } from '../queries/useDuplicateRequestsQuery'
 import { useMutation, useQueryClient } from '@tanstack/vue-query'
 import { axiosInstance } from '@/modules/Core/plugins/axios'
 import { SalesRequestEndpoints } from '@/modules/SalesRequests/domain/endpoints'
@@ -32,6 +35,9 @@ export function useUpdateSalesRequestMutation() {
         reason: payload.reason,
       }),
     onSuccess: (_data, vars) => {
+      for (const key of [MATCH_SUMMARY_KEY, MATCH_HITS_KEY, DUPLICATES_KEY]) {
+        void qc.invalidateQueries({ queryKey: [key] })
+      }
       void qc.invalidateQueries({ queryKey: [UNASSIGNED_QUERY_KEY] })
       void qc.invalidateQueries({ queryKey: [SALES_REQUESTS_QUERY_KEY] })
       void qc.invalidateQueries({ queryKey: [SALES_REQUEST_COUNTS_KEY] })

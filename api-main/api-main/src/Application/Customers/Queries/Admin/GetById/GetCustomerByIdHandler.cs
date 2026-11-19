@@ -31,6 +31,8 @@ public class GetCustomerByIdHandler : IRequestHandler<GetCustomerByIdQuery, Resu
                 x.PhoneNumber,
                 x.WhatsAppPhoneNumber,
                 x.Business,
+                x.SellAmountDiscount,
+                x.DailyInstallmentDiscount,
                 BranchId = x.BranchId,
                 BranchName = x.Branch!.Name,
                 Attachments = x.Attachments.Select(a => new GetAttachmentDto
@@ -78,6 +80,8 @@ public class GetCustomerByIdHandler : IRequestHandler<GetCustomerByIdQuery, Resu
                 row.LastInstallmentPaymentDate,
                 asOf),
             Business = row.Business,
+            SellAmountDiscount = row.SellAmountDiscount,
+            DailyInstallmentDiscount = row.DailyInstallmentDiscount,
             Branch = new GetBranchDto
             {
                 Id = row.BranchId,

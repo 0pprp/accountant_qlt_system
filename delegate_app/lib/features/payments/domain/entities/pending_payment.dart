@@ -20,6 +20,7 @@ class PendingPayment {
     this.orderId,
     this.syncError,
     this.permanentFailure = false,
+    this.legacyRetry = false,
   });
 
   final int id;
@@ -36,6 +37,7 @@ class PendingPayment {
   final String? receiptNumber;
   final String? syncError;
   final bool permanentFailure;
+  final bool legacyRetry;
 
   PendingPayment copyWith({
     int? orderId,
@@ -57,6 +59,7 @@ class PendingPayment {
       ownerAsyncId: ownerAsyncId,
       receiptNumber: receiptNumber,
       syncError: syncError ?? this.syncError,
+      legacyRetry: legacyRetry,
       permanentFailure: permanentFailure ?? this.permanentFailure,
     );
   }
