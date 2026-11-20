@@ -54,8 +54,17 @@ class DioClient {
               !e.requestOptions.path.contains('Auth/refresh-token') &&
               !e.requestOptions.path.contains('Auth/login') &&
               e.requestOptions.extra['auth_retried'] != true) {
-            final refreshed = await _tryRefreshToken();
-            if (refreshed) {
+            final outcome = await _tryRefreshToken();
+            if (outcome == RefreshOutcome.unreachable) {
+              return handler.reject(
+                DioException(
+                  requestOptions: e.requestOptions,
+                  type: DioExceptionType.connectionError,
+                  error: ApiException(networkMessage),
+                ),
+              );
+            }
+            if (outcome == RefreshOutcome.ok) {
               try {
                 final req = e.requestOptions;
                 req.extra['auth_retried'] = true;
@@ -89,12 +98,24 @@ class DioClient {
   late final Dio _dio;
   Dio get dio => _dio;
 
+  static const networkMessage = 'لا يوجد اتصال بالإنترنت';
+
   bool _refreshing = false;
-  Future<bool>? _refreshFuture;
+  Future<RefreshOutcome>? _refreshFuture;
 
   final List<int> recentDurationsMs = <int>[];
 
-  Future<bool> _tryRefreshToken() async {
+  /// رفض الخادم وحده يعني انتهاء الجلسة؛ انقطاع الشبكة لا يُخرج المندوب.
+  static RefreshOutcome classifyRefreshFailure(Object error) {
+    if (error is DioException) {
+      final code = error.response?.statusCode;
+      if (code == 400 || code == 401 || code == 403) return RefreshOutcome.rejected;
+      return RefreshOutcome.unreachable;
+    }
+    return RefreshOutcome.rejected;
+  }
+
+  Future<RefreshOutcome> _tryRefreshToken() async {
     if (_refreshing && _refreshFuture != null) {
       return _refreshFuture!;
     }
@@ -102,7 +123,7 @@ class DioClient {
     _refreshFuture = () async {
       try {
         final refresh = await _session.refreshToken;
-        if (refresh == null || refresh.isEmpty) return false;
+        if (refresh == null || refresh.isEmpty) return RefreshOutcome.rejected;
         // Use a bare Dio call to avoid interceptor recursion.
         final bare = Dio(
           BaseOptions(
@@ -120,18 +141,18 @@ class DioClient {
           data: {'refreshToken': refresh},
         );
         final data = res.data;
-        if (data is! Map) return false;
+        if (data is! Map) return RefreshOutcome.rejected;
         final access = '${data['accessToken'] ?? data['AccessToken'] ?? ''}';
         final nextRefresh =
             '${data['refreshToken'] ?? data['RefreshToken'] ?? ''}';
-        if (access.isEmpty || nextRefresh.isEmpty) return false;
+        if (access.isEmpty || nextRefresh.isEmpty) return RefreshOutcome.rejected;
         await _session.saveTokens(
           accessToken: access,
           refreshToken: nextRefresh,
         );
-        return true;
-      } catch (_) {
-        return false;
+        return RefreshOutcome.ok;
+      } catch (e) {
+        return classifyRefreshFailure(e);
       } finally {
         _refreshing = false;
         _refreshFuture = null;
@@ -201,3 +222,5 @@ class DioClient {
     return null;
   }
 }
+
+enum RefreshOutcome { ok, rejected, unreachable }

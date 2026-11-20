@@ -1,4 +1,4 @@
-using Application.Branches.Common;
+﻿using Application.Branches.Common;
 using Application.Common;
 using Application.Common.AdminPanel;
 using Application.Common.Interfaces;
@@ -105,9 +105,9 @@ public class AuthService : IAuthService
         var newJwtToken = _tokenFactoryService.CreateUserJwt(createJwtDto);
         var newRefreshToken = _tokenFactoryService.CreateRefreshToken();
 
-        await _dbContext.UserLogins
-            .Where(x => x.RefreshToken == hashedRefreshToken)
-            .ExecuteUpdateAsync(x => x.SetProperty(ul => ul.RefreshToken, HashRefreshToken(newRefreshToken)), cancellationToken);
+        await RefreshTokenRotation.RotateAsync(
+            _dbContext, userLogin.UserId, hashedRefreshToken, HashRefreshToken(newRefreshToken),
+            _dateTimeProvider.UtcNowOffset, cancellationToken);
         
         var groupedPermissions = GroupPermissionsForClient(userLogin.Permissions);
         
