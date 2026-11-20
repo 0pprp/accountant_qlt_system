@@ -68,6 +68,18 @@ export const FOLLOWER_PANEL_TAB_KEYS = [
   'followerManage',
 ] as const
 
+export const FIELD_PROMOTER_PANEL_TAB_KEYS = [
+  'fpHome',
+  'fpLiveMap',
+  'fpDay',
+  'fpAttendance',
+  'fpPins',
+  'fpOrders',
+  'fpAlerts',
+  'fpPromoters',
+  'fpSettings',
+] as const
+
 export const MANAGEMENT_LEAF_PANEL_TAB_KEYS = [
   'managementSummary',
   'managementRatings',
@@ -125,6 +137,15 @@ export const SIDEBAR_ID_TO_PANEL_TAB: Readonly<Record<string, string>> = {
   followerLiveMap: 'followerLiveMap',
   followerRoutes: 'followerRoutes',
   followerShopCapture: 'followerShopCapture',
+  fpHome: 'fpHome',
+  fpLiveMap: 'fpLiveMap',
+  fpDay: 'fpDay',
+  fpAttendance: 'fpAttendance',
+  fpPins: 'fpPins',
+  fpOrders: 'fpOrders',
+  fpAlerts: 'fpAlerts',
+  fpPromoters: 'fpPromoters',
+  fpSettings: 'fpSettings',
 }
 
 /** حاويات: أي ابن مفتوح يكفي لعرض الحاوية */
@@ -138,6 +159,10 @@ export const SIDEBAR_ID_TO_PANEL_TABS_ANY: Readonly<
     ...string[],
   ],
   managementFollowerWork: FOLLOWER_PANEL_TAB_KEYS as unknown as [
+    string,
+    ...string[],
+  ],
+  managementFieldPromoter: FIELD_PROMOTER_PANEL_TAB_KEYS as unknown as [
     string,
     ...string[],
   ],
@@ -187,6 +212,15 @@ export const MANAGEMENT_TAB_TO_PANEL_TAB: Readonly<Record<string, string>> = {
   accounts: 'app-delegate-accounts',
   branchVisits: 'app-delegate-branchVisits',
   delegateSettings: 'app-delegate-delegateSettings',
+  fpHome: 'fpHome',
+  fpLiveMap: 'fpLiveMap',
+  fpDay: 'fpDay',
+  fpAttendance: 'fpAttendance',
+  fpPins: 'fpPins',
+  fpOrders: 'fpOrders',
+  fpAlerts: 'fpAlerts',
+  fpPromoters: 'fpPromoters',
+  fpSettings: 'fpSettings',
   // مسارات مشتركة داخل الإدارة
   saleRequests: 'sr.incoming',
   saleFollowup: 'saleFollowup',
@@ -267,6 +301,7 @@ export const TAB_PARENT_LABELS_AR: Readonly<Record<string, string>> = {
   managementFollowerWork: 'عمل المتابعين',
   managementBranch: 'تطبيق الفرع',
   managementDelegate: 'تطبيق المفوض',
+  managementFieldPromoter: 'المروّجون الميدانيون',
 }
 
 /** ترتيب الأقسام كما في السايدبار */
@@ -278,4 +313,5 @@ export const TAB_PARENT_ORDER: readonly string[] = [
   'managementFollowerWork',
   'managementBranch',
   'managementDelegate',
+  'managementFieldPromoter',
 ]

@@ -19,6 +19,7 @@ public static class Roles
         All.Add(Monitor);
         All.Add(SalesManager);
         All.Add(ArchiveOfficer);
+        All.Add(FieldPromoter);
     }
     
     public static readonly RoleName Admin = new(nameof(Admin), "المدیر");
@@ -29,6 +30,9 @@ public static class Roles
     public static readonly RoleName Ceo = new(nameof(Ceo), "المدیر التنفیذی");
     public static readonly RoleName Mandob = new(nameof(Mandob), "المندوب");
     public static readonly RoleName Motaba = new(nameof(Motaba), "المتابع");
+
+    /// <summary>مروّج ميداني: يرسل طلبات بيع ويثبّت المحلات ويُتتبَّع موقعه أثناء الدوام.</summary>
+    public static readonly RoleName FieldPromoter = new(nameof(FieldPromoter), "مروّج ميداني");
 
     /// <summary>قالب افتراضي — مصدر: FE_Company UserType «المدير». لا يمنح ManagePermissions.</summary>
     public static readonly RoleName Director = new(nameof(Director), "المدير");

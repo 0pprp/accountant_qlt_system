@@ -152,6 +152,7 @@ export type PermissionModule =
   | 'DelegateHome'
   | 'PanelTab'
   | 'Archive'
+  | 'FieldPromoter'
   | FollowerWorkPermissionModule
 
 export interface ModulePermissions {
@@ -271,6 +272,7 @@ export interface PermissionTypes {
   BranchManagerAccount?: Permissions[]
   DelegateHome?: Permissions[]
   PanelTab?: Permissions[]
+  FieldPromoter?: Permissions[]
   FollowerWork?: Permissions[]
   FollowerSalesReview?: Permissions[]
   FollowerDeclining?: Permissions[]
@@ -334,6 +336,7 @@ export interface ConvertedPermissionTypes {
   BranchManagerAccount?: ModulePermissions
   DelegateHome?: ModulePermissions
   PanelTab?: ModulePermissions
+  FieldPromoter?: ModulePermissions
   FollowerWork?: ModulePermissions
   FollowerSalesReview?: ModulePermissions
   FollowerDeclining?: ModulePermissions

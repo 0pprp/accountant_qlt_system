@@ -36,7 +36,8 @@ public static class SalesRequestTabMap
     [
         SalesRequestSourceType.EmployeeSubmitted,
         SalesRequestSourceType.Follower,
-        SalesRequestSourceType.Delegate
+        SalesRequestSourceType.Delegate,
+        SalesRequestSourceType.FieldPromoter
     ];
 
     /// <summary>مصادر لها مسار إدخال مربوط فعليًا في الشيفرة: لا شيء.</summary>

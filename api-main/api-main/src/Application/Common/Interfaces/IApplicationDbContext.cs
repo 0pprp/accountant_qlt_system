@@ -79,6 +79,12 @@ public interface IApplicationDbContext : IAsyncDisposable
     public DbSet<ActivityLog> ActivityLogs { get; set; }
     public DbSet<SalesShift> SalesShifts { get; set; }
     public DbSet<SalesLocationPoint> SalesLocationPoints { get; set; }
+    public DbSet<Domain.Entities.FieldPromoterAggregate.FieldPromoterProfile> FieldPromoterProfiles { get; set; }
+    public DbSet<Domain.Entities.FieldPromoterAggregate.FieldPromoterPin> FieldPromoterPins { get; set; }
+    public DbSet<Domain.Entities.FieldPromoterAggregate.FieldPromoterOrderShop> FieldPromoterOrderShops { get; set; }
+    public DbSet<Domain.Entities.FieldPromoterAggregate.FieldPromoterAlert> FieldPromoterAlerts { get; set; }
+    public DbSet<Domain.Entities.FieldPromoterAggregate.FieldPromoterDay> FieldPromoterDays { get; set; }
+    public DbSet<Domain.Entities.FieldPromoterAggregate.FieldPromoterSettings> FieldPromoterSettings { get; set; }
     public DbSet<Domain.Entities.SalesEmployeeAggregate.SalesEmployeeAssignment> SalesEmployeeAssignments { get; set; }
     public DbSet<SalesRequest> SalesRequests { get; set; }
     public DbSet<SalesRequestTimelineEntry> SalesRequestTimelineEntries { get; set; }

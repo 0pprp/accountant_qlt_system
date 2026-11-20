@@ -3,7 +3,7 @@ import type { NavigationSectionDefinition } from '@/modules/Core/navigation/navi
 import { requirementForManagementTabId } from '@/modules/Core/navigation/panelTabAccess'
 import { getReadyTabsForSection, getTabByIds, type ManagementTabDefinition } from './sections'
 
-export type AppWorkspaceId = 'branch' | 'delegate'
+export type AppWorkspaceId = 'branch' | 'delegate' | 'fieldPromoter'
 export interface AppTab { id: string; label: string; icon: string; tabId?: string }
 // Source order: branch_manager_application/lib/ui/home_shell.dart and
 // delegated_manager_application/lib/features/shell/presentation/home_shell.dart.
@@ -34,6 +34,31 @@ export const APP_TABS: Record<AppWorkspaceId, AppTab[]> = {
     { id: 'visits', label: 'أعمال إدارة الفرع', icon: 'pi-building', tabId: 'branchVisits' },
     { id: 'settings', label: 'الإعدادات', icon: 'pi-cog', tabId: 'delegateSettings' },
   ],
+  fieldPromoter: [
+    { id: 'home', label: 'الرئيسية', icon: 'pi-home', tabId: 'fpHome' },
+    { id: 'liveMap', label: 'الخريطة الحية', icon: 'pi-map-marker', tabId: 'fpLiveMap' },
+    { id: 'day', label: 'يوم مروّج', icon: 'pi-calendar', tabId: 'fpDay' },
+    { id: 'attendance', label: 'الحضور والأهداف', icon: 'pi-check-circle', tabId: 'fpAttendance' },
+    { id: 'pins', label: 'المحلات', icon: 'pi-shop', tabId: 'fpPins' },
+    { id: 'orders', label: 'الطلبات', icon: 'pi-shopping-cart', tabId: 'fpOrders' },
+    { id: 'alerts', label: 'التنبيهات', icon: 'pi-bell', tabId: 'fpAlerts' },
+    { id: 'promoters', label: 'المروّجون', icon: 'pi-users', tabId: 'fpPromoters' },
+    { id: 'settings', label: 'الإعدادات', icon: 'pi-cog', tabId: 'fpSettings' },
+  ],
+}
+export const APP_WORKSPACE_IDS: readonly AppWorkspaceId[] = ['branch', 'delegate', 'fieldPromoter']
+const APP_PARENT_IDS: Record<AppWorkspaceId, string> = {
+  branch: 'managementBranch',
+  delegate: 'managementDelegate',
+  fieldPromoter: 'managementFieldPromoter',
+}
+export const APP_ENTRY_ROUTE_NAMES: Record<AppWorkspaceId, string> = {
+  branch: 'ManagementBranchEntryRoute',
+  delegate: 'ManagementDelegateEntryRoute',
+  fieldPromoter: 'ManagementFieldPromoterEntryRoute',
+}
+export function appSectionPath(section: string): string {
+  return section === 'fieldPromoter' ? 'field-promoters' : section
 }
 export function appReadyTabs(section: AppWorkspaceId): ManagementTabDefinition[] {
   return APP_TABS[section].flatMap(item => {
@@ -60,18 +85,18 @@ function anyRead(tabs: ManagementTabDefinition[]): AccessRequirement {
 }
 export const oversightRequirement = anyRead(getReadyTabsForSection('oversight').filter(tab => tab.id !== 'delegateFollowup' && tab.id.startsWith('follower') === false))
 export function appRequirement(section: AppWorkspaceId) { return anyRead(appReadyTabs(section)) }
-export const appNavigationParents: NavigationSectionDefinition[] = (['branch', 'delegate'] as const).map((section, index) => ({
-  id: section === 'branch' ? 'managementBranch' : 'managementDelegate',
+export const appNavigationParents: NavigationSectionDefinition[] = APP_WORKSPACE_IDS.map((section, index) => ({
+  id: APP_PARENT_IDS[section],
   translationKey: `management.sections.${section}`,
   icon: section === 'branch' ? 'branch' : 'user', group: 'management',
-  routeName: section === 'branch' ? 'ManagementBranchEntryRoute' : 'ManagementDelegateEntryRoute',
-  routePath: `/management/${section}`, requirement: appRequirement(section),
+  routeName: APP_ENTRY_ROUTE_NAMES[section],
+  routePath: `/management/${appSectionPath(section)}`, requirement: appRequirement(section),
   displayOrder: 66 + index, implementationStatus: 'ready',
   children: appReadyTabs(section).map((tab, order) => ({
-    id: `app-${section}-${tab.id}`, parentId: section === 'branch' ? 'managementBranch' : 'managementDelegate',
+    id: section === 'fieldPromoter' ? tab.id : `app-${section}-${tab.id}`, parentId: APP_PARENT_IDS[section],
     translationKey: `management.appTabs.${section}.${APP_TABS[section].find(item => item.tabId === tab.id)!.id}`,
     icon: 'user', group: 'management', routeName: tab.routeName,
-    routePath: `/management/${section}/${tab.tabPath}`, routeQuery: tab.defaultQuery,
+    routePath: `/management/${appSectionPath(section)}/${tab.tabPath}`, routeQuery: tab.defaultQuery,
     requirement: resolvedRequirement(tab), displayOrder: order,
     implementationStatus: tab.implementationStatus === 'partial' ? 'partial' : 'ready',
   })),

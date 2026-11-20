@@ -35,6 +35,7 @@ public static class ConfigureServices
         services.AddScoped<Application.Safes.Common.ISafeLedger, Application.Safes.Common.SafeLedger>();
         services.AddScoped<Application.Safes.Common.SafeProvisioner>();
         services.AddScoped<Application.Safes.Common.PaymentSafePosting>();
+        services.AddScoped<Application.FieldPromoters.Common.FieldPromoterMaintenance>();
         services.AddScoped<ISalesRequestChangeNotifier, SalesRequestChangeNotifier>();
         services.AddScoped<SalesRequestHubIdentityResolver>();
         services.AddScoped<SalesRequestOutboxProcessor>();

@@ -18,6 +18,7 @@ public static class RolePermissions
                 .Concat(Permissions.Archive.OutsideAll.Select(x => x.Name))
                 .Concat(Permissions.SalesLocation.OutsideAll.Select(x => x.Name))
                 .Concat(Permissions.SalesRoute.OutsideAll.Select(x => x.Name))
+                .Concat(Permissions.FieldPromoter.OutsideAll.Select(x => x.Name))
                 .Concat(Permissions.SalesSummary.OutsideAll.Select(x => x.Name))
                 .Concat(Permissions.ManagementTask.OutsideAll.Select(x => x.Name))
                 .Concat(Permissions.DelegateFollowup.OutsideAll.Select(x => x.Name))
@@ -257,6 +258,13 @@ public static class RolePermissions
         motaba.Permissions.Add(Permissions.ManagementTask.Complete);
         motaba.Permissions.Add(Permissions.ManagementTask.ReadAttachment);
         All.Add(motaba);
+
+        var fieldPromoter = new RolePermissionDto
+        {
+            RoleName = Roles.FieldPromoter.Name
+        };
+        fieldPromoter.Permissions.Add(Permissions.FieldPromoter.App);
+        All.Add(fieldPromoter);
 
         var archiveOfficer = new RolePermissionDto
         {

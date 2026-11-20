@@ -14,6 +14,7 @@ export type ManagementSectionId =
   | 'oversight'
   | 'branch'
   | 'delegate'
+  | 'fieldPromoter'
   /** alias مستقر للمسارات القديمة /management/director/... */
   | 'director'
 
@@ -65,6 +66,15 @@ export type ManagementTabId =
   | 'delegateRatings'
   | 'delegateSettings'
   | 'branchVisitWorkspace'
+  | 'fpHome'
+  | 'fpLiveMap'
+  | 'fpDay'
+  | 'fpAttendance'
+  | 'fpPins'
+  | 'fpOrders'
+  | 'fpAlerts'
+  | 'fpPromoters'
+  | 'fpSettings'
 
 export type ManagementImplementationStatus =
   | 'ready'
@@ -122,6 +132,15 @@ export interface ManagementTabDefinition {
     | 'DelegateSettingsPage'
     | 'BranchCustomersPage'
     | 'BranchPaymentsPage'
+    | 'FieldPromoterHomePage'
+    | 'FieldPromoterLiveMapPage'
+    | 'FieldPromoterDayPage'
+    | 'FieldPromoterAttendancePage'
+    | 'FieldPromoterPinsPage'
+    | 'FieldPromoterOrdersPage'
+    | 'FieldPromoterAlertsPage'
+    | 'FieldPromoterAccountsPage'
+    | 'FieldPromoterSettingsPage'
     | null
   defaultQuery?: Record<string, string>
   notes?: string
@@ -193,6 +212,11 @@ const FOLLOWER_WORK_DIRECTORY: AccessRequirement = {
   ],
 }
 
+const FIELD_PROMOTER_READ: AccessRequirement = {
+  type: 'single',
+  permission: { module: 'FieldPromoter', action: 'Read' },
+}
+
 const OVERSIGHT_SECTION_ACCESS: AccessRequirement = {
   type: 'anyOf',
   permissions: [
@@ -251,6 +275,12 @@ export const MANAGEMENT_SECTIONS: readonly ManagementSectionDefinition[] = [
         { module: 'Task', action: 'Read' },
       ],
     },
+  },
+  {
+    id: 'fieldPromoter',
+    labelKey: 'sections.fieldPromoter',
+    displayOrder: 30,
+    requirement: FIELD_PROMOTER_READ,
   },
 ] as const
 
@@ -907,6 +937,96 @@ export const MANAGEMENT_TABS: readonly ManagementTabDefinition[] = [
     requirement: { type: 'publicAuthenticated' },
     implementationStatus: 'not_implemented',
     reuse: null,
+  },
+  {
+    id: 'fpHome',
+    sectionId: 'fieldPromoter',
+    labelKey: 'tabs.fpHome',
+    tabPath: 'home',
+    routeName: 'ManagementFieldPromoterHomeRoute',
+    requirement: FIELD_PROMOTER_READ,
+    implementationStatus: 'ready',
+    reuse: 'FieldPromoterHomePage',
+  },
+  {
+    id: 'fpLiveMap',
+    sectionId: 'fieldPromoter',
+    labelKey: 'tabs.fpLiveMap',
+    tabPath: 'live-map',
+    routeName: 'ManagementFieldPromoterLiveMapRoute',
+    requirement: FIELD_PROMOTER_READ,
+    implementationStatus: 'ready',
+    reuse: 'FieldPromoterLiveMapPage',
+  },
+  {
+    id: 'fpDay',
+    sectionId: 'fieldPromoter',
+    labelKey: 'tabs.fpDay',
+    tabPath: 'day',
+    routeName: 'ManagementFieldPromoterDayRoute',
+    requirement: FIELD_PROMOTER_READ,
+    implementationStatus: 'ready',
+    reuse: 'FieldPromoterDayPage',
+  },
+  {
+    id: 'fpAttendance',
+    sectionId: 'fieldPromoter',
+    labelKey: 'tabs.fpAttendance',
+    tabPath: 'attendance',
+    routeName: 'ManagementFieldPromoterAttendanceRoute',
+    requirement: FIELD_PROMOTER_READ,
+    implementationStatus: 'ready',
+    reuse: 'FieldPromoterAttendancePage',
+  },
+  {
+    id: 'fpPins',
+    sectionId: 'fieldPromoter',
+    labelKey: 'tabs.fpPins',
+    tabPath: 'pins',
+    routeName: 'ManagementFieldPromoterPinsRoute',
+    requirement: FIELD_PROMOTER_READ,
+    implementationStatus: 'ready',
+    reuse: 'FieldPromoterPinsPage',
+  },
+  {
+    id: 'fpOrders',
+    sectionId: 'fieldPromoter',
+    labelKey: 'tabs.fpOrders',
+    tabPath: 'orders',
+    routeName: 'ManagementFieldPromoterOrdersRoute',
+    requirement: FIELD_PROMOTER_READ,
+    implementationStatus: 'ready',
+    reuse: 'FieldPromoterOrdersPage',
+  },
+  {
+    id: 'fpAlerts',
+    sectionId: 'fieldPromoter',
+    labelKey: 'tabs.fpAlerts',
+    tabPath: 'alerts',
+    routeName: 'ManagementFieldPromoterAlertsRoute',
+    requirement: FIELD_PROMOTER_READ,
+    implementationStatus: 'ready',
+    reuse: 'FieldPromoterAlertsPage',
+  },
+  {
+    id: 'fpPromoters',
+    sectionId: 'fieldPromoter',
+    labelKey: 'tabs.fpPromoters',
+    tabPath: 'promoters',
+    routeName: 'ManagementFieldPromoterPromotersRoute',
+    requirement: FIELD_PROMOTER_READ,
+    implementationStatus: 'ready',
+    reuse: 'FieldPromoterAccountsPage',
+  },
+  {
+    id: 'fpSettings',
+    sectionId: 'fieldPromoter',
+    labelKey: 'tabs.fpSettings',
+    tabPath: 'settings',
+    routeName: 'ManagementFieldPromoterSettingsRoute',
+    requirement: FIELD_PROMOTER_READ,
+    implementationStatus: 'ready',
+    reuse: 'FieldPromoterSettingsPage',
   },
 ] as const
 

@@ -75,4 +75,19 @@ describe('Independent legacy application workspaces', () => {
         module === 'BranchManagerAccount' && action === 'Read',
     }).type).toBe('allow')
   })
+  it('field promoter workspace is its own root gated by its Panel.Tab keys', () => {
+    expect(APP_TABS.fieldPromoter.map(x => x.tabId)).toEqual([
+      'fpHome', 'fpLiveMap', 'fpDay', 'fpAttendance', 'fpPins', 'fpOrders', 'fpAlerts', 'fpPromoters', 'fpSettings',
+    ])
+    const parent = NAVIGATION_REGISTRY.find(x => x.id === 'managementFieldPromoter')!
+    expect(parent.children!.map(x => x.id)).toContain('fpAlerts')
+    const router = createRouter({ history: createMemoryHistory(), routes: [ManagementRoutes] })
+    const access = (path: string, tab: string) => resolveRouteAccess({ to: router.resolve(path), isAuthenticated: true,
+      permissionsStatus: 'ready', hasPermission: (module, action) => module === 'PanelTab' && action === tab }).type
+    expect(router.resolve('/management/field-promoters/day').name).toBe('ManagementFieldPromoterDayRoute')
+    expect(access('/management/field-promoters/home', 'fpHome')).toBe('allow')
+    expect(access('/management/field-promoters/settings', 'fpHome')).toBe('denied')
+    expect(access('/management/field-promoters', 'fpPins')).toBe('allow')
+    expect(access('/management/delegate/home', 'fpHome')).toBe('denied')
+  })
 })

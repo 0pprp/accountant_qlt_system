@@ -1,4 +1,4 @@
-using System.Security.Cryptography;
+﻿using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
 using System.Text.RegularExpressions;
@@ -14,6 +14,7 @@ public static class SalesRequestSubmissionRules
         SalesRequestSourceType.EmployeeSubmitted => Application.Common.SeedData.Permissions.SalesRequest.SubmitEmployee,
         SalesRequestSourceType.Delegate => Application.Common.SeedData.Permissions.SalesRequest.SubmitDelegate,
         SalesRequestSourceType.Follower => Application.Common.SeedData.Permissions.SalesRequest.SubmitFollower,
+        SalesRequestSourceType.FieldPromoter => Application.Common.SeedData.Permissions.FieldPromoter.App,
         _ => null
     };
 

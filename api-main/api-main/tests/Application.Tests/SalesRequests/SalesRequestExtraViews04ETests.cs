@@ -308,7 +308,7 @@ public class SalesRequestExtraViews04ETests
     public void Sent_view_uses_person_submitted_sources_only_and_none_have_ingestion()
     {
         Assert.Equal(
-            [SalesRequestSourceType.EmployeeSubmitted, SalesRequestSourceType.Follower, SalesRequestSourceType.Delegate],
+            [SalesRequestSourceType.EmployeeSubmitted, SalesRequestSourceType.Follower, SalesRequestSourceType.Delegate, SalesRequestSourceType.FieldPromoter],
             SalesRequestTabMap.SentSourceTypes);
         Assert.Empty(SalesRequestTabMap.IngestionWiredSourceTypes);
 

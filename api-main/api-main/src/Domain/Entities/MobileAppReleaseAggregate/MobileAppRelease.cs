@@ -1,4 +1,4 @@
-using Domain.Common;
+﻿using Domain.Common;
 
 namespace Domain.Entities.MobileAppReleaseAggregate;
 
@@ -166,13 +166,15 @@ public static class MobileAppKeys
     public const string SalesEmployee = "sales-employee";
     public const string Committee = "committee";
     public const string Follower = "follower";
+    public const string FieldPromoter = "field-promoter";
 
     public static readonly string[] All =
     [
         Delegate,
         SalesEmployee,
         Committee,
-        Follower
+        Follower,
+        FieldPromoter
     ];
 
     public static string LabelAr(string appKey) => NormalizeKnown(appKey) switch
@@ -181,6 +183,7 @@ public static class MobileAppKeys
         SalesEmployee => "موظف المبيعات",
         Committee => "مسؤول اللجنة",
         Follower => "المتابع / التطبيق الميداني",
+        FieldPromoter => "المروّج الميداني",
         _ => appKey
     };
 
@@ -194,6 +197,7 @@ public static class MobileAppKeys
             "sales-employee" or "salesemployee" or "sales_employee" or "موظف المبيعات" => SalesEmployee,
             "committee" or "committee-officer" or "لجنة" or "مسؤول اللجنة" => Committee,
             "follower" or "motaba" or "app-dev" or "متابع" or "المتابع" => Follower,
+            "field-promoter" or "fieldpromoter" or "field_promoter" or "مروج" or "المروج الميداني" => FieldPromoter,
             _ => s
         };
     }

@@ -10,7 +10,8 @@
     "oversight": "الإشراف والمتابعة",
     "director": "الإشراف والمتابعة",
     "branch": "إدارة الفروع",
-    "delegate": "المدير المفوض"
+    "delegate": "المدير المفوض",
+    "fieldPromoter": "المروّجون الميدانيون"
   },
   "tabs": {
     "branchArchive": "الأرشيف",
@@ -52,7 +53,16 @@
     "branchVisits": "أعمال إدارة الفرع",
     "branchVisitWorkspace": "بوابة زيارة الفرع",
     "legalDecisions": "سجل القرارات",
-    "committeeRatings": "تقييم اللجان (غير منفّذ)"
+    "committeeRatings": "تقييم اللجان (غير منفّذ)",
+    "fpHome": "الرئيسية",
+    "fpLiveMap": "الخريطة الحية",
+    "fpDay": "يوم مروّج",
+    "fpAttendance": "الحضور والأهداف",
+    "fpPins": "المحلات",
+    "fpOrders": "الطلبات",
+    "fpAlerts": "التنبيهات",
+    "fpPromoters": "المروّجون",
+    "fpSettings": "الإعدادات"
   },
   "appTabs": {
     "branch": {
@@ -78,6 +88,17 @@
       "waivers": "طلبات التنازل",
       "accounts": "حسابات إدارة الفرع",
       "visits": "أعمال إدارة الفرع",
+      "settings": "الإعدادات"
+    },
+    "fieldPromoter": {
+      "home": "الرئيسية",
+      "liveMap": "الخريطة الحية",
+      "day": "يوم مروّج",
+      "attendance": "الحضور والأهداف",
+      "pins": "المحلات",
+      "orders": "الطلبات",
+      "alerts": "التنبيهات",
+      "promoters": "المروّجون",
       "settings": "الإعدادات"
     }
   }

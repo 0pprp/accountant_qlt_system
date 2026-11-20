@@ -1700,6 +1700,253 @@ namespace Infrastructure.Persistence.Migrations
                     b.ToTable("ExpenseItems");
                 });
 
+            modelBuilder.Entity("Domain.Entities.FieldPromoterAggregate.FieldPromoterAlert", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTimeOffset>("LastSeenAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<double>("Latitude")
+                        .HasColumnType("double precision");
+
+                    b.Property<double>("Longitude")
+                        .HasColumnType("double precision");
+
+                    b.Property<DateTimeOffset>("RaisedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTimeOffset?>("ResolvedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTimeOffset?>("SeenAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int?>("SeenByUserId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("ShiftId")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTimeOffset>("SinceUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("RaisedAtUtc", "SeenAtUtc");
+
+                    b.HasIndex("UserId", "ResolvedAtUtc");
+
+                    b.ToTable("FieldPromoterAlerts");
+                });
+
+            modelBuilder.Entity("Domain.Entities.FieldPromoterAggregate.FieldPromoterDay", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<DateOnly>("Day")
+                        .HasColumnType("date");
+
+                    b.Property<int>("Orders")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("Pins")
+                        .HasColumnType("integer");
+
+                    b.Property<byte>("Status")
+                        .HasColumnType("smallint");
+
+                    b.Property<int>("TargetMinutes")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("WorkMinutes")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Day");
+
+                    b.HasIndex("UserId", "Day")
+                        .IsUnique();
+
+                    b.ToTable("FieldPromoterDays");
+                });
+
+            modelBuilder.Entity("Domain.Entities.FieldPromoterAggregate.FieldPromoterOrderShop", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<double?>("Latitude")
+                        .HasColumnType("double precision");
+
+                    b.Property<double?>("Longitude")
+                        .HasColumnType("double precision");
+
+                    b.Property<byte[]>("Photo")
+                        .HasColumnType("bytea");
+
+                    b.Property<string>("PhotoContentType")
+                        .HasMaxLength(40)
+                        .HasColumnType("character varying(40)");
+
+                    b.Property<int>("SalesRequestId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("SalesRequestId")
+                        .IsUnique();
+
+                    b.ToTable("FieldPromoterOrderShops");
+                });
+
+            modelBuilder.Entity("Domain.Entities.FieldPromoterAggregate.FieldPromoterPin", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<double?>("AgentLatitude")
+                        .HasColumnType("double precision");
+
+                    b.Property<double?>("AgentLongitude")
+                        .HasColumnType("double precision");
+
+                    b.Property<DateTimeOffset>("CreatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTimeOffset?>("DeletedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<byte>("Interest")
+                        .HasColumnType("smallint");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("boolean");
+
+                    b.Property<double>("Latitude")
+                        .HasColumnType("double precision");
+
+                    b.Property<double>("Longitude")
+                        .HasColumnType("double precision");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("character varying(150)");
+
+                    b.Property<string>("Note")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)");
+
+                    b.Property<string>("Phone")
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<DateTimeOffset?>("UpdatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Latitude", "Longitude")
+                        .HasFilter("\"IsDeleted\" = false");
+
+                    b.HasIndex("UserId", "CreatedAtUtc");
+
+                    b.ToTable("FieldPromoterPins");
+                });
+
+            modelBuilder.Entity("Domain.Entities.FieldPromoterAggregate.FieldPromoterProfile", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTimeOffset>("CreatedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int?>("DailyWorkMinutesTarget")
+                        .HasColumnType("integer");
+
+                    b.Property<bool>("IsSuspended")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("SuspendReason")
+                        .HasMaxLength(300)
+                        .HasColumnType("character varying(300)");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId")
+                        .IsUnique();
+
+                    b.ToTable("FieldPromoterProfiles");
+                });
+
+            modelBuilder.Entity("Domain.Entities.FieldPromoterAggregate.FieldPromoterSettings", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("DefaultDailyWorkMinutes")
+                        .HasColumnType("integer");
+
+                    b.Property<DateOnly?>("LastFrozenDay")
+                        .HasColumnType("date");
+
+                    b.Property<DateOnly?>("LastRetentionRunDay")
+                        .HasColumnType("date");
+
+                    b.Property<int>("StationaryMinutes")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("StationaryRadiusMeters")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("SupportPhone")
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.Property<string>("SupportWhatsapp")
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("FieldPromoterSettings");
+                });
+
             modelBuilder.Entity("Domain.Entities.FollowerWorkAggregate.CustomerNote", b =>
                 {
                     b.Property<int>("Id")
@@ -4602,6 +4849,59 @@ namespace Infrastructure.Persistence.Migrations
                         .IsRequired();
 
                     b.Navigation("Expense");
+                });
+
+            modelBuilder.Entity("Domain.Entities.FieldPromoterAggregate.FieldPromoterAlert", b =>
+                {
+                    b.HasOne("Domain.Entities.UserAggregate.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("Domain.Entities.FieldPromoterAggregate.FieldPromoterDay", b =>
+                {
+                    b.HasOne("Domain.Entities.UserAggregate.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("Domain.Entities.FieldPromoterAggregate.FieldPromoterOrderShop", b =>
+                {
+                    b.HasOne("Domain.Entities.SalesRequestAggregate.SalesRequest", null)
+                        .WithMany()
+                        .HasForeignKey("SalesRequestId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Domain.Entities.FieldPromoterAggregate.FieldPromoterPin", b =>
+                {
+                    b.HasOne("Domain.Entities.UserAggregate.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("Domain.Entities.FieldPromoterAggregate.FieldPromoterProfile", b =>
+                {
+                    b.HasOne("Domain.Entities.UserAggregate.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("Domain.Entities.InstallmentPaymentAggregate.InstallmentPayment", b =>

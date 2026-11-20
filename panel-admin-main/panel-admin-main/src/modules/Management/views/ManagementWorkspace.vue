@@ -4,6 +4,11 @@
       <RouterView />
     </div>
   </DelegateManagerBoard>
+  <FieldPromoterBoard v-else-if="appSection === 'fieldPromoter'">
+    <div :key="`fpb-${auth.branchGeneration}-${activeTabId}`" class="mgmt-body dmb-body" data-testid="mgmt-ops-body">
+      <RouterView />
+    </div>
+  </FieldPromoterBoard>
   <section v-else class="mgmt-workspace" dir="rtl">
     <header class="mgmt-header">
       <div class="mgmt-heading-icon" aria-hidden="true"><i :class="['pi', appSection === 'branch' ? 'pi-building' : appSection === 'delegate' ? 'pi-briefcase' : 'pi-th-large']" /></div>
@@ -71,6 +76,7 @@ import { useBranchVisitGate } from '../composables/useBranchVisitGate'
 import { getTabByIds, getReadyTabsForSection, type ManagementTabDefinition } from '../domain/sections'
 import { APP_TABS } from '../domain/workspaceNavigation'
 import DelegateManagerBoard from '@/modules/DelegateManager/components/DelegateManagerBoard.vue'
+import FieldPromoterBoard from '@/modules/FieldPromoters/components/FieldPromoterBoard.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -84,7 +90,7 @@ const {
 } = useBranchVisitGate()
 // The router guard owns access and revalidation; the shell never redirects between apps.
 const activeSectionId = computed(() => route.meta.managementSectionId ?? 'oversight')
-const appSection = computed(() => activeSectionId.value === 'branch' || activeSectionId.value === 'delegate' ? activeSectionId.value : null)
+const appSection = computed(() => activeSectionId.value === 'branch' || activeSectionId.value === 'delegate' || activeSectionId.value === 'fieldPromoter' ? activeSectionId.value : null)
 const activeTabId = computed(() => String(route.meta.managementTabId ?? ''))
 const workspaceTitle = computed(() => appSection.value ? t(`management.sections.${appSection.value}`) : t('management.title'))
 const workspaceDescription = computed(() => appSection.value === 'branch'

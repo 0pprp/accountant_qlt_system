@@ -61,6 +61,7 @@ public static class ConfigureServices
         services.AddHostedService<SalesRequestOutboxDispatcher>();
         services.AddHostedService<ManagementTaskOutboxDispatcher>();
         services.AddHostedService<ArchiveReconcileWorker>();
+        services.AddHostedService<FieldPromoterWorker>();
 
         services.AddMemoryCache();
 

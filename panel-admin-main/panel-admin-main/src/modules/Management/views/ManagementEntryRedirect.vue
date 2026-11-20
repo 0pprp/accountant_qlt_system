@@ -93,7 +93,7 @@ onMounted(async () => {
   }
 
   const first =
-    section === 'delegate'
+    section === 'delegate' || section === 'fieldPromoter'
       ? appReadyTabs(section).find(canOpenTab)
       : firstAllowedTab('oversight')
   if (!first) {

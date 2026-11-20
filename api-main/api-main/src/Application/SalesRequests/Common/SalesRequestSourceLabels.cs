@@ -1,4 +1,4 @@
-using Domain.Entities.SalesRequestAggregate.Enums;
+﻿using Domain.Entities.SalesRequestAggregate.Enums;
 
 namespace Application.SalesRequests.Common;
 
@@ -12,6 +12,7 @@ public static class SalesRequestSourceLabels
         SalesRequestSourceType.Delegate => "مندوب",
         SalesRequestSourceType.ExcelImport => "استيراد Excel",
         SalesRequestSourceType.ExternalCrm => "CRM خارجي",
+        SalesRequestSourceType.FieldPromoter => "المروّج الميداني",
         _ => source.ToString()
     };
 
@@ -25,6 +26,7 @@ public static class SalesRequestSourceLabels
         SalesRequestSourceType.Follower,
         SalesRequestSourceType.Delegate,
         SalesRequestSourceType.ExcelImport,
-        SalesRequestSourceType.ExternalCrm
+        SalesRequestSourceType.ExternalCrm,
+        SalesRequestSourceType.FieldPromoter
     ];
 }

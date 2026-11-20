@@ -590,6 +590,25 @@ public static class Permissions
         public const string Read = "SalesLocation.Read";
     }
 
+    /// <summary>المروّجون الميدانيون: تطبيقهم ومتابعتهم من اللوحة.</summary>
+    public static class FieldPromoter
+    {
+        private const string Display = "المروّجون الميدانيون";
+
+        public static readonly PermissionEntity[] OutsideAll =
+        [
+            new(App, "استعمال تطبيق المروّج الميداني", nameof(FieldPromoter), Display),
+            new(Read, "متابعة المروّجين الميدانيين ومواقعهم وحضورهم", nameof(FieldPromoter), Display),
+            new(Manage, "إنشاء وتعديل وإيقاف حسابات المروّجين وأهدافهم وإعداداتهم", nameof(FieldPromoter), Display),
+            new(Alerts, "تنبيهات وقوف المروّجين", nameof(FieldPromoter), Display),
+        ];
+
+        public const string App = "FieldPromoter.App";
+        public const string Read = "FieldPromoter.Read";
+        public const string Manage = "FieldPromoter.Manage";
+        public const string Alerts = "FieldPromoter.Alerts";
+    }
+
     /// <summary>المسارات التاريخية لموظفي المبيعات — مستقلة عن SalesLocation وFollowerRoute.</summary>
     public static class SalesRoute
     {

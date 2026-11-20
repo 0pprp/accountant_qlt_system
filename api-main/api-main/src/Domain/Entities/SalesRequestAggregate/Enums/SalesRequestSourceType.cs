@@ -1,4 +1,4 @@
-namespace Domain.Entities.SalesRequestAggregate.Enums;
+﻿namespace Domain.Entities.SalesRequestAggregate.Enums;
 
 /// <summary>
 /// مصادر الطلب المدعومة في النموذج الجديد.
@@ -12,4 +12,5 @@ public enum SalesRequestSourceType : byte
     Delegate = 3,
     ExcelImport = 4,
     ExternalCrm = 5,
+    FieldPromoter = 6,
 }

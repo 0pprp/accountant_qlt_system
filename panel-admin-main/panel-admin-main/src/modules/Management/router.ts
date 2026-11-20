@@ -1,7 +1,7 @@
 import type { Router, RouteRecordRaw } from 'vue-router'
 import { DELEGATE_FOLLOWUP_ACCESS, FOLLOWER_WORK_ACCESS, requirementForManagementTabId } from '@/modules/Core/navigation/panelTabAccess'
 import { getReadyManagementTabs } from './domain/sections'
-import { appRequirement } from './domain/workspaceNavigation'
+import { APP_ENTRY_ROUTE_NAMES, APP_WORKSPACE_IDS, appRequirement, appSectionPath } from './domain/workspaceNavigation'
 
 function reuseLoader(reuse: string | null) {
   switch (reuse) {
@@ -112,6 +112,33 @@ function reuseLoader(reuse: string | null) {
     case 'BranchPaymentsPage':
       return () =>
         import('@/modules/BranchPayments/views/BranchPaymentsPage.vue')
+    case 'FieldPromoterHomePage':
+      return () =>
+        import('@/modules/FieldPromoters/views/FieldPromoterHomePage.vue')
+    case 'FieldPromoterLiveMapPage':
+      return () =>
+        import('@/modules/FieldPromoters/views/FieldPromoterLiveMapPage.vue')
+    case 'FieldPromoterDayPage':
+      return () =>
+        import('@/modules/FieldPromoters/views/FieldPromoterDayPage.vue')
+    case 'FieldPromoterAttendancePage':
+      return () =>
+        import('@/modules/FieldPromoters/views/FieldPromoterAttendancePage.vue')
+    case 'FieldPromoterPinsPage':
+      return () =>
+        import('@/modules/FieldPromoters/views/FieldPromoterPinsPage.vue')
+    case 'FieldPromoterOrdersPage':
+      return () =>
+        import('@/modules/FieldPromoters/views/FieldPromoterOrdersPage.vue')
+    case 'FieldPromoterAlertsPage':
+      return () =>
+        import('@/modules/FieldPromoters/views/FieldPromoterAlertsPage.vue')
+    case 'FieldPromoterAccountsPage':
+      return () =>
+        import('@/modules/FieldPromoters/views/FieldPromoterAccountsPage.vue')
+    case 'FieldPromoterSettingsPage':
+      return () =>
+        import('@/modules/FieldPromoters/views/FieldPromoterSettingsPage.vue')
     default:
       return () => import('@/modules/Core/views/AccessDeniedView.vue')
   }
@@ -153,7 +180,7 @@ export const FollowerWorkRoutes: RouteRecordRaw[] = [
 ]
 
 const readyChildren: RouteRecordRaw[] = getReadyManagementTabs().filter(tab => tab.id !== 'delegateFollowup' && (tab.id in FOLLOWER_TAB_TO_BOARD) === false).map((tab) => ({
-  path: `${tab.sectionId}/${tab.tabPath}`,
+  path: `${appSectionPath(tab.sectionId)}/${tab.tabPath}`,
   name: tab.routeName,
   component: tab.sectionId === 'delegate' && tab.id === 'exceptions'
     ? () => import('@/modules/DelegateManager/views/DelegateExceptionsPage.vue')
@@ -446,9 +473,9 @@ export const ManagementRoutes: RouteRecordRaw = {
     },
   },
   children: [
-    ...(['branch', 'delegate'] as const).map(section => ({
-      path: section,
-      name: section === 'branch' ? 'ManagementBranchEntryRoute' : 'ManagementDelegateEntryRoute',
+    ...APP_WORKSPACE_IDS.map(section => ({
+      path: appSectionPath(section),
+      name: APP_ENTRY_ROUTE_NAMES[section],
       component: () => import('./views/ManagementEntryRedirect.vue'),
       meta: { requiresAuth: true, accessRequirement: appRequirement(section), managementSectionId: section },
     })),

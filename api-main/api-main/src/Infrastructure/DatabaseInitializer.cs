@@ -76,6 +76,7 @@ public class DatabaseInitializer
             .Concat(Permissions.SalesEmployee.OutsideAll)
             .Concat(Permissions.SalesLocation.OutsideAll)
             .Concat(Permissions.SalesRoute.OutsideAll)
+            .Concat(Permissions.FieldPromoter.OutsideAll)
             .Concat(Permissions.SalesSummary.OutsideAll)
             .Concat(Permissions.ManagementTask.OutsideAll)
             .Concat(Permissions.DelegateFollowup.OutsideAll)
